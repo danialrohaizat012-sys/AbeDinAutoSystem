@@ -204,7 +204,41 @@ input,select,textarea{border-radius:12px!important;border:1px solid rgba(255,255
 @keyframes adaSplashLifecycle{0%,82%{opacity:1;visibility:visible}100%{opacity:0;visibility:hidden;pointer-events:none}}
 
 </style>
-<style id="ada-splash-hard-fix">#ada-splash{background:#050708!important}#ada-splash-bg{display:block!important}.ada-splash-ui{display:block!important}.ada-splash-kicker{font-size:.72rem;letter-spacing:.28em;font-weight:900;color:#e8bd62;margin-bottom:8px}.ada-splash-dialogue{font-size:clamp(1.35rem,5vw,2.2rem);font-weight:900;color:#fff;margin-bottom:18px}.ada-splash-track{width:100%;height:5px;border:1px solid rgba(255,255,255,.28);background:#0008;border-radius:999px;overflow:hidden}.ada-splash-fill{height:100%;width:0;background:linear-gradient(90deg,#54d3ff,#e8bd62);animation:adaLoad 3.4s .2s ease forwards}.ada-splash-caption{margin-top:10px;font-size:.62rem;letter-spacing:.18em;color:#ffffffaa;text-transform:uppercase}@keyframes adaSplashExit{to{opacity:0;visibility:hidden;pointer-events:none}}</style><style id="two-stage-app-fix">#ada-splash{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}</style></head><body><div id="ada-splash" aria-label="Abe Din Auto sedang dibuka" style="position:fixed!important;inset:0!important;z-index:2147483647!important;display:flex!important;align-items:center!important;justify-content:center!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important;background:#050708!important;overflow:hidden!important"><div id="ada-splash-bg"></div><div class="ada-splash-ui"><div class="ada-splash-kicker">ABE DIN AUTO</div><div class="ada-splash-dialogue">Abe Din OTW dah ni!</div><div class="ada-splash-track"><div class="ada-splash-fill"></div></div><div class="ada-splash-caption">Memulakan Cloud System</div></div></div><script id="ada-boot-splash">
+<style id="ada-splash-hard-fix">#ada-splash{background:#050708!important}#ada-splash-bg{display:block!important}.ada-splash-ui{display:block!important}.ada-splash-kicker{font-size:.72rem;letter-spacing:.28em;font-weight:900;color:#e8bd62;margin-bottom:8px}.ada-splash-dialogue{font-size:clamp(1.35rem,5vw,2.2rem);font-weight:900;color:#fff;margin-bottom:18px}.ada-splash-track{width:100%;height:5px;border:1px solid rgba(255,255,255,.28);background:#0008;border-radius:999px;overflow:hidden}.ada-splash-fill{height:100%;width:0;background:linear-gradient(90deg,#54d3ff,#e8bd62);animation:adaLoad 3.4s .2s ease forwards}.ada-splash-caption{margin-top:10px;font-size:.62rem;letter-spacing:.18em;color:#ffffffaa;text-transform:uppercase}@keyframes adaSplashExit{to{opacity:0;visibility:hidden;pointer-events:none}}</style><style id="two-stage-app-fix">#ada-splash{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}</style><style id="ada-live-ui-patch">
+/* LIVE UI PATCH: branding and dashboard welcome visual only */
+#ada-cloud-gate .cloud-side .ada-side-logo{display:none!important}
+#ada-cloud-gate .cloud-side{padding-top:16px!important}
+#ada-cloud-gate .cloud-hero{
+ position:relative;isolation:isolate;overflow:hidden;min-height:210px;
+ display:flex;flex-direction:column;justify-content:center;align-items:flex-start;
+ background:#11191d url("welcome-abe-din.webp") center right / cover no-repeat!important;
+ border:1px solid #64543a!important;border-radius:22px!important;
+ padding:clamp(22px,4vw,40px)!important;box-shadow:0 18px 46px #0005;
+}
+#ada-cloud-gate .cloud-hero::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(90deg,rgba(7,11,13,.97) 0%,rgba(7,11,13,.87) 37%,rgba(7,11,13,.18) 100%)}
+#ada-cloud-gate .cloud-hero h1{max-width:620px;line-height:1.12;text-wrap:balance;text-shadow:0 2px 15px #000a}
+#ada-cloud-gate .cloud-hero p,#ada-cloud-gate .cloud-hero small,#ada-cloud-gate .cloud-hero .ada-cloud-kicker{position:relative;max-width:520px;text-shadow:0 2px 10px #000}
+@media(max-width:760px){
+ #ada-cloud-gate .cloud-hero{min-height:220px;background-position:63% center!important;padding:22px!important}
+ #ada-cloud-gate .cloud-hero::before{background:linear-gradient(90deg,rgba(7,11,13,.96) 0%,rgba(7,11,13,.83) 54%,rgba(7,11,13,.35) 100%)}
+ #ada-cloud-gate .cloud-hero h1{font-size:clamp(23px,6vw,30px)!important;max-width:75%}
+}
+</style><style id="ada-showroom-welcome-final">
+/* Compact showroom welcome: crop source artwork to its photo portion; HTML remains accessible. */
+#ada-cloud-gate .cloud-hero{
+ background:#141719 linear-gradient(90deg,rgba(7,10,12,.95) 0%,rgba(7,10,12,.78) 37%,rgba(7,10,12,.12) 100%),url("showroom-card.webp")!important;
+ background-size:cover!important;background-position:center 47%!important;
+ min-height:0!important;height:184px!important;aspect-ratio:auto!important;
+ padding:24px 30px!important;display:flex!important;flex-direction:column!important;
+ align-items:flex-start!important;justify-content:center!important;
+ border-radius:19px!important;overflow:hidden!important;
+}
+#ada-cloud-gate .cloud-hero::before,#ada-cloud-gate .cloud-hero::after{content:none!important;display:none!important}
+#ada-cloud-gate .cloud-hero>*{display:block!important;position:relative!important;z-index:1!important}
+#ada-cloud-gate .cloud-hero h1{font-size:clamp(23px,2.7vw,32px)!important;margin:9px 0 3px!important;max-width:100%!important}
+#ada-cloud-gate .cloud-hero p{margin:4px 0!important}
+@media(max-width:700px){#ada-cloud-gate .cloud-hero{height:152px!important;min-height:0!important;padding:17px 18px!important;border-radius:14px!important;background-position:55% center!important}#ada-cloud-gate .cloud-hero h1{font-size:clamp(20px,5vw,25px)!important}}
+</style></head><body><div id="ada-splash" aria-label="Abe Din Auto sedang dibuka" style="position:fixed!important;inset:0!important;z-index:2147483647!important;display:flex!important;align-items:center!important;justify-content:center!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important;background:#050708!important;overflow:hidden!important"><div id="ada-splash-bg"></div><div class="ada-splash-ui"><div class="ada-splash-kicker">ABE DIN AUTO</div><div class="ada-splash-dialogue">Abe Din OTW dah ni!</div><div class="ada-splash-track"><div class="ada-splash-fill"></div></div><div class="ada-splash-caption">Memulakan Cloud System</div></div></div><script id="ada-boot-splash">
 (function(){
   const splash=document.getElementById('ada-splash');
   if(!splash)return;
