@@ -1,7 +1,17 @@
 <!doctype html>
-<html lang="ms"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#101419"><title>Abe Din Auto | OTW</title>
+<html lang="ms"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#101419"><link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Abe Din Auto">
+<title>Abe Din Auto | OTW</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#101419;color:#f5f2eb;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}body{min-height:100svh;display:grid;place-items:center;overflow:hidden}.splash{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(24px,5vh,46px);padding:clamp(18px,4vw,44px);background:radial-gradient(ellipse at 50% 38%,#28313d 0%,#101419 65%);transition:opacity .32s ease}.splash.exit{opacity:0;pointer-events:none}.art{display:block;width:min(100%,1250px);max-height:min(67svh,750px);object-fit:contain;border-radius:clamp(12px,2vw,24px);box-shadow:0 25px 90px #0008}.footer{width:min(440px,86vw);display:flex;flex-direction:column;gap:12px;align-items:center}.caption{font-size:clamp(12px,2.4vw,14px);font-weight:650;letter-spacing:.13em;color:#e9c77e}.track{width:100%;height:7px;overflow:hidden;border:1px solid #d6b46b45;background:#ffffff16;border-radius:99px;box-shadow:0 0 0 5px #ffffff04}.fill{height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#a67b33,#f7d98f 55%,#fff0bd);box-shadow:0 0 17px #edc7758c;animation:load 2.55s cubic-bezier(.25,.1,.25,1) forwards}@keyframes load{0%{width:0}40%{width:38%}75%{width:77%}100%{width:100%}}.skip{border:0;background:transparent;color:#d2d2d2;font:inherit;font-size:12px;padding:10px 18px;cursor:pointer;border-radius:99px}.skip:hover,.skip:focus-visible{background:#ffffff13;color:white;outline:1px solid #e9c77e66}@media(max-width:650px){.splash{gap:30px;padding:14px}.art{width:100%;max-height:58svh;object-fit:contain}.footer{width:min(360px,90vw)}}@media(prefers-reduced-motion:reduce){.fill{animation:none;width:100%}.splash{transition:none}}
 </style></head><body><main class="splash" id="splash" aria-label="Memulakan Abe Din Auto"><img class="art" src="abe-din-otw.png" alt="Abe Din menunggang skuter elektrik biru muda" fetchpriority="high"><div class="footer"><div class="caption">ABE DIN AUTO · SEDANG DIBUKA</div><div class="track" role="progressbar" aria-label="Memuatkan sistem"><div class="fill"></div></div><button class="skip" type="button" id="skip">Langkau intro</button></div></main><script>
 let leaving=false;function enterApp(){if(leaving)return;leaving=true;document.getElementById('splash').classList.add('exit');setTimeout(()=>location.replace('app.html'+location.search+location.hash),340)}document.getElementById('skip').addEventListener('click',enterApp);setTimeout(enterApp,2750);
+</script><script>
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));
+}
 </script></body></html>
