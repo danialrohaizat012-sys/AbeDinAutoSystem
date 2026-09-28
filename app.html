@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ms"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport"/><meta content="#111214" name="theme-color"/><link rel="manifest" href="manifest.webmanifest">
+<html lang="ms"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta content="#111214" name="theme-color"/><link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -329,6 +329,101 @@ html.ada-public-route #ada-cloud-message-login{display:none!important}
 .ada-share-v12-icon.wa{background:linear-gradient(145deg,#42e66b,#159b38);color:#fff;box-shadow:inset 0 1px rgba(255,255,255,.25),0 7px 18px rgba(37,211,102,.12)}
 .ada-share-v12-icon.share{background:linear-gradient(145deg,#656b6e,#303436);color:#fff;box-shadow:inset 0 1px rgba(255,255,255,.12)}
 .ada-share-option>span:not(.ada-share-v12-icon){grid-column:2!important}
+</style>
+
+
+<style>
+/* V13 Public Browser Responsive Pass */
+html.ada-public-route,
+html.ada-public-route body{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:0!important;
+  overflow-x:hidden!important;
+  overscroll-behavior-x:none;
+  background:#090b0c!important;
+}
+html.ada-public-route body{
+  position:relative!important;
+  min-height:100vh!important;
+  min-height:100dvh!important;
+}
+html.ada-public-route #ada-cloud-gate{
+  width:100%!important;
+  max-width:none!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:visible!important;
+}
+html.ada-public-route #ada-public-catalogue{
+  position:relative!important;
+  left:auto!important;
+  right:auto!important;
+  top:auto!important;
+  transform:none!important;
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  min-height:100vh!important;
+  min-height:100dvh!important;
+  margin:0!important;
+  padding:0 0 max(24px,env(safe-area-inset-bottom))!important;
+  overflow-x:clip!important;
+  box-sizing:border-box!important;
+  background:#090b0c!important;
+}
+html.ada-public-route #ada-public-catalogue *,
+html.ada-public-route #ada-public-catalogue *::before,
+html.ada-public-route #ada-public-catalogue *::after{
+  box-sizing:border-box!important;
+  min-width:0;
+}
+html.ada-public-route .ada-public-shell{
+  width:100%!important;
+  max-width:1280px!important;
+  min-width:0!important;
+  margin-inline:auto!important;
+  padding-left:max(16px,env(safe-area-inset-left))!important;
+  padding-right:max(16px,env(safe-area-inset-right))!important;
+}
+html.ada-public-route .ada-public-nav{
+  width:100%!important;
+  max-width:100%!important;
+}
+html.ada-public-route img{
+  max-width:100%!important;
+}
+@media(max-width:699px){
+  html.ada-public-route .ada-public-shell{
+    max-width:none!important;
+    padding-left:max(14px,env(safe-area-inset-left))!important;
+    padding-right:max(14px,env(safe-area-inset-right))!important;
+  }
+  html.ada-public-route #ada-public-catalogue{
+    width:100%!important;
+    max-width:100%!important;
+  }
+  html.ada-public-route .ada-public-nav,
+  html.ada-public-route .ada-public-detail,
+  html.ada-public-route .ada-public-spec-section,
+  html.ada-public-route .ada-public-grid{
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+  }
+  html.ada-public-route .ada-public-detail{
+    grid-template-columns:minmax(0,1fr)!important;
+  }
+  html.ada-public-route .ada-public-spec-section{
+    grid-template-columns:minmax(0,1fr)!important;
+  }
+  html.ada-public-route .ada-public-grid{
+    grid-template-columns:minmax(0,1fr)!important;
+  }
+}
 </style>
 
 </head><body><div id="ada-splash" aria-label="Abe Din Auto sedang dibuka" style="position:fixed!important;inset:0!important;z-index:2147483647!important;display:flex!important;align-items:center!important;justify-content:center!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important;background:#050708!important;overflow:hidden!important"><div id="ada-splash-bg"></div><div class="ada-splash-ui"><div class="ada-splash-kicker">ABE DIN AUTO</div><div class="ada-splash-dialogue">Abe Din OTW dah ni!</div><div class="ada-splash-track"><div class="ada-splash-fill"></div></div><div class="ada-splash-caption">Memulakan Cloud System</div></div></div><script id="ada-boot-splash">
