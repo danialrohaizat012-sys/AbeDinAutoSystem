@@ -502,6 +502,141 @@ html.ada-auth-route body > *:not(#ada-cloud-gate):not(script):not(style){
 }
 </style>
 
+
+<style>
+/* V15: lock the unauthenticated screen to the real visual viewport */
+html.ada-auth-route{
+  width:100%!important;
+  height:100%!important;
+  min-height:0!important;
+  overflow:hidden!important;
+  overscroll-behavior:none!important;
+  background:#070a0b!important;
+}
+html.ada-auth-route body{
+  position:fixed!important;
+  inset:0!important;
+  width:100%!important;
+  height:var(--ada-auth-vh,100dvh)!important;
+  min-height:0!important;
+  max-height:var(--ada-auth-vh,100dvh)!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:hidden!important;
+  overscroll-behavior:none!important;
+  touch-action:pan-x!important;
+  background:#070a0b!important;
+}
+html.ada-auth-route #ada-cloud-gate{
+  position:absolute!important;
+  height:var(--ada-auth-vh,100dvh)!important;
+  max-height:var(--ada-auth-vh,100dvh)!important;
+  inset:0!important;
+  width:100%!important;
+  height:100%!important;
+  min-height:0!important;
+  max-height:100%!important;
+  overflow:hidden!important;
+}
+html.ada-auth-route #ada-cloud-gate>.wrap{
+  position:absolute!important;
+  inset:0!important;
+  width:100%!important;
+  height:100%!important;
+  min-height:0!important;
+  max-height:100%!important;
+  padding:max(10px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))!important;
+  overflow:hidden!important;
+  justify-content:center!important;
+}
+html.ada-auth-route #ada-login-box{
+  max-height:calc(100% - max(20px,env(safe-area-inset-top)) - max(20px,env(safe-area-inset-bottom)))!important;
+  overflow:auto!important;
+  overscroll-behavior:contain!important;
+  -webkit-overflow-scrolling:touch;
+  margin:0 auto!important;
+}
+@media(max-width:699px){
+ html.ada-auth-route #ada-cloud-gate>.wrap{
+   justify-content:center!important;
+   overflow:hidden!important;
+ }
+ html.ada-auth-route #ada-login-box{
+   margin:0 auto!important;
+ }
+}
+</style>
+
+
+<style>
+/* V16: public catalogue/detail owns the viewport, just like Auth */
+html.ada-public-route{
+  width:100%!important;
+  height:100%!important;
+  min-height:0!important;
+  overflow:hidden!important;
+  overscroll-behavior:none!important;
+  background:#090b0c!important;
+}
+html.ada-public-route body{
+  position:fixed!important;
+  inset:0!important;
+  width:100%!important;
+  height:var(--ada-public-vh,100dvh)!important;
+  min-height:0!important;
+  max-height:var(--ada-public-vh,100dvh)!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:hidden!important;
+  overscroll-behavior:none!important;
+  background:#090b0c!important;
+}
+html.ada-public-route #ada-cloud-gate{
+  position:fixed!important;
+  inset:0!important;
+  width:100%!important;
+  height:var(--ada-public-vh,100dvh)!important;
+  min-height:0!important;
+  max-height:var(--ada-public-vh,100dvh)!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:hidden!important;
+  background:#090b0c!important;
+}
+html.ada-public-route #ada-cloud-gate>.wrap{
+  position:absolute!important;
+  inset:0!important;
+  width:100%!important;
+  height:100%!important;
+  min-height:0!important;
+  max-height:100%!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:hidden!important;
+}
+html.ada-public-route #ada-public-catalogue{
+  position:absolute!important;
+  inset:0!important;
+  width:100%!important;
+  height:100%!important;
+  min-height:0!important;
+  max-height:100%!important;
+  margin:0!important;
+  padding-bottom:max(24px,env(safe-area-inset-bottom))!important;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+  overscroll-behavior-x:none!important;
+  overscroll-behavior-y:contain!important;
+  -webkit-overflow-scrolling:touch;
+  background:#090b0c!important;
+}
+html.ada-public-route #ada-login-box,
+html.ada-public-route #ada-cloud-panel,
+html.ada-public-route #ada-cloud-gate>.wrap>header{
+  display:none!important;
+}
+</style>
+
 </head><body><div id="ada-splash" aria-label="Abe Din Auto sedang dibuka" style="position:fixed!important;inset:0!important;z-index:2147483647!important;display:flex!important;align-items:center!important;justify-content:center!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important;background:#050708!important;overflow:hidden!important"><div id="ada-splash-bg"></div><div class="ada-splash-ui"><div class="ada-splash-kicker">ABE DIN AUTO</div><div class="ada-splash-dialogue">Abe Din OTW dah ni!</div><div class="ada-splash-track"><div class="ada-splash-fill"></div></div><div class="ada-splash-caption">Memulakan Cloud System</div></div></div><script id="ada-boot-splash">
 (function(){
   const splash=document.getElementById('ada-splash');
@@ -608,10 +743,18 @@ const money=v=>'RM '+Number(v||0).toLocaleString('en-MY',{maximumFractionDigits:
 const PUBLIC_BUCKET='https://buzpdyvvoiqgbeventwm.supabase.co/storage/v1/object/public/vehicle-images/';
 let profile=null, vehicles=[], suppliers=[], sales=[], customers=[], payments=[], vehicleImages=[], imageUrls={}, signedUrlCache=new Map(), publicCatalogueCache=new Map(), inspections=[], inspectionItems=[], publicSettings={whatsapp_number:'',whatsapp_message:'Hi Abe Din Auto, saya berminat dengan kereta ini: {link}'}, current='dashboard', inspectionVehicleId=null, vehicleProfileId=null;
 const msg=s=>{el('ada-cloud-message').textContent=s;el('ada-cloud-message-login').textContent=s};
+const syncAuthViewport=()=>{
+  const h=Math.round(window.visualViewport?.height||window.innerHeight);
+  if(document.documentElement.classList.contains('ada-auth-route'))document.documentElement.style.setProperty('--ada-auth-vh',h+'px');
+  if(document.documentElement.classList.contains('ada-public-route'))document.documentElement.style.setProperty('--ada-public-vh',h+'px');
+};
 const setRouteMode=mode=>{
   document.documentElement.classList.toggle('ada-auth-route',mode==='auth');
   document.documentElement.classList.toggle('ada-public-route',mode==='public');
+  if(mode==='auth'||mode==='public'){syncAuthViewport();window.scrollTo(0,0)}
 };
+window.visualViewport?.addEventListener('resize',syncAuthViewport);
+window.addEventListener('orientationchange',()=>setTimeout(syncAuthViewport,120));
 
 async function verify(){
   setRouteMode('auth');
