@@ -922,6 +922,72 @@ radial-gradient(circle at 88% 18%,rgba(217,177,94,.25),transparent 34%),#0c1112}
 }
 </style>
 
+
+<style>
+/* V26 exact Inspection selectors, based on the rendered Inspection markup */
+.inspection-panel textarea,
+.inspection-panel input,
+.inspection-panel select,
+.inspection-remark textarea,
+.inspection-meta input{
+  color:#f7f8f8!important;
+  -webkit-text-fill-color:#f7f8f8!important;
+  caret-color:#d9b15e!important;
+  opacity:1!important;
+}
+.inspection-panel textarea::placeholder,
+.inspection-panel input::placeholder,
+.inspection-remark textarea::placeholder,
+.inspection-meta input::placeholder{
+  color:#7f898b!important;
+  -webkit-text-fill-color:#7f898b!important;
+  opacity:1!important;
+}
+.inspection-panel textarea:disabled,
+.inspection-panel input:disabled,
+.inspection-remark textarea:disabled,
+.inspection-meta input:disabled{
+  color:#cbd0d0!important;
+  -webkit-text-fill-color:#cbd0d0!important;
+  opacity:.8!important;
+}
+</style>
+
+
+<style>
+/* V27 Public Vehicle Gallery: image + thumbnails are one media unit */
+.ada-public-media-column{min-width:0;display:flex;flex-direction:column;gap:10px}
+.ada-public-media-column .ada-public-gallery-strip{margin:0!important}
+.ada-public-image-counter{
+ position:absolute;right:12px;bottom:12px;z-index:3;
+ min-width:42px;height:30px;padding:0 10px;border-radius:999px;
+ display:flex;align-items:center;justify-content:center;
+ background:rgba(7,10,11,.82);border:1px solid rgba(255,255,255,.16);
+ color:#f5f5f3;font-size:11px;font-weight:800;backdrop-filter:blur(8px)
+}
+.ada-public-thumb{position:relative;opacity:.72;transition:border-color .16s ease,opacity .16s ease,transform .16s ease}
+.ada-public-thumb:hover{opacity:1}
+.ada-public-thumb.is-active{
+ opacity:1!important;border-color:#e5b74f!important;
+ box-shadow:inset 0 0 0 1px #e5b74f,0 0 0 1px rgba(229,183,79,.12)!important
+}
+.ada-public-thumb.is-active:after{
+ content:"";position:absolute;left:18%;right:18%;bottom:3px;height:2px;border-radius:2px;background:#f0c45f
+}
+@media(max-width:650px){
+ .ada-public-detail-hero{align-items:start!important}
+ .ada-public-media-column{gap:7px}
+ .ada-public-media-column .ada-public-gallery-strip{
+   width:100%;padding:0 1px 3px!important;gap:7px!important;
+   scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch
+ }
+ .ada-public-media-column .ada-public-thumb{
+   width:76px!important;flex:0 0 76px!important;border-radius:10px!important;scroll-snap-align:start
+ }
+ .ada-public-image-counter{right:9px;bottom:9px;height:27px;min-width:38px;font-size:10px}
+}
+</style>
+
 </head><body><div id="ada-splash" aria-label="Abe Din Auto sedang dibuka" style="position:fixed!important;inset:0!important;z-index:2147483647!important;display:flex!important;align-items:center!important;justify-content:center!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important;background:#050708!important;overflow:hidden!important"><div id="ada-splash-bg"></div><div class="ada-splash-ui"><div class="ada-splash-kicker">ABE DIN AUTO</div><div class="ada-splash-dialogue">Abe Din OTW dah ni!</div><div class="ada-splash-track"><div class="ada-splash-fill"></div></div><div class="ada-splash-caption">Memulakan Cloud System</div></div></div><script id="ada-boot-splash">
 (function(){
   const splash=document.getElementById('ada-splash');
@@ -1343,15 +1409,15 @@ async function openPublicCatalogue(vehicleId=null){
       const imgs=Array.isArray(v.images)?v.images:[],cover=imgs.find(x=>x.is_cover)||imgs[0],coverUrl=cover?PUBLIC_BUCKET+cover.storage_path:'';
       const title=safe((v.make||'')+' '+(v.model||''));
       const main=coverUrl?`<img id="ada-public-main-image" src="${safe(coverUrl)}" alt="${title}" decoding="async" fetchpriority="high">`:'<div class="ada-vp-hero-placeholder" style="position:absolute;inset:0"></div>';
-      const thumbs=imgs.map((i,n)=>`<button class="ada-public-thumb" type="button" data-public-image="${safe(PUBLIC_BUCKET+i.storage_path)}" aria-label="Lihat gambar ${n+1}"><img src="${safe(PUBLIC_BUCKET+i.storage_path)}" alt="${title} gambar ${n+1}" loading="lazy" decoding="async"></button>`).join('');
-      box.innerHTML=`${nav}<main class="ada-public-shell ada-public-detail"><div class="ada-public-detail-hero"><div class="ada-public-main-photo">${main}</div><aside class="ada-public-detail-copy"><div class="ada-public-eyebrow">AVAILABLE NOW</div><h1>${title}</h1><div class="ada-public-detail-sub">${safe(v.model_year||'—')} · ${safe(v.plate||'')} · ${Number(v.mileage_km||0).toLocaleString('en-MY')} km</div><div class="ada-public-detail-price">${money(v.asking_price)}</div><div class="ada-public-trust"><div><span>Status</span><strong>Sedia untuk jualan</strong></div><div><span>Galeri</span><strong>${imgs.length} foto</strong></div><div><span>Tahun</span><strong>${safe(v.model_year||'—')}</strong></div><div><span>Mileage</span><strong>${Number(v.mileage_km||0).toLocaleString('en-MY')} km</strong></div></div><div class="ada-public-cta">${whatsappUrl(v,vehiclePublicLink(v.vehicle_id))?`<a class="primary ada-wa-cta" href="${safe(whatsappUrl(v,vehiclePublicLink(v.vehicle_id)))}" target="_blank" rel="noopener"><span class="ada-cta-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20.5 11.7a8.5 8.5 0 0 1-12.6 7.5L3 20.5l1.3-4.7a8.5 8.5 0 1 1 16.2-4.1Z"/><path d="M8.5 8.3c1.2 3.2 3.1 5.1 6.2 6.3"/></svg></span>WhatsApp Abe Din</a>`:''}<button id="ada-share-public-car" type="button" data-public-share-id="${safe(v.vehicle_id)}" data-public-share-make="${safe(v.make||'')}" data-public-share-model="${safe(v.model||'')}"><span class="ada-cta-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 16V3"/><path d="m7.5 7.5 4.5-4.5 4.5 4.5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg></span>Kongsi</button><button id="ada-public-back-list" type="button" class="secondary"><span class="ada-cta-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></span>Kereta lain</button></div></aside></div>${imgs.length>1?`<div class="ada-public-gallery-strip">${thumbs}</div>`:''}<div class="ada-public-spec-section"><section class="ada-public-spec-card"><h3>Maklumat Kenderaan</h3><div class="ada-public-spec-grid"><div class="ada-public-spec"><span>Jenama</span><strong>${safe(v.make||'—')}</strong></div><div class="ada-public-spec"><span>Model</span><strong>${safe(v.model||'—')}</strong></div><div class="ada-public-spec"><span>Tahun</span><strong>${safe(v.model_year||'—')}</strong></div><div class="ada-public-spec"><span>Mileage</span><strong>${Number(v.mileage_km||0).toLocaleString('en-MY')} km</strong></div><div class="ada-public-spec"><span>No. Pendaftaran</span><strong>${safe(v.plate||'—')}</strong></div><div class="ada-public-spec"><span>Vehicle ID</span><strong>${safe(v.vehicle_id||'—')}</strong></div></div></section><aside class="ada-public-spec-card ada-public-contact"><div class="ada-public-eyebrow">ABE DIN AUTO</div><h3>Berminat dengan unit ini?</h3><p class="muted">Hubungi Abe Din terus untuk pertanyaan lanjut.</p>${whatsappUrl(v,vehiclePublicLink(v.vehicle_id))?`<a class="ada-wa-contact" href="${safe(whatsappUrl(v,vehiclePublicLink(v.vehicle_id)))}" target="_blank" rel="noopener">WhatsApp Abe Din</a>`:'<p class="muted">Nombor WhatsApp belum ditetapkan.</p>'}</aside></div></main>`;
+      const thumbs=imgs.map((i,n)=>`<button class="ada-public-thumb${i===cover?' is-active':''}" type="button" data-public-image="${safe(PUBLIC_BUCKET+i.storage_path)}" data-public-index="${n}" aria-label="Lihat gambar ${n+1}"><img src="${safe(PUBLIC_BUCKET+i.storage_path)}" alt="${title} gambar ${n+1}" loading="lazy" decoding="async"></button>`).join('');
+      box.innerHTML=`${nav}<main class="ada-public-shell ada-public-detail"><div class="ada-public-detail-hero"><div class="ada-public-media-column"><div class="ada-public-main-photo">${main}<span class="ada-public-image-counter">${imgs.length?'1/'+imgs.length:'0/0'}</span></div>${imgs.length>1?`<div class="ada-public-gallery-strip">${thumbs}</div>`:''}</div><aside class="ada-public-detail-copy"><div class="ada-public-eyebrow">AVAILABLE NOW</div><h1>${title}</h1><div class="ada-public-detail-sub">${safe(v.model_year||'—')} · ${safe(v.plate||'')} · ${Number(v.mileage_km||0).toLocaleString('en-MY')} km</div><div class="ada-public-detail-price">${money(v.asking_price)}</div><div class="ada-public-trust"><div><span>Status</span><strong>Sedia untuk jualan</strong></div><div><span>Galeri</span><strong>${imgs.length} foto</strong></div><div><span>Tahun</span><strong>${safe(v.model_year||'—')}</strong></div><div><span>Mileage</span><strong>${Number(v.mileage_km||0).toLocaleString('en-MY')} km</strong></div></div><div class="ada-public-cta">${whatsappUrl(v,vehiclePublicLink(v.vehicle_id))?`<a class="primary ada-wa-cta" href="${safe(whatsappUrl(v,vehiclePublicLink(v.vehicle_id)))}" target="_blank" rel="noopener"><span class="ada-cta-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20.5 11.7a8.5 8.5 0 0 1-12.6 7.5L3 20.5l1.3-4.7a8.5 8.5 0 1 1 16.2-4.1Z"/><path d="M8.5 8.3c1.2 3.2 3.1 5.1 6.2 6.3"/></svg></span>WhatsApp Abe Din</a>`:''}<button id="ada-share-public-car" type="button" data-public-share-id="${safe(v.vehicle_id)}" data-public-share-make="${safe(v.make||'')}" data-public-share-model="${safe(v.model||'')}"><span class="ada-cta-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 16V3"/><path d="m7.5 7.5 4.5-4.5 4.5 4.5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg></span>Kongsi</button><button id="ada-public-back-list" type="button" class="secondary"><span class="ada-cta-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></span>Kereta lain</button></div></aside></div><div class="ada-public-spec-section"><section class="ada-public-spec-card"><h3>Maklumat Kenderaan</h3><div class="ada-public-spec-grid"><div class="ada-public-spec"><span>Jenama</span><strong>${safe(v.make||'—')}</strong></div><div class="ada-public-spec"><span>Model</span><strong>${safe(v.model||'—')}</strong></div><div class="ada-public-spec"><span>Tahun</span><strong>${safe(v.model_year||'—')}</strong></div><div class="ada-public-spec"><span>Mileage</span><strong>${Number(v.mileage_km||0).toLocaleString('en-MY')} km</strong></div><div class="ada-public-spec"><span>No. Pendaftaran</span><strong>${safe(v.plate||'—')}</strong></div><div class="ada-public-spec"><span>Vehicle ID</span><strong>${safe(v.vehicle_id||'—')}</strong></div></div></section><aside class="ada-public-spec-card ada-public-contact"><div class="ada-public-eyebrow">ABE DIN AUTO</div><h3>Berminat dengan unit ini?</h3><p class="muted">Hubungi Abe Din terus untuk pertanyaan lanjut.</p>${whatsappUrl(v,vehiclePublicLink(v.vehicle_id))?`<a class="ada-wa-contact" href="${safe(whatsappUrl(v,vehiclePublicLink(v.vehicle_id)))}" target="_blank" rel="noopener">WhatsApp Abe Din</a>`:'<p class="muted">Nombor WhatsApp belum ditetapkan.</p>'}</aside></div></main>`;
     }
   }
   el('ada-cloud-gate').querySelector('.wrap').appendChild(box);
   box.querySelectorAll('a.ada-public-view').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const u=new URL(a.href,location.href),id=u.searchParams.get('car');if(!id)return;history.pushState({publicCar:id},'',location.pathname+'?car='+encodeURIComponent(id));openPublicCatalogue(id);window.scrollTo({top:0,behavior:'instant'})}));
   box.querySelector('#ada-cat-back').onclick=()=>{box.remove();if(vehicleId){history.replaceState(null,'',location.pathname+'?catalogue=1');openPublicCatalogue()}else{history.replaceState(null,'',location.pathname);setRouteMode('auth');const cloudHeader=el('ada-cloud-gate').querySelector('.wrap > header');if(cloudHeader)cloudHeader.hidden=false;el('ada-login-box').hidden=false;verify()}};
   box.querySelector('#ada-public-back-list')?.addEventListener('click',()=>{history.replaceState(null,'',location.pathname+'?catalogue=1');openPublicCatalogue()});
-  box.querySelectorAll('[data-public-image]').forEach(b=>b.addEventListener('click',()=>{const main=box.querySelector('#ada-public-main-image');if(main)main.src=b.dataset.publicImage}));
+  box.querySelectorAll('[data-public-image]').forEach(b=>b.addEventListener('click',()=>{const main=box.querySelector('#ada-public-main-image');if(main){main.src=b.dataset.publicImage;box.querySelectorAll('[data-public-image]').forEach(x=>x.classList.toggle('is-active',x===b));const counter=box.querySelector('.ada-public-image-counter');if(counter)counter.textContent=(Number(b.dataset.publicIndex)+1)+'/'+box.querySelectorAll('[data-public-image]').length}}));
   
 }
 
