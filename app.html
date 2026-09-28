@@ -797,6 +797,36 @@ radial-gradient(circle at 88% 18%,rgba(217,177,94,.25),transparent 34%),#0c1112}
 }
 </style>
 
+
+<style>
+/* V22 precision mobile catalogue polish */
+.ada-cat-hero{min-height:205px!important;padding:19px 16px!important;margin-bottom:12px!important;border-radius:20px!important}
+.ada-cat-kicker{font-size:9px!important;letter-spacing:.145em!important;white-space:nowrap}
+.ada-cat-hero h1{font-size:clamp(31px,8.5vw,46px)!important;margin:6px 0 3px!important;line-height:1!important}
+.ada-cat-hero p{font-size:12px!important}
+.ada-cat-search{margin-top:15px!important;min-height:50px!important;border-radius:14px!important;padding:0 12px!important}
+.ada-cat-search input{font-size:12px!important;min-width:0!important;text-overflow:ellipsis}
+.ada-cat-tools{gap:7px!important;margin:8px 0!important}
+.ada-cat-select{padding:7px 9px!important;border-radius:12px!important;min-height:53px!important}
+.ada-cat-select span{font-size:8px!important}.ada-cat-select select{font-size:11px!important}
+.ada-brand-strip{display:flex!important;grid-template-columns:none!important;overflow-x:auto!important;overscroll-behavior-inline:contain;scroll-snap-type:x proximity;gap:7px!important;padding:2px 0 4px!important}
+.ada-brand-chip{flex:0 0 72px!important;width:72px!important;min-height:61px!important;padding:6px 4px!important;border-radius:13px!important;background:#0e1314!important;border:1px solid #2c3436!important;color:#cbd1d1!important;box-shadow:none!important;scroll-snap-align:start}
+.ada-brand-chip.active{background:#15140f!important;border-color:#e2b74f!important;color:#f1c661!important;box-shadow:inset 0 0 0 1px rgba(226,183,79,.13)!important}
+.ada-brand-logo{width:29px!important;height:25px!important}.ada-brand-logo img{width:29px!important;height:25px!important;object-fit:contain!important}
+.ada-brand-logo .ada-brand-wordmark{font-size:8px!important;line-height:1!important;max-width:62px!important}
+.ada-brand-chip small{font-size:8px!important;line-height:1!important;max-width:64px!important}
+.ada-cat-results{margin:8px 0 9px!important}.ada-cat-results strong{font-size:11px!important}.ada-cat-reset{min-height:32px!important;padding:5px 9px!important;font-size:10px!important}
+@media(max-width:700px){
+ .ada-public-shell{padding-left:14px!important;padding-right:14px!important}
+ .ada-cat-tools{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+ .ada-cat-select{min-width:0!important}
+ .ada-cat-select select{width:100%!important;text-overflow:ellipsis}
+}
+@media(max-width:390px){
+ .ada-cat-tools{grid-template-columns:1fr 1fr!important}
+}
+</style>
+
 </head><body><div id="ada-splash" aria-label="Abe Din Auto sedang dibuka" style="position:fixed!important;inset:0!important;z-index:2147483647!important;display:flex!important;align-items:center!important;justify-content:center!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important;background:#050708!important;overflow:hidden!important"><div id="ada-splash-bg"></div><div class="ada-splash-ui"><div class="ada-splash-kicker">ABE DIN AUTO</div><div class="ada-splash-dialogue">Abe Din OTW dah ni!</div><div class="ada-splash-track"><div class="ada-splash-fill"></div></div><div class="ada-splash-caption">Memulakan Cloud System</div></div></div><script id="ada-boot-splash">
 (function(){
   const splash=document.getElementById('ada-splash');
@@ -1114,8 +1144,14 @@ async function editVehicleMaster(kind,oldValue){
 async function saveCatalogueSettings(e){e.preventDefault();if(profile?.role!=='owner')return;const f=new FormData(e.currentTarget),number=cleanWhatsAppNumber(f.get('whatsapp_number')),message=String(f.get('whatsapp_message')||'').trim();const status=e.currentTarget.querySelector('[data-settings-status]');if(!number){status.textContent='Masukkan nombor WhatsApp termasuk kod negara, contoh 60123456789.';return}if(!message){status.textContent='Ayat WhatsApp tidak boleh kosong.';return}status.textContent='Menyimpan...';const {error}=await client.rpc('update_public_settings',{p_whatsapp_number:number,p_whatsapp_message:message});if(error){status.textContent='Gagal simpan: '+error.message;return}publicSettings={whatsapp_number:number,whatsapp_message:message};publicCatalogueCache.clear();status.textContent='Tetapan catalogue berjaya disimpan.'}
 
 function catNorm(x){return String(x||'').trim()}
+function catMakeKey(x){return catNorm(x).toLowerCase().replace(/[^a-z0-9]/g,'')}
+function catCanonicalMake(x){
+ const raw=catNorm(x),k=catMakeKey(raw);
+ const map={perodua:'Perodua',proton:'Proton',bmw:'BMW',honda:'Honda',toyota:'Toyota',mazda:'Mazda',mercedes:'Mercedes-Benz',mercedesbenz:'Mercedes-Benz',mitsubishi:'Mitsubishi',mitsubishimotors:'Mitsubishi',suzuki:'Suzuki'};
+ return map[k]||raw.replace(/\b\w/g,c=>c.toUpperCase());
+}
 function catDisplayTitle(v){
- const make=catNorm(v.make), model=catNorm(v.model);
+ const make=catCanonicalMake(v.make), model=catNorm(v.model);
  const cleanModel=model.replace(new RegExp('^'+make.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\s+','i'),'');
  const title=[make,cleanModel].filter(Boolean).join(' ');
  return title.toLowerCase().replace(/\b[a-z]/g,c=>c.toUpperCase());
@@ -1155,8 +1191,10 @@ async function openPublicCatalogue(vehicleId=null){
   const nav=`<div class="ada-public-shell"><nav class="ada-public-nav">${brand}<div class="ada-public-nav-actions"><button id="ada-cat-back" type="button">${vehicleId?'Semua Kereta':'Staff Login'}</button></div></nav></div>`;
   if(!vehicleId){
     const popularMakes=['Perodua','Proton','BMW','Honda','Toyota','Mazda','Mercedes-Benz','Mitsubishi','Suzuki'];
-    const stockMakes=rows.map(v=>catNorm(v.make)).filter(Boolean);
-    const makes=[...new Set([...popularMakes,...stockMakes])];
+    const stockMakes=rows.map(v=>catCanonicalMake(v.make)).filter(Boolean);
+    const makeMap=new Map();
+    [...popularMakes,...stockMakes].forEach(x=>{const c=catCanonicalMake(x),k=catMakeKey(c);if(k&&!makeMap.has(k))makeMap.set(k,c)});
+    const makes=[...makeMap.values()];
     const models=[...new Set(rows.map(v=>catNorm(v.model)).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
     const brandChips=makes.map(x=>`<button class="ada-brand-chip" type="button" data-cat-brand="${safe(x)}"><span class="ada-brand-logo">${catBrandLogo(x)}</span><small>${safe(x)}</small></button>`).join('');
     box.innerHTML=`${nav}<div class="ada-public-shell">
@@ -1175,9 +1213,10 @@ async function openPublicCatalogue(vehicleId=null){
     </div>`;
 
     const grid=box.querySelector('#ada-cat-grid'), search=box.querySelector('#ada-cat-search'), makeSel=box.querySelector('#ada-cat-make'), modelSel=box.querySelector('#ada-cat-model'), priceSel=box.querySelector('#ada-cat-price'), sortSel=box.querySelector('#ada-cat-sort'), count=box.querySelector('#ada-cat-count');
+    makeSel.value=''; modelSel.value=''; priceSel.value=''; sortSel.value='new';
     const renderCards=()=>{
       const q=String(search.value||'').trim().toLowerCase(),mk=makeSel.value,mo=modelSel.value,pb=priceSel.value;
-      let list=rows.filter(v=>(!mk||v.make===mk)&&(!mo||v.model===mo)&&(!pb||catPriceBand(v)===pb)&&(!q||[v.make,v.model,v.plate,v.vehicle_id].some(x=>String(x||'').toLowerCase().includes(q))));
+      let list=rows.filter(v=>(!mk||catMakeKey(v.make)===catMakeKey(mk))&&(!mo||v.model===mo)&&(!pb||catPriceBand(v)===pb)&&(!q||[v.make,v.model,v.plate,v.vehicle_id].some(x=>String(x||'').toLowerCase().includes(q))));
       if(sortSel.value==='low')list.sort((a,b)=>Number(a.asking_price||0)-Number(b.asking_price||0));
       else if(sortSel.value==='high')list.sort((a,b)=>Number(b.asking_price||0)-Number(a.asking_price||0));
       else if(sortSel.value==='year')list.sort((a,b)=>Number(b.model_year||0)-Number(a.model_year||0));
@@ -1189,8 +1228,8 @@ async function openPublicCatalogue(vehicleId=null){
         return `<article class="ada-public-card"><div class="ada-public-card-media">${photo}<span class="ada-public-card-badge">AVAILABLE</span><span class="ada-public-photo-count">${imgs.length} foto</span></div><div class="ada-public-card-body"><h2>${title}</h2><div class="ada-public-card-meta"><span>${safe(v.model_year||'—')}</span><span>${Number(v.mileage_km||0).toLocaleString('en-MY')} km</span><span>${safe(v.plate||'')}</span></div><div class="ada-public-card-price">${money(v.asking_price)}</div><div class="ada-public-card-tags"><span>${safe(catNorm(v.make)||'Kereta')}</span></div><a class="ada-public-view" href="${href}">Lihat kereta</a></div></article>`;
       }).join('')||'<div class="ada-cat-empty">Tiada kereta sepadan dengan carian ini.<br><small>Cuba ubah filter atau reset carian.</small></div>';
     };
-    const syncModels=()=>{const mk=makeSel.value,valid=[...new Set(rows.filter(v=>!mk||v.make===mk).map(v=>catNorm(v.model)).filter(Boolean))].sort((a,b)=>a.localeCompare(b));const old=modelSel.value;modelSel.innerHTML='<option value="">Semua</option>'+valid.map(x=>`<option value="${safe(x)}">${safe(x)}</option>`).join('');if(valid.includes(old))modelSel.value=old;renderCards()};
-    search.addEventListener('input',renderCards); makeSel.addEventListener('change',()=>{box.querySelectorAll('[data-cat-brand]').forEach(b=>b.classList.toggle('active',b.dataset.catBrand===makeSel.value));syncModels()}); modelSel.addEventListener('change',renderCards); priceSel.addEventListener('change',renderCards); sortSel.addEventListener('change',renderCards);
+    const syncModels=()=>{const mk=makeSel.value,valid=[...new Set(rows.filter(v=>!mk||catMakeKey(v.make)===catMakeKey(mk)).map(v=>catNorm(v.model)).filter(Boolean))].sort((a,b)=>a.localeCompare(b));const old=modelSel.value;modelSel.innerHTML='<option value="">Semua</option>'+valid.map(x=>`<option value="${safe(x)}">${safe(x)}</option>`).join('');if(valid.includes(old))modelSel.value=old;renderCards()};
+    search.addEventListener('input',renderCards); makeSel.addEventListener('change',()=>{box.querySelectorAll('[data-cat-brand]').forEach(b=>b.classList.toggle('active',catMakeKey(b.dataset.catBrand)===catMakeKey(makeSel.value)));syncModels()}); modelSel.addEventListener('change',renderCards); priceSel.addEventListener('change',renderCards); sortSel.addEventListener('change',renderCards);
     box.querySelectorAll('[data-cat-brand]').forEach(b=>b.addEventListener('click',()=>{makeSel.value=b.dataset.catBrand;box.querySelectorAll('[data-cat-brand]').forEach(x=>x.classList.toggle('active',x===b));syncModels()}));
     box.querySelector('#ada-cat-reset').onclick=()=>{search.value='';makeSel.value='';priceSel.value='';sortSel.value='new';box.querySelectorAll('[data-cat-brand]').forEach(b=>b.classList.toggle('active',b.dataset.catBrand===''));syncModels()};
     renderCards();
