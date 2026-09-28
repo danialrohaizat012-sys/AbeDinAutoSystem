@@ -1165,7 +1165,7 @@ const allInspectionKeys=()=>CLOUD_INSPECTION_SECTIONS.flatMap(sec=>sec.items.map
 function latestInspection(vehicleId){return inspections.filter(x=>x.vehicle_id===vehicleId).sort((a,b)=>new Date(b.inspected_at)-new Date(a.inspected_at))[0]||null}
 function inspectionItemMap(id){return Object.fromEntries(inspectionItems.filter(x=>x.inspection_id===id).map(x=>[x.item_key,x]))}
 function inspectionList(){return `<h2>Vehicle Inspection</h2><p class="muted">Checklist cloud berdasarkan borang operasi Abe Din Auto.</p><div class="cloud-cards">${vehicles.map(v=>{const r=latestInspection(v.id),m=r?inspectionItemMap(r.id):{},done=Object.keys(m).length,total=allInspectionKeys().length;return `<div class="cloud-car"><div class="info"><span class="cloud-pill">${r?.status==='completed'?'Completed':r?'Draft':'Belum mula'}</span><h3>${safe(v.make)} ${safe(v.model)}</h3><p>${safe(v.plate)} · ${done}/${total} item</p><button data-inspect="${v.id}">${r?.status==='completed'?'Lihat Inspection':r?'Sambung Inspection':'Mula Inspection'}</button></div></div>`}).join('')||'<p>Tiada kenderaan.</p>'}</div>`}
-function inspectionEditor(vehicleId){const v=vehicles.find(x=>x.id===vehicleId),r=latestInspection(vehicleId);if(!v)return inspectionList();if(!r)return `<h2>${safe(v.make)} ${safe(v.model)}</h2><div class="panel"><p>${safe(v.plate)}</p><p>Belum ada inspection cloud untuk kenderaan ini.</p><button id="ada-start-inspection">Mula Inspection</button><button class="secondary" id="ada-inspection-back">Kembali</button></div>`;const m=inspectionItemMap(r.id),done=Object.keys(m).length,total=allInspectionKeys().length,locked=r.status==='completed';return `<h2>${safe(v.make)} ${safe(v.model)}</h2><div class="cloud-notice">${locked?'Inspection telah diselesaikan. Rekod dikunci.':'Draft disimpan terus ke Supabase setiap kali item dipilih.'} · ${done}/${total}</div>${CLOUD_INSPECTION_SECTIONS.map(sec=>`<div class="panel"><h3>Section ${sec.id} · ${sec.name}</h3>${sec.items.map((item,i)=>{const k=sec.id+':'+item,x=m[k];return `<div style="padding:12px 0;border-top:1px solid #3c4140"><b>${i+1}. ${safe(item)}</b><div class="cloud-toolbar" style="margin-top:8px">${CLOUD_RESULTS.map(([val,label])=>`<button class="${x?.result===val?'':'secondary'}" data-rate-key="${safe(k)}" data-rate-result="${val}" ${locked?'disabled':''}>${label}</button>`).join('')}</div>${['fair','bad'].includes(x?.result)?`<input data-note-key="${safe(k)}" value="${safe(x?.notes||'')}" placeholder="Catatan keadaan / kerosakan" ${locked?'disabled':''}>`:''}</div>`}).join('')}</div>`).join('')}<div class="panel"><h3>Overall Condition</h3><textarea id="ada-inspection-overall" style="width:100%;min-height:80px" ${locked?'disabled':''}>${safe(r.overall_condition||'')}</textarea><h3>Defect</h3><textarea id="ada-inspection-defects" style="width:100%;min-height:80px" ${locked?'disabled':''}>${safe(r.defects||'')}</textarea><h3>Tyre</h3><div class="cloud-toolbar">${[['fl','Front Left'],['fr','Front Right'],['rl','Rear Left'],['rr','Rear Right']].map(([k,l])=>`<input data-tyre="${k}" placeholder="${l} · Jenama" value="${safe(r.tyre_info?.[k]||'')}" ${locked?'disabled':''}>`).join('')}</div><button class="secondary" id="ada-save-inspection" ${locked?'disabled':''}>Simpan Draf</button><button id="ada-complete-inspection" ${locked?'disabled':''}>Selesaikan Pemeriksaan</button><button class="secondary" id="ada-inspection-back">Kembali</button>${r.completed_at?`<p class="muted">Completed: ${safe(new Date(r.completed_at).toLocaleString('ms-MY'))}</p>`:''}</div>`}
+function inspectionEditor(vehicleId){const v=vehicles.find(x=>x.id===vehicleId),r=latestInspection(vehicleId);if(!v)return inspectionList();if(!r)return `<h2>${safe(v.make)} ${safe(v.model)}</h2><div class="panel"><p>${safe(v.plate)}</p><p>Belum ada inspection cloud untuk kenderaan ini.</p><button id="ada-start-inspection">Mula Inspection</button><button class="secondary" id="ada-inspection-back">Kembali</button></div>`;const m=inspectionItemMap(r.id),done=Object.keys(m).length,total=allInspectionKeys().length,locked=r.status==='completed';return `<h2>${safe(v.make)} ${safe(v.model)}</h2><div class="cloud-notice">${locked?'Inspection telah diselesaikan. Rekod dikunci.':'Draft disimpan terus ke Supabase setiap kali item dipilih.'} · ${done}/${total}</div>${CLOUD_INSPECTION_SECTIONS.map(sec=>`<div class="panel"><h3>Section ${sec.id} · ${sec.name}</h3>${sec.items.map((item,i)=>{const k=sec.id+':'+item,x=m[k];return `<div style="padding:12px 0;border-top:1px solid #3c4140"><b>${i+1}. ${safe(item)}</b><div class="cloud-toolbar" style="margin-top:8px">${CLOUD_RESULTS.map(([val,label])=>`<button class="${x?.result===val?'':'secondary'}" data-rate-key="${safe(k)}" data-rate-result="${val}" ${locked?'disabled':''}>${label}</button>`).join('')}</div>${['fair','bad'].includes(x?.result)?`<input data-note-key="${safe(k)}" value="${safe(x?.notes||'')}" placeholder="Catatan keadaan / kerosakan" ${locked?'disabled':''}>`:''}</div>`}).join('')}</div>`).join('')}<div class="panel"><h3>Overall Condition</h3><textarea id="ada-inspection-overall" class="ada-inspection-textarea" style="width:100%;min-height:80px;color:#f7f8f8!important;-webkit-text-fill-color:#f7f8f8!important;caret-color:#d9b15e!important;background:#0b0f10!important" ${locked?'disabled':''}>${safe(r.overall_condition||'')}</textarea><h3>Defect</h3><textarea id="ada-inspection-defects" class="ada-inspection-textarea" style="width:100%;min-height:80px;color:#f7f8f8!important;-webkit-text-fill-color:#f7f8f8!important;caret-color:#d9b15e!important;background:#0b0f10!important" ${locked?'disabled':''}>${safe(r.defects||'')}</textarea><h3>Tyre</h3><div class="cloud-toolbar">${[['fl','Front Left'],['fr','Front Right'],['rl','Rear Left'],['rr','Rear Right']].map(([k,l])=>`<input data-tyre="${k}" placeholder="${l} · Jenama" value="${safe(r.tyre_info?.[k]||'')}" ${locked?'disabled':''}>`).join('')}</div><button class="secondary" id="ada-save-inspection" ${locked?'disabled':''}>Simpan Draf</button><button id="ada-complete-inspection" ${locked?'disabled':''}>Selesaikan Pemeriksaan</button><button class="secondary" id="ada-inspection-back">Kembali</button>${r.completed_at?`<p class="muted">Completed: ${safe(new Date(r.completed_at).toLocaleString('ms-MY'))}</p>`:''}</div>`}
 async function startInspection(vehicleId){msg('Mencipta inspection...');const {data:{user}}=await client.auth.getUser();const {data,error}=await client.from('inspections').insert({vehicle_id:vehicleId,inspected_by:user.id,status:'draft'}).select().single();if(error){msg('Gagal mula inspection: '+error.message);return}inspections.push(data);renderCloud();msg('Inspection dimulakan.')}
 async function saveInspectionMeta(complete=false){const r=latestInspection(inspectionVehicleId);if(!r||r.status==='completed')return;const tyre={};document.querySelectorAll('[data-tyre]').forEach(x=>tyre[x.dataset.tyre]=x.value.trim());const patch={overall_condition:document.getElementById('ada-inspection-overall')?.value||'',defects:document.getElementById('ada-inspection-defects')?.value||'',tyre_info:tyre};if(complete){const m=inspectionItemMap(r.id),keys=allInspectionKeys();if(keys.some(k=>!m[k])){msg(`Lengkapkan semua item dahulu (${Object.keys(m).length}/${keys.length}).`);return}for(const k of keys){if(['fair','bad'].includes(m[k].result)&&!String(m[k].notes||'').trim()){msg('Catatan diperlukan untuk item Fair / Broken: '+k.split(':').slice(1).join(':'));return}}patch.status='completed';patch.completed_at=new Date().toISOString()}let data,error;if(complete){({data,error}=await client.rpc('complete_vehicle_inspection',{p_inspection_id:r.id,p_overall_condition:patch.overall_condition||null,p_defects:patch.defects||null,p_tyre_info:patch.tyre_info||{}}));}else{({data,error}=await client.from('inspections').update(patch).eq('id',r.id).select().single());}if(error){msg('Gagal simpan inspection: '+error.message);return}if(complete){await refresh();inspectionVehicleId=null;current='inventory';renderCloud();msg('Inspection selesai. Kenderaan kini Available.');return}inspections=inspections.map(x=>x.id===r.id?data:x);renderCloud();msg('Draf inspection disimpan.')}
 async function rateCloudInspection(key,result){const r=latestInspection(inspectionVehicleId);if(!r||r.status==='completed')return;const old=inspectionItemMap(r.id)[key],payload={inspection_id:r.id,item_key:key,result,notes:['fair','bad'].includes(result)?(old?.notes||''):null};const {data,error}=await client.from('inspection_items').upsert(payload,{onConflict:'inspection_id,item_key'}).select().single();if(error){msg('Gagal simpan item: '+error.message);return}inspectionItems=inspectionItems.filter(x=>!(x.inspection_id===r.id&&x.item_key===key));inspectionItems.push(data);renderCloud()}
@@ -1410,14 +1410,14 @@ async function openPublicCatalogue(vehicleId=null){
       const title=safe((v.make||'')+' '+(v.model||''));
       const main=coverUrl?`<img id="ada-public-main-image" src="${safe(coverUrl)}" alt="${title}" decoding="async" fetchpriority="high">`:'<div class="ada-vp-hero-placeholder" style="position:absolute;inset:0"></div>';
       const thumbs=imgs.map((i,n)=>`<button class="ada-public-thumb${i===cover?' is-active':''}" type="button" data-public-image="${safe(PUBLIC_BUCKET+i.storage_path)}" data-public-index="${n}" aria-label="Lihat gambar ${n+1}"><img src="${safe(PUBLIC_BUCKET+i.storage_path)}" alt="${title} gambar ${n+1}" loading="lazy" decoding="async"></button>`).join('');
-      box.innerHTML=`${nav}<main class="ada-public-shell ada-public-detail"><div class="ada-public-detail-hero"><div class="ada-public-media-column"><div class="ada-public-main-photo">${main}<span class="ada-public-image-counter">${imgs.length?'1/'+imgs.length:'0/0'}</span></div>${imgs.length>1?`<div class="ada-public-gallery-strip">${thumbs}</div>`:''}</div><aside class="ada-public-detail-copy"><div class="ada-public-eyebrow">AVAILABLE NOW</div><h1>${title}</h1><div class="ada-public-detail-sub">${safe(v.model_year||'—')} · ${safe(v.plate||'')} · ${Number(v.mileage_km||0).toLocaleString('en-MY')} km</div><div class="ada-public-detail-price">${money(v.asking_price)}</div><div class="ada-public-trust"><div><span>Status</span><strong>Sedia untuk jualan</strong></div><div><span>Galeri</span><strong>${imgs.length} foto</strong></div><div><span>Tahun</span><strong>${safe(v.model_year||'—')}</strong></div><div><span>Mileage</span><strong>${Number(v.mileage_km||0).toLocaleString('en-MY')} km</strong></div></div><div class="ada-public-cta">${whatsappUrl(v,vehiclePublicLink(v.vehicle_id))?`<a class="primary ada-wa-cta" href="${safe(whatsappUrl(v,vehiclePublicLink(v.vehicle_id)))}" target="_blank" rel="noopener"><span class="ada-cta-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20.5 11.7a8.5 8.5 0 0 1-12.6 7.5L3 20.5l1.3-4.7a8.5 8.5 0 1 1 16.2-4.1Z"/><path d="M8.5 8.3c1.2 3.2 3.1 5.1 6.2 6.3"/></svg></span>WhatsApp Abe Din</a>`:''}<button id="ada-share-public-car" type="button" data-public-share-id="${safe(v.vehicle_id)}" data-public-share-make="${safe(v.make||'')}" data-public-share-model="${safe(v.model||'')}"><span class="ada-cta-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 16V3"/><path d="m7.5 7.5 4.5-4.5 4.5 4.5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg></span>Kongsi</button><button id="ada-public-back-list" type="button" class="secondary"><span class="ada-cta-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></span>Kereta lain</button></div></aside></div><div class="ada-public-spec-section"><section class="ada-public-spec-card"><h3>Maklumat Kenderaan</h3><div class="ada-public-spec-grid"><div class="ada-public-spec"><span>Jenama</span><strong>${safe(v.make||'—')}</strong></div><div class="ada-public-spec"><span>Model</span><strong>${safe(v.model||'—')}</strong></div><div class="ada-public-spec"><span>Tahun</span><strong>${safe(v.model_year||'—')}</strong></div><div class="ada-public-spec"><span>Mileage</span><strong>${Number(v.mileage_km||0).toLocaleString('en-MY')} km</strong></div><div class="ada-public-spec"><span>No. Pendaftaran</span><strong>${safe(v.plate||'—')}</strong></div><div class="ada-public-spec"><span>Vehicle ID</span><strong>${safe(v.vehicle_id||'—')}</strong></div></div></section><aside class="ada-public-spec-card ada-public-contact"><div class="ada-public-eyebrow">ABE DIN AUTO</div><h3>Berminat dengan unit ini?</h3><p class="muted">Hubungi Abe Din terus untuk pertanyaan lanjut.</p>${whatsappUrl(v,vehiclePublicLink(v.vehicle_id))?`<a class="ada-wa-contact" href="${safe(whatsappUrl(v,vehiclePublicLink(v.vehicle_id)))}" target="_blank" rel="noopener">WhatsApp Abe Din</a>`:'<p class="muted">Nombor WhatsApp belum ditetapkan.</p>'}</aside></div></main>`;
+      box.innerHTML=`${nav}<main class="ada-public-shell ada-public-detail"><div class="ada-public-detail-hero"><div class="ada-public-media-column"><div class="ada-public-main-photo">${main}<span class="ada-public-cover-badge">★ COVER</span><span class="ada-public-image-counter">${imgs.length?'1/'+imgs.length:'0/0'}</span></div>${imgs.length>1?`<div class="ada-public-gallery-strip">${thumbs}</div>`:''}</div><aside class="ada-public-detail-copy"><div class="ada-public-eyebrow">AVAILABLE NOW</div><h1>${title}</h1><div class="ada-public-detail-sub">${safe(v.model_year||'—')} · ${safe(v.plate||'')} · ${Number(v.mileage_km||0).toLocaleString('en-MY')} km</div><div class="ada-public-detail-price">${money(v.asking_price)}</div><div class="ada-public-trust"><div><span>Status</span><strong>Sedia untuk jualan</strong></div><div><span>Galeri</span><strong>${imgs.length} foto</strong></div><div><span>Tahun</span><strong>${safe(v.model_year||'—')}</strong></div><div><span>Mileage</span><strong>${Number(v.mileage_km||0).toLocaleString('en-MY')} km</strong></div></div><div class="ada-public-cta">${whatsappUrl(v,vehiclePublicLink(v.vehicle_id))?`<a class="primary ada-wa-cta" href="${safe(whatsappUrl(v,vehiclePublicLink(v.vehicle_id)))}" target="_blank" rel="noopener"><span class="ada-cta-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20.5 11.7a8.5 8.5 0 0 1-12.6 7.5L3 20.5l1.3-4.7a8.5 8.5 0 1 1 16.2-4.1Z"/><path d="M8.5 8.3c1.2 3.2 3.1 5.1 6.2 6.3"/></svg></span>WhatsApp Abe Din</a>`:''}<button id="ada-share-public-car" type="button" data-public-share-id="${safe(v.vehicle_id)}" data-public-share-make="${safe(v.make||'')}" data-public-share-model="${safe(v.model||'')}"><span class="ada-cta-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 16V3"/><path d="m7.5 7.5 4.5-4.5 4.5 4.5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg></span>Kongsi</button><button id="ada-public-back-list" type="button" class="secondary"><span class="ada-cta-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></span>Kereta lain</button></div></aside></div><div class="ada-public-spec-section"><section class="ada-public-spec-card"><h3>Maklumat Kenderaan</h3><div class="ada-public-spec-grid"><div class="ada-public-spec"><span>Jenama</span><strong>${safe(v.make||'—')}</strong></div><div class="ada-public-spec"><span>Model</span><strong>${safe(v.model||'—')}</strong></div><div class="ada-public-spec"><span>Tahun</span><strong>${safe(v.model_year||'—')}</strong></div><div class="ada-public-spec"><span>Mileage</span><strong>${Number(v.mileage_km||0).toLocaleString('en-MY')} km</strong></div><div class="ada-public-spec"><span>No. Pendaftaran</span><strong>${safe(v.plate||'—')}</strong></div><div class="ada-public-spec"><span>Vehicle ID</span><strong>${safe(v.vehicle_id||'—')}</strong></div></div></section><aside class="ada-public-spec-card ada-public-contact"><div class="ada-public-eyebrow">ABE DIN AUTO</div><h3>Berminat dengan unit ini?</h3><p class="muted">Hubungi Abe Din terus untuk pertanyaan lanjut.</p>${whatsappUrl(v,vehiclePublicLink(v.vehicle_id))?`<a class="ada-wa-contact" href="${safe(whatsappUrl(v,vehiclePublicLink(v.vehicle_id)))}" target="_blank" rel="noopener">WhatsApp Abe Din</a>`:'<p class="muted">Nombor WhatsApp belum ditetapkan.</p>'}</aside></div></main>`;
     }
   }
   el('ada-cloud-gate').querySelector('.wrap').appendChild(box);
   box.querySelectorAll('a.ada-public-view').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const u=new URL(a.href,location.href),id=u.searchParams.get('car');if(!id)return;history.pushState({publicCar:id},'',location.pathname+'?car='+encodeURIComponent(id));openPublicCatalogue(id);window.scrollTo({top:0,behavior:'instant'})}));
   box.querySelector('#ada-cat-back').onclick=()=>{box.remove();if(vehicleId){history.replaceState(null,'',location.pathname+'?catalogue=1');openPublicCatalogue()}else{history.replaceState(null,'',location.pathname);setRouteMode('auth');const cloudHeader=el('ada-cloud-gate').querySelector('.wrap > header');if(cloudHeader)cloudHeader.hidden=false;el('ada-login-box').hidden=false;verify()}};
   box.querySelector('#ada-public-back-list')?.addEventListener('click',()=>{history.replaceState(null,'',location.pathname+'?catalogue=1');openPublicCatalogue()});
-  box.querySelectorAll('[data-public-image]').forEach(b=>b.addEventListener('click',()=>{const main=box.querySelector('#ada-public-main-image');if(main){main.src=b.dataset.publicImage;box.querySelectorAll('[data-public-image]').forEach(x=>x.classList.toggle('is-active',x===b));const counter=box.querySelector('.ada-public-image-counter');if(counter)counter.textContent=(Number(b.dataset.publicIndex)+1)+'/'+box.querySelectorAll('[data-public-image]').length}}));
+  box.querySelectorAll('[data-public-image]').forEach(b=>b.addEventListener('click',()=>{const main=box.querySelector('#ada-public-main-image'),frame=box.querySelector('.ada-public-main-photo');if(main){if(main.src===b.dataset.publicImage)return;frame?.classList.add('is-switching');const apply=()=>{main.src=b.dataset.publicImage;box.querySelectorAll('[data-public-image]').forEach(x=>x.classList.toggle('is-active',x===b));const counter=box.querySelector('.ada-public-image-counter');if(counter)counter.textContent=(Number(b.dataset.publicIndex)+1)+'/'+box.querySelectorAll('[data-public-image]').length;setTimeout(()=>frame?.classList.remove('is-switching'),80)};setTimeout(apply,90)}}));
   
 }
 
@@ -1454,4 +1454,87 @@ renderCloud=function(){__adaOriginalRenderCloud();requestAnimationFrame(enhanceC
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));
 }
-</script></body></html>
+</script>
+<style>
+/* V28 exact cloud Inspection text fix */
+#ada-inspection-overall,
+#ada-inspection-defects,
+#ada-cloud-view #ada-inspection-overall,
+#ada-cloud-view #ada-inspection-defects{
+ color:#f7f8f8!important;
+ -webkit-text-fill-color:#f7f8f8!important;
+ caret-color:#d9b15e!important;
+ background-color:#0b0f10!important;
+ opacity:1!important;
+}
+#ada-inspection-overall::placeholder,
+#ada-inspection-defects::placeholder{
+ color:#7f898b!important;
+ -webkit-text-fill-color:#7f898b!important;
+ opacity:1!important;
+}
+#ada-inspection-overall:focus,
+#ada-inspection-defects:focus{
+ color:#fff!important;
+ -webkit-text-fill-color:#fff!important;
+ border-color:#d9b15e!important;
+ outline:none!important;
+}
+</style>
+
+
+<style>
+/* V29 Gallery selected state + premium cover frame */
+.ada-public-main-photo{
+ position:relative!important;
+ overflow:hidden!important;
+ background:#080b0c!important;
+ border:1px solid #303839!important;
+ box-shadow:0 18px 46px rgba(0,0,0,.28)!important;
+}
+.ada-public-main-photo:after{
+ content:"";position:absolute;inset:0;pointer-events:none;z-index:2;
+ box-shadow:inset 0 0 0 1px rgba(255,255,255,.035),inset 0 -42px 55px rgba(0,0,0,.14);
+ border-radius:inherit
+}
+.ada-public-main-photo img{
+ transition:opacity .18s ease,transform .28s ease!important;
+}
+.ada-public-main-photo.is-switching img{opacity:.35!important;transform:scale(1.012)!important}
+.ada-public-thumb{
+ border:1px solid #303839!important;
+ opacity:.7!important;
+ background:#0b0f10!important;
+ transition:border-color .16s ease,box-shadow .16s ease,opacity .16s ease,transform .16s ease!important
+}
+.ada-public-thumb.is-active{
+ opacity:1!important;
+ border:2px solid #e9b94f!important;
+ box-shadow:0 0 0 2px rgba(233,185,79,.16),0 5px 15px rgba(0,0,0,.28)!important;
+ transform:translateY(-1px)!important
+}
+.ada-public-thumb.is-active:after{
+ content:"";position:absolute;inset:2px;border:1px solid rgba(255,224,145,.36);
+ border-radius:calc(inherit - 2px);pointer-events:none
+}
+.ada-public-image-counter{
+ background:rgba(7,10,11,.82)!important;
+ border-color:rgba(240,196,95,.38)!important;
+ box-shadow:0 5px 16px rgba(0,0,0,.25)!important
+}
+.ada-public-cover-badge{
+ position:absolute;left:11px;bottom:11px;z-index:3;
+ display:inline-flex;align-items:center;gap:6px;
+ height:28px;padding:0 10px;border-radius:999px;
+ background:rgba(8,11,12,.78);border:1px solid rgba(240,196,95,.38);
+ color:#f0c45f;font-size:9px;font-weight:900;letter-spacing:.11em;
+ backdrop-filter:blur(8px)
+}
+@media(max-width:650px){
+ .ada-public-main-photo{border-radius:18px!important}
+ .ada-public-cover-badge{left:9px;bottom:9px;height:25px;padding:0 8px;font-size:8px}
+ .ada-public-thumb.is-active{box-shadow:0 0 0 1px rgba(233,185,79,.2),0 4px 12px rgba(0,0,0,.25)!important}
+}
+</style>
+
+</body></html>
