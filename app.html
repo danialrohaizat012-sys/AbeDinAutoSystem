@@ -869,6 +869,59 @@ radial-gradient(circle at 88% 18%,rgba(217,177,94,.25),transparent 34%),#0c1112}
 }
 </style>
 
+
+<style>
+/* V25 Inspection form contrast fix */
+#inspection-view input,
+#inspection-view textarea,
+#inspection-view select,
+#inspection-view option,
+.inspection-view input,
+.inspection-view textarea,
+.inspection-view select,
+.inspection-view option,
+[data-view="inspection"] input,
+[data-view="inspection"] textarea,
+[data-view="inspection"] select,
+[data-view="inspection"] option,
+.ada-inspection input,
+.ada-inspection textarea,
+.ada-inspection select,
+.ada-inspection option,
+.ada-inspection-form input,
+.ada-inspection-form textarea,
+.ada-inspection-form select,
+.ada-inspection-form option{
+  color:#f7f8f8!important;
+  -webkit-text-fill-color:#f7f8f8!important;
+  caret-color:#d9b15e!important;
+}
+#inspection-view input::placeholder,
+#inspection-view textarea::placeholder,
+.inspection-view input::placeholder,
+.inspection-view textarea::placeholder,
+[data-view="inspection"] input::placeholder,
+[data-view="inspection"] textarea::placeholder,
+.ada-inspection input::placeholder,
+.ada-inspection textarea::placeholder,
+.ada-inspection-form input::placeholder,
+.ada-inspection-form textarea::placeholder{
+  color:#899294!important;
+  -webkit-text-fill-color:#899294!important;
+  opacity:1!important;
+}
+/* Browser autofill can otherwise inject black text */
+#inspection-view input:-webkit-autofill,
+.inspection-view input:-webkit-autofill,
+[data-view="inspection"] input:-webkit-autofill,
+.ada-inspection input:-webkit-autofill,
+.ada-inspection-form input:-webkit-autofill{
+  -webkit-text-fill-color:#f7f8f8!important;
+  caret-color:#d9b15e!important;
+  transition:background-color 9999s ease-out 0s;
+}
+</style>
+
 </head><body><div id="ada-splash" aria-label="Abe Din Auto sedang dibuka" style="position:fixed!important;inset:0!important;z-index:2147483647!important;display:flex!important;align-items:center!important;justify-content:center!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important;background:#050708!important;overflow:hidden!important"><div id="ada-splash-bg"></div><div class="ada-splash-ui"><div class="ada-splash-kicker">ABE DIN AUTO</div><div class="ada-splash-dialogue">Abe Din OTW dah ni!</div><div class="ada-splash-track"><div class="ada-splash-fill"></div></div><div class="ada-splash-caption">Memulakan Cloud System</div></div></div><script id="ada-boot-splash">
 (function(){
   const splash=document.getElementById('ada-splash');
