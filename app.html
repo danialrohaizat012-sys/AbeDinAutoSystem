@@ -1253,7 +1253,7 @@ function vehicleCards(rows){
     let catalogueActions='';
     if(profile&&['owner','sales_advisor'].includes(profile.role)){
       catalogueActions=`<button class="ada-icon-action ${v.is_published?'is-live':''}" type="button" data-publish="${safe(v.id)}" data-state="${v.is_published?'1':'0'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5c5.5 0 9 7 9 7s-3.5 7-9 7-9-7-9-7 3.5-7 9-7Z"/><circle cx="12" cy="12" r="3"/></svg><span>${v.is_published?'Unpublish':'Publish'}</span></button>`;
-      if(v.is_published) catalogueActions+=`<button class="ada-icon-action" type="button" data-share="${safe(v.vehicle_id)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4"/></svg><span>Share</span></button>`;
+      if(v.is_published) catalogueActions+=`<button class="ada-icon-action ada-share-action" type="button" data-share="${safe(v.vehicle_id)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4"/></svg><span>Share</span></button>`;
     }
     const media=url?`<img src="${safe(url)}" alt="${safe(carName(v))}" loading="lazy" decoding="async">`:'<div class="ada-car-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 17h14l-1.2-5.2A3 3 0 0 0 14.9 9H9.1a3 3 0 0 0-2.9 2.8L5 17Z"/><path d="M7 9l1.5-3h7L17 9M5 17v2m14-2v2"/></svg><span>Tiada gambar</span></div>';
     return `<article class="cloud-car"><div class="photo">${media}<div class="ada-card-top"><span class="cloud-pill status-${safe(v.status)}">${safe(status)}</span><span class="ada-photo-count">${imgCount} foto</span></div></div><div class="info"><div class="ada-car-title"><div><h3>${carName(v)}</h3><small class="muted">${safe(v.model_year||'—')} · ${safe(v.plate)}</small></div><div class="ada-price">${money(v.asking_price)}</div></div><div class="ada-car-meta"><span>ID <b>${safe(v.vehicle_id)}</b></span><span>${v.is_published?'<i class="ada-live-dot"></i> Live catalogue':'Internal stock'}</span></div><div class="ada-card-actions"><button class="ada-icon-action ada-profile-btn" type="button" data-profile="${safe(v.id)}" title="Buka profil"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 19V8l8-4 8 4v11"/><path d="M8 19v-6h8v6"/></svg><span>Profil</span></button><button class="ada-icon-action" type="button" data-images="${safe(v.id)}" title="Urus gambar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 15-5-5L5 19"/></svg><span>Gambar</span></button>${catalogueActions}</div></div></article>`;
@@ -1537,4 +1537,75 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
 }
 </style>
 
+
+<style id="ada-v30-inventory-card-polish">
+/* V30 Inventory Card: image-led premium internal inventory UI. Logic untouched. */
+#ada-cloud-gate #ada-cloud-view .cloud-car{
+ padding:0!important;
+ border-radius:22px!important;
+ overflow:hidden!important;
+ background:linear-gradient(165deg,#171b1c 0%,#0d1112 100%)!important;
+ border:1px solid #303839!important;
+ box-shadow:0 16px 36px rgba(0,0,0,.22)!important;
+}
+#ada-cloud-gate #ada-cloud-view .cloud-car .photo{
+ width:100%!important;height:auto!important;aspect-ratio:16/9!important;
+ position:relative!important;overflow:hidden!important;
+ background:radial-gradient(circle at 50% 42%,#2b3334,#0c1011 74%)!important;
+ border-bottom:1px solid #293132!important;
+}
+#ada-cloud-gate #ada-cloud-view .cloud-car .photo:before{
+ content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+ background:linear-gradient(180deg,rgba(0,0,0,.03) 38%,rgba(4,7,8,.58) 100%);
+}
+#ada-cloud-gate #ada-cloud-view .cloud-car .photo:after{
+ content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+ box-shadow:inset 0 0 0 1px rgba(255,255,255,.025);
+}
+#ada-cloud-gate #ada-cloud-view .cloud-car .photo img{transform:scale(1.001);transition:transform .35s ease,filter .35s ease!important}
+#ada-cloud-gate #ada-cloud-view .cloud-car:hover .photo img{transform:scale(1.025)!important}
+#ada-cloud-gate #ada-cloud-view .ada-card-top{z-index:3!important;top:12px!important;left:12px!important;right:12px!important}
+#ada-cloud-gate #ada-cloud-view .cloud-pill{
+ padding:7px 11px!important;background:rgba(10,14,15,.78)!important;
+ border:1px solid rgba(255,255,255,.16)!important;box-shadow:0 6px 16px rgba(0,0,0,.22)!important;
+ backdrop-filter:blur(10px)!important;
+}
+#ada-cloud-gate #ada-cloud-view .cloud-pill.status-available{border-color:rgba(87,205,151,.68)!important;color:#a8f0cc!important}
+#ada-cloud-gate #ada-cloud-view .ada-photo-count{background:rgba(10,14,15,.76)!important;border-color:rgba(255,255,255,.14)!important;box-shadow:0 6px 16px rgba(0,0,0,.2)!important}
+#ada-cloud-gate #ada-cloud-view .cloud-car .info{padding:16px 17px 17px!important}
+#ada-cloud-gate #ada-cloud-view .ada-car-title{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:12px!important;align-items:start!important}
+#ada-cloud-gate #ada-cloud-view .ada-car-title h3{font-size:17px!important;line-height:1.22!important;letter-spacing:-.025em!important;margin:0 0 6px!important;color:#f5f4f0!important}
+#ada-cloud-gate #ada-cloud-view .ada-car-title small{font-size:11px!important;color:#929b9d!important}
+#ada-cloud-gate #ada-cloud-view .ada-price{font-size:18px!important;line-height:1.15!important;color:#efc86f!important;font-weight:850!important;letter-spacing:-.02em!important}
+#ada-cloud-gate #ada-cloud-view .ada-car-meta{
+ margin-top:14px!important;padding:11px 0!important;border-top:1px solid #293132!important;border-bottom:1px solid #242b2c!important;
+ font-size:10px!important;color:#818b8d!important;
+}
+#ada-cloud-gate #ada-cloud-view .ada-card-actions{
+ display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:7px!important;margin-top:12px!important;
+}
+#ada-cloud-gate #ada-cloud-view .ada-icon-action{
+ width:100%!important;min-width:0!important;min-height:44px!important;padding:9px 6px!important;margin:0!important;
+ border-radius:12px!important;border:1px solid #30393a!important;background:#141a1b!important;
+ color:#b8c0c1!important;font-size:10px!important;line-height:1.05!important;white-space:nowrap!important;
+}
+#ada-cloud-gate #ada-cloud-view .ada-icon-action span{display:block!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+#ada-cloud-gate #ada-cloud-view .ada-icon-action svg{width:16px!important;height:16px!important}
+#ada-cloud-gate #ada-cloud-view .ada-icon-action.is-live{border-color:#315c4b!important;color:#a4e7c8!important;background:#111c18!important}
+#ada-cloud-gate #ada-cloud-view .ada-share-action{
+ grid-column:1/-1!important;min-height:46px!important;margin-top:1px!important;
+ border-color:#66532f!important;background:linear-gradient(135deg,#211b12,#171713)!important;color:#edc978!important;
+ font-size:11px!important;letter-spacing:.015em!important;
+}
+#ada-cloud-gate #ada-cloud-view .ada-share-action:hover{border-color:#a07b38!important;background:linear-gradient(135deg,#2b2113,#1c1a13)!important}
+#ada-cloud-gate .ada-stock-strip .cloud-cards{gap:14px!important}
+@media(max-width:700px){
+ #ada-cloud-gate #ada-cloud-view .cloud-car{border-radius:20px!important}
+ #ada-cloud-gate #ada-cloud-view .cloud-car .photo{aspect-ratio:16/9!important}
+ #ada-cloud-gate #ada-cloud-view .cloud-car .info{padding:14px 14px 15px!important}
+ #ada-cloud-gate #ada-cloud-view .ada-car-title h3{font-size:16px!important}
+ #ada-cloud-gate #ada-cloud-view .ada-price{font-size:17px!important}
+ #ada-cloud-gate #ada-cloud-view .ada-icon-action{min-height:43px!important;font-size:10px!important}
+}
+</style>
 </body></html>
