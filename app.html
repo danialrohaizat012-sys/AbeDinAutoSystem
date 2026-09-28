@@ -761,6 +761,42 @@ radial-gradient(circle at 88% 18%,rgba(217,177,94,.25),transparent 34%),#0c1112}
 }
 </style>
 
+
+<style>
+/* V20 Catalogue refinement */
+.ada-cat-hero{isolation:isolate;min-height:245px;display:flex;flex-direction:column;justify-content:flex-end;background:#0b0f10!important}
+.ada-cat-hero-bg{position:absolute;inset:0;z-index:-2;width:100%;height:100%;object-fit:cover;object-position:center 46%;filter:saturate(.9) contrast(1.03)}
+.ada-cat-hero:before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(5,8,9,.97) 0%,rgba(5,8,9,.88) 45%,rgba(5,8,9,.45) 76%,rgba(5,8,9,.58) 100%),linear-gradient(0deg,rgba(5,8,9,.75),transparent 55%)}
+.ada-cat-hero:after{display:none!important}
+.ada-cat-kicker{font-size:11px!important;letter-spacing:.16em!important}
+.ada-cat-hero h1{max-width:520px!important;text-shadow:0 2px 24px rgba(0,0,0,.35)}
+.ada-cat-hero p{color:#d1d5d4!important}
+.ada-brand-logo img{width:34px;height:28px;object-fit:contain;display:block}
+.ada-brand-logo .ada-brand-wordmark{font-size:11px;font-weight:900;letter-spacing:-.02em;color:#e8eceb;text-transform:uppercase}
+.ada-brand-chip.active .ada-brand-wordmark{color:#f0c565}
+@media(max-width:700px){
+ .ada-cat-hero{min-height:225px}
+}
+</style>
+
+
+<style>
+/* V21 purpose-built catalogue hero + complete brand selector */
+.ada-cat-hero-bg{object-position:center center!important}
+.ada-cat-kicker{color:#f0c45f!important}
+.ada-brand-strip{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;overflow:visible!important;gap:8px!important}
+.ada-brand-chip{width:100%!important;min-width:0!important;min-height:72px!important;flex:none!important}
+.ada-brand-logo{width:38px!important;height:30px!important}
+.ada-brand-logo img{width:38px!important;height:30px!important;object-fit:contain!important;filter:none}
+.ada-brand-chip small{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:700px){
+ .ada-brand-strip{grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:6px!important}
+ .ada-brand-chip{min-height:65px!important;padding:6px 3px!important}
+ .ada-brand-logo,.ada-brand-logo img{width:29px!important;height:25px!important}
+ .ada-brand-chip small{font-size:8px!important}
+}
+</style>
+
 </head><body><div id="ada-splash" aria-label="Abe Din Auto sedang dibuka" style="position:fixed!important;inset:0!important;z-index:2147483647!important;display:flex!important;align-items:center!important;justify-content:center!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important;background:#050708!important;overflow:hidden!important"><div id="ada-splash-bg"></div><div class="ada-splash-ui"><div class="ada-splash-kicker">ABE DIN AUTO</div><div class="ada-splash-dialogue">Abe Din OTW dah ni!</div><div class="ada-splash-track"><div class="ada-splash-fill"></div></div><div class="ada-splash-caption">Memulakan Cloud System</div></div></div><script id="ada-boot-splash">
 (function(){
   const splash=document.getElementById('ada-splash');
@@ -1085,16 +1121,22 @@ function catDisplayTitle(v){
  return title.toLowerCase().replace(/\b[a-z]/g,c=>c.toUpperCase());
 }
 function catBrandLogo(name){
- const n=catNorm(name).toLowerCase();
- const common={
-  perodua:'<svg viewBox="0 0 40 28"><ellipse cx="20" cy="14" rx="16" ry="10" fill="#e9eceb"/><path d="M8 15c5-9 12-10 24-6-4 9-12 12-24 6Z" fill="#138b4a"/><path d="M12 17c5 1 10-2 16-9" stroke="#e23a36" stroke-width="4" fill="none"/></svg>',
-  proton:'<svg viewBox="0 0 36 30"><path d="M18 2 32 8l-3 15-11 5L7 23 4 8Z" fill="none" stroke="#e8eceb" stroke-width="2"/><path d="M10 11c6-5 13-5 17 1-6-1-10 1-13 6" fill="none" stroke="#e8eceb" stroke-width="2"/></svg>',
-  toyota:'<svg viewBox="0 0 42 28"><ellipse cx="21" cy="14" rx="17" ry="10" fill="none" stroke="#e8eceb" stroke-width="2"/><ellipse cx="21" cy="12" rx="6" ry="9" fill="none" stroke="#e8eceb" stroke-width="2"/><path d="M7 11c7 5 21 5 28 0" fill="none" stroke="#e8eceb" stroke-width="2"/></svg>',
-  honda:'<svg viewBox="0 0 40 28"><path d="M7 4h26l-3 20H10Z" fill="none" stroke="#e8eceb" stroke-width="2"/><path d="M13 8v11m14-11v11M13 14h14" stroke="#e8eceb" stroke-width="2"/></svg>',
-  nissan:'<svg viewBox="0 0 42 28"><circle cx="21" cy="14" r="10" fill="none" stroke="#e8eceb" stroke-width="2"/><path d="M5 10h32v8H5Z" fill="#0e1314" stroke="#e8eceb" stroke-width="1.5"/><path d="M10 14h22" stroke="#e8eceb" stroke-width="2"/></svg>',
-  mazda:'<svg viewBox="0 0 42 28"><ellipse cx="21" cy="14" rx="17" ry="10" fill="none" stroke="#e8eceb" stroke-width="2"/><path d="M10 9c6 1 9 4 11 10 2-6 5-9 11-10" fill="none" stroke="#e8eceb" stroke-width="2"/></svg>'
+ const n=catNorm(name).toLowerCase().replace(/[-\s]+/g,'');
+ const logos={
+  perodua:'https://commons.wikimedia.org/wiki/Special:Redirect/file/Perodua%20Logo%20%282008%20-%20Present%29.svg',
+  proton:'https://commons.wikimedia.org/wiki/Special:Redirect/file/Proton%20Logo.jpg',
+  bmw:'https://commons.wikimedia.org/wiki/Special:Redirect/file/BMW.svg',
+  honda:'https://commons.wikimedia.org/wiki/Special:Redirect/file/Honda%20Logo.svg',
+  toyota:'https://commons.wikimedia.org/wiki/Special:Redirect/file/Toyota%20Symbol.svg',
+  mazda:'https://commons.wikimedia.org/wiki/Special:Redirect/file/Mazda%20logo%202024%20%28vertical%29.svg',
+  mercedes:'https://commons.wikimedia.org/wiki/Special:Redirect/file/Mercedes-Benz%20free%20logo.svg',
+  mercedesbenz:'https://commons.wikimedia.org/wiki/Special:Redirect/file/Mercedes-Benz%20free%20logo.svg',
+  mitsubishi:'https://commons.wikimedia.org/wiki/Special:Redirect/file/Mitsubishi%20logo.svg',
+  mitsubishimotors:'https://commons.wikimedia.org/wiki/Special:Redirect/file/Mitsubishi%20logo.svg',
+  suzuki:'https://commons.wikimedia.org/wiki/Special:Redirect/file/Suzuki%20logo%202025%20%28symbol%29.svg'
  };
- return common[n]||`<svg viewBox="0 0 40 28"><circle cx="20" cy="14" r="11" fill="none" stroke="#e8eceb" stroke-width="2"/><path d="M14 14h12M20 8v12" stroke="#e8eceb" stroke-width="2"/></svg>`;
+ const url=logos[n];
+ return url?`<img src="${url}" alt="${safe(name)} logo" loading="lazy" decoding="async" referrerpolicy="no-referrer">`:`<span class="ada-brand-wordmark">${safe(name)}</span>`;
 }
 function catPriceBand(v){
  const p=Number(v.asking_price||0); if(p<20000)return 'u20'; if(p<30000)return '20-30'; if(p<50000)return '30-50'; return '50p';
@@ -1112,11 +1154,13 @@ async function openPublicCatalogue(vehicleId=null){
   const brand=`<div class="ada-public-brand">${logo?`<img src="${safe(logo)}" alt="Abe Din Auto">`:''}<div><strong>ABE DIN AUTO</strong><small>Kereta terpilih · Urusan lebih mudah</small></div></div>`;
   const nav=`<div class="ada-public-shell"><nav class="ada-public-nav">${brand}<div class="ada-public-nav-actions"><button id="ada-cat-back" type="button">${vehicleId?'Semua Kereta':'Staff Login'}</button></div></nav></div>`;
   if(!vehicleId){
-    const makes=[...new Set(rows.map(v=>catNorm(v.make)).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+    const popularMakes=['Perodua','Proton','BMW','Honda','Toyota','Mazda','Mercedes-Benz','Mitsubishi','Suzuki'];
+    const stockMakes=rows.map(v=>catNorm(v.make)).filter(Boolean);
+    const makes=[...new Set([...popularMakes,...stockMakes])];
     const models=[...new Set(rows.map(v=>catNorm(v.model)).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
     const brandChips=makes.map(x=>`<button class="ada-brand-chip" type="button" data-cat-brand="${safe(x)}"><span class="ada-brand-logo">${catBrandLogo(x)}</span><small>${safe(x)}</small></button>`).join('');
     box.innerHTML=`${nav}<div class="ada-public-shell">
-      <section class="ada-cat-hero"><div class="ada-cat-kicker">KERETA TERPAKAI TERPILIH</div><h1>Cari Kereta Anda</h1><p>Perjalanan seterusnya bermula di sini.</p>
+      <section class="ada-cat-hero"><img class="ada-cat-hero-bg" src="./catalogue-hero-showroom.png" alt="" fetchpriority="high" decoding="async"><div class="ada-cat-kicker">YOUR NO.1 PRE-OWNED CAR DEALER</div><h1>Cari Kereta Anda</h1><p>Perjalanan seterusnya bermula di sini.</p>
         <label class="ada-cat-search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="ada-cat-search" placeholder="Cari jenama, model atau nombor pendaftaran..." autocomplete="off"></label>
       </section>
       <div class="ada-cat-tools">
