@@ -426,6 +426,82 @@ html.ada-public-route img{
 }
 </style>
 
+
+<style>
+/* V14 Auth Screen Isolation */
+html.ada-auth-route,
+html.ada-auth-route body{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  min-height:100%!important;
+  margin:0!important;
+  padding:0!important;
+  overflow-x:hidden!important;
+  background:#070a0b!important;
+}
+html.ada-auth-route body{
+  min-height:100vh!important;
+  min-height:100dvh!important;
+}
+html.ada-auth-route #ada-cloud-gate{
+  position:relative!important;
+  z-index:2147483000!important;
+  width:100%!important;
+  max-width:none!important;
+  min-width:0!important;
+  min-height:100vh!important;
+  min-height:100dvh!important;
+  margin:0!important;
+  padding:0!important;
+  background:#070a0b!important;
+  overflow:hidden!important;
+}
+html.ada-auth-route #ada-cloud-gate>.wrap{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  min-height:100vh!important;
+  min-height:100dvh!important;
+  margin:0!important;
+  padding:max(18px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  box-sizing:border-box!important;
+  overflow:hidden!important;
+}
+html.ada-auth-route #ada-cloud-gate>.wrap>header{display:none!important}
+html.ada-auth-route #ada-login-box{
+  position:relative!important;
+  z-index:2!important;
+  width:min(100%,560px)!important;
+  max-width:560px!important;
+  min-width:0!important;
+  margin:0 auto!important;
+  box-sizing:border-box!important;
+}
+html.ada-auth-route #ada-cloud-panel{display:none!important}
+html.ada-auth-route #ada-public-catalogue{display:none!important}
+html.ada-auth-route #ada-cloud-gate ~ *,
+html.ada-auth-route body > *:not(#ada-cloud-gate):not(script):not(style){
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
+@media(max-width:699px){
+ html.ada-auth-route #ada-cloud-gate>.wrap{
+   justify-content:flex-start!important;
+   overflow-y:auto!important;
+   -webkit-overflow-scrolling:touch;
+ }
+ html.ada-auth-route #ada-login-box{
+   margin-top:max(12px,env(safe-area-inset-top))!important;
+   margin-bottom:max(18px,env(safe-area-inset-bottom))!important;
+ }
+}
+</style>
+
 </head><body><div id="ada-splash" aria-label="Abe Din Auto sedang dibuka" style="position:fixed!important;inset:0!important;z-index:2147483647!important;display:flex!important;align-items:center!important;justify-content:center!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important;background:#050708!important;overflow:hidden!important"><div id="ada-splash-bg"></div><div class="ada-splash-ui"><div class="ada-splash-kicker">ABE DIN AUTO</div><div class="ada-splash-dialogue">Abe Din OTW dah ni!</div><div class="ada-splash-track"><div class="ada-splash-fill"></div></div><div class="ada-splash-caption">Memulakan Cloud System</div></div></div><script id="ada-boot-splash">
 (function(){
   const splash=document.getElementById('ada-splash');
@@ -532,7 +608,13 @@ const money=v=>'RM '+Number(v||0).toLocaleString('en-MY',{maximumFractionDigits:
 const PUBLIC_BUCKET='https://buzpdyvvoiqgbeventwm.supabase.co/storage/v1/object/public/vehicle-images/';
 let profile=null, vehicles=[], suppliers=[], sales=[], customers=[], payments=[], vehicleImages=[], imageUrls={}, signedUrlCache=new Map(), publicCatalogueCache=new Map(), inspections=[], inspectionItems=[], publicSettings={whatsapp_number:'',whatsapp_message:'Hi Abe Din Auto, saya berminat dengan kereta ini: {link}'}, current='dashboard', inspectionVehicleId=null, vehicleProfileId=null;
 const msg=s=>{el('ada-cloud-message').textContent=s;el('ada-cloud-message-login').textContent=s};
+const setRouteMode=mode=>{
+  document.documentElement.classList.toggle('ada-auth-route',mode==='auth');
+  document.documentElement.classList.toggle('ada-public-route',mode==='public');
+};
+
 async function verify(){
+  setRouteMode('auth');
   msg('Mengesahkan log masuk...');
   try{
     const {data:{session},error:sessionError}=await client.auth.getSession();
@@ -560,7 +642,7 @@ async function verify(){
       msg('Akaun ini telah dinyahaktifkan.');
       return;
     }
-    profile=p;
+    profile=p;setRouteMode('staff');
     el('ada-login-box').hidden=true;
     el('ada-cloud-panel').hidden=false;
     document.querySelectorAll('[data-cloud-page]').forEach(b=>{
@@ -704,6 +786,7 @@ function showShareMenu(v){
 }
 async function saveCatalogueSettings(e){e.preventDefault();if(profile?.role!=='owner')return;const f=new FormData(e.currentTarget),number=cleanWhatsAppNumber(f.get('whatsapp_number')),message=String(f.get('whatsapp_message')||'').trim();const status=e.currentTarget.querySelector('[data-settings-status]');if(!number){status.textContent='Masukkan nombor WhatsApp termasuk kod negara, contoh 60123456789.';return}if(!message){status.textContent='Ayat WhatsApp tidak boleh kosong.';return}status.textContent='Menyimpan...';const {error}=await client.rpc('update_public_settings',{p_whatsapp_number:number,p_whatsapp_message:message});if(error){status.textContent='Gagal simpan: '+error.message;return}publicSettings={whatsapp_number:number,whatsapp_message:message};publicCatalogueCache.clear();status.textContent='Tetapan catalogue berjaya disimpan.'}
 async function openPublicCatalogue(vehicleId=null){
+  setRouteMode('public');
   el('ada-login-box').hidden=true;el('ada-cloud-panel').hidden=true;const cloudHeader=el('ada-cloud-gate').querySelector('.wrap > header');if(cloudHeader)cloudHeader.hidden=true;msg('Memuatkan catalogue awam...');
   await loadPublicSettings();
   document.getElementById('ada-public-catalogue')?.remove();
@@ -735,7 +818,7 @@ async function openPublicCatalogue(vehicleId=null){
   }
   el('ada-cloud-gate').querySelector('.wrap').appendChild(box);
   box.querySelectorAll('a.ada-public-view').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const u=new URL(a.href,location.href),id=u.searchParams.get('car');if(!id)return;history.pushState({publicCar:id},'',location.pathname+'?car='+encodeURIComponent(id));openPublicCatalogue(id);window.scrollTo({top:0,behavior:'instant'})}));
-  box.querySelector('#ada-cat-back').onclick=()=>{box.remove();if(vehicleId){history.replaceState(null,'',location.pathname+'?catalogue=1');openPublicCatalogue()}else{history.replaceState(null,'',location.pathname);document.documentElement.classList.remove('ada-public-route');const cloudHeader=el('ada-cloud-gate').querySelector('.wrap > header');if(cloudHeader)cloudHeader.hidden=false;el('ada-login-box').hidden=false;verify()}};
+  box.querySelector('#ada-cat-back').onclick=()=>{box.remove();if(vehicleId){history.replaceState(null,'',location.pathname+'?catalogue=1');openPublicCatalogue()}else{history.replaceState(null,'',location.pathname);setRouteMode('auth');const cloudHeader=el('ada-cloud-gate').querySelector('.wrap > header');if(cloudHeader)cloudHeader.hidden=false;el('ada-login-box').hidden=false;verify()}};
   box.querySelector('#ada-public-back-list')?.addEventListener('click',()=>{history.replaceState(null,'',location.pathname+'?catalogue=1');openPublicCatalogue()});
   box.querySelectorAll('[data-public-image]').forEach(b=>b.addEventListener('click',()=>{const main=box.querySelector('#ada-public-main-image');if(main)main.src=b.dataset.publicImage}));
   
@@ -750,7 +833,7 @@ document.addEventListener('click',(e)=>{
  showShareMenu({vehicle_id:id,make:b.dataset.publicShareMake||'',model:b.dataset.publicShareModel||''});
 },true);
 window.addEventListener('popstate',()=>{const q=new URLSearchParams(location.search);if(q.has('car'))openPublicCatalogue(q.get('car'));else if(q.has('catalogue'))openPublicCatalogue();});
-el('ada-open-catalogue').addEventListener('click',()=>{history.replaceState(null,'','?catalogue=1');document.documentElement.classList.add('ada-public-route');openPublicCatalogue()});el('ada-cloud-login').addEventListener('submit',async e=>{e.preventDefault();msg('Mengesahkan login...');const {error}=await client.auth.signInWithPassword({email:el('ada-cloud-email').value,password:el('ada-cloud-password').value});el('ada-cloud-password').value='';if(error){msg('Login gagal: '+error.message);return}await verify()});document.querySelectorAll('[data-cloud-page]').forEach(b=>b.addEventListener('click',()=>{current=b.dataset.cloudPage;renderCloud();window.scrollTo(0,0)}));el('ada-cloud-logout').addEventListener('click',async()=>{await client.auth.signOut();await verify()});el('ada-cloud-demo').addEventListener('click',()=>{if(confirm('Demo V3.7 hanya localStorage dan tidak disimpan ke Supabase. Teruskan untuk ujian sahaja?')){el('ada-cloud-gate').hidden=true;const b=document.createElement('button');b.textContent='Kembali ke Cloud';b.style.cssText='position:fixed;bottom:75px;right:12px;z-index:999999;background:#e6b75d;color:#111;padding:12px;border-radius:12px';b.onclick=()=>{el('ada-cloud-gate').hidden=false;b.remove()};document.body.appendChild(b)}});const params=new URLSearchParams(location.search);await loadPublicSettings();if(params.has('car'))await openPublicCatalogue(params.get('car'));else if(params.has('catalogue'))await openPublicCatalogue();else await verify();
+el('ada-open-catalogue').addEventListener('click',()=>{history.replaceState(null,'','?catalogue=1');document.documentElement.classList.add('ada-public-route');openPublicCatalogue()});el('ada-cloud-login').addEventListener('submit',async e=>{e.preventDefault();msg('Mengesahkan login...');const {error}=await client.auth.signInWithPassword({email:el('ada-cloud-email').value,password:el('ada-cloud-password').value});el('ada-cloud-password').value='';if(error){msg('Login gagal: '+error.message);return}await verify()});document.querySelectorAll('[data-cloud-page]').forEach(b=>b.addEventListener('click',()=>{current=b.dataset.cloudPage;renderCloud();window.scrollTo(0,0)}));el('ada-cloud-logout').addEventListener('click',async()=>{await client.auth.signOut();setRouteMode('auth');await verify()});el('ada-cloud-demo').addEventListener('click',()=>{if(confirm('Demo V3.7 hanya localStorage dan tidak disimpan ke Supabase. Teruskan untuk ujian sahaja?')){el('ada-cloud-gate').hidden=true;const b=document.createElement('button');b.textContent='Kembali ke Cloud';b.style.cssText='position:fixed;bottom:75px;right:12px;z-index:999999;background:#e6b75d;color:#111;padding:12px;border-radius:12px';b.onclick=()=>{el('ada-cloud-gate').hidden=false;b.remove()};document.body.appendChild(b)}});const params=new URLSearchParams(location.search);await loadPublicSettings();if(params.has('car'))await openPublicCatalogue(params.get('car'));else if(params.has('catalogue'))await openPublicCatalogue();else await verify();
 
 
 // RC2 UI Completion enhancement layer. Presentation only; cloud/auth/RPC logic remains unchanged.
