@@ -637,6 +637,36 @@ html.ada-public-route #ada-cloud-gate>.wrap>header{
 }
 </style>
 
+
+<style>
+/* V17 Public/Auth isolation cleanup: no staff chrome may leak into consumer routes */
+html.ada-public-route .bottom-nav,
+html.ada-public-route .mobile-bottom-nav,
+html.ada-public-route .cloud-bottom-nav,
+html.ada-public-route .ada-bottom-nav,
+html.ada-public-route .staff-nav,
+html.ada-public-route .cloud-side,
+html.ada-public-route .cloud-top,
+html.ada-public-route [data-staff-nav],
+html.ada-public-route #ada-cloud-panel,
+html.ada-auth-route .bottom-nav,
+html.ada-auth-route .mobile-bottom-nav,
+html.ada-auth-route .cloud-bottom-nav,
+html.ada-auth-route .ada-bottom-nav,
+html.ada-auth-route .staff-nav,
+html.ada-auth-route .cloud-side,
+html.ada-auth-route .cloud-top,
+html.ada-auth-route [data-staff-nav],
+html.ada-auth-route #ada-cloud-panel{
+  display:none!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
+html.ada-public-route #ada-public-catalogue{
+  z-index:2147482000!important;
+}
+</style>
+
 </head><body><div id="ada-splash" aria-label="Abe Din Auto sedang dibuka" style="position:fixed!important;inset:0!important;z-index:2147483647!important;display:flex!important;align-items:center!important;justify-content:center!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important;background:#050708!important;overflow:hidden!important"><div id="ada-splash-bg"></div><div class="ada-splash-ui"><div class="ada-splash-kicker">ABE DIN AUTO</div><div class="ada-splash-dialogue">Abe Din OTW dah ni!</div><div class="ada-splash-track"><div class="ada-splash-fill"></div></div><div class="ada-splash-caption">Memulakan Cloud System</div></div></div><script id="ada-boot-splash">
 (function(){
   const splash=document.getElementById('ada-splash');
@@ -751,7 +781,10 @@ const syncAuthViewport=()=>{
 const setRouteMode=mode=>{
   document.documentElement.classList.toggle('ada-auth-route',mode==='auth');
   document.documentElement.classList.toggle('ada-public-route',mode==='public');
+  document.documentElement.classList.toggle('ada-staff-route',mode==='staff');
   if(mode==='auth'||mode==='public'){syncAuthViewport();window.scrollTo(0,0)}
+  const staffPanel=document.getElementById('ada-cloud-panel');
+  if(staffPanel&&(mode==='auth'||mode==='public'))staffPanel.hidden=true;
 };
 window.visualViewport?.addEventListener('resize',syncAuthViewport);
 window.addEventListener('orientationchange',()=>setTimeout(syncAuthViewport,120));
