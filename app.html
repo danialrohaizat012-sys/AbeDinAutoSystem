@@ -854,6 +854,21 @@ radial-gradient(circle at 88% 18%,rgba(217,177,94,.25),transparent 34%),#0c1112}
 .ada-brand-chip[data-cat-brand="Perodua"] .ada-brand-logo img{max-width:31px!important;max-height:27px!important}
 </style>
 
+
+<style>
+/* V24: final micro-fix for Semua + Proton only */
+.ada-all-car-icon{width:31px;height:24px;display:block;color:#f0c45f;overflow:visible}
+.ada-brand-chip:not(.active) .ada-all-car-icon{color:#d8dddd}
+.ada-brand-chip[data-cat-brand="Proton"] .ada-brand-logo{
+ width:32px!important;height:32px!important;border-radius:50%;overflow:hidden!important;background:#eef1f2!important;
+}
+.ada-brand-chip[data-cat-brand="Proton"] .ada-brand-logo img{
+ width:38px!important;height:38px!important;max-width:none!important;max-height:none!important;
+ object-fit:cover!important;object-position:center!important;transform:scale(1.16)!important;
+ mix-blend-mode:multiply;
+}
+</style>
+
 </head><body><div id="ada-splash" aria-label="Abe Din Auto sedang dibuka" style="position:fixed!important;inset:0!important;z-index:2147483647!important;display:flex!important;align-items:center!important;justify-content:center!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important;background:#050708!important;overflow:hidden!important"><div id="ada-splash-bg"></div><div class="ada-splash-ui"><div class="ada-splash-kicker">ABE DIN AUTO</div><div class="ada-splash-dialogue">Abe Din OTW dah ni!</div><div class="ada-splash-track"><div class="ada-splash-fill"></div></div><div class="ada-splash-caption">Memulakan Cloud System</div></div></div><script id="ada-boot-splash">
 (function(){
   const splash=document.getElementById('ada-splash');
@@ -1187,7 +1202,7 @@ function catBrandLogo(name){
  const n=catNorm(name).toLowerCase().replace(/[-\s]+/g,'');
  const logos={
   perodua:'https://commons.wikimedia.org/wiki/Special:Redirect/file/Perodua%20logo%202008.png',
-  proton:'https://www.carlogos.org/logo/Proton-logo-2000-2560x1440.png',
+  proton:'https://fastly.mwm-storage.mwmcdn.com/raw_files/bc433d6d-bda3-4a91-934b-180209bc0590?format=webp&height=640',
   bmw:'https://commons.wikimedia.org/wiki/Special:Redirect/file/BMW.svg',
   honda:'https://www.pngfind.com/pngs/m/126-1262031_honda-vector-png-pluspng-honda-h-logo-vector.png',
   toyota:'https://commons.wikimedia.org/wiki/Special:Redirect/file/Toyota%20Symbol.svg',
@@ -1200,6 +1215,14 @@ function catBrandLogo(name){
  };
  const url=logos[n];
  return url?`<img src="${url}" alt="${safe(name)} emblem" loading="lazy" decoding="async" referrerpolicy="no-referrer">`:`<span class="ada-brand-wordmark">${safe(name)}</span>`;
+}
+function catAllBrandIcon(){
+ return `<svg class="ada-all-car-icon" viewBox="0 0 64 40" aria-hidden="true">
+  <path d="M13 25.5 17.8 15c.9-2 2.6-3 4.8-3h18.8c2.2 0 3.9 1 4.8 3L51 25.5" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M10 25.5h44c2.2 0 4 1.8 4 4v4.2H6v-4.2c0-2.2 1.8-4 4-4Z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M17 33.7v3M47 33.7v3" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+  <path d="M14 29.5h6M44 29.5h6" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+ </svg>`;
 }
 function catPriceBand(v){
  const p=Number(v.asking_price||0); if(p<20000)return 'u20'; if(p<30000)return '20-30'; if(p<50000)return '30-50'; return '50p';
@@ -1234,7 +1257,7 @@ async function openPublicCatalogue(vehicleId=null){
         <label class="ada-cat-select"><span>Harga</span><select id="ada-cat-price"><option value="">Semua</option><option value="u20">Bawah RM20k</option><option value="20-30">RM20k – RM30k</option><option value="30-50">RM30k – RM50k</option><option value="50p">RM50k+</option></select></label>
         <label class="ada-cat-select"><span>Susun</span><select id="ada-cat-sort"><option value="new">Terbaru</option><option value="low">Harga rendah</option><option value="high">Harga tinggi</option><option value="year">Tahun terbaru</option></select></label>
       </div>
-      ${brandChips?`<div class="ada-brand-strip"><button class="ada-brand-chip active" type="button" data-cat-brand=""><span class="ada-brand-logo"><svg viewBox="0 0 40 28"><path d="M5 18h30l-3-8H10Z" fill="none" stroke="#e8eceb" stroke-width="2"/><circle cx="12" cy="20" r="3" fill="none" stroke="#e8eceb" stroke-width="2"/><circle cx="29" cy="20" r="3" fill="none" stroke="#e8eceb" stroke-width="2"/></svg></span><small>Semua</small></button>${brandChips}</div>`:''}
+      ${brandChips?`<div class="ada-brand-strip"><button class="ada-brand-chip active" type="button" data-cat-brand=""><span class="ada-brand-logo">${catAllBrandIcon()}</span><small>Semua</small></button>${brandChips}</div>`:''}
       <div class="ada-cat-results"><strong id="ada-cat-count">${rows.length} kereta tersedia</strong><button class="ada-cat-reset" id="ada-cat-reset" type="button">↻ Reset filter</button></div>
       <main class="ada-public-grid" id="ada-cat-grid"></main>
     </div>`;
