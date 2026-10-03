@@ -294,7 +294,7 @@ input,select,textarea{border-radius:12px!important;border:1px solid rgba(255,255
 /* Compact showroom welcome: crop source artwork to its photo portion; HTML remains accessible. */
 #ada-cloud-gate .cloud-hero{
  background-color:#141719!important;
- background-image:linear-gradient(90deg,rgba(7,10,12,.95) 0%,rgba(7,10,12,.78) 37%,rgba(7,10,12,.12) 100%),url("./showroom-welcome.webp")!important;
+ background-image:linear-gradient(90deg,rgba(7,10,12,.95) 0%,rgba(7,10,12,.78) 37%,rgba(7,10,12,.12) 100%),url("../showroom-welcome.webp")!important;
  background-repeat:no-repeat,no-repeat!important;
  background-size:cover,cover!important;background-position:center center,center 54%!important;
  min-height:0!important;height:184px!important;aspect-ratio:auto!important;
