@@ -1262,3 +1262,9 @@ radial-gradient(circle at 88% 18%,rgba(217,177,94,.25),transparent 34%),#0c1112}
   text-decoration:underline;
   text-underline-offset:3px;
 }
+
+
+/* V50.4 · consolidated public detail actions */
+.ada-public-contact-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.ada-public-contact-actions button{min-height:52px;display:flex;align-items:center;justify-content:center;gap:9px}
+@media(max-width:520px){.ada-public-contact-actions{grid-template-columns:1fr 1fr}}
