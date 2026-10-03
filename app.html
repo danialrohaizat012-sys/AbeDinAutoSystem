@@ -511,7 +511,7 @@ async function openPublicCatalogue(vehicleId=null){
   if(error){el('ada-login-box').hidden=false;msg('Catalogue gagal: '+error.message);return}
   let rows=Array.isArray(data)?data:[]; rows=await mergePublicOffers(rows);
   const box=document.createElement('section');box.id='ada-public-catalogue';
-  const logo=document.querySelector('.ada-cloud-logo')?.src||'';
+  const logo=new URL('assets/embedded-300045c966fa.png',location.href).href;
   const brand=`<div class="ada-public-brand">${logo?`<img src="${safe(logo)}" alt="Abe Din Auto">`:''}<div><strong>ABE DIN AUTO</strong><small>Kereta terpilih · Urusan lebih mudah</small></div></div>`;
   const nav=`<div class="ada-public-shell"><nav class="ada-public-nav">${brand}<div class="ada-public-nav-actions"><button id="ada-cat-back" type="button">${vehicleId?'Semua Kereta':'Staff Login'}</button></div></nav></div>`;
   if(!vehicleId){
