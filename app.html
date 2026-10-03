@@ -609,6 +609,17 @@ if(adminEntry){
 }
 window.__adaFinishSplash?.();
 
+// V50 · BinaLab signature
+function ensureBinaLabSignature(){
+  if(document.getElementById('ada-binalab-signature'))return;
+  const footer=document.createElement('div');
+  footer.id='ada-binalab-signature';
+  footer.className='ada-binalab-signature';
+  footer.innerHTML='Built by <a href="https://binalab.my" target="_blank" rel="noopener noreferrer">BinaLab</a>';
+  document.body.appendChild(footer);
+}
+ensureBinaLabSignature();
+
 
 // RC2 UI Completion enhancement layer. Presentation only; cloud/auth/RPC logic remains unchanged.
 function enhanceCloudUI(){
