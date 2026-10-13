@@ -1268,3 +1268,9 @@ radial-gradient(circle at 88% 18%,rgba(217,177,94,.25),transparent 34%),#0c1112}
 .ada-public-contact-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
 .ada-public-contact-actions button{min-height:52px;display:flex;align-items:center;justify-content:center;gap:9px}
 @media(max-width:520px){.ada-public-contact-actions{grid-template-columns:1fr 1fr}}
+
+/* V50.8 · Public vehicle trust section */
+.ada-why-choose{margin:24px 0 26px;padding:28px;border:1px solid rgba(195,157,84,.27);border-radius:18px;background:linear-gradient(135deg,#171819,#202020);color:#f8f7f3}
+.ada-why-heading{margin-bottom:22px}.ada-why-heading .ada-public-eyebrow{color:#d9bb7d;letter-spacing:.15em;font-size:11px}.ada-why-heading h2{margin:8px 0;font-size:clamp(21px,3vw,28px);font-weight:750;letter-spacing:-.025em;color:#fff}.ada-why-heading p{margin:0;color:#bdbbb5;font-size:14px}
+.ada-why-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}.ada-why-item{display:flex;flex-direction:column;gap:14px;padding:18px 16px;border:1px solid rgba(255,255,255,.10);border-radius:12px;background:rgba(255,255,255,.035);min-width:0}.ada-why-icon{width:40px;height:40px;display:grid;place-items:center;border:1px solid rgba(217,187,125,.32);border-radius:10px;color:#d9bb7d;background:rgba(217,187,125,.08)}.ada-why-icon svg{width:22px;height:22px}.ada-why-item h3{margin:0 0 6px;color:#fff;font-size:15px;line-height:1.35;font-weight:700}.ada-why-item p{margin:0;color:#bdbbb5;font-size:12px;line-height:1.65}
+@media(max-width:900px){.ada-why-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:520px){.ada-why-choose{padding:20px 15px;margin:18px 0 22px}.ada-why-grid{gap:9px}.ada-why-item{padding:14px 12px;gap:10px}.ada-why-icon{width:36px;height:36px}.ada-why-item h3{font-size:13px}.ada-why-item p{font-size:11px}}
