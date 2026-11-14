@@ -93,6 +93,14 @@ html.ada-public-route .ada-public-card.is-sold .ada-public-card-media>.ada-publi
 html.ada-public-route .ada-public-card.is-sold .ada-public-card-media>.ada-public-card-badge.status-sold::after{content:"TELAH TERJUAL";display:block;margin-top:8px;padding-top:8px;width:85%;border-top:1px solid rgba(255,228,185,.65);font-size:clamp(8px,1.7vw,10px);font-weight:750;letter-spacing:.08em;line-height:1.2;color:#ffe7c4;text-shadow:none}
 @media(max-width:650px){html.ada-public-route .ada-public-card.is-sold .ada-public-card-media>.ada-public-card-badge.status-sold{width:clamp(138px,43%,185px)!important;font-size:clamp(27px,8vw,36px)!important;padding:14px 8px!important}}
 </style>
+<style id="ada-ios-catalogue-search-focus-fix">
+/* iOS Safari zooms inputs below 16px, shifting the fixed-height catalogue viewport. */
+html.ada-public-route #ada-cat-search,
+html.ada-public-route .ada-cat-search input{font-size:16px!important;line-height:1.4!important;min-height:44px!important;max-width:100%!important;min-width:0!important;-webkit-text-size-adjust:100%}
+html.ada-public-route .ada-cat-search{min-height:52px!important;overflow:visible!important}
+html.ada-public-route #ada-public-catalogue{scroll-padding-top:24px;scroll-padding-bottom:calc(32px + env(safe-area-inset-bottom))}
+@media(max-width:650px){html.ada-public-route .ada-cat-search input{font-size:16px!important;text-overflow:ellipsis}}
+</style>
 </head><body><script id="ada-boot-app">
 (function(){
   const activate=(id,isModule)=>{
