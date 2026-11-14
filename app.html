@@ -210,6 +210,23 @@ const setRouteMode=mode=>{
   if(staffPanel&&(mode==='auth'||mode==='public'))staffPanel.hidden=true;
 };
 window.visualViewport?.addEventListener('resize',syncAuthViewport);
+window.visualViewport?.addEventListener('scroll',syncAuthViewport);
+// On iOS keyboard focus, keep the search field and its result area in the visible catalogue scroller.
+document.addEventListener('focusin',e=>{
+  if(e.target?.id!=='ada-cat-search')return;
+  const adjust=()=>{
+    const pane=document.getElementById('ada-public-catalogue');
+    const field=e.target.closest('.ada-cat-search');
+    if(!pane||!field||document.activeElement!==e.target)return;
+    const paneRect=pane.getBoundingClientRect(),fieldRect=field.getBoundingClientRect();
+    const desiredTop=paneRect.top+16;
+    const delta=fieldRect.top-desiredTop;
+    if(delta>8)pane.scrollTop+=delta;
+  };
+  requestAnimationFrame(adjust);
+  setTimeout(adjust,320);
+});
+
 window.addEventListener('orientationchange',()=>setTimeout(syncAuthViewport,120));
 
 async function verify(){
