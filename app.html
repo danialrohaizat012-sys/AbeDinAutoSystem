@@ -93,6 +93,23 @@ html.ada-public-route .ada-public-card.is-sold .ada-public-card-media>.ada-publi
 html.ada-public-route .ada-public-card.is-sold .ada-public-card-media>.ada-public-card-badge.status-sold::after{content:"TELAH TERJUAL";display:block;margin-top:7px;padding-top:7px;width:82%;border-top:1px solid rgba(217,180,102,.4);font-size:clamp(7px,.9vw,9px);font-weight:650;letter-spacing:.08em;line-height:1.2;color:#d9b466;text-shadow:none}
 @media(max-width:650px){html.ada-public-route .ada-public-card.is-sold .ada-public-card-media>.ada-public-card-badge.status-sold{width:clamp(126px,37%,160px)!important;font-size:clamp(24px,7vw,32px)!important;padding:12px 8px!important}html.ada-public-route .ada-public-card.is-sold .ada-public-card-media>.ada-public-card-badge.status-sold::after{font-size:8px}}
 </style>
+<style id="ada-available-emerald-status">
+/* Public catalogue AVAILABLE badge: vivid emerald, original top-left position retained. */
+html.ada-public-route .ada-public-card:not(.is-sold) .ada-public-card-media>.ada-public-card-badge.status-available{
+  position:absolute!important;top:14px!important;left:14px!important;right:auto!important;bottom:auto!important;transform:none!important;z-index:5!important;
+  display:inline-flex!important;align-items:center;gap:8px;
+  padding:9px 13px!important;border:1px solid rgba(112,255,184,.76)!important;border-radius:999px!important;
+  background:linear-gradient(125deg,rgba(10,101,64,.98),rgba(9,71,51,.97))!important;
+  color:#f3fff8!important;font-size:11px!important;font-weight:850!important;line-height:1.2!important;letter-spacing:.105em!important;
+  text-shadow:0 1px 2px rgba(0,0,0,.18)!important;
+  box-shadow:0 5px 16px rgba(0,0,0,.36),inset 0 1px 0 rgba(255,255,255,.15)!important;
+  backdrop-filter:blur(8px)!important;white-space:nowrap;
+}
+html.ada-public-route .ada-public-card:not(.is-sold) .ada-public-card-media>.ada-public-card-badge.status-available::before{
+  content:"";display:inline-block;flex:0 0 7px;width:7px;height:7px;border-radius:50%;background:#8dffc0;box-shadow:0 0 0 3px rgba(141,255,192,.16);
+}
+@media(max-width:650px){html.ada-public-route .ada-public-card:not(.is-sold) .ada-public-card-media>.ada-public-card-badge.status-available{top:12px!important;left:12px!important;padding:8px 11px!important;font-size:10px!important;gap:7px}}
+</style>
 <style id="ada-ios-catalogue-search-focus-fix">
 /* iOS Safari zooms inputs below 16px, shifting the fixed-height catalogue viewport. */
 html.ada-public-route #ada-cat-search,
