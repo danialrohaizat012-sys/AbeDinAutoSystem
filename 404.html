@@ -14,6 +14,10 @@
     location.replace('/app.html?admin=1');
     return;
   }
+  if(/\/permohonan(\.html)?$/.test(path)){
+    location.replace('/permohonan.html'+location.search);
+    return;
+  }
   if(qs.has('car')){
     location.replace('/app.html?car='+encodeURIComponent(qs.get('car')));
     return;
