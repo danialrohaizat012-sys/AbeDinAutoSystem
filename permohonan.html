@@ -1,221 +1,337 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ms">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#080b0c">
-<title>Borang Permohonan | Abe Din Auto</title>
-<meta name="description" content="Borang permohonan bakal pembeli kereta Abe Din Auto.">
-<link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
-<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Borang Permohonan Pembeli Kereta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#080b0c;--line:#2d3536;--ink:#f3eee2;--muted:#969da8;--gold:#d8ad57;--gold-ink:#0b0d0e;--err:#e47777;--ok:#45c98b;--r:18px;color-scheme:dark}
+:root{
+  --bg:#f3f5f8; --card:#fff; --ink:#14181f; --muted:#5d6675; --line:#dfe3ea;
+  --brand:#0e5fd8; --brand-ink:#fff; --accent:#e8f0fd; --err:#c62828; --ok:#14804a;
+  --r:14px;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#0f1217;--card:#181c23;--ink:#eef1f6;--muted:#9aa3b2;--line:#2a303a;--brand:#4b8dff;--accent:#1b2638;--err:#ff6b6b;--ok:#3ccf7f}
+}
 *{box-sizing:border-box}
-body{margin:0;background:radial-gradient(1200px 500px at 50% -200px,#1d1a12 0%,var(--bg) 60%) var(--bg);color:var(--ink);
-  font:16px/1.45 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-.wrap{max-width:720px;margin:0 auto;padding:max(18px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) 130px max(16px,env(safe-area-inset-left))}
-header{text-align:center;padding:10px 0 18px}
-header img{width:min(62%,230px);height:auto}
-h1{font-size:clamp(24px,6vw,30px);line-height:1.15;margin:14px 0 6px;font-weight:800}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Plus Jakarta Sans",system-ui,sans-serif;font-size:16px;line-height:1.45}
+.wrap{max-width:720px;margin:0 auto;padding:20px 16px 120px}
+header{padding:22px 4px 10px}
+header .tag{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--brand);background:var(--accent);padding:5px 10px;border-radius:99px}
+h1{font-size:28px;line-height:1.15;margin:12px 0 6px;font-weight:800;letter-spacing:-.01em}
 header p{margin:0;color:var(--muted)}
-section.card{background:linear-gradient(150deg,#151b1c,#0d1112);border:1px solid var(--line);border-radius:var(--r);padding:20px 18px;margin:0 0 14px}
-.card h2{font-size:16px;margin:0 0 16px;font-weight:800;letter-spacing:.02em;color:var(--gold)}
-.field{margin-bottom:14px}
-.field:last-child{margin-bottom:0}
+.progress{position:sticky;top:0;z-index:5;background:var(--bg);padding:12px 0 10px;margin-bottom:4px}
+.bar{height:6px;background:var(--line);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--brand);transition:width .25s}
+.progress small{display:block;margin-top:6px;color:var(--muted);font-size:13px}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px 18px;margin:14px 0}
+.card h2{display:flex;align-items:center;gap:10px;font-size:17px;margin:0 0 16px;font-weight:800;letter-spacing:.01em}
+.card h2 .n{width:28px;height:28px;border-radius:8px;background:var(--brand);color:var(--brand-ink);display:grid;place-items:center;font-size:14px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.full{grid-column:1/-1}
+@media (max-width:560px){.grid{grid-template-columns:1fr}}
 label{display:block;font-size:14px;font-weight:600;margin-bottom:6px}
-input,textarea{width:100%;font:inherit;color:var(--ink);background:#0b0f10;border:1.5px solid var(--line);border-radius:12px;padding:12px;outline:none}
-textarea{resize:vertical;min-height:80px}
-input:focus,textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(216,173,87,.18)}
-.field.bad input,.field.bad textarea{border-color:var(--err)}
+label .req{color:var(--err)}
+input,select,textarea{width:100%;font:inherit;color:var(--ink);background:var(--card);border:1.5px solid var(--line);border-radius:10px;padding:12px 12px;outline:none;transition:border-color .15s, box-shadow .15s}
+textarea{resize:vertical;min-height:84px}
+input:focus,select:focus,textarea:focus{border-color:var(--brand);box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 20%,transparent)}
+.field.bad input,.field.bad select,.field.bad textarea{border-color:var(--err)}
 .msg{display:none;color:var(--err);font-size:13px;margin-top:5px}
 .field.bad .msg{display:block}
-.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
-.actions{position:fixed;left:0;right:0;bottom:0;background:rgba(8,11,12,.92);backdrop-filter:blur(14px);border-top:1px solid var(--line);padding:12px 16px max(12px,env(safe-area-inset-bottom))}
-.actions .in{max-width:720px;margin:0 auto;display:flex}
-.btn{flex:1;font:inherit;font-weight:800;border-radius:14px;padding:14px 16px;border:1.5px solid var(--line);background:transparent;color:var(--ink);cursor:pointer;text-align:center;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.check{display:flex;align-items:center;gap:8px;font-weight:500;font-size:14px;margin:-4px 0 0;cursor:pointer}
+.check input{width:18px;height:18px;accent-color:var(--brand)}
+.hint{font-size:13px;color:var(--muted);margin-top:5px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.chip{border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:99px;padding:7px 13px;font:inherit;font-size:14px;cursor:pointer}
+.chip.on{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
+.actions{position:fixed;left:0;right:0;bottom:0;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px);border-top:1px solid var(--line);padding:12px 16px calc(12px + env(safe-area-inset-bottom))}
+.actions .in{max-width:720px;margin:0 auto;display:flex;gap:10px}
+.btn{flex:1;font:inherit;font-weight:700;border-radius:12px;padding:14px 16px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;text-align:center;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
 .btn.wa{background:#1fa855;border-color:#1fa855;color:#fff}
-#done{display:none;text-align:center;padding:30px 20px}
-#done .tick{width:64px;height:64px;border-radius:50%;background:rgba(69,201,139,.14);border:1px solid rgba(69,201,139,.45);display:grid;place-items:center;margin:0 auto 14px;color:var(--ok)}
-#done h2{color:var(--ink);font-size:22px}
-#done p{color:var(--muted);margin:0 0 18px}
-.stack{display:grid;gap:10px;max-width:420px;margin:0 auto}
-.toast{position:fixed;left:50%;bottom:100px;transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:.2s;z-index:9}
-.toast.show{opacity:1;transform:translate(-50%,0)}
+.btn.ghost{flex:0 0 auto}
+/* review */
+#review{display:none}
+#review .card pre{white-space:pre-wrap;word-break:break-word;font-family:inherit;font-size:14.5px;margin:0;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:14px}
+.done{display:flex;gap:10px;align-items:flex-start;background:color-mix(in srgb,var(--ok) 12%,var(--card));border:1px solid color-mix(in srgb,var(--ok) 40%,transparent);border-radius:var(--r);padding:14px 16px;margin-top:14px}
+.done b{color:var(--ok)}
+.stack{display:grid;gap:10px;margin-top:14px}
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:.2s}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.note{font-size:13px;color:var(--muted);text-align:center;margin-top:18px}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <a href="./"><img src="abe-din-logo.png" alt="Abe Din Auto" width="500" height="222"></a>
-    <h1>Borang Permohonan</h1>
-    <p>Sila lengkapkan maklumat dibawah :</p>
+    <span class="tag">Permohonan Pembiayaan Kereta</span>
+    <h1>Borang Maklumat Bakal Pembeli</h1>
+    <p>Sila lengkapkan maklumat di bawah. Ruangan bertanda <span style="color:var(--err)">*</span> wajib diisi.</p>
   </header>
 
   <form id="f" novalidate>
+    <div class="progress"><div class="bar"><i id="pb"></i></div><small id="pt">0% lengkap</small></div>
+
     <section class="card">
-      <h2>MAKLUMAT PEMOHON</h2>
-      <div class="field"><label for="nama">1. Nama Penuh</label><input id="nama" name="nama" required maxlength="150" autocomplete="name"><div class="msg">Sila isi.</div></div>
-      <div class="field"><label for="ic">2. No I/C</label><input id="ic" name="ic" required inputmode="numeric" maxlength="14" placeholder="900101-01-1234" data-type="ic"><div class="msg">No. I/C mesti 12 digit.</div></div>
-      <div class="field"><label for="alamatTetap">2. Alamat Tetap</label><textarea id="alamatTetap" name="alamatTetap" required maxlength="500"></textarea><div class="msg">Sila isi.</div></div>
-      <div class="field"><label for="alamatSekarang">3. Alamat Sekarang</label><textarea id="alamatSekarang" name="alamatSekarang" required maxlength="500"></textarea><div class="msg">Sila isi.</div></div>
-      <div class="field"><label for="tempoh">4. Tempoh Menetap</label><input id="tempoh" name="tempoh" required maxlength="60"><div class="msg">Sila isi.</div></div>
-      <div class="field"><label for="tel">5. No Tel Bimbit</label><input id="tel" name="tel" required type="tel" inputmode="tel" maxlength="20" data-type="tel"><div class="msg">Sila isi no. telefon yang sah.</div></div>
-      <div class="field"><label for="tanggungan">6. Bilangan Tanggungan</label><input id="tanggungan" name="tanggungan" required inputmode="numeric" maxlength="2" data-type="int"><div class="msg">Sila isi nombor.</div></div>
-      <div class="field"><label for="kahwin">7. Taraf Perkahwinan</label><input id="kahwin" name="kahwin" required maxlength="60"><div class="msg">Sila isi.</div></div>
-      <div class="field"><label for="bangsa">8. Bangsa</label><input id="bangsa" name="bangsa" required maxlength="60"><div class="msg">Sila isi.</div></div>
-      <div class="field"><label for="agama">9. Agama</label><input id="agama" name="agama" required maxlength="60"><div class="msg">Sila isi.</div></div>
-      <div class="field"><label for="rumah">10. Taraf Pemilikan Rumah</label><input id="rumah" name="rumah" required maxlength="80"><div class="msg">Sila isi.</div></div>
-      <div class="field"><label for="pendidikan">11. Pendidikan Tertinggi</label><input id="pendidikan" name="pendidikan" required maxlength="80"><div class="msg">Sila isi.</div></div>
-      <div class="field"><label for="email">12. Alamat Email</label><input id="email" name="email" required type="email" inputmode="email" maxlength="150" autocomplete="email"><div class="msg">Sila isi email yang sah.</div></div>
+      <h2><span class="n">1</span>Maklumat Pemohon</h2>
+      <div class="grid">
+        <div class="field full"><label>Nama Penuh (seperti dalam IC) <span class="req">*</span></label><input name="nama" required autocomplete="name"><div class="msg">Sila isi nama penuh.</div></div>
+        <div class="field"><label>No. I/C <span class="req">*</span></label><input name="ic" required inputmode="numeric" placeholder="900101-01-1234" maxlength="14" data-type="ic"><div class="msg">No. I/C mesti 12 digit.</div></div>
+        <div class="field"><label>No. Tel Bimbit <span class="req">*</span></label><input name="tel" required type="tel" inputmode="tel" placeholder="012-345 6789" data-type="tel"><div class="msg">Sila isi no. telefon yang sah.</div></div>
+        <div class="field full"><label>Alamat Tetap <span class="req">*</span></label><textarea name="alamatTetap" required autocomplete="street-address"></textarea><div class="msg">Sila isi alamat tetap.</div></div>
+        <div class="full"><label class="check"><input type="checkbox" id="sama"> Alamat sekarang sama seperti alamat tetap</label></div>
+        <div class="field full"><label>Alamat Sekarang <span class="req">*</span></label><textarea name="alamatSekarang" required></textarea><div class="msg">Sila isi alamat sekarang.</div></div>
+        <div class="field"><label>Tempoh Menetap <span class="req">*</span></label><input name="tempoh" required placeholder="cth: 5 tahun"><div class="msg">Sila isi tempoh menetap.</div></div>
+        <div class="field"><label>Bilangan Tanggungan <span class="req">*</span></label><input name="tanggungan" required type="number" min="0" max="30" inputmode="numeric" placeholder="0"><div class="msg">Sila isi bilangan tanggungan.</div></div>
+        <div class="field"><label>Taraf Perkahwinan <span class="req">*</span></label>
+          <select name="kahwin" required><option value="">— Pilih —</option><option>Bujang</option><option>Berkahwin</option><option>Duda</option><option>Janda</option></select><div class="msg">Sila pilih.</div></div>
+        <div class="field"><label>Bangsa <span class="req">*</span></label>
+          <select name="bangsa" required data-other><option value="">— Pilih —</option><option>Melayu</option><option>Cina</option><option>India</option><option>Bumiputera Sabah</option><option>Bumiputera Sarawak</option><option>Lain-lain</option></select><div class="msg">Sila pilih.</div></div>
+        <div class="field"><label>Agama <span class="req">*</span></label>
+          <select name="agama" required data-other><option value="">— Pilih —</option><option>Islam</option><option>Buddha</option><option>Hindu</option><option>Kristian</option><option>Lain-lain</option></select><div class="msg">Sila pilih.</div></div>
+        <div class="field"><label>Taraf Pemilikan Rumah <span class="req">*</span></label>
+          <select name="rumah" required data-other><option value="">— Pilih —</option><option>Milik Sendiri</option><option>Sewa</option><option>Tinggal Bersama Ibu Bapa / Keluarga</option><option>Kuarters Majikan</option><option>Lain-lain</option></select><div class="msg">Sila pilih.</div></div>
+        <div class="field"><label>Pendidikan Tertinggi <span class="req">*</span></label>
+          <select name="pendidikan" required data-other><option value="">— Pilih —</option><option>SPM / Setaraf</option><option>STPM / Sijil</option><option>Diploma</option><option>Ijazah Sarjana Muda</option><option>Sarjana / PhD</option><option>Lain-lain</option></select><div class="msg">Sila pilih.</div></div>
+        <div class="field"><label>Alamat Email <span class="req">*</span></label><input name="email" required type="email" inputmode="email" autocomplete="email" placeholder="nama@email.com"><div class="msg">Sila isi email yang sah.</div></div>
+      </div>
     </section>
 
     <section class="card">
-      <h2>MAKLUMAT PEKERJAAN PEMOHON</h2>
-      <div class="field"><label for="majikan">1. Nama Majikan</label><input id="majikan" name="majikan" required maxlength="150"><div class="msg">Sila isi.</div></div>
-      <div class="field"><label for="alamatMajikan">2. Alamat Majikan</label><textarea id="alamatMajikan" name="alamatMajikan" required maxlength="500"></textarea><div class="msg">Sila isi.</div></div>
-      <div class="field"><label for="jawatan">3. Jawatan</label><input id="jawatan" name="jawatan" required maxlength="100"><div class="msg">Sila isi.</div></div>
-      <div class="field"><label for="mula">4. Tarikh Mula Berkhidmat</label><input id="mula" name="mula" required type="date" data-type="date"><div class="msg">Sila pilih tarikh.</div></div>
-      <div class="field"><label for="gred">5. Gred / Pangkat</label><input id="gred" name="gred" maxlength="60"></div>
-      <div class="field"><label for="telPejabat">6. No. Tel. Pejabat/majikan/HR</label><input id="telPejabat" name="telPejabat" required type="tel" inputmode="tel" maxlength="20" data-type="tel"><div class="msg">Sila isi no. telefon yang sah.</div></div>
+      <h2><span class="n">2</span>Maklumat Pekerjaan Pemohon</h2>
+      <div class="grid">
+        <div class="field full"><label>Nama Majikan <span class="req">*</span></label><input name="majikan" required autocomplete="organization"><div class="msg">Sila isi nama majikan.</div></div>
+        <div class="field full"><label>Alamat Majikan <span class="req">*</span></label><textarea name="alamatMajikan" required></textarea><div class="msg">Sila isi alamat majikan.</div></div>
+        <div class="field"><label>Jawatan <span class="req">*</span></label><input name="jawatan" required autocomplete="organization-title"><div class="msg">Sila isi jawatan.</div></div>
+        <div class="field"><label>Tarikh Mula Berkhidmat <span class="req">*</span></label><input name="mulaKerja" required type="date"><div class="msg">Sila pilih tarikh.</div></div>
+        <div class="field"><label>Gred / Pangkat</label><input name="gred" placeholder="cth: N19 / Eksekutif"></div>
+        <div class="field"><label>No. Tel Pejabat / Majikan / HR <span class="req">*</span></label><input name="telPejabat" required type="tel" inputmode="tel" data-type="tel"><div class="msg">Sila isi no. telefon yang sah.</div></div>
+      </div>
     </section>
 
     <section class="card">
-      <h2>MAKLUMAT PERUJUK/WARIS</h2>
-      <div class="field"><label for="warisNama">1. Nama</label><input id="warisNama" name="warisNama" required maxlength="150"><div class="msg">Sila isi.</div></div>
-      <div class="field"><label for="warisTel">2. No.Tel Bimbit</label><input id="warisTel" name="warisTel" required type="tel" inputmode="tel" maxlength="20" data-type="tel"><div class="msg">Sila isi no. telefon yang sah.</div></div>
-      <div class="field"><label for="warisAlamat">3. Alamat</label><textarea id="warisAlamat" name="warisAlamat" required maxlength="500"></textarea><div class="msg">Sila isi.</div></div>
-      <div class="field"><label for="warisHubungan">4. Hubungan</label><input id="warisHubungan" name="warisHubungan" required maxlength="60"><div class="msg">Sila isi.</div></div>
+      <h2><span class="n">3</span>Maklumat Perujuk / Waris</h2>
+      <div class="grid">
+        <div class="field full"><label>Nama <span class="req">*</span></label><input name="warisNama" required><div class="msg">Sila isi nama perujuk/waris.</div></div>
+        <div class="field"><label>No. Tel Bimbit <span class="req">*</span></label><input name="warisTel" required type="tel" inputmode="tel" data-type="tel"><div class="msg">Sila isi no. telefon yang sah.</div></div>
+        <div class="field"><label>Hubungan <span class="req">*</span></label>
+          <select name="warisHubungan" required data-other><option value="">— Pilih —</option><option>Ibu / Bapa</option><option>Suami / Isteri</option><option>Adik-beradik</option><option>Anak</option><option>Saudara</option><option>Rakan</option><option>Lain-lain</option></select><div class="msg">Sila pilih.</div></div>
+        <div class="field full"><label>Alamat <span class="req">*</span></label><textarea name="warisAlamat" required></textarea><div class="msg">Sila isi alamat perujuk/waris.</div></div>
+      </div>
     </section>
 
     <section class="card">
-      <h2>NAK JENIS KERETA APA?</h2>
-      <div class="field"><textarea id="kereta" name="kereta" required maxlength="500" aria-label="Nak jenis kereta apa?"></textarea><div class="msg">Sila isi.</div></div>
-      <div class="hp" aria-hidden="true"><label>Website<input name="website" tabindex="-1" autocomplete="off"></label></div>
+      <h2><span class="n">4</span>Nak Jenis Kereta Apa?</h2>
+      <div class="chips" id="chips">
+        <button type="button" class="chip">Perodua Myvi</button><button type="button" class="chip">Perodua Axia</button><button type="button" class="chip">Perodua Bezza</button><button type="button" class="chip">Perodua Alza</button><button type="button" class="chip">Proton Saga</button><button type="button" class="chip">Proton X50</button><button type="button" class="chip">Honda City</button><button type="button" class="chip">Toyota Vios</button>
+      </div>
+      <div class="field"><label>Model / jenis kereta yang diminati <span class="req">*</span></label><textarea name="kereta" required placeholder="cth: Myvi 1.5 AV, warna putih, terpakai bawah 5 tahun"></textarea><div class="msg">Sila nyatakan kereta yang diminati.</div><div class="hint">Tekan pilihan di atas atau taip sendiri — boleh nyatakan model, warna, baru/terpakai.</div></div>
     </section>
   </form>
 
-  <section class="card" id="done" aria-live="polite">
-    <div class="tick"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
-    <h2>Satu langkah lagi</h2>
-    <p>WhatsApp akan dibuka dengan maklumat anda. <b style="color:var(--ink)">Tekan butang Hantar dalam WhatsApp</b> untuk menghantar kepada Abe Din Auto.</p>
-    <div class="stack">
-      <a class="btn wa" id="waOpen" href="#">Buka WhatsApp</a>
-      <button type="button" class="btn" id="edit">Edit borang</button>
-    </div>
-  </section>
+  <div id="review">
+    <section class="card">
+      <h2><span class="n">✓</span>Semak & Hantar</h2>
+      <p style="margin:0 0 12px;color:var(--muted)">Sila semak maklumat anda. Tekan <b>Hantar melalui WhatsApp</b> untuk menghantar kepada kami.</p>
+      <pre id="out"></pre>
+      <div class="stack">
+        <a class="btn wa" id="wa" href="#" target="_blank" rel="noopener">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.4.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.1 5.1 0 0 0 1.1 2.7 11.7 11.7 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 0 0 1.8-1.2 2.2 2.2 0 0 0 .1-1.3c0-.1-.2-.2-.4-.3Z"/></svg>
+          Hantar melalui WhatsApp</a>
+        <button type="button" class="btn" id="copy">Salin Maklumat</button>
+      </div>
+      <div class="done" id="done" style="display:none"><span>✅</span><div><b>Terima kasih!</b> Pastikan anda tekan "Hantar" dalam WhatsApp. Kami akan menghubungi anda secepat mungkin.</div></div>
+    </section>
+  </div>
+  <p class="note">Maklumat anda hanya digunakan untuk tujuan permohonan pembiayaan kereta.</p>
 </div>
 
-<div class="actions" id="actions"><div class="in">
-  <button type="button" class="btn wa" id="submit">Hantar ke WhatsApp Abe Din</button>
+<div class="actions"><div class="in" id="barForm">
+  <button type="button" class="btn ghost" id="reset">Kosongkan</button>
+  <button type="button" class="btn primary" id="next">Semak & Hantar →</button>
+</div><div class="in" id="barReview" style="display:none">
+  <button type="button" class="btn" id="back">← Edit Semula</button>
 </div></div>
-<div class="toast" id="toast" role="status"></div>
+<div class="toast" id="toast"></div>
 
-<script type="module">
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-// Hanya untuk membaca nombor WhatsApp Abe Din (Tetapan > WhatsApp Abe Din). Borang tidak menyimpan apa-apa data.
-const client = createClient('https://buzpdyvvoiqgbeventwm.supabase.co', 'sb_publishable_zuuNipsMpalN_38SJwXpFA_MRzQ6eZ0',
-  { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: 'ada-public-form' } });
+<script>
+// Nombor WhatsApp Abe Din dibaca dari Tetapan sistem (lihat skrip di bawah).
+window.WHATSAPP_PENJUAL = window.WHATSAPP_PENJUAL || "";
 
+const f = document.getElementById('f');
 const $ = s => document.querySelector(s);
-const f = $('#f');
-const DRAFT = 'ada-permohonan-draf';
-const fields = [...f.querySelectorAll('input[name],textarea[name]')].filter(el => el.name !== 'website');
-let waNumber = '';
+const KEY = 'borang-pembeli-draf';
+const fields = [...f.querySelectorAll('input[name],select[name],textarea[name]')];
+const requiredFields = fields.filter(el => el.required);
 
-const settings = Promise.race([
-  client.rpc('get_public_settings').then(({ data }) => {
-    const x = Array.isArray(data) ? data[0] : data;
-    waNumber = String(x?.whatsapp_number || '').replace(/\D/g, '');
-  }).catch(() => {}),
-  new Promise(r => setTimeout(r, 4000))
-]);
-
-f.ic.addEventListener('input', () => {
-  const d = f.ic.value.replace(/\D/g, '').slice(0, 12);
-  f.ic.value = d.length > 8 ? `${d.slice(0,6)}-${d.slice(6,8)}-${d.slice(8)}` : d.length > 6 ? `${d.slice(0,6)}-${d.slice(6)}` : d;
+// "Lain-lain" -> tukar kepada input teks
+f.querySelectorAll('select[data-other]').forEach(sel => {
+  const box = document.createElement('input');
+  box.placeholder = 'Sila nyatakan';
+  box.style.marginTop = '8px'; box.style.display = 'none';
+  box.dataset.otherFor = sel.name;
+  sel.after(box);
+  const sync = () => { box.style.display = sel.value === 'Lain-lain' ? 'block' : 'none'; };
+  sel.addEventListener('change', () => { sync(); if (sel.value === 'Lain-lain') box.focus(); });
+  sel._other = box; sel._sync = sync;
 });
-f.mula.max = new Date().toISOString().slice(0, 10);
 
+// format IC: 900101-01-1234
+f.querySelectorAll('[data-type=ic]').forEach(el => el.addEventListener('input', () => {
+  const d = el.value.replace(/\D/g, '').slice(0, 12);
+  el.value = d.length > 8 ? `${d.slice(0,6)}-${d.slice(6,8)}-${d.slice(8)}` : d.length > 6 ? `${d.slice(0,6)}-${d.slice(6)}` : d;
+}));
+
+// alamat sama
+const sama = $('#sama'), aT = f.alamatTetap, aS = f.alamatSekarang;
+sama.addEventListener('change', () => { if (sama.checked) aS.value = aT.value; aS.readOnly = sama.checked; save(); progress(); });
+aT.addEventListener('input', () => { if (sama.checked) aS.value = aT.value; });
+
+// chips kereta
+$('#chips').addEventListener('click', e => {
+  const c = e.target.closest('.chip'); if (!c) return;
+  c.classList.toggle('on');
+  const picked = [...document.querySelectorAll('.chip.on')].map(x => x.textContent);
+  const k = f.kereta;
+  const manual = k.value.split('\n').filter(l => !l.startsWith('Pilihan: ')).join('\n').trim();
+  k.value = (picked.length ? 'Pilihan: ' + picked.join(', ') + (manual ? '\n' : '') : '') + manual;
+  k.dispatchEvent(new Event('input', { bubbles: true }));
+});
+
+function valueOf(el) {
+  if (el.tagName === 'SELECT' && el.value === 'Lain-lain' && el._other.value.trim()) return 'Lain-lain: ' + el._other.value.trim();
+  return el.value.trim();
+}
 function valid(el) {
   const v = el.value.trim();
   if (!el.required && !v) return true;
   if (!v) return false;
-  const t = el.dataset.type;
-  if (t === 'ic') return /^\d{6}-\d{2}-\d{4}$/.test(v);
-  if (t === 'tel') { const d = v.replace(/\D/g, ''); return d.length >= 9 && d.length <= 15; }
-  if (t === 'int') return /^\d{1,2}$/.test(v);
-  if (t === 'date') return v <= f.mula.max;
+  if (el.dataset.type === 'ic') return v.replace(/\D/g, '').length === 12;
+  if (el.dataset.type === 'tel') return v.replace(/\D/g, '').length >= 9;
   if (el.type === 'email') return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
   return true;
 }
+function progress() {
+  const ok = requiredFields.filter(valid).length;
+  const p = Math.round(ok / requiredFields.length * 100);
+  $('#pb').style.width = p + '%'; $('#pt').textContent = `${p}% lengkap · ${ok}/${requiredFields.length} ruangan wajib`;
+}
 fields.forEach(el => {
-  el.addEventListener('input', () => { if (valid(el)) el.closest('.field')?.classList.remove('bad'); save(); });
+  const h = () => { if (valid(el)) el.closest('.field')?.classList.remove('bad'); progress(); save(); };
+  el.addEventListener('input', h); el.addEventListener('change', h);
   el.addEventListener('blur', () => { if (el.value && !valid(el)) el.closest('.field')?.classList.add('bad'); });
 });
+f.addEventListener('input', e => { if (e.target.dataset.otherFor) save(); });
 
-function save() { try { const d = {}; fields.forEach(el => d[el.name] = el.value); localStorage.setItem(DRAFT, JSON.stringify(d)); } catch (e) {} }
-function load() { try { const d = JSON.parse(localStorage.getItem(DRAFT) || 'null'); if (d) fields.forEach(el => { if (d[el.name] != null) el.value = d[el.name]; }); } catch (e) {} }
-
-const v = n => f[n].value.trim();
-function fmtDate(x) { const [y, m, d] = x.split('-'); return d ? `${d}/${m}/${y}` : x; }
-
-// Format sama seperti templat asal Abe Din Auto.
-function message() {
-  return `*MAKLUMAT PEMOHON*
-1. Nama Penuh : ${v('nama')}
-2. No I/C: ${v('ic')}
-2. Alamat Tetap : ${v('alamatTetap')}
-3. Alamat Sekarang : ${v('alamatSekarang')}
-4. Tempoh Menetap : ${v('tempoh')}
-5. No Tel Bimbit : ${v('tel')}
-6. Bilangan Tanggungan : ${v('tanggungan')}
-7. Taraf Perkahwinan : ${v('kahwin')}
-8. Bangsa : ${v('bangsa')}
-9. Agama : ${v('agama')}
-10. Taraf Pemilikan Rumah: ${v('rumah')}
-11. Pendidikan Tertinggi : ${v('pendidikan')}
-12. Alamat Email : ${v('email')}
-
-*MAKLUMAT PEKERJAAN PEMOHON* :
-1.Nama Majikan: ${v('majikan')}
-2. Alamat Majikan: ${v('alamatMajikan')}
-3. Jawatan : ${v('jawatan')}
-4. Tarikh Mula Berkhidmat: ${fmtDate(v('mula'))}
-5. Gred / Pangkat : ${v('gred') || '-'}
-6. No. Tel. Pejabat/majikan/HR : ${v('telPejabat')}
-
-*MAKLUMAT PERUJUK/WARIS*
-1. Nama: ${v('warisNama')}
-2. No.Tel Bimbit: ${v('warisTel')}
-3. Alamat: ${v('warisAlamat')}
-4. Hubungan: ${v('warisHubungan')}
-
-NAK JENIS KERETA APA?
-- ${v('kereta')}`;
+// draf (pada peranti ini sahaja)
+function save() {
+  try {
+    const d = {}; fields.forEach(el => d[el.name] = el.value);
+    f.querySelectorAll('[data-other-for]').forEach(b => d['_o_' + b.dataset.otherFor] = b.value);
+    d._sama = sama.checked; localStorage.setItem(KEY, JSON.stringify(d));
+  } catch (e) {}
+}
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem(KEY) || 'null'); if (!d) return;
+    fields.forEach(el => { if (d[el.name] != null) el.value = d[el.name]; });
+    f.querySelectorAll('select[data-other]').forEach(s => { s._other.value = d['_o_' + s.name] || ''; s._sync(); });
+    sama.checked = !!d._sama; aS.readOnly = sama.checked;
+    const k = f.kereta.value; document.querySelectorAll('.chip').forEach(c => { if (k.includes(c.textContent)) c.classList.add('on'); });
+  } catch (e) {}
 }
 
-$('#submit').addEventListener('click', async () => {
-  if (f.website.value) return; // bot
-  let first = null;
-  fields.forEach(el => { const ok = valid(el); el.closest('.field')?.classList.toggle('bad', !ok); if (!ok && !first) first = el; });
-  if (first) {
-    first.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    setTimeout(() => first.focus({ preventScroll: true }), 350);
-    toast('Sila lengkapkan ruangan bertanda merah'); return;
-  }
-  await settings;
-  const link = (waNumber ? `https://wa.me/${waNumber}` : 'https://wa.me/') + '?text=' + encodeURIComponent(message());
-  $('#waOpen').href = link;
-  f.hidden = true; $('#actions').hidden = true; $('#done').style.display = 'block'; $('#toast').classList.remove('show');
-  window.scrollTo({ top: 0 });
-  location.href = link;
-});
-$('#edit').addEventListener('click', () => {
-  f.hidden = false; $('#actions').hidden = false; $('#done').style.display = 'none'; window.scrollTo({ top: 0 });
-});
+function fmtDate(v) { if (!v) return ''; const [y, m, d] = v.split('-'); return `${d}/${m}/${y}`; }
+function build() {
+  const g = n => valueOf(f[n]) || '-';
+  return `*BORANG PERMOHONAN PEMBELI KERETA*
 
+*MAKLUMAT PEMOHON*
+1. Nama Penuh : ${g('nama')}
+2. No I/C : ${g('ic')}
+3. Alamat Tetap : ${g('alamatTetap')}
+4. Alamat Sekarang : ${g('alamatSekarang')}
+5. Tempoh Menetap : ${g('tempoh')}
+6. No Tel Bimbit : ${g('tel')}
+7. Bilangan Tanggungan : ${g('tanggungan')}
+8. Taraf Perkahwinan : ${g('kahwin')}
+9. Bangsa : ${g('bangsa')}
+10. Agama : ${g('agama')}
+11. Taraf Pemilikan Rumah : ${g('rumah')}
+12. Pendidikan Tertinggi : ${g('pendidikan')}
+13. Alamat Email : ${g('email')}
+
+*MAKLUMAT PEKERJAAN PEMOHON*
+1. Nama Majikan : ${g('majikan')}
+2. Alamat Majikan : ${g('alamatMajikan')}
+3. Jawatan : ${g('jawatan')}
+4. Tarikh Mula Berkhidmat : ${fmtDate(f.mulaKerja.value) || '-'}
+5. Gred / Pangkat : ${g('gred')}
+6. No. Tel Pejabat/Majikan/HR : ${g('telPejabat')}
+
+*MAKLUMAT PERUJUK/WARIS*
+1. Nama : ${g('warisNama')}
+2. No. Tel Bimbit : ${g('warisTel')}
+3. Alamat : ${g('warisAlamat')}
+4. Hubungan : ${g('warisHubungan')}
+
+*NAK JENIS KERETA APA?*
+${g('kereta')}`;
+}
+
+let text = '';
+$('#next').addEventListener('click', () => {
+  let first = null;
+  requiredFields.forEach(el => { const ok = valid(el); el.closest('.field')?.classList.toggle('bad', !ok); if (!ok && !first) first = el; });
+  if (first) { first.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => first.focus({ preventScroll: true }), 350); toast('Sila lengkapkan ruangan bertanda merah'); return; }
+  text = build();
+  $('#out').textContent = text;
+  const num = String(window.WHATSAPP_PENJUAL || '').replace(/\D/g, '');
+  $('#wa').href = (num ? `https://wa.me/${num}` : 'https://wa.me/') + '?text=' + encodeURIComponent(text);
+  f.style.display = 'none'; $('#review').style.display = 'block';
+  $('#barForm').style.display = 'none'; $('#barReview').style.display = 'flex';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+$('#back').addEventListener('click', () => {
+  f.style.display = ''; $('#review').style.display = 'none'; $('#done').style.display = 'none';
+  $('#barForm').style.display = 'flex'; $('#barReview').style.display = 'none';
+  window.scrollTo({ top: 0 });
+});
+$('#wa').addEventListener('click', () => { $('#done').style.display = 'flex'; });
+$('#copy').addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText(text); toast('Maklumat telah disalin ✔'); }
+  catch (e) {
+    const r = document.createRange(); r.selectNodeContents($('#out'));
+    const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+    toast('Teks dipilih — tekan Salin / Copy');
+  }
+});
+// kosongkan (dengan pengesahan dua kali tekan)
+let armed = 0;
+$('#reset').addEventListener('click', e => {
+  if (Date.now() - armed > 3000) { armed = Date.now(); e.target.textContent = 'Tekan lagi'; setTimeout(() => e.target.textContent = 'Kosongkan', 3000); return; }
+  f.reset(); sama.checked = false; aS.readOnly = false;
+  f.querySelectorAll('select[data-other]').forEach(s => { s._other.value = ''; s._sync(); });
+  document.querySelectorAll('.chip.on').forEach(c => c.classList.remove('on'));
+  document.querySelectorAll('.field.bad').forEach(x => x.classList.remove('bad'));
+  try { localStorage.removeItem(KEY); } catch (e) {}
+  e.target.textContent = 'Kosongkan'; armed = 0; progress(); toast('Borang dikosongkan');
+});
 function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 2200); }
-load();
+
+load(); progress();
+</script>
+<script type="module">
+// Baca nombor WhatsApp Abe Din dari Tetapan > WhatsApp Abe Din. Borang tidak menyimpan apa-apa data.
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+const client = createClient('https://buzpdyvvoiqgbeventwm.supabase.co', 'sb_publishable_zuuNipsMpalN_38SJwXpFA_MRzQ6eZ0',
+  { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: 'ada-public-form' } });
+client.rpc('get_public_settings').then(({ data }) => {
+  const x = Array.isArray(data) ? data[0] : data;
+  window.WHATSAPP_PENJUAL = String(x?.whatsapp_number || '').replace(/\D/g, '');
+}).catch(() => {});
 </script>
 </body>
 </html>
