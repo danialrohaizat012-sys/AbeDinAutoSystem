@@ -55,8 +55,6 @@ input[readonly],textarea[readonly]{opacity:.7}
 #done h2{justify-content:center;text-transform:none;font-size:22px;letter-spacing:0}
 #done p{color:var(--muted);margin:0 0 18px}
 .stack{display:grid;gap:10px;max-width:420px;margin:0 auto}
-.alert{display:none;background:rgba(228,119,119,.1);border:1px solid rgba(228,119,119,.45);color:#ffd2d2;border-radius:14px;padding:14px 16px;margin:0 0 14px}
-.alert .stack{margin-top:12px;max-width:none}
 .toast{position:fixed;left:50%;bottom:100px;transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:.2s;z-index:9}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 .note{font-size:12.5px;color:var(--muted);text-align:center;margin-top:18px}
@@ -74,9 +72,6 @@ input[readonly],textarea[readonly]{opacity:.7}
 
   <form id="f" novalidate>
     <div class="progress"><div class="bar"><i id="pb"></i></div><small id="pt">0% lengkap</small></div>
-    <div class="alert" id="alert" role="alert"><b>Borang tidak dapat dihantar.</b> <span id="alertMsg"></span>
-      <div class="stack"><a class="btn wa" id="waFallback" href="#" target="_blank" rel="noopener">Hantar melalui WhatsApp</a></div>
-    </div>
 
     <section class="card">
       <h2><span class="n">1</span>Maklumat Pemohon</h2>
@@ -135,25 +130,25 @@ input[readonly],textarea[readonly]{opacity:.7}
 
   <section class="card" id="done" aria-live="polite">
     <div class="tick"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
-    <h2>Permohonan diterima</h2>
-    <p>Terima kasih, <b id="doneName"></b>. Pasukan Abe Din Auto akan menghubungi anda secepat mungkin.</p>
+    <h2>Satu langkah lagi</h2>
+    <p>Terima kasih, <b id="doneName"></b>. WhatsApp akan dibuka dengan maklumat anda. <b style="color:var(--ink)">Tekan butang Hantar dalam WhatsApp</b> untuk menghantar kepada Abe Din Auto.</p>
     <div class="stack">
-      <a class="btn wa" id="waNotify" href="#" target="_blank" rel="noopener" hidden>Maklumkan kami di WhatsApp</a>
-      <a class="btn" href="./">Lihat kereta dalam katalog</a>
+      <a class="btn wa" id="waOpen" href="#">Buka WhatsApp</a>
+      <button type="button" class="btn" id="edit">Edit borang</button>
     </div>
   </section>
 
-  <p class="note">Maklumat anda hanya digunakan oleh Abe Din Auto untuk tujuan permohonan pembiayaan kereta.</p>
+  <p class="note">Maklumat anda dihantar terus melalui WhatsApp kepada Abe Din Auto dan tidak disimpan dalam laman ini.</p>
 </div>
 
 <div class="actions" id="actions"><div class="in">
-  <button type="button" class="btn primary" id="submit">Hantar Permohonan</button>
+  <button type="button" class="btn wa" id="submit"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.4.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.1 5.1 0 0 0 1.1 2.7 11.7 11.7 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 0 0 1.8-1.2 2.2 2.2 0 0 0 .1-1.3c0-.1-.2-.2-.4-.3Z"/></svg>Hantar ke WhatsApp Abe Din</button>
 </div></div>
 <div class="toast" id="toast" role="status"></div>
 
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-// Klien berasingan: tidak berkongsi sesi log masuk staf, sentiasa hantar sebagai orang awam.
+// Hanya untuk membaca nombor WhatsApp Abe Din (Tetapan > WhatsApp Abe Din). Borang tidak menyimpan apa-apa data.
 const client = createClient('https://buzpdyvvoiqgbeventwm.supabase.co', 'sb_publishable_zuuNipsMpalN_38SJwXpFA_MRzQ6eZ0',
   { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: 'ada-public-form' } });
 
@@ -164,10 +159,13 @@ const fields = [...f.querySelectorAll('input[name],select[name],textarea[name]')
 const required = fields.filter(el => el.required);
 let waNumber = '';
 
-client.rpc('get_public_settings').then(({ data }) => {
-  const x = Array.isArray(data) ? data[0] : data;
-  waNumber = String(x?.whatsapp_number || '').replace(/\D/g, '');
-}).catch(() => {});
+const settings = Promise.race([
+  client.rpc('get_public_settings').then(({ data }) => {
+    const x = Array.isArray(data) ? data[0] : data;
+    waNumber = String(x?.whatsapp_number || '').replace(/\D/g, '');
+  }).catch(() => {}),
+  new Promise(r => setTimeout(r, 4000))
+]);
 
 // Lain-lain -> ruang teks
 f.querySelectorAll('select[data-other]').forEach(sel => {
@@ -189,7 +187,9 @@ const same = $('#same');
 same.addEventListener('change', () => { if (same.checked) f.current_addr.value = f.permanent_addr.value; f.current_addr.readOnly = same.checked; touch(f.current_addr); });
 f.permanent_addr.addEventListener('input', () => { if (same.checked) f.current_addr.value = f.permanent_addr.value; });
 
-const kereta = new URLSearchParams(location.search).get('kereta');
+const params = new URLSearchParams(location.search);
+const kereta = params.get('kereta');
+const ref = (params.get('ref') || '').trim().slice(0, 60);
 
 function val(el) {
   if (el.tagName === 'SELECT' && el.value === 'Lain-lain' && el._other.value.trim()) return 'Lain-lain: ' + el._other.value.trim();
@@ -284,18 +284,11 @@ function summary(p) {
 4. Hubungan : ${p.ref_relation}
 
 *NAK JENIS KERETA APA?*
-${p.car_wanted}`;
+${p.car_wanted}${ref ? `\n\n_Dirujuk oleh: ${ref}_` : ''}`;
 }
 const wa = text => (waNumber ? `https://wa.me/${waNumber}` : 'https://wa.me/') + '?text=' + encodeURIComponent(text);
 
-function friendly(err) {
-  const m = String(err?.message || err || '');
-  if (/Terlalu banyak|Sistem sibuk/.test(m)) return m;
-  if (/fetch|network|Failed/i.test(m)) return 'Sambungan internet bermasalah.';
-  return 'Ralat sistem.';
-}
-
-let busy = false;
+let busy = false, lastLink = '';
 $('#submit').addEventListener('click', async () => {
   if (busy) return;
   if (f.website.value) return; // bot
@@ -306,29 +299,20 @@ $('#submit').addEventListener('click', async () => {
     setTimeout(() => first.focus({ preventScroll: true }), 350);
     toast('Sila lengkapkan ruangan bertanda merah'); return;
   }
-  const p = payload(), btn = $('#submit');
-  busy = true; btn.disabled = true; btn.textContent = 'Menghantar...'; $('#alert').style.display = 'none';
-  try {
-    const { error } = await client.from('loan_applications').insert(p);
-    if (error) throw error;
-    try { localStorage.removeItem(DRAFT); } catch (e) {}
-    f.hidden = true; $('#actions').hidden = true; $('#done').style.display = 'block'; $('#toast').classList.remove('show');
-    $('#doneName').textContent = p.full_name;
-    if (waNumber) {
-      const n = $('#waNotify');
-      n.href = wa(`Salam Abe Din Auto, saya ${p.full_name} (${p.phone}) baru hantar borang permohonan untuk: ${p.car_wanted}`);
-      n.hidden = false;
-    }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  } catch (err) {
-    console.error(err);
-    $('#alertMsg').textContent = friendly(err) + ' Anda boleh cuba sekali lagi, atau hantar maklumat yang sama melalui WhatsApp.';
-    $('#waFallback').href = wa(summary(p));
-    $('#alert').style.display = 'block';
-    $('#alert').scrollIntoView({ behavior: 'smooth', block: 'center' });
-  } finally {
-    busy = false; btn.disabled = false; btn.textContent = 'Hantar Permohonan';
-  }
+  busy = true;
+  await settings; // pastikan nombor Abe Din sudah dibaca (maks. 4 saat)
+  busy = false;
+  const p = payload();
+  lastLink = wa(summary(p));
+  $('#waOpen').href = lastLink;
+  $('#doneName').textContent = p.full_name;
+  f.hidden = true; $('#actions').hidden = true; $('#done').style.display = 'block'; $('#toast').classList.remove('show');
+  window.scrollTo({ top: 0 });
+  location.href = lastLink;
+});
+$('#edit').addEventListener('click', () => {
+  f.hidden = false; $('#actions').hidden = false; $('#done').style.display = 'none';
+  window.scrollTo({ top: 0 });
 });
 
 function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 2200); }
