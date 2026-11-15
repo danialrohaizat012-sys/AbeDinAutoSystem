@@ -1,4 +1,4 @@
-// Abe Din Auto – modul Checklist pemeriksaan kereta (V54).
+// Abe Din Auto – modul Sistem Pemeriksaan kereta (V54). Berasingan daripada menu Checklist lama.
 // Dimuat oleh app.html melalui import("./js/checklist.js"). Jadual: checklist_inspections (lihat V54_CHECKLIST_MIGRATION.sql).
 // UI diasingkan dalam Shadow DOM supaya tidak bercampur dengan CSS sistem sedia ada.
 const SECTIONS = [
@@ -421,7 +421,7 @@ function tabs(){
 function render(){
   if(!app) return;
   if(S.view==="form") return renderForm();
-  let h=`<div class="head"><div><span class="kick">PEMERIKSAAN</span><h2>Checklist Kereta</h2></div></div>`+tabs();
+  let h=`<div class="head"><div><span class="kick">PEMERIKSAAN</span><h2>Sistem Pemeriksaan</h2></div></div>`+tabs();
   if(S.err) h+=`<div class="notice err">${esc(S.err)}</div>`;
   if(!S.loaded) h+=`<div class="empty">Memuatkan…</div>`;
   else if(S.view==="kereta") h+=viewKereta();

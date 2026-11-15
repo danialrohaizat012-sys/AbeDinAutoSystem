@@ -1,4 +1,4 @@
--- Abe Din Auto V54: modul Checklist pemeriksaan kereta (8 bahagian OK/NG/N/A, keputusan akhir,
+-- Abe Din Auto V54: modul Sistem Pemeriksaan kereta (menu "Pemeriksaan", berasingan daripada Checklist lama) (8 bahagian OK/NG/N/A, keputusan akhir,
 -- gred A-D, barang perlu tukar & kos, semakan Owner).
 -- Jalankan sekali dalam Supabase SQL Editor SEBELUM deploy V54. Selamat dijalankan semula (idempotent).
 -- Tidak mengubah jadual sedia ada (vehicles, inspections, inspection_items) atau status kenderaan.
