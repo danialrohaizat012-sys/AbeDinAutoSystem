@@ -86,6 +86,24 @@ function hariSewa(r) {
   const a = new Date(`${r.ambil_tarikh}T${hm(r.ambil_masa)}`), b = new Date(`${r.pulang_tarikh}T${hm(r.pulang_masa)}`);
   const h = (b - a) / 36e5; return h > 0 ? Math.max(1, Math.ceil(h / 24)) : '';
 }
+const KSTATUS = { aktif: 'Aktif', servis: 'Servis', tidak_aktif: 'Tidak Aktif' };
+const fmtRM = v => 'RM ' + Number(v || 0).toLocaleString('ms-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const aktifSewa = r => r.status === 'baru' || r.status === 'disahkan';
+const mula = r => new Date(`${r.ambil_tarikh}T${hm(r.ambil_masa)}`);
+const akhir = r => new Date(`${r.pulang_tarikh}T${hm(r.pulang_masa)}`);
+// Kiraan harga: hari penuh x harga hari + baki jam x harga jam (maksimum harga sehari)
+function kiraHarga(k, jenis, a, b) {
+  const jam = (b - a) / 36e5; if (!k || !(jam > 0)) return null;
+  const hHari = Number(jenis === 'agen' ? k.harga_hari_agen : k.harga_hari_customer) || 0;
+  const hJam = Number(jenis === 'agen' ? k.harga_jam_agen : k.harga_jam_customer) || 0;
+  let hari = Math.floor(jam / 24), baki = Math.ceil(jam - hari * 24 - 1e-9);
+  if (hari === 0) { hari = 1; baki = 0; }
+  let tambahan = baki * hJam;
+  if (!hJam && baki) { tambahan = hHari; }
+  tambahan = Math.min(tambahan, hHari);
+  const terang = `${hari} hari × ${fmtRM(hHari)}` + (baki ? ` + ${baki} jam ${hJam ? '× ' + fmtRM(hJam) : '(dikira sehari)'}${baki * hJam > hHari && hJam ? ' (had sehari)' : ''}` : '');
+  return { hari, baki, caj_sewa: +(hari * hHari).toFixed(2), tambahan_masa: +tambahan.toFixed(2), deposit: Number(k.deposit) || 0, hHari, terang };
+}
 const DOC_LABEL = { lesen: 'Lesen Memandu', kp: 'Kad Pengenalan', utiliti: 'Bil Utiliti', gambar: 'Gambar Pemandu' };
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const dmy = s => s ? String(s).slice(0, 10).split('-').reverse().join('/') : '-';
@@ -108,7 +126,7 @@ export function mountSewa(host, ctx) {
   let logoSrc = new URL('abedin-car-rental-logo.webp', location.href).href;
   // simpan logo sebagai data URL supaya sentiasa muncul dalam tetingkap cetak
   fetch(logoSrc).then(r => r.blob()).then(b => new Promise(ok => { const f = new FileReader(); f.onload = () => ok(f.result); f.readAsDataURL(b); })).then(d => { logoSrc = d; }).catch(() => {});
-  const S = { rows: [], loaded: false, error: '', filter: 'semua', q: '', view: 'list', id: null, terma: null, urls: {}, msg: '' };
+  const S = { kereta: [], keretaErr: '', kid: null, rows: [], loaded: false, error: '', filter: 'semua', q: '', view: 'list', id: null, terma: null, urls: {}, msg: '' };
 
   async function load() {
     S.error = '';
@@ -116,7 +134,13 @@ export function mountSewa(host, ctx) {
       .select('*').order('created_at', { ascending: false }).limit(500);
     if (error) S.error = /relation|does not exist|schema cache/i.test(error.message)
       ? 'Jadual Sewa belum wujud. Jalankan V60_SEWA_MIGRATION.sql dalam Supabase SQL Editor.' : error.message;
+    const k = await client.from('sewa_kereta').select('*').order('model');
+    S.kereta = k.data || []; S.keretaErr = k.error ? k.error.message : '';
     S.rows = data || []; S.loaded = true; render();
+  }
+  const keretaOf = id => S.kereta.find(k => k.id === id);
+  function bertindih(kid, a, b, kecuali) {
+    return S.rows.filter(r => r.kereta_id === kid && r.id !== kecuali && aktifSewa(r) && mula(r) < b && akhir(r) > a);
   }
 
   function shareCard() {
@@ -138,13 +162,14 @@ export function mountSewa(host, ctx) {
       <div class="brand"><img src="abedin-car-rental-logo.webp" alt="Abedin Car Rental"></div></div>
       ${shareCard()}
       <div class="tabs">${['semua', ...Object.keys(STATUS)].map(k => `<button class="tab" data-f="${k}" aria-pressed="${S.filter === k}">${k === 'semua' ? 'Semua' : STATUS[k]}<i>${counts[k]}</i></button>`).join('')}
+      <button class="tab" data-a="stok" aria-pressed="false">🚗 Stok Kereta<i>${S.kereta.length}</i></button>
       ${owner ? `<button class="tab" data-a="terma" aria-pressed="false">⚙ Terma & Syarat</button>` : ''}</div>
       <div class="row"><input id="q" placeholder="Cari nama, no rujukan, telefon, model…" value="${esc(S.q)}" style="flex:1;min-width:200px"><button class="btn" data-a="refresh">Refresh</button></div>
       ${S.error ? `<div class="card" style="border-color:#5a2a26;color:var(--bad)">${esc(S.error)}</div>` : ''}
       <div class="list">${!S.loaded ? '<div class="empty">Memuatkan…</div>' : rows.map(r => `
         <button class="item" data-open="${r.id}"><div><span class="ref">${esc(r.ref_no)}</span><br><b>${esc(r.nama)}</b></div>
         <span class="chip st-${r.status}">${STATUS[r.status] || r.status}</span>
-        <span class="sub">${esc(r.model)} · ${jenisTxt(r.jenis_sewa)} · ${dmy(r.ambil_tarikh)} ${hm(r.ambil_masa)} → ${dmy(r.pulang_tarikh)} ${hm(r.pulang_masa)}<br>${esc(r.telefon)} · dihantar ${when(r.created_at)}</span></button>`).join('')
+        <span class="sub">${esc(r.model)}${r.no_pendaftaran ? ' (' + esc(r.no_pendaftaran) + ')' : ''} · ${jenisTxt(r.jenis_sewa)}${r.jenis_harga === 'agen' ? ' · Agen' + (r.nama_agen ? ': ' + esc(r.nama_agen) : '') : ''} · ${dmy(r.ambil_tarikh)} ${hm(r.ambil_masa)} → ${dmy(r.pulang_tarikh)} ${hm(r.pulang_masa)}<br>${esc(r.telefon)} · dihantar ${when(r.created_at)}</span></button>`).join('')
         || `<div class="empty">${S.rows.length ? 'Tiada padanan.' : 'Belum ada Perjanjian Sewa. Kongsi pautan borang kepada pelanggan.'}</div>`}</div>`;
   }
 
@@ -175,6 +200,7 @@ export function mountSewa(host, ctx) {
         ['Tempoh', tempoh(r)], ['Remark pelanggan', r.remark]])}</section>
       <section class="card"><h3>Butiran Sewaan (diisi admin)</h3>${adminFilled(r) ? kv([
         ['No Pendaftaran', r.no_pendaftaran],
+        ['Jenis Harga', r.jenis_harga === 'agen' ? 'Agen' + (r.nama_agen ? ' – ' + r.nama_agen : '') : r.jenis_harga === 'customer' ? 'Customer' : ''],
         ['Ambil: Jarak / Minyak', [km(r.ambil_jarak), r.ambil_minyak].filter(Boolean).join(' · ')],
         ['Pulang: Jarak / Minyak', [km(r.pulang_jarak), r.pulang_minyak].filter(Boolean).join(' · ')],
         ['Sewa (Hari)', r.sewa_hari ?? ''], ...CAJ.map(([k, l]) => [l, rm(r[k])]),
@@ -192,7 +218,7 @@ export function mountSewa(host, ctx) {
 
   function adminFilled(r) {
     return ['no_pendaftaran', 'ambil_jarak', 'ambil_minyak', 'pulang_jarak', 'pulang_minyak', 'sewa_hari', 'caj_sewa', 'caj_hantar',
-      'tambahan_masa', 'imbuhan_perlindungan', 'jumlah', 'deposit', 'remark_admin'].some(k => r[k] !== null && r[k] !== undefined && r[k] !== '')
+      'tambahan_masa', 'imbuhan_perlindungan', 'jumlah', 'deposit', 'remark_admin', 'kereta_id', 'jenis_harga'].some(k => r[k] !== null && r[k] !== undefined && r[k] !== '')
       || Object.keys(r.aksesori || {}).length > 0;
   }
 
@@ -215,8 +241,14 @@ export function mountSewa(host, ctx) {
         ${inp('bandar', '6. Bandar', C)}${inp('negeri', '7. Negeri', C)}${inp('poskod', '8. Poskod', C)}${inp('negara', '9. Negara', C)}
         ${inp('no_lesen', '10. No Lesen Memandu', C)}${inp('lesen_luput', '11. Tarikh Luput', { ...C, type: 'date' })}
       </div></section>
-      <section class="card"><h3>Maklumat Kenderaan</h3><div class="ed">
-        ${inp('model', '1. Model', C)}${inp('no_pendaftaran', '2. No Pendaftaran', { ph: 'cth: DEF 1234' })}${inp('kumpulan', '3. Kumpulan', C)}
+      <section class="card"><h3>Maklumat Kenderaan & Harga</h3><div class="ed">
+        <div class="full"><label for="e-kereta">Pilih kereta dari stok</label><select id="e-kereta" data-k="kereta_id"><option value="">— Tidak dipilih / isi manual —</option>${S.kereta.map(k => {
+          const tindih = bertindih(k.id, mula(r), akhir(r), r.id);
+          return `<option value="${esc(k.id)}"${r.kereta_id === k.id ? ' selected' : ''}${k.status !== 'aktif' && r.kereta_id !== k.id ? ' disabled' : ''}>${esc(k.model)} · ${esc(k.no_pendaftaran)}${k.status !== 'aktif' ? ' (' + KSTATUS[k.status] + ')' : ''}${tindih.length ? ' ⚠ bertindih' : ''}</option>`;
+        }).join('')}</select>${S.kereta.length ? '' : '<p class="mute" style="margin-top:6px">Belum ada kereta dalam stok. Tambah di tab 🚗 Stok Kereta.</p>'}<div class="mute" id="e-tindih" style="color:var(--warn);margin-top:6px"></div></div>
+        <div class="full"><label>Jenis Harga</label><div class="seg2">${[['customer', 'Customer'], ['agen', 'Agen']].map(([v, l]) => `<label><input type="radio" name="e-jh" data-k="jenis_harga" value="${v}"${(r.jenis_harga || 'customer') === v ? ' checked' : ''}>${l}</label>`).join('')}</div></div>
+        <div class="full" id="w-agen"${r.jenis_harga === 'agen' ? '' : ' hidden'}><label for="e-nama_agen">Nama Agen</label><input id="e-nama_agen" data-k="nama_agen" value="${esc(r.nama_agen || '')}" maxlength="120" placeholder="Nama agen"></div>
+        ${inp('model', '1. Model')}${inp('no_pendaftaran', '2. No Pendaftaran', { ph: 'cth: DEF 1234' })}${inp('kumpulan', '3. Kumpulan')}
       </div></section>
       <section class="card"><h3>Penghantaran & Pengambilan</h3><div class="ed">
         <h4>Ambil</h4>${inp('ambil_lokasi', '1. Lokasi', { ...C, full: true })}${inp('ambil_tarikh', '2. Tarikh Mula', { ...C, type: 'date' })}${inp('ambil_masa', '3. Masa Mula', { ...C, type: 'time' })}
@@ -229,6 +261,7 @@ export function mountSewa(host, ctx) {
         ${inp('sewa_hari', '1. Sewa (Hari)', { type: 'number', step: '0.5', val: r.sewa_hari ?? hariSewa(r) })}
         ${CAJ.map(([k, l], i) => inp(k, `${i + 2}. ${l} (RM)`, { type: 'number', step: '0.01', ph: '0.00' })).join('')}
         ${inp('jumlah', '6. Jumlah (RM)', { type: 'number', step: '0.01', ph: 'Dikira automatik', cls: 'tot' })}${inp('deposit', '7. Sekuriti Deposit (RM)', { type: 'number', step: '0.01', ph: '0.00' })}
+        <div class="full row" style="align-items:center"><button type="button" class="btn sm" data-a="kira">↻ Kira semula ikut harga stok</button><span class="mute" id="e-kira"></span></div>
       </div></section>
       <section class="card"><h3>Aksesori</h3><div class="ed">
         ${AKSESORI.map(([k, l], i) => `<div><label for="a-${k}">${i + 1}. ${l}</label><select id="a-${k}" data-ak="${k}"><option value="">-----pilih-----</option>${['Ada', 'Tiada', 'Rosak'].map(o => `<option${ak[k] === o ? ' selected' : ''}>${o}</option>`).join('')}</select></div>`).join('')}
@@ -253,7 +286,39 @@ export function mountSewa(host, ctx) {
     CAJ.forEach(([k]) => g(k).addEventListener('input', total));
     ['ambil_jarak', 'pulang_jarak'].forEach(k => g(k).addEventListener('input', pakai));
     pakai();
+    const r = S.rows.find(x => x.id === S.id);
+    const jh = () => app.querySelector('input[name=e-jh]:checked')?.value || 'customer';
+    const masa = () => [new Date(`${g('ambil_tarikh').value}T${g('ambil_masa').value}`), new Date(`${g('pulang_tarikh').value}T${g('pulang_masa').value}`)];
+    const semakTindih = () => {
+      const k = keretaOf(g('kereta').value), [a, b] = masa(), t = k ? bertindih(k.id, a, b, r.id) : [];
+      g('tindih').textContent = t.length ? `⚠ Kereta ini sudah ditempah pada masa bertindih: ${t.map(x => `${x.ref_no} (${dmy(x.ambil_tarikh)}–${dmy(x.pulang_tarikh)})`).join(', ')}` : '';
+    };
+    const set = (k, v) => { g(k).value = v === null || v === undefined ? '' : v; };
+    kira = (tulis = true) => {
+      const k = keretaOf(g('kereta').value), [a, b] = masa(), h = kiraHarga(k, jh(), a, b), m = g('kira');
+      if (!k) { m.textContent = 'Pilih kereta dari stok untuk kiraan automatik.'; return; }
+      if (!h) { m.textContent = 'Semak tarikh dan masa ambil/pulang.'; return; }
+      m.textContent = `${jh() === 'agen' ? 'Harga Agen' : 'Harga Customer'}: ${h.terang}`;
+      if (!tulis) return;
+      set('sewa_hari', h.hari); set('caj_sewa', h.caj_sewa.toFixed(2)); set('tambahan_masa', h.tambahan_masa.toFixed(2));
+      set('deposit', h.deposit.toFixed(2)); total();
+    };
+    g('kereta').addEventListener('change', () => {
+      const k = keretaOf(g('kereta').value);
+      if (k) { set('model', k.model); set('no_pendaftaran', k.no_pendaftaran); set('kumpulan', k.kumpulan || ''); }
+      semakTindih(); kira();
+    });
+    app.querySelectorAll('input[name=e-jh]').forEach(x => x.addEventListener('change', () => { app.querySelector('#w-agen').hidden = jh() !== 'agen'; kira(); }));
+    ['ambil_tarikh', 'ambil_masa', 'pulang_tarikh', 'pulang_masa'].forEach(k => g(k).addEventListener('change', () => { semakTindih(); kira(); }));
+    g('sewa_hari').addEventListener('input', () => {
+      const k = keretaOf(g('kereta').value), d = num('sewa_hari'); if (!k || d === null) return;
+      set('caj_sewa', (d * Number(jh() === 'agen' ? k.harga_hari_agen : k.harga_hari_customer)).toFixed(2)); total();
+    });
+    semakTindih();
+    // kira automatik bila dibuka kali pertama dan caj belum diisi
+    kira(r.caj_sewa === null || r.caj_sewa === undefined);
   }
+  let kira = () => {};
 
   const WAJIB = ['nama', 'email', 'telefon', 'no_kp', 'alamat', 'bandar', 'negeri', 'poskod', 'negara', 'model', 'ambil_lokasi', 'pulang_lokasi', 'ambil_tarikh', 'pulang_tarikh', 'ambil_masa', 'pulang_masa'];
   function collect() {
@@ -268,11 +333,55 @@ export function mountSewa(host, ctx) {
     });
     const ak = {}; app.querySelectorAll('[data-ak]').forEach(el => { if (el.value) ak[el.dataset.ak] = el.value; });
     p.aksesori = ak;
+    if (p.jenis_harga !== 'agen') p.nama_agen = null;
     for (const k of ['ambil_jarak', 'pulang_jarak', 'sewa_hari', 'jumlah', 'deposit', ...CAJ.map(c => c[0])])
       if (p[k] !== null && p[k] !== undefined && (isNaN(p[k]) || p[k] < 0)) throw new Error('Nilai tidak sah pada medan nombor.');
     if (p.ambil_jarak != null && p.pulang_jarak != null && p.pulang_jarak < p.ambil_jarak) throw new Error('Jarak pulang lebih rendah daripada jarak ambil.');
     for (const k of ['ambil_jarak', 'pulang_jarak']) if (p[k] != null) p[k] = Math.round(p[k]);
     return p;
+  }
+
+  function sedangDisewa(kid) {
+    const now = new Date();
+    return S.rows.find(r => r.kereta_id === kid && aktifSewa(r) && mula(r) <= now && akhir(r) > now);
+  }
+  function stokView() {
+    const kst = k => `<span class="chip ${k.status === 'aktif' ? 'st-selesai' : k.status === 'servis' ? 'st-baru' : 'st-batal'}">${KSTATUS[k.status]}</span>`;
+    return `<button class="back" data-a="back">← Senarai Sewa</button>
+      <div class="head"><div><h2>Stok Kereta Sewa</h2><p class="mute">Harga Customer dan Agen digunakan untuk kiraan automatik dalam Edit Dokumen Sewa.</p></div>
+      ${owner ? '<button class="btn pri" data-kereta="baru">+ Tambah Kereta</button>' : ''}</div>
+      ${S.keretaErr ? `<div class="card" style="border-color:#5a2a26;color:var(--bad)">${esc(/relation|does not exist|schema cache/i.test(S.keretaErr) ? 'Jadual stok belum wujud. Jalankan V60_SEWA_MIGRATION.sql terkini dalam Supabase SQL Editor.' : S.keretaErr)}</div>` : ''}
+      <div class="list">${S.kereta.map(k => {
+        const now = sedangDisewa(k.id), next = S.rows.filter(r => r.kereta_id === k.id && aktifSewa(r) && mula(r) > new Date()).sort((a, b) => mula(a) - mula(b))[0];
+        return `<button class="item" data-kereta="${esc(k.id)}"${owner ? '' : ' style="cursor:default"'}><div><span class="ref">${esc(k.no_pendaftaran)}</span><br><b>${esc(k.model)}</b></div>${kst(k)}
+          <span class="sub">${[k.kumpulan, k.warna, k.tahun].filter(Boolean).map(esc).join(' · ') || '&nbsp;'}</span>
+          <div class="sub" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px">
+            <div style="border:1px solid var(--line);border-radius:10px;padding:8px 10px"><small style="display:block">Customer</small><b style="color:var(--gold);font-size:15px">${fmtRM(k.harga_hari_customer)}</b>/hari<br>${fmtRM(k.harga_jam_customer)}/jam</div>
+            <div style="border:1px solid var(--line);border-radius:10px;padding:8px 10px"><small style="display:block">Agen</small><b style="color:var(--blue);font-size:15px">${fmtRM(k.harga_hari_agen)}</b>/hari<br>${fmtRM(k.harga_jam_agen)}/jam</div></div>
+          <span class="sub">Deposit ${fmtRM(k.deposit)}${now ? ` · <b style="color:var(--warn)">Sedang disewa (${esc(now.ref_no)}) hingga ${dmy(now.pulang_tarikh)}</b>` : next ? ` · Tempahan seterusnya ${dmy(next.ambil_tarikh)}` : ' · Tiada tempahan'}</span></button>`;
+      }).join('') || '<div class="empty">Belum ada kereta dalam stok.</div>'}</div>`;
+  }
+  function keretaForm() {
+    const k = S.kid === 'baru' ? { status: 'aktif' } : keretaOf(S.kid) || {};
+    const f = (key, l, o = {}) => `<div class="${o.full ? 'full' : ''}"><label for="k-${key}">${l}</label><input id="k-${key}" data-kk="${key}" type="${o.type || 'text'}"${o.type === 'number' ? ` min="0" step="${o.step || '0.01'}" inputmode="decimal"` : ''} placeholder="${o.ph || ''}" value="${esc(k[key] ?? '')}"></div>`;
+    return `<button class="back" data-a="stok">← Stok Kereta</button><h2>${S.kid === 'baru' ? 'Tambah Kereta' : 'Edit Kereta'}</h2>
+      <section class="card"><h3>Kenderaan</h3><div class="ed">
+        ${f('model', 'Model *', { ph: 'cth: Toyota Alphard' })}${f('no_pendaftaran', 'No Pendaftaran *', { ph: 'cth: DEF 1234' })}
+        ${f('kumpulan', 'Kumpulan', { ph: 'cth: MPV' })}${f('warna', 'Warna')}${f('tahun', 'Tahun', { type: 'number', step: '1', ph: 'cth: 2022' })}
+        <div><label for="k-status">Status</label><select id="k-status" data-kk="status">${Object.entries(KSTATUS).map(([v, l]) => `<option value="${v}"${k.status === v ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
+      </div></section>
+      <section class="card"><h3>Harga</h3><div class="ed">
+        <h4>Customer</h4>${f('harga_hari_customer', 'Harga sehari (RM)', { type: 'number', ph: '0.00' })}${f('harga_jam_customer', 'Harga sejam – tambahan masa (RM)', { type: 'number', ph: '0.00' })}
+        <h4>Agen</h4>${f('harga_hari_agen', 'Harga sehari (RM)', { type: 'number', ph: '0.00' })}${f('harga_jam_agen', 'Harga sejam – tambahan masa (RM)', { type: 'number', ph: '0.00' })}
+        <h4>Lain-lain</h4>${f('deposit', 'Sekuriti Deposit (RM)', { type: 'number', ph: '0.00' })}<div id="k-untung" class="mute" style="align-self:end"></div>
+        <div class="full"><label for="k-nota">Nota</label><textarea id="k-nota" data-kk="nota" maxlength="1000">${esc(k.nota || '')}</textarea></div>
+      </div><p class="mute" style="margin-top:10px">Baki jam selepas hari penuh dicaj ikut harga sejam, maksimum harga sehari. Jika harga sejam kosong, baki jam dicaj sehari.</p></section>
+      <div class="savebar"><button class="btn pri" data-a="save-kereta">Simpan</button>${S.kid !== 'baru' ? '<button class="btn danger" data-a="del-kereta">Padam</button>' : ''}<span class="msg" id="k-msg"></span></div>`;
+  }
+  function wireKereta() {
+    const g = id => app.querySelector('#k-' + id), n = id => Number(g(id).value || 0);
+    const u = () => { const d = n('harga_hari_customer') - n('harga_hari_agen'); g('untung').textContent = n('harga_hari_customer') ? `Beza Customer − Agen: ${fmtRM(d)} sehari` : ''; };
+    ['harga_hari_customer', 'harga_hari_agen'].forEach(k => g(k).addEventListener('input', u)); u();
   }
 
   function termaView() {
@@ -283,8 +392,9 @@ export function mountSewa(host, ctx) {
   }
 
   function render() {
-    app.innerHTML = S.view === 'edit' ? editView() : S.view === 'detail' ? detailView() : S.view === 'terma' ? termaView() : listView();
-    if (S.view === 'edit') wireEdit();
+    app.innerHTML = S.view === 'stok' ? stokView() : S.view === 'kereta' ? keretaForm() : S.view === 'edit' ? editView() : S.view === 'detail' ? detailView() : S.view === 'terma' ? termaView() : listView();
+    if (S.view === 'edit') wireEdit(); else kira = () => {};
+    if (S.view === 'kereta') wireKereta();
     const q = app.querySelector('#q');
     if (q) q.oninput = () => { S.q = q.value; const pos = q.selectionStart; render(); const n = app.querySelector('#q'); n.focus(); n.setSelectionRange(pos, pos); };
   }
@@ -332,7 +442,8 @@ export function mountSewa(host, ctx) {
   }
 
   app.addEventListener('click', async e => {
-    const t = e.target.closest('[data-a],[data-f],[data-open],[data-st]'); if (!t) return;
+    const t = e.target.closest('[data-a],[data-f],[data-open],[data-st],[data-kereta]'); if (!t) return;
+    if (t.dataset.kereta) { if (!owner) return; S.kid = t.dataset.kereta; S.view = 'kereta'; render(); scrollTo(0, 0); return; }
     const a = t.dataset.a;
     if (t.dataset.f) { S.filter = t.dataset.f; render(); return; }
     if (t.dataset.open) { S.id = t.dataset.open; S.view = 'detail'; S.msg = ''; render(); scrollTo(0, 0); signDocs(S.rows.find(x => x.id === S.id)); return; }
@@ -345,6 +456,29 @@ export function mountSewa(host, ctx) {
     else if (a === 'back') { S.view = 'list'; S.msg = ''; render(); }
     else if (a === 'nota' && r) { update(r.id, { nota_staf: app.querySelector('#nota').value.trim() || null }, 'Nota disimpan.'); }
     else if (a === 'print' && r) printAgreement(r);
+    else if (a === 'stok') { S.view = 'stok'; render(); scrollTo(0, 0); }
+    else if (a === 'kira') kira(true);
+    else if (a === 'save-kereta') {
+      const m = app.querySelector('#k-msg'), row = {}; m.classList.remove('err');
+      app.querySelectorAll('[data-kk]').forEach(el => {
+        const v = el.value.trim(), k = el.dataset.kk;
+        row[k] = el.type === 'number' ? (v === '' ? (k === 'tahun' ? null : 0) : Number(v)) : (v || null);
+      });
+      if (!row.model || !row.no_pendaftaran) { m.textContent = 'Model dan No Pendaftaran wajib.'; m.classList.add('err'); return; }
+      if (Object.entries(row).some(([k, v]) => typeof v === 'number' && (isNaN(v) || v < 0))) { m.textContent = 'Semak nilai harga.'; m.classList.add('err'); return; }
+      row.no_pendaftaran = row.no_pendaftaran.toUpperCase(); row.status ||= 'aktif'; row.updated_at = new Date().toISOString();
+      m.textContent = 'Menyimpan…';
+      const q = S.kid === 'baru' ? client.from('sewa_kereta').insert(row) : client.from('sewa_kereta').update(row).eq('id', S.kid);
+      const { data, error } = await q.select().single();
+      if (error) { m.textContent = 'Gagal simpan: ' + (/plate_uniq|duplicate/.test(error.message) ? 'No pendaftaran sudah ada dalam stok.' : error.message); m.classList.add('err'); return; }
+      S.kereta = S.kid === 'baru' ? [...S.kereta, data] : S.kereta.map(x => x.id === data.id ? data : x);
+      S.kereta.sort((a, b) => a.model.localeCompare(b.model)); S.view = 'stok'; render(); scrollTo(0, 0);
+    } else if (a === 'del-kereta') {
+      const k = keretaOf(S.kid); if (!k || !confirm(`Padam ${k.model} (${k.no_pendaftaran}) dari stok? Perjanjian lama tidak terjejas.`)) return;
+      const { error } = await client.from('sewa_kereta').delete().eq('id', k.id);
+      if (error) { app.querySelector('#k-msg').textContent = 'Gagal padam: ' + error.message; return; }
+      S.kereta = S.kereta.filter(x => x.id !== k.id); S.view = 'stok'; render();
+    }
     else if (a === 'edit' && r) { S.view = 'edit'; render(); scrollTo(0, 0); }
     else if (a === 'detail') { S.view = 'detail'; S.msg = ''; render(); scrollTo(0, 0); }
     else if ((a === 'save-edit' || a === 'save-print') && r) {

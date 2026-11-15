@@ -297,3 +297,72 @@ begin
   new.updated_by := auth.uid();
   return new;
 end $$;
+
+-- =====================================================================
+-- Stok kereta sewa + harga Customer / Agen
+-- =====================================================================
+create table if not exists public.sewa_kereta (
+  id                  text primary key default gen_random_uuid()::text,
+  model               text not null check (length(model) between 1 and 120),
+  no_pendaftaran      text not null check (length(no_pendaftaran) between 1 and 20),
+  kumpulan            text check (kumpulan is null or length(kumpulan) <= 80),
+  warna               text check (warna is null or length(warna) <= 40),
+  tahun               integer check (tahun is null or tahun between 1980 and 2100),
+  status              text not null default 'aktif' check (status in ('aktif','servis','tidak_aktif')),
+  harga_hari_customer numeric(12,2) not null default 0 check (harga_hari_customer >= 0),
+  harga_hari_agen     numeric(12,2) not null default 0 check (harga_hari_agen >= 0),
+  harga_jam_customer  numeric(12,2) not null default 0 check (harga_jam_customer >= 0),
+  harga_jam_agen      numeric(12,2) not null default 0 check (harga_jam_agen >= 0),
+  deposit             numeric(12,2) not null default 0 check (deposit >= 0),
+  nota                text check (nota is null or length(nota) <= 1000),
+  created_at          timestamptz not null default now(),
+  updated_at          timestamptz not null default now()
+);
+create unique index if not exists sewa_kereta_plate_uniq on public.sewa_kereta (upper(replace(no_pendaftaran, ' ', '')));
+
+alter table public.sewa_kereta enable row level security;
+drop policy if exists sewa_kereta_select on public.sewa_kereta;
+create policy sewa_kereta_select on public.sewa_kereta for select to authenticated
+  using (public.sewa_role() is not null);
+drop policy if exists sewa_kereta_write on public.sewa_kereta;
+create policy sewa_kereta_write on public.sewa_kereta for all to authenticated
+  using (public.sewa_role() = 'owner') with check (public.sewa_role() = 'owner');
+
+alter table public.sewa_agreements
+  add column if not exists kereta_id   text references public.sewa_kereta(id) on delete set null,
+  add column if not exists jenis_harga text check (jenis_harga is null or jenis_harga in ('customer','agen')),
+  add column if not exists nama_agen   text check (nama_agen is null or length(nama_agen) <= 120);
+create index if not exists sewa_agreements_kereta_idx on public.sewa_agreements (kereta_id);
+
+-- Guard (versi akhir): staf boleh pilih kereta, jenis harga dan isi butiran admin
+create or replace function public.sewa_agreements_guard()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  r   text := public.sewa_role();
+  nw  public.sewa_agreements := new;
+begin
+  if r is null then raise exception 'Tiada akses modul Sewa.'; end if;
+  if r <> 'owner' then
+    new := old;
+    new.status := nw.status;                 new.nota_staf := nw.nota_staf;
+    new.kereta_id := nw.kereta_id;           new.jenis_harga := nw.jenis_harga;
+    new.nama_agen := nw.nama_agen;           new.model := nw.model;
+    new.kumpulan := nw.kumpulan;             new.no_pendaftaran := nw.no_pendaftaran;
+    new.ambil_jarak := nw.ambil_jarak;       new.ambil_minyak := nw.ambil_minyak;
+    new.pulang_jarak := nw.pulang_jarak;     new.pulang_minyak := nw.pulang_minyak;
+    new.sewa_hari := nw.sewa_hari;           new.caj_sewa := nw.caj_sewa;
+    new.caj_hantar := nw.caj_hantar;         new.tambahan_masa := nw.tambahan_masa;
+    new.imbuhan_perlindungan := nw.imbuhan_perlindungan;
+    new.jumlah := nw.jumlah;                 new.deposit := nw.deposit;
+    new.aksesori := nw.aksesori;             new.remark_admin := nw.remark_admin;
+  end if;
+  new.id := old.id; new.ref_no := old.ref_no; new.created_at := old.created_at;
+  new.tandatangan := old.tandatangan; new.terma_snapshot := old.terma_snapshot;
+  new.updated_at := now();
+  new.updated_by := auth.uid();
+  return new;
+end $$;
