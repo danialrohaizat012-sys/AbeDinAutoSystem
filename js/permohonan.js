@@ -44,7 +44,7 @@ const staffName = () => String(ctx.profile?.full_name || '').trim();
 const abeDin = () => String(ctx.publicSettings?.whatsapp_number || '').replace(/\D/g, '');
 
 function formLink() {
-  const u = new URL('permohonan.html', location.href);
+  const u = new URL('/permohonan.html', location.origin); // sentiasa dari root (dashboard berada di /admin/)
   u.search = '';
   if (S.car.trim()) u.searchParams.set('kereta', S.car.trim());
   if (S.ref && staffName()) u.searchParams.set('ref', staffName());
