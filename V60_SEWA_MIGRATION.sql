@@ -246,3 +246,54 @@ begin
 end $$;
 revoke all on function public.submit_sewa(jsonb) from public;
 grant execute on function public.submit_sewa(jsonb) to anon, authenticated;
+
+-- =====================================================================
+-- Butiran admin (diisi staf dalam "Edit Dokumen Sewa", dicetak bersama perjanjian)
+-- =====================================================================
+alter table public.sewa_agreements
+  add column if not exists no_pendaftaran       text check (no_pendaftaran is null or length(no_pendaftaran) <= 20),
+  add column if not exists ambil_jarak          integer check (ambil_jarak is null or ambil_jarak >= 0),
+  add column if not exists ambil_minyak         text check (ambil_minyak is null or ambil_minyak in ('Kosong','1/8','1/4','3/8','1/2','5/8','3/4','7/8','Penuh')),
+  add column if not exists pulang_jarak         integer check (pulang_jarak is null or pulang_jarak >= 0),
+  add column if not exists pulang_minyak        text check (pulang_minyak is null or pulang_minyak in ('Kosong','1/8','1/4','3/8','1/2','5/8','3/4','7/8','Penuh')),
+  add column if not exists sewa_hari            numeric(6,1) check (sewa_hari is null or sewa_hari >= 0),
+  add column if not exists caj_sewa             numeric(12,2) check (caj_sewa is null or caj_sewa >= 0),
+  add column if not exists caj_hantar           numeric(12,2) check (caj_hantar is null or caj_hantar >= 0),
+  add column if not exists tambahan_masa        numeric(12,2) check (tambahan_masa is null or tambahan_masa >= 0),
+  add column if not exists imbuhan_perlindungan numeric(12,2) check (imbuhan_perlindungan is null or imbuhan_perlindungan >= 0),
+  add column if not exists jumlah               numeric(12,2) check (jumlah is null or jumlah >= 0),
+  add column if not exists deposit              numeric(12,2) check (deposit is null or deposit >= 0),
+  add column if not exists aksesori             jsonb not null default '{}'::jsonb,
+  add column if not exists remark_admin         text check (remark_admin is null or length(remark_admin) <= 1000);
+
+-- Guard dikemas kini: Owner boleh ubah semua. Staf lain boleh isi butiran admin, status dan nota,
+-- tetapi tidak boleh ubah maklumat yang diisi pelanggan.
+create or replace function public.sewa_agreements_guard()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  r   text := public.sewa_role();
+  nw  public.sewa_agreements := new;
+begin
+  if r is null then raise exception 'Tiada akses modul Sewa.'; end if;
+  if r <> 'owner' then
+    new := old;
+    new.status := nw.status;                 new.nota_staf := nw.nota_staf;
+    new.no_pendaftaran := nw.no_pendaftaran;
+    new.ambil_jarak := nw.ambil_jarak;       new.ambil_minyak := nw.ambil_minyak;
+    new.pulang_jarak := nw.pulang_jarak;     new.pulang_minyak := nw.pulang_minyak;
+    new.sewa_hari := nw.sewa_hari;           new.caj_sewa := nw.caj_sewa;
+    new.caj_hantar := nw.caj_hantar;         new.tambahan_masa := nw.tambahan_masa;
+    new.imbuhan_perlindungan := nw.imbuhan_perlindungan;
+    new.jumlah := nw.jumlah;                 new.deposit := nw.deposit;
+    new.aksesori := nw.aksesori;             new.remark_admin := nw.remark_admin;
+  end if;
+  new.id := old.id; new.ref_no := old.ref_no; new.created_at := old.created_at;
+  new.tandatangan := old.tandatangan; new.terma_snapshot := old.terma_snapshot;
+  new.updated_at := now();
+  new.updated_by := auth.uid();
+  return new;
+end $$;
