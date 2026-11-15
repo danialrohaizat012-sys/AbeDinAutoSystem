@@ -312,7 +312,7 @@ $('#submit').addEventListener('click', async () => {
     const { error } = await client.from('loan_applications').insert(p);
     if (error) throw error;
     try { localStorage.removeItem(DRAFT); } catch (e) {}
-    f.hidden = true; $('#actions').hidden = true; $('#done').style.display = 'block';
+    f.hidden = true; $('#actions').hidden = true; $('#done').style.display = 'block'; $('#toast').classList.remove('show');
     $('#doneName').textContent = p.full_name;
     if (waNumber) {
       const n = $('#waNotify');
