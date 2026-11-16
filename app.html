@@ -351,6 +351,7 @@ function coverFor(vehicleId){const imgs=vehicleImages.filter(x=>x.vehicle_id===v
 function cloudModal(title,body){const o=document.createElement('div');o.className='ada-form-overlay';o.innerHTML=`<form class="ada-form"><div class="ada-form-head"><h2>${safe(title)}</h2><button type="button" data-close>×</button></div>${body}<p class="ada-form-error"></p></form>`;document.body.appendChild(o);o.querySelector('[data-close]').onclick=()=>o.remove();o.addEventListener('click',e=>{if(e.target===o)o.remove()});return o}
 function showCustomerForm(){const o=cloudModal('Tambah Pelanggan',`<label>Nama penuh<input name="full_name" required></label><label>Telefon<input name="phone"></label><label>Email<input name="email" type="email"></label><label>Nota<textarea name="notes"></textarea></label><button>Simpan Pelanggan</button>`);o.querySelector('form').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.currentTarget),err=o.querySelector('.ada-form-error');try{const {error}=await client.from('customers').insert({full_name:f.get('full_name').trim(),phone:f.get('phone').trim()||null,email:f.get('email').trim()||null,notes:f.get('notes').trim()||null});if(error)throw error;o.remove();await refresh();msg('Pelanggan berjaya disimpan.')}catch(x){err.textContent=x.message}}}
 let salesQuery='';
+const payMethodOf=p=>{const m=String(p?.notes||'').match(/^\[Kaedah:\s*([^\]]+)\]/);return m?m[1].trim():''};const payNoteOf=p=>String(p?.notes||'').replace(/^\[Kaedah:\s*[^\]]+\]\s*/,'').trim();
 const saleKindLabel=k=>({deposit:'Deposit',full_payment:'Bayaran Penuh'}[k]||String(k||'Bayaran'));
 const saleStatusLabel=s=>({reserved:'Reserved',sold:'Sold',completed:'Selesai',active:'Aktif',cancelled:'Dibatalkan'}[String(s||'').toLowerCase()]||String(s||'-'));
 const rm2=v=>'RM '+Number(v||0).toLocaleString('en-MY',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -418,25 +419,43 @@ async function downloadSaleReceipt(saleId,btn){
     top-=10;
     // Jadual bayaran
     txt('REKOD PEMBAYARAN',M,top,{bold:true,size:10});top-=10;
-    const cols=[M,M+90,M+200,W-M];
+    const cols=[M,M+78,M+168,M+278,W-M];
     page.drawRectangle({x:M,y:top-20,width:W-2*M,height:20,color:ink});
-    [['Tarikh',cols[0]+10],['Jenis',cols[1]+10],['No. Rujukan',cols[2]+10]].forEach(([t,xx])=>txt(t,xx,top-14,{bold:true,size:9,color:rgb(1,1,1)}));txt('Jumlah',cols[3]-10,top-14,{bold:true,size:9,color:rgb(1,1,1),right:true});
+    [['Tarikh',cols[0]+10],['Jenis',cols[1]+10],['Kaedah',cols[2]+10],['No. Rujukan',cols[3]+10]].forEach(([t,xx])=>txt(t,xx,top-14,{bold:true,size:9,color:rgb(1,1,1)}));txt('Jumlah',cols[4]-10,top-14,{bold:true,size:9,color:rgb(1,1,1),right:true});
     top-=20;
     if(!pays.length){page.drawRectangle({x:M,y:top-22,width:W-2*M,height:22,color:soft});txt('Belum ada pembayaran direkodkan.',M+10,top-15,{size:9.5,color:mut});top-=22}
-    pays.forEach((p,i)=>{if(top<170)return;if(i%2===0)page.drawRectangle({x:M,y:top-22,width:W-2*M,height:22,color:soft});txt(dmy(p.confirmed_at),cols[0]+10,top-15,{size:9.5});txt(saleKindLabel(p.kind),cols[1]+10,top-15,{size:9.5});txt(p.reference_no||'-',cols[2]+10,top-15,{size:9.5,max:cols[3]-cols[2]-110});txt(rm2(p.amount),cols[3]-10,top-15,{size:9.5,bold:true,right:true});top-=22});
+    const RH=19,maxRows=Math.max(2,Math.floor((top-345)/RH)),shown=pays.length>maxRows?pays.slice(0,maxRows-1):pays;shown.forEach((p,i)=>{if(i%2===0)page.drawRectangle({x:M,y:top-RH,width:W-2*M,height:RH,color:soft});txt(dmy(p.confirmed_at),cols[0]+10,top-13,{size:9});txt(saleKindLabel(p.kind),cols[1]+10,top-13,{size:9});txt(payMethodOf(p)||'-',cols[2]+10,top-13,{size:9,max:cols[3]-cols[2]-16});txt(p.reference_no||'-',cols[3]+10,top-13,{size:9,max:cols[4]-cols[3]-100});txt(rm2(p.amount),cols[4]-10,top-13,{size:9,bold:true,right:true});top-=RH});
+    if(pays.length>shown.length){txt(`+ ${pays.length-shown.length} bayaran lagi (jumlah termasuk dalam ringkasan)`,M+10,top-14,{size:8.5,color:mut});top-=20}
     page.drawRectangle({x:M,y:top,width:W-2*M,height:1,color:line});
     // Ringkasan
     top-=16;const sx=W-M-220;
     page.drawRectangle({x:sx,y:top-72,width:220,height:72,color:soft,borderColor:line,borderWidth:1});
+    const bw=sx-M-16;page.drawRectangle({x:M,y:top-72,width:bw,height:72,color:rgb(1,1,1),borderColor:y,borderWidth:1.2});
+    txt('BAYARAN KE AKAUN ABE DIN AUTO',M+12,top-16,{bold:true,size:8.5,color:mut});
+    txt('OCBC Bank',M+12,top-33,{bold:true,size:11});
+    txt('7551072447',M+12,top-50,{bold:true,size:14});
+    txt('Sila guna no. plat kenderaan sebagai rujukan bayaran',M+12,top-64,{size:7.5,color:mut,max:bw-24});
     txt('Harga',sx+12,top-18,{size:9.5,color:mut});txt(rm2(x.agreed_price),W-M-12,top-18,{size:9.5,right:true});
     txt('Jumlah dibayar',sx+12,top-36,{size:9.5,color:mut});txt(rm2(paid),W-M-12,top-36,{size:9.5,right:true,bold:true});
     page.drawRectangle({x:sx,y:top-72,width:220,height:24,color:bal>0?y:rgb(0.86,0.96,0.89)});
     txt(bal>0?'BAKI PERLU DIBAYAR':'LUNAS SEPENUHNYA',sx+12,top-64,{size:9.5,bold:true});txt(rm2(bal),W-M-12,top-64,{size:10.5,bold:true,right:true});
-    // Tandatangan & nota
-    const sy=150;
-    [[M,'Disediakan oleh'],[W-M-180,'Diterima oleh (Pelanggan)']].forEach(([xx,t])=>{page.drawRectangle({x:xx,y:sy,width:180,height:0.8,color:mut});txt(t,xx,sy-13,{size:8.5,color:mut})});
-    txt('Resit ini dijana oleh sistem Abe Din Auto. Sila simpan untuk rujukan anda.',W/2,92,{size:8.5,color:mut,center:true});
-    txt('Terima kasih kerana memilih Abe Din Auto.',W/2,78,{size:9.5,bold:true,center:true});
+    // Terma & syarat
+    let ty=top-96;
+    txt('TERMA & SYARAT',M,ty,{bold:true,size:9.5});ty-=6;page.drawRectangle({x:M,y:ty,width:W-2*M,height:1,color:line});ty-=14;
+    const wrap=(t,max,size)=>{const words=clean(t).split(' '),out=[];let cur='';words.forEach(w=>{const n=cur?cur+' '+w:w;if(f.widthOfTextAtSize(n,size)>max&&cur){out.push(cur);cur=w}else cur=n});if(cur)out.push(cur);return out};
+    ['Setiap belian kenderaan adalah TANPA JAMINAN (warranty).','Pembeli wajib memeriksa kenderaan dengan teliti sebelum mengambil kenderaan.','Dengan mengambil kenderaan, pembeli mengesahkan kenderaan berada dalam keadaan baik dan diterima seperti yang telah dipersetujui oleh kedua-dua pihak.'].forEach((t,i)=>{txt((i+1)+'.',M,ty,{size:8.5,bold:true});wrap(t,W-2*M-16,8.5).forEach((ln,j)=>{txt(ln,M+14,ty,{size:8.5,color:rgb(0.2,0.22,0.25)});ty-=12});ty-=2});
+    // Kotak nota
+    const ny=96,nh=Math.max(62,Math.min(110,ty-ny-10));
+    page.drawRectangle({x:M,y:ny,width:W-2*M,height:nh,borderColor:rgb(0.75,0.77,0.8),borderWidth:1,color:rgb(1,1,1)});
+    txt('NOTA / CATATAN',M+10,ny+nh-14,{bold:true,size:8.5,color:mut});
+    const notes=pays.map(p=>clean(payNoteOf(p))).filter(Boolean);
+    let nyy=ny+nh-28;
+    if(notes.length){notes.forEach(n=>wrap(n,W-2*M-20,8.5).forEach(ln=>{if(nyy>ny+6){txt(ln,M+10,nyy,{size:8.5});nyy-=11}}))}
+    else{for(let k=ny+nh-34;k>ny+8;k-=16)page.drawRectangle({x:M+10,y:k,width:W-2*M-20,height:0.5,color:line})}
+    // Tandatangan
+    const sy=62;
+    [[M,'Disediakan oleh (Abe Din Auto)'],[W-M-180,'Diterima oleh (Pelanggan)']].forEach(([xx,t])=>{page.drawRectangle({x:xx,y:sy,width:180,height:0.8,color:mut});txt(t,xx,sy-12,{size:8,color:mut})});
+    txt('Resit ini dijana oleh sistem Abe Din Auto. Terima kasih kerana memilih Abe Din Auto.',W/2,22,{size:8,color:mut,center:true});
     page.drawRectangle({x:0,y:0,width:W,height:6,color:y});
     doc.setTitle('Resit '+no);doc.setAuthor('Abe Din Auto');doc.setCreator('Abe Din Auto Management System');
     const bytes=await doc.save();const blob=new Blob([bytes],{type:'application/pdf'});
@@ -447,7 +466,7 @@ async function downloadSaleReceipt(saleId,btn){
   finally{if(btn){btn.disabled=false;btn.textContent=old}}
 }
 function showSaleForm(){const cars=vehicles.filter(v=>['available','preparation'].includes(v.status));if(!cars.length){msg('Tiada kereta available/preparation untuk jualan baru.');return}if(!customers.length){msg('Tambah pelanggan dahulu sebelum mencipta jualan.');current='customers';renderCloud();return}const o=cloudModal('Jual Kereta',`<label>Kenderaan<select name="vehicle_id" required>${cars.map(v=>`<option value="${v.id}">${safe(v.plate)} · ${safe(carName(v))}</option>`).join('')}</select></label><label>Pelanggan<select name="customer_id" required>${customers.map(c=>`<option value="${c.id}">${safe(c.full_name)} · ${safe(c.phone||'')}</option>`).join('')}</select></label><label>Harga dipersetujui (RM)<input name="agreed_price" type="number" min="0.01" step="0.01" required></label><button>Cipta Sale / Reserve Kereta</button>`);{const fm=o.querySelector('form'),price=fm.querySelector('[name=agreed_price]');let touched=false;price.addEventListener('input',()=>{touched=true});fm.querySelector('[name=vehicle_id]').addEventListener('change',e=>{const v=cars.find(c=>c.id===e.target.value);if(v&&!touched){const pr=Number(v.promo_price)>0&&Number(v.promo_price)<Number(v.asking_price)?Number(v.promo_price):Number(v.asking_price||0);price.value=pr||''}});attachPickerSearch(fm,'vehicle_id','🔍 Cari plat, jenama atau model...',id=>{const v=cars.find(c=>c.id===id)||{};return [v.plate,v.make,v.model,v.vehicle_id,v.model_year].join(' ')});attachPickerSearch(fm,'customer_id','🔍 Cari nama atau telefon pelanggan...')}o.querySelector('form').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.currentTarget),err=o.querySelector('.ada-form-error');try{const {error}=await client.rpc('create_vehicle_sale',{p_vehicle_id:f.get('vehicle_id'),p_customer_id:f.get('customer_id'),p_agreed_price:Number(f.get('agreed_price'))});if(error)throw error;o.remove();await refresh();msg('Sale berjaya dicipta. Kereta kini Reserved.')}catch(x){err.textContent=x.message}}}
-function showPaymentForm(saleId){const sale=sales.find(s=>s.id===saleId);if(!sale)return;const paid=payments.filter(p=>p.sale_id===saleId).reduce((a,p)=>a+Number(p.amount),0),balance=Math.max(0,Number(sale.agreed_price)-paid);const o=cloudModal('Rekod Pembayaran',`<div class="cloud-notice">Harga: ${money(sale.agreed_price)} · Dibayar: ${money(paid)} · Baki: ${money(balance)}</div><label>Jenis<select name="kind"><option value="deposit">Deposit</option><option value="full_payment">Full payment</option></select></label><label>Jumlah (RM)<input name="amount" type="number" min="0.01" step="0.01" value="${balance||''}" required></label><label>No. rujukan<input name="reference_no" required></label><label>Nota<textarea name="notes"></textarea></label><button>Sahkan Pembayaran</button>`);o.querySelector('form').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.currentTarget),err=o.querySelector('.ada-form-error');if(!confirm('Sahkan pembayaran ini? Rekod pembayaran tidak boleh dipadam melalui UI.'))return;try{const {error}=await client.rpc('record_sale_payment',{p_sale_id:saleId,p_kind:f.get('kind'),p_amount:Number(f.get('amount')),p_reference_no:f.get('reference_no').trim(),p_notes:f.get('notes').trim()||null});if(error)throw error;o.remove();await refresh();msg(f.get('kind')==='full_payment'?'Full payment disahkan. Kereta ditanda Sold.':'Deposit disahkan. Kereta kekal Reserved.')}catch(x){err.textContent=x.message}}}
+function showPaymentForm(saleId){const sale=sales.find(s=>s.id===saleId);if(!sale)return;const paid=payments.filter(p=>p.sale_id===saleId).reduce((a,p)=>a+Number(p.amount),0),balance=Math.max(0,Number(sale.agreed_price)-paid);const o=cloudModal('Rekod Pembayaran',`<div class="cloud-notice">Harga: ${money(sale.agreed_price)} · Dibayar: ${money(paid)} · Baki: ${money(balance)}</div><label>Jenis<select name="kind"><option value="deposit">Deposit</option><option value="full_payment">Full payment</option></select></label><label>Kaedah bayaran<select name="method"><option>Pindahan Bank</option><option>Tunai</option><option>Pinjaman Bank</option><option>DuitNow / QR</option><option>Kad Debit/Kredit</option><option>Cek</option></select></label><label>Jumlah (RM)<input name="amount" type="number" min="0.01" step="0.01" value="${balance||''}" required></label><label>No. rujukan<input name="reference_no" required></label><label>Nota<textarea name="notes"></textarea></label><button>Sahkan Pembayaran</button>`);o.querySelector('form').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.currentTarget),err=o.querySelector('.ada-form-error');if(!confirm('Sahkan pembayaran ini? Rekod pembayaran tidak boleh dipadam melalui UI.'))return;try{const {error}=await client.rpc('record_sale_payment',{p_sale_id:saleId,p_kind:f.get('kind'),p_amount:Number(f.get('amount')),p_reference_no:f.get('reference_no').trim(),p_notes:('[Kaedah: '+f.get('method')+']'+(f.get('notes').trim()?' '+f.get('notes').trim():''))});if(error)throw error;o.remove();await refresh();msg(f.get('kind')==='full_payment'?'Full payment disahkan. Kereta ditanda Sold.':'Deposit disahkan. Kereta kekal Reserved.')}catch(x){err.textContent=x.message}}}
 function showEditVehicleForm(vehicleId){
   if(profile?.role!=='owner'){msg('Edit Inventory hanya untuk Owner.');return}
   const v=vehicles.find(x=>x.id===vehicleId);if(!v){msg('Kenderaan tidak dijumpai.');return}
