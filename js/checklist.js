@@ -154,6 +154,17 @@ em{font-style:normal}.ng{color:var(--ng)}.ok{color:var(--ok)}
 .seg button{border:0;background:var(--soft);padding:8px 10px;font-weight:700;font-size:13px;color:var(--mute);min-width:42px}
 .seg button+button{border-left:1px solid var(--line)}
 .seg .ok.on{background:var(--ok);color:#04140a}.seg .ng.on{background:var(--ng);color:#fff}.seg .na.on{background:var(--na);color:#fff}
+.cam{flex:0 0 auto;border:1px solid var(--line);background:var(--soft);border-radius:9px;padding:7px 9px;font-size:15px;line-height:1;cursor:pointer;position:relative;display:inline-flex;align-items:center;gap:3px}
+.cam small{font-size:11px;font-weight:800;color:var(--pri)}.cam.has{border-color:#5a4a14}
+.cam input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
+.phs{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}.phs:empty{display:none}
+.ph{position:relative;width:64px;height:64px;border-radius:9px;overflow:hidden;background:#222;border:1px solid var(--line);flex:0 0 64px;padding:0}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.ph .x{position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;border:0;background:rgba(0,0,0,.75);color:#fff;font-size:12px;line-height:20px;padding:0;cursor:pointer}
+.ph.up{display:grid;place-items:center;font-size:11px;color:var(--mute)}
+.evid{display:flex;flex-direction:column;gap:10px}.evid .ei b{font-size:14px}.evid .phs .ph{width:84px;height:84px;flex-basis:84px;cursor:zoom-in}
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:60;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px;gap:10px}
+.lightbox img{max-width:100%;max-height:82vh;border-radius:10px}.lightbox p{color:#ddd;font:600 14px var(--f);margin:0;text-align:center}
 .it .note{margin-top:7px;padding:8px 10px}.it.isng .note{border-color:#6b2420;background:#1d100f}
 .sugg{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 10px}
 .sugg button{border:1px dashed #8a3a35;background:transparent;color:#ffaaa4;border-radius:999px;padding:5px 10px;font-size:13px;font-weight:600}
@@ -220,6 +231,25 @@ function pLabel(d,x,y,k,v,w){ pFont(d,6.3,"bold"); pText(d,"#7a7a7a"); d.text(A(
 async function savePdf(d,name){ try{ d.save(name); toast("PDF dimuat turun ✓"); }catch(e){ toast("Gagal muat turun PDF"); } }
 async function withBusy(btn,fn){ const t=btn.textContent; btn.disabled=true; btn.textContent="Menjana PDF…"; try{ await fn(); }catch(e){ toast(e?.message==="load"||e?.message==="lib"?"Gagal memuatkan penjana PDF. Semak internet.":"Gagal menjana PDF"); } btn.disabled=false; btn.textContent=t; }
 
+async function pdfPhotos(d,r){
+  const ev=[]; SECTIONS.forEach(sec=>sec.items.forEach((nm,i)=>{ const v=r.items?.[sec.k+"_"+i]; photosOf(v).forEach(p=>ev.push({p,cap:sec.t+" - "+nm+(v.s?" ("+(v.s==="na"?"N/A":v.s.toUpperCase())+")":""),ng:v.s==="ng"})); }));
+  if(!ev.length) return;
+  await signPaths(ev.map(e=>e.p));
+  const load=async url=>{ const b=await (await fetch(url)).blob(); const du=await new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.onerror=rej;fr.readAsDataURL(b);});
+    const dim=await new Promise(res=>{const im=new Image();im.onload=()=>res([im.naturalWidth,im.naturalHeight]);im.onerror=()=>res([4,3]);im.src=du;}); return {du,w:dim[0],h:dim[1]}; };
+  d.addPage(); let y=pMini(d);
+  pFont(d,11,"bold"); pText(d,"#141414"); d.text("Gambar bukti ("+ev.length+")",PM,y+4); y+=9;
+  const cols=3, gap=4, cw=(PW-2*PM-gap*(cols-1))/cols, ih=cw*0.75, rh=ih+11; let c=0;
+  for(const e of ev){
+    if(c===0&&y+rh>PH-14){ d.addPage(); y=pMini(d); }
+    const x=PM+c*(cw+gap);
+    d.setDrawColor(228,225,218); d.setLineWidth(.3); pFill(d,"#f4f2ee"); d.rect(x,y,cw,ih,"FD");
+    try{ const im=await load(URLS[e.p]); const sc=Math.min(cw/im.w,ih/im.h), w=im.w*sc, h=im.h*sc; d.addImage(im.du,"JPEG",x+(cw-w)/2,y+(ih-h)/2,w,h); }
+    catch(err){ pFont(d,7,"italic"); pText(d,"#999999"); d.text("Gambar tidak dapat dimuatkan",x+cw/2,y+ih/2,{align:"center"}); }
+    pFont(d,7,e.ng?"bold":"normal"); pText(d,e.ng?"#a01f1f":"#333333"); d.splitTextToSize(A(e.cap),cw).slice(0,2).forEach((l,j)=>d.text(l,x,y+ih+3.6+j*3.2));
+    c++; if(c===cols){ c=0; y+=rh; }
+  }
+}
 async function pdfInspection(r){
   const J=await loadPdf(); const d=new J({unit:"mm",format:"a4"});
   pHeader(d,"LAPORAN PEMERIKSAAN KERETA","Checklist sebelum dijual  |  "+(STATUS[r.status]||STATUS.draf)[0]);
@@ -298,6 +328,7 @@ async function pdfInspection(r){
   y+=6; d.setDrawColor(120,120,120); d.setLineWidth(.3);
   [["Tandatangan pemeriksa",who(r)],["Disahkan oleh",r.status==="lulus"?(S.names[r.reviewedBy]||""):""]].forEach((s,i)=>{ const x=PM+i*96; d.line(x,y+12,x+80,y+12);
     pFont(d,7.5,"bold"); pText(d,"#6b6b6b"); d.text(s[0].toUpperCase(),x,y+16); pFont(d,8.5,"normal"); pText(d,"#141414"); d.text(A(s[1]),x,y+20.5); });
+  await pdfPhotos(d,r);
   pFooter(d);
   await savePdf(d,"Pemeriksaan_"+A(r.plat||"tanpa-plat").replace(/[^A-Za-z0-9]+/g,"")+"_"+(r.tarikh||today())+".pdf");
 }
@@ -416,7 +447,7 @@ async function load(){
 }
 function bodyOf(f){
   return { jenis:(f.jenis||"").trim(), tahun:String(f.tahun||"").trim(), plat:(f.plat||"").trim().toUpperCase(), mileage:String(f.mileage||"").trim(),
-    tarikh:f.tarikh, pemeriksa:(f.pemeriksa||"").trim(), items:f.items, akhir:f.akhir, grade:f.grade, catatan:f.catatan||"",
+    tarikh:f.tarikh, pemeriksa:(f.pemeriksa||"").trim(), pid:f.pid||undefined, items:f.items, akhir:f.akhir, grade:f.grade, catatan:f.catatan||"",
     parts:(f.parts||[]).filter(p=>(p.nama||"").trim()||num(p.harga)||num(p.upah)).map(p=>({id:p.id||newId(),nama:(p.nama||"").trim(),bhg:p.bhg||"lain",qty:num(p.qty||1)||1,harga:num(p.harga),upah:num(p.upah),siap:!!p.siap})) };
 }
 
@@ -455,7 +486,7 @@ function recRow(r){
   const c=counts(r), s=STATUS[r.status]||STATUS.draf, flood=["Suspected","Confirmed"].includes(r.akhir?.banjir);
   return `<button class="rec" data-rec="${esc(r.id)}"><span class="gchip ${gradeCls(r.grade)}">${esc(r.grade||"–")}</span>
     <span class="rb"><b>${esc(r.plat||"(tiada plat)")} · ${esc(r.jenis||"-")} ${esc(r.tahun||"")}</b>
-    <small>${esc(who(r))} · ${fmtD(r.tarikh)} · ${c.done}/${TOTAL_ITEMS}${c.ng?` · <em class="ng">${c.ng} NG</em>`:""}${(r.parts||[]).length?` · ${RM(partsTotal(r)).replace(".00","")}`:""}${flood?` · <em class="ng">Banjir</em>`:""}</small></span>
+    <small>${esc(who(r))} · ${fmtD(r.tarikh)} · ${c.done}/${TOTAL_ITEMS}${c.ng?` · <em class="ng">${c.ng} NG</em>`:""}${(r.parts||[]).length?` · ${RM(partsTotal(r)).replace(".00","")}`:""}${photoCount(r)?` · 📷 ${photoCount(r)}`:""}${flood?` · <em class="ng">Banjir</em>`:""}</small></span>
     <span class="pill ${s[1]}">${s[0]}</span></button>`;
 }
 
@@ -629,6 +660,11 @@ function viewDetail(){
     ${(r.parts||[]).length?`<table class="ptab"><thead><tr><th>Siap</th><th>Barang</th><th class="num hx">Qty</th><th class="num hx">Harga</th><th class="num hx">Upah</th><th class="num">Jumlah</th></tr></thead><tbody>
       ${r.parts.map((p,i)=>`<tr class="${p.siap?"siap":""}"><td><input type="checkbox" data-siap="${i}" ${p.siap?"checked":""}></td><td><div class="pn">${esc(p.nama||"-")}</div><small class="mute">${esc(bhgName(p.bhg))}</small><div class="mx">${esc(p.qty)} × ${RM(p.harga)}${num(p.upah)?` + upah ${RM(p.upah)}`:""}</div></td><td class="num hx">${esc(p.qty)}</td><td class="num hx">${RM(p.harga)}</td><td class="num hx">${RM(p.upah)}</td><td class="num"><b>${RM(partTotal(p))}</b></td></tr>`).join("")}
       </tbody></table><div class="gtot"><span>Jumlah anggaran kos</span><b>${RM(partsTotal(r))}</b></div>`:`<p class="mute">Tiada barang direkodkan.</p>`}</div>
+  ${photoCount(r)?`<div class="card"><div class="row"><h3>Gambar bukti</h3><span class="grow"></span><small class="mute">${photoCount(r)} gambar</small></div><div class="evid">
+    ${SECTIONS.map(sec=>sec.items.map((nm,i)=>{const v=r.items?.[sec.k+"_"+i]; const ps=photosOf(v); if(!ps.length) return "";
+      return `<div class="ei"><b class="${v.s==="ng"?"ng":""}">${esc(sec.t)} › ${esc(nm)}</b>${v.s?` <span class="pill ${v.s==="ng"?"p-ng":v.s==="ok"?"p-lulus":"p-draf"}">${v.s==="na"?"N/A":v.s.toUpperCase()}</span>`:""}${v.n?`<div class="mute">${esc(v.n)}</div>`:""}
+        <div class="phs">${ps.map(p=>thumbHtml(p,false).replace('data-open=','data-cap="'+esc(sec.t+" › "+nm)+'" data-open=')).join("")}</div></div>`;}).join("")).join("")}
+  </div></div>`:""}
   <div class="card"><h3>Butiran mengikut bahagian</h3>
     ${SECTIONS.map((sec,si)=>{const sc=secCounts(r,sec);const rows=sec.items.map((nm,i)=>({nm,v:r.items?.[sec.k+"_"+i]}));const ngs=rows.filter(x=>x.v?.s==="ng"),notes=rows.filter(x=>x.v?.s!=="ng"&&x.v?.n);
       return `<div class="secsum"><i style="background:${SECHEX[sec.k]}"></i><b class="grow">${si+1}. ${esc(sec.t)}</b><small class="mute">${sc.done}/${sc.total}</small>${sc.ng?`<span class="pill p-ng">${sc.ng} NG</span>`:sc.done===sc.total?`<span class="pill p-lulus">Semua OK</span>`:""}</div>
@@ -642,6 +678,8 @@ function viewDetail(){
 function bindDetail(){
   const r=S.rows.find(x=>x.id===S.id); if(!r) return;
   loadTrail(r.id);
+  hydrate(Object.values(r.items||{}).flatMap(photosOf));
+  $$(".evid [data-open]").forEach(t=>t.onclick=()=>lightbox(t.dataset.open,t.dataset.cap));
   $$("[data-edit]").forEach(b=>b.onclick=()=>openForm(b.dataset.edit));
   $('[data-act="pdf"]').onclick=e=>withBusy(e.target,()=>pdfInspection(r));
   $('[data-act="copy"]').onclick=()=>{ const t=summaryText(r); (navigator.clipboard?.writeText(t)||Promise.reject()).then(()=>toast("Ringkasan disalin"),()=>showCopy(t)); };
@@ -682,6 +720,59 @@ function review(r,to){
 }
 
 /* ---------- form ---------- */
+/* ---------- gambar bukti (bucket peribadi checklist-photos) ---------- */
+const BUCKET="checklist-photos", URLS={};
+const photosOf = v => Array.isArray(v?.p)?v.p:[];
+function photoCount(r){ return Object.values(r.items||{}).reduce((a,v)=>a+photosOf(v).length,0); }
+async function signPaths(paths){
+  const need=[...new Set(paths)].filter(p=>p&&!URLS[p]); if(!need.length) return;
+  try{ const {data,error}=await S.client.storage.from(BUCKET).createSignedUrls(need,3600); if(error) throw error;
+    (data||[]).forEach(d=>{ if(d.signedUrl&&d.path) URLS[d.path]=d.signedUrl; }); }catch(e){ console.warn("signed url",e); }
+}
+function fillImgs(){ root.querySelectorAll("img[data-ph]").forEach(i=>{ const u=URLS[i.dataset.ph]; if(u&&i.src!==u) i.src=u; }); }
+async function hydrate(paths){ await signPaths(paths); fillImgs(); }
+async function compress(file){
+  try{
+    const bmp=await createImageBitmap(file,{imageOrientation:"from-image"}); const max=1600, sc=Math.min(1,max/Math.max(bmp.width,bmp.height));
+    const c=document.createElement("canvas"); c.width=Math.round(bmp.width*sc); c.height=Math.round(bmp.height*sc);
+    c.getContext("2d").drawImage(bmp,0,0,c.width,c.height); bmp.close?.();
+    const b=await new Promise(res=>c.toBlob(res,"image/jpeg",0.78)); if(b) return b;
+  }catch(e){}
+  return file;
+}
+function thumbHtml(path,removable){ return `<span class="ph" data-open="${esc(path)}"><img data-ph="${esc(path)}" alt="" loading="lazy" src="${esc(URLS[path]||"")}">${removable?`<button class="x" data-rm="${esc(path)}" title="Buang gambar">✕</button>`:""}</span>`; }
+function lightbox(path,cap){ const m=document.createElement("div"); m.className="lightbox"; m.innerHTML=`<img src="${esc(URLS[path]||"")}" alt=""><p>${esc(cap||"")}</p><p class="mute">Tekan di mana-mana untuk tutup</p>`; m.onclick=()=>m.remove(); root.appendChild(m); }
+async function uploadPhotos(key,files,row){
+  const f=S.form; if(!f) return; f.pid=f.pid||crypto.randomUUID?.()||newId();
+  const box=row.querySelector(".phs"), cam=row.querySelector(".cam");
+  for(const file of files){
+    if(!/^image\//.test(file.type)){ toast("Hanya fail gambar"); continue; }
+    const tmp=document.createElement("span"); tmp.className="ph up"; tmp.textContent="Muat naik…"; box.appendChild(tmp);
+    try{
+      const blob=await compress(file), path=`${f.pid}/${key}/${Date.now()}-${Math.random().toString(36).slice(2,7)}.jpg`;
+      const {error}=await S.client.storage.from(BUCKET).upload(path,blob,{contentType:"image/jpeg",upsert:false});
+      if(error) throw error;
+      if(S.form!==f) return;
+      const cur=f.items[key]||{}; f.items[key]={...cur,p:[...photosOf(cur),path]};
+      await signPaths([path]); markDirty();
+    }catch(e){ toast("Gagal muat naik: "+(e?.message||e)); }
+    tmp.remove();
+  }
+  renderItemPhotos(row,key);
+}
+function renderItemPhotos(row,key){
+  const v=S.form?.items[key], ps=photosOf(v), box=row.querySelector(".phs"), cam=row.querySelector(".cam");
+  box.innerHTML=ps.map(p=>thumbHtml(p,true)).join(""); cam.classList.toggle("has",ps.length>0); cam.querySelector("small").textContent=ps.length?ps.length:"";
+  fillImgs(); bindThumbs(box,key);
+}
+function bindThumbs(box,key){
+  box.querySelectorAll("[data-open]").forEach(t=>t.onclick=e=>{ if(e.target.closest("[data-rm]")) return; lightbox(t.dataset.open); });
+  box.querySelectorAll("[data-rm]").forEach(b=>b.onclick=async e=>{ e.stopPropagation(); const path=b.dataset.rm, cur=S.form.items[key]||{};
+    const rest=photosOf(cur).filter(x=>x!==path); S.form.items[key]={...cur,p:rest}; if(!rest.length) delete S.form.items[key].p;
+    if(!S.form.items[key].s&&!S.form.items[key].n&&!S.form.items[key].p) delete S.form.items[key];
+    markDirty(); renderItemPhotos(box.closest(".it"),key);
+    S.client.storage.from(BUCKET).remove([path]).catch(()=>{}); });
+}
 function blankForm(){ return {id:null,vehicle_id:null,jenis:"",tahun:"",plat:"",mileage:"",tarikh:today(),pemeriksa:S.profile?.full_name||lsGet("abedin_nama")||"",items:{},akhir:{},grade:"",catatan:"",status:"draf",parts:[]}; }
 function openForCar(vid){
   const v=vehById(vid); if(!v) return toast("Kenderaan tidak dijumpai");
@@ -726,8 +817,10 @@ function secHtml(s,si){
   return `<div class="sec ${closed?"closed":""}" data-sec="${s.k}"><div class="sech" style="background:${SECHEX[s.k]}"><span class="no">${si+1}</span><span class="tt">${esc(s.t)}</span><span class="pg" data-pg="${s.k}"></span><span class="chev">▾</span></div>
   <div class="secb"><div class="tools"><button class="sm" data-allok="${s.k}">Tandakan baki OK</button></div>
   ${s.items.map((nm,i)=>{const key=s.k+"_"+i,v=S.form.items[key]||{};return `<div class="it ${v.s==="ng"?"isng":""}" data-it="${key}"><div class="top"><span class="lbl">${esc(nm)}</span>
+    <label class="cam ${photosOf(v).length?"has":""}" title="Tambah gambar bukti">📷<small>${photosOf(v).length||""}</small><input type="file" accept="image/*" multiple data-cam></label>
     <div class="seg"><button class="ok ${v.s==="ok"?"on":""}" data-s="ok">OK</button><button class="ng ${v.s==="ng"?"on":""}" data-s="ng">NG</button><button class="na ${v.s==="na"?"on":""}" data-s="na">N/A</button></div></div>
-    <input class="note field" placeholder="Catatan${v.s==="ng"?" (apa masalahnya?)":""}" value="${esc(v.n||"")}" style="${v.s==="ng"||v.n?"":"display:none"}"></div>`;}).join("")}</div></div>`;
+    <input class="note field" placeholder="Catatan${v.s==="ng"?" (apa masalahnya?)":""}" value="${esc(v.n||"")}" style="${v.s==="ng"||v.n?"":"display:none"}">
+    <div class="phs">${photosOf(v).map(p=>thumbHtml(p,true)).join("")}</div></div>`;}).join("")}</div></div>`;
 }
 function markDirty(){ if(!S.form) return; S.dirty=true; if(!S.form.id&&S.form.vehicle_id) lsSet("abedin_ck_draft_"+S.form.vehicle_id,S.form); updateProg(); }
 function bindForm(){
@@ -736,11 +829,14 @@ function bindForm(){
   $$(".sech").forEach(h=>h.onclick=()=>h.parentElement.dataset.sec&&h.parentElement.classList.toggle("closed"));
   $$(".it").forEach(row=>{ const key=row.dataset.it, note=row.querySelector(".note");
     row.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{ const cur=S.form.items[key]||{}, ns=cur.s===b.dataset.s?null:b.dataset.s;
-      S.form.items[key]={...cur,s:ns}; if(!ns&&!cur.n) delete S.form.items[key];
+      S.form.items[key]={...cur,s:ns}; if(!ns&&!cur.n&&!photosOf(cur).length) delete S.form.items[key];
       row.querySelectorAll(".seg button").forEach(x=>x.classList.toggle("on",x.dataset.s===ns)); row.classList.toggle("isng",ns==="ng");
       note.style.display=(ns==="ng"||note.value)?"":"none"; note.placeholder=ns==="ng"?"Catatan (apa masalahnya?)":"Catatan"; if(ns==="ng") note.focus();
       markDirty(); renderParts(); });
-    note.oninput=()=>{ S.form.items[key]={...(S.form.items[key]||{}),n:note.value}; markDirty(); }; });
+    note.oninput=()=>{ S.form.items[key]={...(S.form.items[key]||{}),n:note.value}; markDirty(); };
+    const ci=row.querySelector("[data-cam]"); ci.onchange=()=>{ const fs=[...ci.files]; ci.value=""; if(fs.length) uploadPhotos(key,fs,row); };
+    bindThumbs(row.querySelector(".phs"),key); });
+  hydrate(Object.values(S.form.items).flatMap(photosOf));
   $$("[data-allok]").forEach(b=>b.onclick=()=>{ const s=SECTIONS.find(x=>x.k===b.dataset.allok);
     s.items.forEach((_,i)=>{const key=s.k+"_"+i; if(!S.form.items[key]?.s){ S.form.items[key]={...(S.form.items[key]||{}),s:"ok"}; root.querySelector(`[data-it="${key}"] .seg .ok`).classList.add("on"); }});
     markDirty(); renderParts(); toast("Item yang belum ditanda → OK"); });
