@@ -1984,3 +1984,12 @@ html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-hero :is([class*=ey
 .ada-edit-pay legend{padding:0 6px;font-size:12px;font-weight:700;opacity:.8}
 .ada-edit-note{font-size:12px!important;margin:6px 0 12px!important}
 @media(max-width:520px){.ada-edit-grid{grid-template-columns:1fr}}
+
+/* V69 pelanggan baru dalam borang Jual Kereta */
+.ada-cust-mode{display:grid;gap:8px;margin:14px 0 8px}
+.ada-cust-mode>span{font-weight:700;font-size:14px}
+.ada-cust-mode>div{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ada-cust-mode button{min-height:44px!important;margin:0!important;border-radius:12px!important;background:transparent!important;border:1.5px solid var(--ada-line,#ffffff2a)!important;color:inherit!important;box-shadow:none!important;font-weight:700!important}
+.ada-cust-mode button.is-active{background:linear-gradient(135deg,#ffe878,#f4c430)!important;border-color:#f4c430!important;color:#111!important}
+.ada-cust-mode button:disabled{opacity:.45}
+.ada-cust-new{border:1px dashed var(--ada-line,#ffffff2a);border-radius:14px;padding:4px 12px 10px}
