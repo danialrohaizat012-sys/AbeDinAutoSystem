@@ -1949,3 +1949,29 @@ html.ada-light:not(.ada-public-route) #ada-cloud-gate [style*="color:#e7e6e1"]{c
 html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-hero h1{color:#ffffff!important}
 html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-hero :is(p,small,span,div):not([class*=eyebrow]):not([class*=kicker]){color:#e8e9eb!important}
 html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-hero :is([class*=eyebrow],[class*=kicker]){color:#f4c430!important}
+
+/* V67 jualan: carian, resit, jadual mudah alih */
+.ada-sales-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch}
+.ada-sales-toolbar .ada-inv-search{flex:1 1 320px}
+.ada-sales-table td small{display:block;font-size:11.5px;opacity:.7;margin-top:2px}
+.ada-sale-actions{display:flex;gap:6px;flex-wrap:wrap}
+.ada-sale-actions button{min-height:36px!important;padding:6px 12px!important;font-size:12.5px!important;white-space:nowrap;margin:0!important}
+.ada-picker-search{width:100%;margin:6px 0!important}
+.ada-form select[size]{height:auto!important;min-height:120px;padding:4px!important}
+.ada-form select[size] option{padding:8px 10px;border-radius:8px}
+.ada-picker-info{display:block;font-size:11.5px;opacity:.7;margin-top:4px}
+@media(max-width:720px){
+ .ada-sales-table,.ada-sales-table tbody,.ada-sales-table tr,.ada-sales-table td{display:block;width:100%}
+ .ada-sales-table tr:first-child{display:none}
+ .ada-sales-table tr{border:1px solid var(--ada-line,#ffffff1a);border-radius:14px;padding:6px 12px;margin:0 0 12px}
+ .ada-sales-table td{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 0!important;border:0!important;border-bottom:1px solid var(--ada-line,#ffffff14)!important;text-align:right}
+ .ada-sales-table td:last-child{border-bottom:0!important}
+ .ada-sales-table td::before{content:attr(data-label);font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.6;text-align:left;flex:none}
+ .ada-sales-table td[data-label="Kenderaan"]{display:block;text-align:left;font-size:17px}
+ .ada-sales-table td[data-label="Kenderaan"]::before{display:none}
+ .ada-sales-table td[colspan]{display:block;text-align:center}
+ .ada-sales-table td[colspan]::before{display:none}
+ .ada-sale-actions{justify-content:flex-end}
+}
+.ada-sales-toolbar #ada-new-sale{flex:0 0 auto!important;width:auto!important;min-width:150px;white-space:nowrap;margin:0!important}
+@media(max-width:640px){.ada-sales-toolbar .ada-inv-search{flex-basis:100%!important}.ada-sales-toolbar #ada-new-sale{flex:1 1 100%!important;width:100%!important}}
