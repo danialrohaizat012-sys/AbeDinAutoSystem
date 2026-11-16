@@ -122,7 +122,7 @@ export function mountSewa(host, ctx) {
   const root = host.shadowRoot || host.attachShadow({ mode: 'open' });
   root.innerHTML = `<style>${CSS}</style><div class="shell"><div class="wrap" id="app"></div></div>`;
   const app = root.getElementById('app');
-  const formUrl = new URL('sewa.html', location.href.split('#')[0].split('?')[0]).href;
+  const formUrl = new URL(ctx.formPath || 'sewa.html', location.href.split('#')[0].split('?')[0]).href;
   let logoSrc = new URL('abedin-car-rental-logo.webp', location.href).href;
   // simpan logo sebagai data URL supaya sentiasa muncul dalam tetingkap cetak
   fetch(logoSrc).then(r => r.blob()).then(b => new Promise(ok => { const f = new FileReader(); f.onload = () => ok(f.result); f.readAsDataURL(b); })).then(d => { logoSrc = d; }).catch(() => {});
