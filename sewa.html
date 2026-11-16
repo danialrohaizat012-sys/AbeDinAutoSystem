@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Perjanjian Sewa – Abedin Car Rental</title>
+<meta name="description" content="Borang Perjanjian Sewa Abedin Car Rental. Your Trusted Ride. Always.">
+<meta name="theme-color" content="#f5f7fd">
+<link rel="icon" href="icon-32.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Borang awam Perjanjian Sewa. Data dihantar ke Supabase melalui RPC submit_sewa (V60_SEWA_MIGRATION.sql). */
+:root{
+  --bg:#f5f7fd;--card:#fff;--ink:#1b2236;--muted:#647089;--line:#dde2ee;--field:#fff;
+  --navy:#1f2f57;--blue:#3c6fd8;--gold:#b48a3c;--gold-soft:#f7efdf;--err:#c62828;--ok:#14804a;--r:16px;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 "Plus Jakarta Sans",system-ui,-apple-system,sans-serif}
+.wrap{max-width:760px;margin:0 auto;padding:18px 16px calc(40px + env(safe-area-inset-bottom))}
+header{display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px 0 4px;text-align:center}
+header img{width:min(78%,300px);height:auto}
+h1{margin:6px 0 0;font-size:24px;letter-spacing:.02em;color:var(--blue);font-weight:800}
+.sub{margin:0;color:var(--muted);font-size:14px}
+.terma-link{margin-top:2px;background:none;border:0;color:var(--navy);font:inherit;font-size:13px;font-weight:700;letter-spacing:.04em;text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:6px}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px 18px;margin:16px 0;box-shadow:0 1px 2px rgba(20,30,60,.04)}
+.card h2{margin:0 0 4px;font-size:17px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;color:var(--navy);display:flex;align-items:center;gap:10px}
+.card h2 .n{width:26px;height:26px;border-radius:8px;background:var(--navy);color:#fff;display:grid;place-items:center;font-size:13px}
+.card h3{margin:18px 0 10px;font-size:15px;font-weight:800;color:var(--gold);letter-spacing:.04em;text-transform:uppercase}
+.card .lead{margin:0 0 16px;color:var(--muted);font-size:13.5px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.full{grid-column:1/-1}
+.grid>*{min-width:0}
+@media (max-width:560px){.grid{grid-template-columns:1fr}}
+label{display:block;font-size:14px;font-weight:600;margin-bottom:6px}
+.req{color:var(--err)}
+.opt{color:var(--muted);font-weight:500;font-size:12.5px}
+input,select,textarea{width:100%;font:inherit;color:var(--ink);background:var(--field);border:1.5px solid var(--line);border-radius:11px;padding:12px;outline:none;transition:border-color .15s,box-shadow .15s;min-height:48px}
+input[readonly]{background:#eef1f7;color:var(--muted)}
+textarea{resize:vertical;min-height:88px}
+input:focus,select:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(60,111,216,.18)}
+.field.bad input,.field.bad textarea,.field.bad select,.field.bad .seg,.field.bad .file,.field.bad .sig{border-color:var(--err)}
+.msg{display:none;color:var(--err);font-size:13px;margin-top:5px}
+.field.bad .msg{display:block}
+.hint{font-size:12.5px;color:var(--muted);margin-top:5px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px;border:1.5px solid transparent;border-radius:13px}
+.seg label{margin:0;display:flex;align-items:center;gap:10px;border:1.5px solid var(--line);border-radius:12px;padding:13px 14px;cursor:pointer;font-weight:600;background:var(--field)}
+.seg input{width:18px;height:18px;min-height:0;margin:0;accent-color:var(--blue)}
+.seg label:has(input:checked){border-color:var(--blue);background:#eef3fd}
+.seg small{display:block;font-weight:500;color:var(--muted);font-size:12px}
+.file{display:flex;align-items:center;gap:12px;border:1.5px dashed var(--line);border-radius:12px;padding:10px;background:#fafbfe}
+.file .thumb{width:56px;height:56px;border-radius:9px;background:#eef1f7 center/cover no-repeat;flex:none;display:grid;place-items:center;color:var(--muted);font-size:11px;font-weight:700}
+.file .meta{flex:1;min-width:0;font-size:13.5px}
+.file .meta b{display:block;font-size:14px}
+.file .meta span{display:block;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.file input{display:none}
+.pick{border:1.5px solid var(--navy);background:#fff;color:var(--navy);border-radius:10px;padding:9px 12px;font:inherit;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap}
+.sig{border:1.5px solid var(--line);border-radius:12px;background:#fff;position:relative;touch-action:none}
+.sig canvas{display:block;width:100%;height:170px;border-radius:12px;cursor:crosshair}
+.sig .ph{position:absolute;inset:0;display:grid;place-items:center;color:#a7b0c2;font-size:14px;pointer-events:none}
+.sig .line{position:absolute;left:18px;right:18px;bottom:34px;border-bottom:1px dashed #c8cfdd;pointer-events:none}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px}
+.link{background:none;border:0;color:var(--blue);font:inherit;font-size:14px;font-weight:700;cursor:pointer;padding:6px 0}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:14.5px;font-weight:500;cursor:pointer;margin:4px 0 0}
+.check input{width:20px;height:20px;min-height:0;margin:1px 0 0;flex:none;accent-color:var(--blue)}
+.submit{display:flex;justify-content:center;margin:22px 0 6px}
+.btn{font:inherit;font-weight:800;border-radius:999px;padding:15px 30px;border:0;background:#58b947;color:#fff;cursor:pointer;min-width:220px;font-size:16px;display:inline-flex;align-items:center;justify-content:center;gap:10px;text-decoration:none}
+.btn:disabled{opacity:.6;cursor:wait}
+.btn.ghost{background:#fff;color:var(--navy);border:1.5px solid var(--line)}
+.btn.wa{background:#1fa855}
+.spin{width:18px;height:18px;border:2.5px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:s .8s linear infinite;display:none}
+.btn:disabled .spin{display:inline-block}
+@keyframes s{to{transform:rotate(360deg)}}
+.status{text-align:center;color:var(--muted);font-size:14px;min-height:20px}
+.status.err{color:var(--err);font-weight:600}
+footer{text-align:center;color:var(--muted);font-size:12.5px;margin-top:20px}
+/* Modal terma */
+dialog{border:0;border-radius:18px;padding:0;width:min(640px,calc(100% - 24px));max-height:calc(100dvh - 40px);box-shadow:0 20px 60px rgba(10,20,50,.3)}
+dialog::backdrop{background:rgba(15,22,40,.55)}
+.dlg{display:flex;flex-direction:column;max-height:calc(100dvh - 40px)}
+.dlg header{flex-direction:row;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--line)}
+.dlg header b{font-size:17px;color:var(--navy)}
+.dlg .x{background:#eef1f7;border:0;border-radius:10px;width:36px;height:36px;font-size:18px;cursor:pointer}
+.dlg .body{padding:16px 18px;overflow:auto;white-space:pre-wrap;font-size:14.5px;line-height:1.6}
+.dlg .foot{padding:14px 18px;border-top:1px solid var(--line);display:flex;justify-content:flex-end}
+/* Skrin berjaya */
+.done{display:none;text-align:center}
+.done .tick{width:68px;height:68px;border-radius:50%;background:#e6f6ea;color:var(--ok);display:grid;place-items:center;font-size:34px;margin:4px auto 10px}
+.done .ref{display:inline-block;font-size:24px;font-weight:800;letter-spacing:.06em;color:var(--navy);background:var(--gold-soft);border:1px dashed var(--gold);padding:8px 16px;border-radius:12px;margin:8px 0 14px}
+.done .acts{display:flex;flex-direction:column;gap:10px;align-items:center;margin-top:12px}
+body.sent form{display:none}
+body.sent .done{display:block}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <img src="abedin-car-rental-logo.webp" alt="Abedin Car Rental – Your Trusted Ride. Always" width="694" height="290">
+    <h1>PERJANJIAN SEWA</h1>
+    <p class="sub">Lengkapkan borang ini untuk tempahan kereta sewa anda.</p>
+    <button type="button" class="terma-link" data-open-terma>KLIK UNTUK TERMA DAN SYARAT</button>
+  </header>
+
+  <form id="f" novalidate autocomplete="on">
+    <section class="card">
+      <h2><span class="n">1</span>Maklumat Peribadi</h2>
+      <p class="lead">Medan bertanda <span class="req">*</span> wajib diisi.</p>
+      <div class="grid">
+        <div class="field"><label for="tarikh">Tarikh</label><input id="tarikh" readonly></div>
+        <div class="field full"><label>Sewaan <span class="req">*</span></label>
+          <div class="seg">
+            <label><input type="radio" name="jenis_sewa" value="pandu_sendiri"><span>Pandu Sendiri<small>Anda memandu sendiri</small></span></label>
+            <label><input type="radio" name="jenis_sewa" value="chauffeur"><span>Chauffeur<small>Dengan pemandu kami</small></span></label>
+          </div><div class="msg">Sila pilih jenis sewaan.</div></div>
+        <div class="field full"><label for="nama">1. Nama Penuh <span class="req">*</span></label><input id="nama" name="nama" autocomplete="name" placeholder="Seperti dalam Kad Pengenalan" maxlength="120" required><div class="msg">Sila masukkan nama penuh.</div></div>
+        <div class="field"><label for="email">2. Email <span class="req">*</span></label><input id="email" name="email" type="email" autocomplete="email" inputmode="email" placeholder="nama@email.com" maxlength="160" required><div class="msg">Sila masukkan email yang sah.</div></div>
+        <div class="field"><label for="telefon">3. No Telefon Bimbit <span class="req">*</span></label><input id="telefon" name="telefon" type="tel" autocomplete="tel" inputmode="tel" placeholder="012-345 6789" maxlength="20" required><div class="msg">Sila masukkan no telefon yang sah.</div></div>
+        <div class="field full"><label for="no_kp">4. No KP / Passport <span class="req">*</span></label><input id="no_kp" name="no_kp" placeholder="cth: 900101-03-5678" maxlength="30" required><div class="msg">Sila masukkan No KP atau Passport.</div></div>
+        <div class="field full"><label for="alamat">5. Alamat <span class="req">*</span></label><textarea id="alamat" name="alamat" autocomplete="street-address" placeholder="No rumah, jalan, taman" maxlength="400" required></textarea><div class="msg">Sila masukkan alamat.</div></div>
+        <div class="field"><label for="bandar">6. Bandar <span class="req">*</span></label><input id="bandar" name="bandar" autocomplete="address-level2" placeholder="cth: Kota Bharu" maxlength="80" required><div class="msg">Sila masukkan bandar.</div></div>
+        <div class="field"><label for="negeri">7. Negeri <span class="req">*</span></label><input id="negeri" name="negeri" list="senarai-negeri" autocomplete="address-level1" placeholder="cth: Kelantan" maxlength="80" required><div class="msg">Sila masukkan negeri.</div></div>
+        <div class="field"><label for="poskod">8. Poskod <span class="req">*</span></label><input id="poskod" name="poskod" autocomplete="postal-code" inputmode="numeric" placeholder="cth: 15000" maxlength="12" required><div class="msg">Sila masukkan poskod.</div></div>
+        <div class="field"><label for="negara">9. Negara <span class="req">*</span></label><input id="negara" name="negara" autocomplete="country-name" value="Malaysia" maxlength="80" required><div class="msg">Sila masukkan negara.</div></div>
+        <div class="field"><label for="no_lesen">10. No Lesen Memandu <span class="req lesen-req">*</span></label><input id="no_lesen" name="no_lesen" placeholder="No lesen memandu" maxlength="40"><div class="msg">Wajib untuk Pandu Sendiri.</div></div>
+        <div class="field"><label for="lesen_luput">11. Tarikh Luput Lesen <span class="req lesen-req">*</span></label><input id="lesen_luput" name="lesen_luput" type="date"><div class="msg">Lesen mesti sah sehingga tarikh pulang.</div></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2><span class="n">2</span>Maklumat Kenderaan</h2>
+      <p class="lead">Kereta yang ingin disewa.</p>
+      <div class="grid">
+        <div class="field"><label for="model">1. Model <span class="req">*</span></label><input id="model" name="model" placeholder="cth: Perodua Bezza / Toyota Vellfire" maxlength="120" required><div class="msg">Sila masukkan model kereta.</div></div>
+        <div class="field"><label for="kumpulan">2. Kumpulan <span class="opt">(jika ada)</span></label><input id="kumpulan" name="kumpulan" list="senarai-kumpulan" placeholder="cth: Sedan / MPV / SUV" maxlength="80"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2><span class="n">3</span>Penghantaran &amp; Pengambilan</h2>
+      <h3>Ambil</h3>
+      <div class="grid">
+        <div class="field full"><label for="ambil_lokasi">1. Lokasi <span class="req">*</span></label><input id="ambil_lokasi" name="ambil_lokasi" placeholder="cth: Lapangan Terbang Sultan Ismail Petra" maxlength="200" required><div class="msg">Sila masukkan lokasi ambil.</div></div>
+        <div class="field"><label for="ambil_tarikh">2. Tarikh Mula <span class="req">*</span></label><input id="ambil_tarikh" name="ambil_tarikh" type="date" required><div class="msg">Sila pilih tarikh mula.</div></div>
+        <div class="field"><label for="ambil_masa">3. Masa Mula <span class="req">*</span></label><input id="ambil_masa" name="ambil_masa" type="time" required><div class="msg">Sila pilih masa mula.</div></div>
+      </div>
+      <h3>Pulang</h3>
+      <div class="grid">
+        <div class="field full"><label for="pulang_lokasi">1. Lokasi <span class="req">*</span></label><input id="pulang_lokasi" name="pulang_lokasi" maxlength="200" required><div class="row" style="margin:6px 0 0;justify-content:flex-start"><label class="check" style="font-size:13.5px"><input type="checkbox" id="sama"> Sama seperti lokasi ambil</label></div><div class="msg">Sila masukkan lokasi pulang.</div></div>
+        <div class="field"><label for="pulang_tarikh">2. Tarikh Akhir <span class="req">*</span></label><input id="pulang_tarikh" name="pulang_tarikh" type="date" required><div class="msg">Tarikh akhir mesti selepas tarikh mula.</div></div>
+        <div class="field"><label for="pulang_masa">3. Masa Akhir <span class="req">*</span></label><input id="pulang_masa" name="pulang_masa" type="time" required><div class="msg">Sila pilih masa akhir.</div></div>
+        <div class="full hint" id="tempoh"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2><span class="n">4</span>Remark</h2>
+      <div class="field"><label for="remark">Catatan tambahan <span class="opt">(pilihan)</span></label><textarea id="remark" name="remark" maxlength="1000" placeholder="cth: perlu kerusi bayi, no penerbangan, dll."></textarea></div>
+    </section>
+
+    <section class="card">
+      <h2><span class="n">5</span>Upload Dokumen</h2>
+      <p class="lead">Gambar atau PDF, maksimum 8MB setiap satu. Gambar akan dikecilkan secara automatik.</p>
+      <div class="grid" id="docs"></div>
+    </section>
+
+    <section class="card">
+      <h2><span class="n">6</span>Pengesahan</h2>
+      <div class="field" id="f-sig"><label>Tandatangan Penyewa <span class="req">*</span></label>
+        <div class="sig"><canvas id="sig"></canvas><div class="line"></div><div class="ph" id="sig-ph">Tandatangan di sini</div></div>
+        <div class="row"><span class="hint" style="margin:0">Guna jari atau tetikus.</span><button type="button" class="link" id="sig-clear">Padam</button></div>
+        <div class="msg">Sila turunkan tandatangan.</div></div>
+      <div class="field" id="f-setuju" style="margin-top:14px"><label class="check"><input type="checkbox" id="setuju"><span>Saya mengesahkan maklumat di atas adalah benar dan bersetuju dengan <button type="button" class="link" data-open-terma style="padding:0">Terma dan Syarat</button> Abedin Car Rental.</span></label><div class="msg">Sila tandakan persetujuan.</div></div>
+    </section>
+
+    <div class="submit"><button class="btn" id="hantar" type="submit"><span class="spin"></span><span class="t">Submit Now</span></button></div>
+    <p class="status" id="status" role="status" aria-live="polite"></p>
+  </form>
+
+  <section class="card done" id="done">
+    <div class="tick">✓</div>
+    <h2 style="justify-content:center">Perjanjian Sewa Diterima</h2>
+    <p class="sub" style="margin-top:6px">Terima kasih. Simpan nombor rujukan ini:</p>
+    <div class="ref" id="ref"></div>
+    <p class="sub" id="done-sum"></p>
+    <div class="acts">
+      <a class="btn wa" id="wa" target="_blank" rel="noopener" hidden>Maklumkan melalui WhatsApp</a>
+      <button class="btn ghost" type="button" onclick="location.reload()">Isi borang baharu</button>
+    </div>
+  </section>
+
+  <footer>© Abedin Car Rental · Your Trusted Ride. Always</footer>
+</div>
+
+<datalist id="senarai-negeri"><option>Johor</option><option>Kedah</option><option>Kelantan</option><option>Melaka</option><option>Negeri Sembilan</option><option>Pahang</option><option>Perak</option><option>Perlis</option><option>Pulau Pinang</option><option>Sabah</option><option>Sarawak</option><option>Selangor</option><option>Terengganu</option><option>W.P. Kuala Lumpur</option><option>W.P. Labuan</option><option>W.P. Putrajaya</option></datalist>
+<datalist id="senarai-kumpulan"><option>Kompak</option><option>Sedan</option><option>MPV</option><option>SUV</option><option>Pickup</option><option>Van</option><option>Luxury</option></datalist>
+
+<dialog id="terma"><div class="dlg">
+  <header><b>Terma dan Syarat</b><button type="button" class="x" data-close aria-label="Tutup">✕</button></header>
+  <div class="body" id="terma-body">Memuatkan…</div>
+  <div class="foot"><button type="button" class="btn" data-close style="min-width:0;padding:12px 22px">Faham</button></div>
+</div></dialog>
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+const client = createClient('https://abqrgiebeoyzowvxeggj.supabase.co', 'sb_publishable_ofappLwL3Q_OZzlmlcbNqQ_y5y-fC3B',
+  { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: 'acr-sewa-form' } });
+
+const $ = s => document.querySelector(s);
+const form = $('#f');
+const formId = crypto.randomUUID();
+const today = new Date();
+const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const dmy = s => s ? s.split('-').reverse().join('/') : '';
+$('#tarikh').value = today.toLocaleDateString('ms-MY', { day: '2-digit', month: '2-digit', year: 'numeric' });
+$('#ambil_tarikh').min = iso(today);
+$('#pulang_tarikh').min = iso(today);
+
+// ---------- Terma & WhatsApp ----------
+let terma = '', waNumber = '';
+client.rpc('get_sewa_terma').then(({ data, error }) => {
+  terma = error ? '' : String(data || '');
+  $('#terma-body').textContent = terma || 'Terma dan Syarat akan dimaklumkan oleh Abedin Car Rental.';
+});
+client.rpc('get_public_settings').then(({ data }) => {
+  const x = Array.isArray(data) ? data[0] : data;
+  waNumber = String(x?.whatsapp_number || '').replace(/\D/g, '');
+}).catch(() => {});
+const dlg = $('#terma');
+document.querySelectorAll('[data-open-terma]').forEach(b => b.addEventListener('click', e => { e.preventDefault(); dlg.showModal(); }));
+dlg.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => dlg.close()));
+dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+
+// ---------- Jenis sewa ----------
+const jenis = () => form.querySelector('input[name=jenis_sewa]:checked')?.value || '';
+function syncJenis() {
+  const ps = jenis() !== 'chauffeur';
+  document.querySelectorAll('.lesen-req').forEach(x => x.style.display = ps ? '' : 'none');
+  DOCS.forEach(d => { if (d.reqPs) d.el.querySelector('.req').style.display = ps ? '' : 'none'; });
+}
+form.querySelectorAll('input[name=jenis_sewa]').forEach(r => r.addEventListener('change', () => { syncJenis(); clearBad(r); }));
+
+// ---------- Lokasi pulang sama ----------
+$('#sama').addEventListener('change', e => {
+  const p = $('#pulang_lokasi');
+  if (e.target.checked) { p.value = $('#ambil_lokasi').value; p.readOnly = true; clearBad(p); } else p.readOnly = false;
+});
+$('#ambil_lokasi').addEventListener('input', e => { if ($('#sama').checked) $('#pulang_lokasi').value = e.target.value; });
+
+// ---------- Tempoh ----------
+function dt(t, m) { return t && m ? new Date(`${t}T${m}`) : null; }
+function tempoh() {
+  const a = dt($('#ambil_tarikh').value, $('#ambil_masa').value), b = dt($('#pulang_tarikh').value, $('#pulang_masa').value);
+  if ($('#ambil_tarikh').value) $('#pulang_tarikh').min = $('#ambil_tarikh').value;
+  if (!a || !b || b <= a) { $('#tempoh').textContent = ''; return; }
+  const h = Math.round((b - a) / 36e5), d = Math.floor(h / 24), r = h % 24;
+  $('#tempoh').textContent = `Tempoh sewaan: ${d ? d + ' hari ' : ''}${r ? r + ' jam' : ''}`.trim();
+}
+['ambil_tarikh', 'ambil_masa', 'pulang_tarikh', 'pulang_masa'].forEach(id => $('#' + id).addEventListener('input', tempoh));
+
+// ---------- Dokumen ----------
+const DOCS = [
+  { key: 'lesen', label: 'Lesen Memandu', reqPs: true },
+  { key: 'kp', label: 'Kad Pengenalan / Passport', req: true },
+  { key: 'utiliti', label: 'Bil Utiliti', hint: 'Air / elektrik, 3 bulan terkini' },
+  { key: 'gambar', label: 'Gambar Pemandu', hint: 'Gambar wajah yang jelas' }
+];
+const picked = {}, uploaded = {};
+DOCS.forEach(d => {
+  const box = document.createElement('div');
+  box.className = 'field';
+  box.innerHTML = `<label>${d.label} <span class="req"${d.req || d.reqPs ? '' : ' style="display:none"'}>*</span>${d.req || d.reqPs ? '' : ' <span class="opt">(pilihan)</span>'}</label>
+    <div class="file"><div class="thumb">FAIL</div><div class="meta"><b>Belum dipilih</b><span>${d.hint || 'Gambar atau PDF'}</span></div>
+    <button type="button" class="pick">Pilih</button><input type="file" accept="image/*,application/pdf"></div>
+    <div class="msg">Sila muat naik ${d.label.toLowerCase()}.</div>`;
+  const inp = box.querySelector('input'), th = box.querySelector('.thumb'), meta = box.querySelector('.meta');
+  box.querySelector('.pick').onclick = () => inp.click();
+  inp.onchange = () => {
+    const f = inp.files[0]; if (!f) return;
+    if (f.size > 25 * 1024 * 1024) { alert('Fail terlalu besar. Maksimum 8MB.'); inp.value = ''; return; }
+    picked[d.key] = f; clearBad(box);
+    meta.querySelector('b').textContent = '✓ Dipilih';
+    meta.querySelector('span').textContent = f.name;
+    if (f.type.startsWith('image/')) { th.textContent = ''; th.style.backgroundImage = `url(${URL.createObjectURL(f)})`; }
+    else { th.style.backgroundImage = ''; th.textContent = 'PDF'; }
+    box.querySelector('.pick').textContent = 'Tukar';
+  };
+  d.el = box;
+  $('#docs').appendChild(box);
+});
+
+async function shrink(file) {
+  if (!file.type.startsWith('image/') || file.type === 'image/gif') return file;
+  try {
+    const bmp = await createImageBitmap(file);
+    const s = Math.min(1, 1800 / Math.max(bmp.width, bmp.height));
+    const c = document.createElement('canvas');
+    c.width = Math.round(bmp.width * s); c.height = Math.round(bmp.height * s);
+    c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+    const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.82));
+    return blob && blob.size < file.size ? new File([blob], file.name.replace(/\.\w+$/, '') + '.jpg', { type: 'image/jpeg' }) : file;
+  } catch { return file; }
+}
+
+// ---------- Tandatangan ----------
+const cv = $('#sig'), ctx = cv.getContext('2d');
+let drawn = false, drawing = false, last = null;
+function sizeCanvas() {
+  const r = cv.getBoundingClientRect(), dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const old = drawn ? cv.toDataURL() : null;
+  cv.width = r.width * dpr; cv.height = r.height * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.lineWidth = 2.4; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#14204a';
+  if (old) { const im = new Image(); im.onload = () => ctx.drawImage(im, 0, 0, r.width, r.height); im.src = old; }
+}
+sizeCanvas();
+let rw = 0; addEventListener('resize', () => { if (Math.abs(cv.getBoundingClientRect().width - rw) > 2) { rw = cv.getBoundingClientRect().width; sizeCanvas(); } });
+const pt = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+cv.addEventListener('pointerdown', e => { drawing = true; last = pt(e); cv.setPointerCapture(e.pointerId); ctx.beginPath(); ctx.arc(last[0], last[1], 1.1, 0, 7); ctx.fillStyle = '#14204a'; ctx.fill(); });
+cv.addEventListener('pointermove', e => {
+  if (!drawing) return; const p = pt(e);
+  ctx.beginPath(); ctx.moveTo(...last); ctx.lineTo(...p); ctx.stroke(); last = p;
+  if (!drawn) { drawn = true; $('#sig-ph').style.display = 'none'; clearBad(cv); }
+});
+['pointerup', 'pointercancel', 'pointerleave'].forEach(t => cv.addEventListener(t, () => drawing = false));
+$('#sig-clear').onclick = () => { ctx.clearRect(0, 0, cv.width, cv.height); drawn = false; $('#sig-ph').style.display = ''; };
+function sigData() {
+  // eksport kecil (maks 700px lebar) dengan latar putih
+  const w = Math.min(700, cv.width), h = Math.round(cv.height * w / cv.width);
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, w, h); x.drawImage(cv, 0, 0, w, h);
+  return c.toDataURL('image/png');
+}
+
+// ---------- Semakan ----------
+function bad(el, on = true) { el.closest('.field')?.classList.toggle('bad', on); }
+function clearBad(el) { bad(el, false); }
+form.addEventListener('input', e => clearBad(e.target));
+$('#setuju').addEventListener('change', e => clearBad(e.target));
+
+function validate() {
+  let first = null;
+  const fail = el => { bad(el); first ||= el; };
+  const ps = jenis() === 'pandu_sendiri';
+  if (!jenis()) fail(form.querySelector('input[name=jenis_sewa]'));
+  form.querySelectorAll('[required]').forEach(el => { if (!el.value.trim()) fail(el); });
+  const em = $('#email'); if (em.value && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em.value.trim())) fail(em);
+  const tel = $('#telefon'); if (tel.value && tel.value.replace(/\D/g, '').length < 9) fail(tel);
+  const a = dt($('#ambil_tarikh').value, $('#ambil_masa').value), b = dt($('#pulang_tarikh').value, $('#pulang_masa').value);
+  if ($('#ambil_tarikh').value && $('#ambil_tarikh').value < iso(today)) fail($('#ambil_tarikh'));
+  if (a && b && b <= a) fail($('#pulang_tarikh'));
+  if (ps) {
+    if (!$('#no_lesen').value.trim()) fail($('#no_lesen'));
+    const lp = $('#lesen_luput').value;
+    if (!lp || ($('#pulang_tarikh').value && lp < $('#pulang_tarikh').value)) fail($('#lesen_luput'));
+  }
+  DOCS.forEach(d => { if ((d.req || (d.reqPs && ps)) && !picked[d.key]) fail(d.el); });
+  if (!drawn) fail(cv);
+  if (!$('#setuju').checked) fail($('#setuju'));
+  if (first) first.closest('.field').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  return !first;
+}
+
+// ---------- Hantar ----------
+const btn = $('#hantar'), status = $('#status');
+const say = (m, err) => { status.textContent = m; status.classList.toggle('err', !!err); };
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+  say('');
+  if (!validate()) { say('Sila semak medan bertanda merah.', true); return; }
+  btn.disabled = true; btn.querySelector('.t').textContent = 'Menghantar…';
+  try {
+    const docs = {};
+    const keys = DOCS.map(d => d.key).filter(k => picked[k]);
+    let i = 0;
+    for (const k of keys) {
+      i++;
+      if (uploaded[k]?.file === picked[k]) { docs[k] = uploaded[k].path; continue; }
+      say(`Memuat naik dokumen ${i}/${keys.length}…`);
+      const f = await shrink(picked[k]);
+      if (f.size > 8 * 1024 * 1024) throw new Error(`Fail ${f.name} melebihi 8MB.`);
+      const ext = (f.type === 'application/pdf' ? 'pdf' : (f.name.split('.').pop() || 'jpg')).toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 5) || 'jpg';
+      const path = `sewa/${formId}/${k}-${Date.now()}.${ext}`;
+      const { error } = await client.storage.from('sewa-docs').upload(path, f, { contentType: f.type || 'application/octet-stream', upsert: false });
+      if (error) throw new Error('Gagal muat naik dokumen: ' + error.message);
+      uploaded[k] = { file: picked[k], path };
+      docs[k] = path;
+    }
+    say('Menghantar borang…');
+    const v = id => $('#' + id).value.trim();
+    const payload = {
+      id: formId, jenis_sewa: jenis(), nama: v('nama'), email: v('email'), telefon: v('telefon'), no_kp: v('no_kp'),
+      alamat: v('alamat'), bandar: v('bandar'), negeri: v('negeri'), poskod: v('poskod'), negara: v('negara'),
+      no_lesen: v('no_lesen'), lesen_luput: v('lesen_luput'), model: v('model'), kumpulan: v('kumpulan'),
+      ambil_lokasi: v('ambil_lokasi'), ambil_tarikh: v('ambil_tarikh'), ambil_masa: v('ambil_masa'),
+      pulang_lokasi: v('pulang_lokasi'), pulang_tarikh: v('pulang_tarikh'), pulang_masa: v('pulang_masa'),
+      remark: v('remark'), docs, tandatangan: sigData(), setuju: $('#setuju').checked
+    };
+    const { data: ref, error } = await client.rpc('submit_sewa', { p: payload });
+    if (error) throw new Error(error.message);
+    showDone(String(ref), payload);
+  } catch (err) {
+    say((err?.message || String(err)) + ' Sila cuba lagi.', true);
+    btn.disabled = false; btn.querySelector('.t').textContent = 'Submit Now';
+  }
+});
+
+function showDone(ref, p) {
+  $('#ref').textContent = ref;
+  $('#done-sum').textContent = `${p.nama} · ${p.model} · ${dmy(p.ambil_tarikh)} ${p.ambil_masa} → ${dmy(p.pulang_tarikh)} ${p.pulang_masa}`;
+  if (waNumber) {
+    const msg = `Salam Abedin Car Rental, saya telah menghantar Perjanjian Sewa.\n\nNo Rujukan: ${ref}\nNama: ${p.nama}\nSewaan: ${p.jenis_sewa === 'chauffeur' ? 'Chauffeur' : 'Pandu Sendiri'}\nModel: ${p.model}\nAmbil: ${p.ambil_lokasi}, ${dmy(p.ambil_tarikh)} ${p.ambil_masa}\nPulang: ${p.pulang_lokasi}, ${dmy(p.pulang_tarikh)} ${p.pulang_masa}`;
+    const a = $('#wa'); a.href = `https://wa.me/${waNumber}?text=${encodeURIComponent(msg)}`; a.hidden = false;
+  }
+  document.body.classList.add('sent');
+  scrollTo({ top: 0, behavior: 'smooth' });
+}
+syncJenis();
+</script>
+</body>
+</html>

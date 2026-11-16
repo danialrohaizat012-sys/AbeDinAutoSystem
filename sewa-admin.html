@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Admin Sewa – Abedin Car Rental</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#080b0c">
+<link rel="icon" href="icon-32.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Halaman admin Sewa. Login guna akaun Supabase projek Abedin Car Rental. */
+*{box-sizing:border-box}
+body{margin:0;background:#080b0c;color:#f3eee2;font:15px/1.45 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100vh}
+.top{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 16px;padding-top:max(10px,env(safe-area-inset-top));background:#0c1112ee;backdrop-filter:blur(10px);border-bottom:1px solid #2a3233}
+.top b{font-size:14px;letter-spacing:.08em}
+.top small{display:block;color:#969da8;font-size:12px}
+.wrap{padding:16px;padding-bottom:calc(30px + env(safe-area-inset-bottom));max-width:940px;margin:0 auto}
+.login{max-width:380px;margin:8vh auto 0;padding:24px;border:1px solid #2a3233;border-radius:20px;background:linear-gradient(150deg,#151b1c,#0d1112)}
+.login .brand{background:#f5f7fd;border-radius:14px;padding:10px;display:flex;justify-content:center;margin-bottom:18px}
+.login .brand img{height:64px}
+h1{font-size:20px;margin:0 0 4px}
+p{margin:0 0 16px;color:#969da8;font-size:14px}
+label{display:block;font-size:13px;font-weight:600;color:#969da8;margin:12px 0 6px}
+input{width:100%;font:inherit;color:inherit;background:#0b0f10;border:1px solid #2a3233;border-radius:12px;padding:12px;outline:none}
+input:focus{border-color:#d8ad57}
+button{font:inherit;font-weight:700;cursor:pointer;border-radius:12px;border:1px solid #2a3233;background:rgba(255,255,255,.05);color:#f3eee2;padding:9px 14px}
+.pri{width:100%;margin-top:18px;background:#d8ad57;border-color:#d8ad57;color:#0b0d0e;padding:13px}
+.msg{min-height:20px;margin-top:12px;font-size:13.5px;color:#f08a7e}
+.msg.ok{color:#45c98b}
+</style>
+</head>
+<body>
+<div class="top" id="top" hidden><div><b>ABEDIN CAR RENTAL</b><small id="who"></small></div><button id="logout" type="button">Log keluar</button></div>
+<div class="wrap">
+  <form class="login" id="login" hidden>
+    <div class="brand"><img src="abedin-car-rental-logo.webp" alt="Abedin Car Rental"></div>
+    <h1 id="h1">Admin Sewa</h1>
+    <p id="sub">Log masuk dengan akaun staf Abedin Car Rental.</p>
+    <div id="w-nama" hidden><label for="nama">Nama penuh</label><input id="nama" autocomplete="name" maxlength="120"></div>
+    <label for="email">Email</label><input id="email" type="email" autocomplete="username" required>
+    <label for="pw">Kata laluan</label><input id="pw" type="password" autocomplete="current-password" required>
+    <button class="pri" type="submit" id="go">Log masuk</button>
+    <div class="msg" id="msg"></div>
+    <p style="margin:14px 0 0;text-align:center"><button type="button" id="mode" style="background:none;border:0;color:#d8ad57;padding:4px">Daftar akaun staf baharu</button></p>
+  </form>
+  <div id="host"></div>
+</div>
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+import { mountSewa } from './js/sewa.js?v=4';
+const client = createClient('https://abqrgiebeoyzowvxeggj.supabase.co', 'sb_publishable_ofappLwL3Q_OZzlmlcbNqQ_y5y-fC3B',
+  { auth: { persistSession: true, autoRefreshToken: true, storageKey: 'acr-sewa-admin' } });
+const $ = id => document.getElementById(id);
+const say = (t, ok) => { $('msg').textContent = t; $('msg').classList.toggle('ok', !!ok); };
+let daftar = false;
+$('mode').onclick = () => {
+  daftar = !daftar; say('');
+  $('w-nama').hidden = !daftar; $('nama').required = daftar;
+  $('h1').textContent = daftar ? 'Daftar Akaun Staf' : 'Admin Sewa';
+  $('sub').textContent = daftar ? 'Selepas daftar, Owner perlu aktifkan akaun anda.' : 'Log masuk dengan akaun staf Abedin Car Rental.';
+  $('go').textContent = daftar ? 'Daftar' : 'Log masuk';
+  $('pw').autocomplete = daftar ? 'new-password' : 'current-password';
+  $('mode').textContent = daftar ? 'Sudah ada akaun? Log masuk' : 'Daftar akaun staf baharu';
+};
+
+async function start() {
+  const { data: { session } } = await client.auth.getSession();
+  if (!session) { $('login').hidden = false; $('top').hidden = true; $('host').innerHTML = ''; return; }
+  const { data: profile, error } = await client.from('profiles').select('id,full_name,role,enabled').eq('id', session.user.id).maybeSingle();
+  if (error || !profile || profile.enabled !== true) {
+    await client.auth.signOut(); $('login').hidden = false;
+    say(error ? 'Gagal semak akaun: ' + error.message : 'Akaun anda belum diaktifkan. Minta Owner aktifkan di Admin → 👤 Staf.'); return;
+  }
+  $('login').hidden = true; $('top').hidden = false;
+  $('who').textContent = `${profile.full_name || session.user.email} · ${profile.role}`;
+  mountSewa($('host'), { client, profile, formPath: 'sewa.html', manageStaff: true });
+}
+$('login').addEventListener('submit', async e => {
+  e.preventDefault(); say(''); $('go').disabled = true;
+  const label = daftar ? 'Daftar' : 'Log masuk'; $('go').textContent = 'Sila tunggu…';
+  if (daftar) {
+    if ($('pw').value.length < 8) { say('Kata laluan sekurang-kurangnya 8 aksara.'); $('go').disabled = false; $('go').textContent = label; return; }
+    const { data, error } = await client.auth.signUp({ email: $('email').value.trim(), password: $('pw').value,
+      options: { data: { full_name: $('nama').value.trim() }, emailRedirectTo: location.href.split('#')[0] } });
+    $('pw').value = ''; $('go').disabled = false; $('go').textContent = label;
+    if (error) { say('Daftar gagal: ' + error.message); return; }
+    if (data.session) { start(); return; }
+    say('Akaun didaftarkan. Semak email anda dan tekan pautan pengesahan, kemudian minta Owner aktifkan akaun.', true); return;
+  }
+  const { error } = await client.auth.signInWithPassword({ email: $('email').value.trim(), password: $('pw').value });
+  $('pw').value = ''; $('go').disabled = false; $('go').textContent = label;
+  if (error) { say('Login gagal: ' + (/invalid/i.test(error.message) ? 'email atau kata laluan salah.' : /confirm/i.test(error.message) ? 'sahkan email anda dahulu (semak inbox).' : error.message)); return; }
+  start();
+});
+$('logout').addEventListener('click', async () => { await client.auth.signOut(); location.reload(); });
+start();
+</script>
+</body>
+</html>
