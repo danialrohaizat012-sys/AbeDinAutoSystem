@@ -136,7 +136,7 @@ export function mountSewa(host, ctx) {
   root.innerHTML = `<style>${CSS}</style><div class="shell"><div class="wrap" id="app"></div></div>`;
   const app = root.getElementById('app');
   const formUrl = new URL(ctx.formPath || 'sewa.html', location.href.split('#')[0].split('?')[0]).href;
-  let logoSrc = new URL('abedin-car-rental-logo.webp', location.href).href;
+  let logoSrc = new URL('abedin-car-rental-badge.webp', location.href).href;
   // simpan logo sebagai data URL supaya sentiasa muncul dalam tetingkap cetak
   fetch(logoSrc).then(r => r.blob()).then(b => new Promise(ok => { const f = new FileReader(); f.onload = () => ok(f.result); f.readAsDataURL(b); })).then(d => { logoSrc = d; }).catch(() => {});
   const S = { staf: null, wa: null, kereta: [], keretaErr: '', kid: null, rows: [], loaded: false, error: '', filter: 'semua', q: '', view: 'list', id: null, terma: null, urls: {}, msg: '' };
@@ -446,36 +446,101 @@ export function mountSewa(host, ctx) {
 
   function printAgreement(r, w0) {
     const w = w0 || window.open('', '_blank'); if (!w) { alert('Benarkan pop-up untuk cetak.'); return; }
-    const row = (k, v) => `<tr><th>${k}</th><td>${esc(v || '-')}</td></tr>`;
-    w.document.write(`<!DOCTYPE html><html lang="ms"><head><meta charset="utf-8"><title>Perjanjian Sewa ${esc(r.ref_no)}</title>
-      <base href="${esc(location.href)}"><style>
-      body{font:13px/1.45 Arial,sans-serif;color:#111;margin:28px;max-width:780px}
-      header{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #1f2f57;padding-bottom:10px}
-      header img{height:70px} h1{font-size:20px;color:#1f2f57;margin:0;text-align:right} .ref{text-align:right;color:#555}
-      h2{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#1f2f57;margin:18px 0 6px;border-bottom:1px solid #ccc;padding-bottom:3px}
-      table{width:100%;border-collapse:collapse} th{width:34%;text-align:left;font-weight:600;color:#444;padding:4px 8px 4px 0;vertical-align:top} td{padding:4px 0;white-space:pre-wrap}
-      .tc{page-break-before:always;break-before:page} .tc h1{text-align:center;font-size:16px;letter-spacing:.06em;color:#111;margin:0 0 6px}
-      .terma{columns:2;column-gap:18px;font-size:8.3px;line-height:1.3;color:#111;text-align:justify}
-      .terma h4{font-size:9px;margin:5px 0 1px;text-decoration:underline;break-after:avoid;color:#111}
-      .terma p{margin:0 0 2px} .agree{margin-top:10px;font-size:11.5px;break-inside:avoid} .agree .sign img{height:60px} .agree .sign>div>div[style]{height:60px!important}
-      .agree .sign{margin-top:8px} .foot{text-align:center;font-size:9px;color:#777;margin-top:10px} .two th,.two td{width:auto} .tot th,.tot td{font-weight:800;font-size:14px;border-top:1px solid #333;padding-top:6px} h2{break-after:avoid} table{break-inside:avoid} .sign{display:flex;gap:40px;margin-top:26px}
-      .sign div{flex:1} .sign img{height:90px;display:block} .line{border-top:1px solid #333;padding-top:4px;margin-top:4px;font-size:12px}
-      @media print{body{margin:0}} @page{size:A4;margin:10mm}</style></head><body>
-      <header><img src="${esc(logoSrc)}" alt="Abedin Car Rental"><div><h1>PERJANJIAN SEWA</h1><div class="ref">No Rujukan: <b>${esc(r.ref_no)}</b><br>Tarikh: ${when(r.created_at)}</div></div></header>
-      <h2>Maklumat Peribadi</h2><table>${row('Sewaan', jenisTxt(r.jenis_sewa))}${row('Nama Penuh', r.nama)}${row('Email', r.email)}${row('No Telefon', r.telefon)}${row('No KP / Passport', r.no_kp)}${row('Alamat', [r.alamat, `${r.poskod} ${r.bandar}`, `${r.negeri}, ${r.negara}`].join('\n'))}${row('No Lesen', r.no_lesen)}${row('Tarikh Luput Lesen', r.lesen_luput ? dmy(r.lesen_luput) : '')}</table>
-      <h2>Maklumat Kenderaan</h2><table>${row('Model', r.model)}${row('No Pendaftaran', r.no_pendaftaran)}${row('Kumpulan', r.kumpulan)}</table>
-      <h2>Penghantaran & Pengambilan</h2><table>${row('Ambil', `${r.ambil_lokasi}\n${dmy(r.ambil_tarikh)} ${hm(r.ambil_masa)}`)}${row('Pulang', `${r.pulang_lokasi}\n${dmy(r.pulang_tarikh)} ${hm(r.pulang_masa)}`)}${row('Tempoh', tempoh(r))}</table>
-      <table class="two"><tr><th></th><th>Ambil</th><th>Pulang</th></tr><tr><th>Jarak</th><td>${esc(km(r.ambil_jarak) || '-')}</td><td>${esc(km(r.pulang_jarak) || '-')}</td></tr><tr><th>Minyak</th><td>${esc(r.ambil_minyak || '-')}</td><td>${esc(r.pulang_minyak || '-')}</td></tr></table>
-      <h2>Calculation</h2><table>${row('Sewa (Hari)', r.sewa_hari ?? '')}${CAJ.map(([k, l]) => row(l, rm(r[k]))).join('')}<tr class="tot"><th>Jumlah</th><td>${esc(rm(r.jumlah) || '-')}</td></tr>${row('Sekuriti Deposit', rm(r.deposit))}</table>
-      <h2>Aksesori</h2><table>${AKSESORI.map(([k, l]) => row(l, (r.aksesori || {})[k])).join('')}</table>
-      <h2>Remark</h2><table>${row('Pelanggan', r.remark)}${row('Abedin Car Rental', r.remark_admin)}</table>
-      <div class="sign"><div><img src="${esc(r.tandatangan)}" alt=""><div class="line">Tandatangan Penyewa<br>${esc(r.nama)} · ${esc(r.no_kp)}</div></div>
-      <div><div style="height:90px"></div><div class="line">Bagi pihak Abedin Car Rental<br>Nama & cop:</div></div></div>
-      <section class="tc"><h1>TERMA &amp; SYARAT</h1><div class="terma">${termaHtml(r.terma_snapshot)}</div>
-      <div class="agree"><b>Saya setuju dengan terma dan syarat yang dinyatakan.</b>
-        <div class="sign"><div><img src="${esc(r.tandatangan)}" alt=""><div class="line">(Tandatangan Penyewa)<br>${esc(r.nama)}</div></div>
-        <div style="text-align:right"><div style="height:90px;display:flex;align-items:flex-end;justify-content:flex-end;font-size:14px">${new Date(r.created_at).toLocaleDateString('en-GB')}</div><div class="line">(Tarikh)</div></div></div></div></section>
-      <script>window.onload=()=>setTimeout(()=>print(),300)<\/script></body></html>`);
+    const v = x => esc(x === null || x === undefined || x === '' ? '-' : x);
+    const kv = (k, x) => `<tr><th>${k}</th><td>${v(x)}</td></tr>`;
+    const tarikhBuat = new Date(r.created_at).toLocaleDateString('en-GB');
+    const ak = r.aksesori || {};
+    const akMark = x => x === 'Ada' ? '<span class="ok">✓ Ada</span>' : x === 'Tiada' ? '<span class="no">✗ Tiada</span>' : x === 'Rosak' ? '<span class="bad">! Rosak</span>' : '<span class="na">—</span>';
+    const caj = CAJ.map(([k, l]) => `<tr><th>${l}</th><td class="num">${v(rm(r[k]))}</td></tr>`).join('');
+    const css = `
+      *{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      @page{size:A4;margin:9mm}
+      body{margin:0;font:10.5px/1.42 "Helvetica Neue",Arial,sans-serif;color:#1b2236;background:#fff}
+      .page{width:192mm;margin:0 auto}
+      .tc-page{break-before:page;page-break-before:always}
+      .hero{display:flex;align-items:center;gap:14px;background:linear-gradient(120deg,#0f1c3a,#1d2f5c);color:#fff;border-radius:12px;padding:12px 16px;border-bottom:3px solid #c9a24b}
+      .hero img{width:74px;height:74px;flex:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,.35))}
+      .hero .t{flex:1}
+      .hero h1{margin:0;font:700 21px/1.1 Georgia,"Times New Roman",serif;letter-spacing:.08em;color:#e8c875}
+      .hero .s{margin-top:3px;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#c8cfe0}
+      .hero .meta{text-align:right;font-size:10px;color:#c8cfe0;line-height:1.6}
+      .hero .meta b{display:block;font-size:15px;color:#fff;letter-spacing:.06em}
+      .chips{display:flex;gap:6px;margin:9px 0 2px;flex-wrap:wrap}
+      .chip{border:1px solid #d9dfeb;background:#f6f8fc;border-radius:99px;padding:3px 10px;font-size:9.5px;font-weight:700;color:#1d2f5c;text-transform:uppercase;letter-spacing:.06em}
+      .chip.gold{background:#fbf3df;border-color:#e2c47c;color:#7a5a12}
+      .grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:9px}
+      .card{border:1px solid #dfe4ee;border-radius:10px;padding:8px 11px;break-inside:avoid}
+      .card h3{margin:0 0 5px;font:700 9.5px/1 Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#1d2f5c;display:flex;align-items:center;gap:6px}
+      .card h3:before{content:"";width:3px;height:11px;background:#c9a24b;border-radius:2px}
+      .full{grid-column:1/-1}
+      table{width:100%;border-collapse:collapse}
+      th{text-align:left;font-weight:600;color:#6a7389;width:40%;padding:2.5px 6px 2.5px 0;vertical-align:top}
+      td{padding:2.5px 0;vertical-align:top;white-space:pre-wrap;font-weight:600}
+      .sched th,.sched td{border-bottom:1px solid #eef1f6;padding:4px 6px 4px 0;width:auto}
+      .sched thead th{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#1d2f5c;border-bottom:1.5px solid #c9a24b}
+      .sched tbody th{width:22%}
+      .num{text-align:right}
+      .calc th{width:auto}
+      .calc .tot th,.calc .tot td{background:#0f1c3a;color:#e8c875;font-size:12.5px;font-weight:800;padding:6px 8px}
+      .calc .tot th{border-radius:6px 0 0 6px} .calc .tot td{border-radius:0 6px 6px 0}
+      .calc .dep th,.calc .dep td{padding-top:6px;color:#1d2f5c}
+      .ok{color:#14804a;font-weight:700}.no{color:#7b8496}.bad{color:#c62828;font-weight:700}.na{color:#aab1c0}
+      .sig{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:10px;break-inside:avoid}
+      .sig .box{border:1px dashed #c3cad8;border-radius:10px;padding:8px 11px;min-height:118px;display:flex;flex-direction:column;justify-content:flex-end}
+      .sig img{height:62px;width:auto;object-fit:contain;align-self:flex-start;margin-bottom:2px}
+      .sig .ln{border-top:1px solid #1b2236;padding-top:4px;font-size:9.5px;color:#4b5468}
+      .sig .ln b{color:#1b2236;font-size:10.5px}
+      .decl{margin-top:9px;font-size:9.5px;color:#4b5468;border-left:3px solid #c9a24b;padding:3px 0 3px 8px}
+      .foot{margin-top:8px;text-align:center;font-size:8.5px;color:#8a93a6;letter-spacing:.06em}
+      .tc-head{display:flex;align-items:center;gap:10px;border-bottom:2px solid #0f1c3a;padding-bottom:6px;margin-bottom:6px}
+      .tc-head img{width:44px;height:44px}
+      .tc-head h2{margin:0;flex:1;font:700 17px Georgia,serif;letter-spacing:.1em;color:#0f1c3a}
+      .tc-head span{font-size:9px;color:#6a7389;text-align:right}
+      .terma{columns:2;column-gap:16px;column-rule:1px solid #e6e9f0;font-size:8.1px;line-height:1.3;text-align:justify}
+      .terma h4{font:700 8.8px Arial,sans-serif;margin:5px 0 1px;color:#0f1c3a;text-transform:uppercase;letter-spacing:.04em;break-after:avoid}
+      .terma h4:first-child{margin-top:0}
+      .terma p{margin:0 0 2px} .terma p b{color:#9a7424}
+      .agree{margin-top:8px;border:1px solid #dfe4ee;border-radius:10px;padding:8px 11px;break-inside:avoid}
+      .agree .q{font:700 11px Georgia,serif;color:#0f1c3a}
+      .agree .sig{margin-top:4px}.agree .sig .box{min-height:86px;border:0;padding:0}
+      .agree .sig img{height:52px}
+      @media screen{body{background:#e9edf4;padding:16px 0}.page{background:#fff;padding:9mm;box-shadow:0 4px 24px rgba(0,0,0,.12);margin-bottom:16px;width:210mm}}`;
+    w.document.write(`<!DOCTYPE html><html lang="ms"><head><meta charset="utf-8"><title>Perjanjian Sewa ${esc(r.ref_no)} – ${esc(r.nama)}</title><style>${css}</style></head><body>
+      <div class="page">
+        <div class="hero"><img src="${esc(logoSrc)}" alt="Abe Din Car Rental">
+          <div class="t"><h1>PERJANJIAN SEWA</h1><div class="s">Abe Din Car Rental · Trust &amp; Reliability</div></div>
+          <div class="meta">No Rujukan<b>${esc(r.ref_no)}</b>Tarikh: ${tarikhBuat}</div></div>
+        <div class="chips"><span class="chip gold">${jenisTxt(r.jenis_sewa)}</span><span class="chip">${esc(STATUS[r.status] || r.status)}</span>${r.no_pendaftaran ? `<span class="chip">${esc(r.no_pendaftaran)}</span>` : ''}${tempoh(r) ? `<span class="chip">${esc(tempoh(r))}</span>` : ''}</div>
+        <div class="grid">
+          <div class="card"><h3>Maklumat Penyewa</h3><table>${kv('Nama Penuh', r.nama)}${kv('No KP / Passport', r.no_kp)}${kv('No Telefon', r.telefon)}${kv('Email', r.email)}${kv('Alamat', [r.alamat, `${r.poskod} ${r.bandar}`, `${r.negeri}, ${r.negara}`].join('\n'))}${kv('No Lesen', r.no_lesen)}${kv('Luput Lesen', r.lesen_luput ? dmy(r.lesen_luput) : '')}</table></div>
+          <div class="card"><h3>Maklumat Kenderaan</h3><table>${kv('Model', r.model)}${kv('No Pendaftaran', r.no_pendaftaran)}${kv('Kumpulan', r.kumpulan)}${kv('Jenis Sewaan', jenisTxt(r.jenis_sewa))}</table>
+            <h3 style="margin-top:9px">Aksesori</h3><table>${AKSESORI.map(([k, l]) => `<tr><th>${l}</th><td>${akMark(ak[k])}</td></tr>`).join('')}</table></div>
+          <div class="card full"><h3>Penghantaran &amp; Pengambilan</h3><table class="sched"><thead><tr><th></th><th>Ambil</th><th>Pulang</th></tr></thead><tbody>
+            <tr><th>Lokasi</th><td>${v(r.ambil_lokasi)}</td><td>${v(r.pulang_lokasi)}</td></tr>
+            <tr><th>Tarikh &amp; Masa</th><td>${dmy(r.ambil_tarikh)} · ${hm(r.ambil_masa)}</td><td>${dmy(r.pulang_tarikh)} · ${hm(r.pulang_masa)}</td></tr>
+            <tr><th>Jarak (odometer)</th><td>${v(km(r.ambil_jarak))}</td><td>${v(km(r.pulang_jarak))}</td></tr>
+            <tr><th>Minyak</th><td>${v(r.ambil_minyak)}</td><td>${v(r.pulang_minyak)}</td></tr></tbody></table></div>
+          <div class="card"><h3>Caj Sewaan</h3><table class="calc">${kv('Sewa (Hari)', r.sewa_hari ?? '')}${caj}
+            <tr class="tot"><th>JUMLAH</th><td class="num">${v(rm(r.jumlah))}</td></tr>
+            <tr class="dep"><th>Sekuriti Deposit</th><td class="num">${v(rm(r.deposit))}</td></tr></table></div>
+          <div class="card"><h3>Catatan</h3><table>${kv('Pelanggan', r.remark)}${kv('Abe Din Car Rental', r.remark_admin)}</table></div>
+        </div>
+        <div class="decl">Penyewa mengesahkan maklumat di atas adalah benar, telah menerima kenderaan dalam keadaan seperti yang dinyatakan, dan bersetuju dengan Terma &amp; Syarat di muka surat berikutnya.</div>
+        <div class="sig">
+          <div class="box"><img src="${esc(r.tandatangan)}" alt=""><div class="ln"><b>${esc(r.nama)}</b><br>Tandatangan Penyewa · ${esc(r.no_kp)} · ${tarikhBuat}</div></div>
+          <div class="box"><div class="ln"><b>Abe Din Car Rental</b><br>Tandatangan, Nama &amp; Cop · Tarikh:</div></div>
+        </div>
+        <div class="foot">ABE DIN CAR RENTAL · ${esc(r.ref_no)} · Muka surat 1 / 2</div>
+      </div>
+      <div class="page tc-page">
+        <div class="tc-head"><img src="${esc(logoSrc)}" alt=""><h2>TERMA &amp; SYARAT</h2><span>${esc(r.ref_no)}<br>${esc(r.nama)}</span></div>
+        <div class="terma">${termaHtml(r.terma_snapshot)}</div>
+        <div class="agree"><div class="q">Saya setuju dengan terma dan syarat yang dinyatakan.</div>
+          <div class="sig"><div class="box"><img src="${esc(r.tandatangan)}" alt=""><div class="ln"><b>${esc(r.nama)}</b><br>(Tandatangan Penyewa)</div></div>
+          <div class="box" style="align-items:flex-end;text-align:right"><div style="font-size:13px;font-weight:700;margin-bottom:4px">${tarikhBuat}</div><div class="ln" style="width:100%">(Tarikh)</div></div></div></div>
+        <div class="foot">ABE DIN CAR RENTAL · ${esc(r.ref_no)} · Muka surat 2 / 2</div>
+      </div>
+      <script>window.onload=()=>setTimeout(()=>print(),400)<\/script></body></html>`);
     w.document.close();
   }
 
