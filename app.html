@@ -82,6 +82,9 @@
 
 
 
+<link rel="preconnect" href="https://buzpdyvvoiqgbeventwm.supabase.co" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm" crossorigin>
 <link rel="stylesheet" href="css/app.css?v=50.15">
 <style id="ada-sold-overlay-midnight-gold">
 /* Midnight Gold SOLD seal, limited to sold public catalogue cards. */
@@ -439,8 +442,10 @@ function showImageManager(vehicleId){const v=vehicles.find(x=>x.id===vehicleId);
 async function setCatalogueStatus(id,status){if(profile?.role!=='owner')return;try{const {error}=await client.rpc('set_catalogue_status',{p_vehicle_id:id,p_status:status});if(error)throw error;const v=vehicles.find(x=>x.id===id);if(v)v.catalogue_status=status;publicCatalogueCache.clear();renderCloud();msg('Status catalogue ditukar kepada '+status.charAt(0).toUpperCase()+status.slice(1)+'.')}catch(e){msg('Status catalogue: '+e.message)}}
 async function togglePublish(id,publish){try{const {error}=await client.rpc('set_vehicle_published',{p_vehicle_id:id,p_publish:publish});if(error)throw error;publicCatalogueCache.clear();await refresh();msg(publish?'Kereta dipublish ke catalogue.':'Kereta dikeluarkan daripada catalogue.')}catch(e){msg('Catalogue: '+e.message)}}
 async function shareVehicle(vehicleId){const u=new URL(location.href);u.search='';u.hash='';u.searchParams.set('car',vehicleId);const link=u.href;try{await navigator.clipboard.writeText(link);msg('Share link disalin: '+link)}catch{prompt('Salin share link ini:',link)}}
+let publicSettingsPromise=null;function ensurePublicSettings(){return publicSettingsPromise||(publicSettingsPromise=loadPublicSettings())}
 async function loadPublicSettings(){
-  try{const {data,error}=await client.rpc('get_public_settings');if(error)throw error;const x=Array.isArray(data)?data[0]:data;if(x){publicSettings.whatsapp_number=String(x.whatsapp_number||'');publicSettings.whatsapp_message=String(x.whatsapp_message||publicSettings.whatsapp_message)}}catch(e){console.warn('Public settings unavailable',e)}await loadCatalogueSocialLinks()
+  const socialP=loadCatalogueSocialLinks();
+  try{const {data,error}=await client.rpc('get_public_settings');if(error)throw error;const x=Array.isArray(data)?data[0]:data;if(x){publicSettings.whatsapp_number=String(x.whatsapp_number||'');publicSettings.whatsapp_message=String(x.whatsapp_message||publicSettings.whatsapp_message)}}catch(e){console.warn('Public settings unavailable',e)}await socialP
 }
 async function loadCatalogueSocialLinks(){try{const {data,error}=await client.rpc('get_catalogue_social_links');if(error)throw error;const x=Array.isArray(data)?data[0]:data;if(x){publicSettings.tiktok_url=String(x.tiktok_url||'');publicSettings.maps_url=String(x.maps_url||'')}}catch(e){console.warn('Social links unavailable',e)}}
 function cleanWhatsAppNumber(v){return String(v||'').replace(/[^0-9]/g,'')}
@@ -527,6 +532,8 @@ function catPriceBand(v){
 function publicOfferPrice(v){const base=Number(v.asking_price||0),promo=Number(v.promo_price||0);return promo>0&&base>0&&promo<base?promo:base}
 function publicDiscountPct(v){const base=Number(v.asking_price||0),promo=Number(v.promo_price||0);return promo>0&&base>0&&promo<base?Math.round((base-promo)/base*100):0}
 function publicPriceMarkup(v,detail=false){const base=Number(v.asking_price||0),promo=Number(v.promo_price||0),disc=publicDiscountPct(v),inst=Number(v.monthly_installment||0),cls=detail?'ada-public-detail-price':'ada-public-card-price';if(disc>0)return `<div class="${cls} ada-offer-price"><div class="ada-offer-row"><span class="ada-price-old">${money(base)}</span><span class="ada-discount-badge">${disc}% OFF</span></div><strong>${money(promo)}</strong>${inst>0?`<small>Dari RM ${inst.toLocaleString('en-MY')} / bulan</small>`:''}</div>`;return `<div class="${cls} ada-offer-price"><strong>${money(base)}</strong>${inst>0?`<small>Dari RM ${inst.toLocaleString('en-MY')} / bulan</small>`:''}</div>`}
+let publicOffersCache=null;function loadPublicOffers(){if(publicOffersCache&&Date.now()-publicOffersCache.at<60000)return publicOffersCache.p;const p=Promise.resolve(client.rpc('get_public_vehicle_offers')).then(({data,error})=>error||!Array.isArray(data)?null:data,()=>null);publicOffersCache={p,at:Date.now()};return p}
+function applyPublicOffers(rows,data){if(!Array.isArray(data))return rows;const m=new Map(data.map(x=>[String(x.vehicle_id),x]));return rows.map(v=>Object.assign({},v,m.get(String(v.vehicle_id))||{}))}
 async function mergePublicOffers(rows){try{const {data,error}=await client.rpc('get_public_vehicle_offers');if(error||!Array.isArray(data))return rows;const m=new Map(data.map(x=>[String(x.vehicle_id),x]));return rows.map(v=>Object.assign({},v,m.get(String(v.vehicle_id))||{}))}catch(_){return rows}}
 
 async function registerPublicCatalogueVisitor(){
@@ -548,11 +555,12 @@ async function registerPublicCatalogueVisitor(){
 async function openPublicCatalogue(vehicleId=null){
   setRouteMode('public');
   el('ada-login-box').hidden=true;el('ada-cloud-panel').hidden=true;const cloudHeader=el('ada-cloud-gate').querySelector('.wrap > header');if(cloudHeader)cloudHeader.hidden=true;msg('Memuatkan catalogue awam...');
-  await loadPublicSettings();
+  const settingsP=ensurePublicSettings(),offersP=loadPublicOffers();
   document.getElementById('ada-public-catalogue')?.remove();
   const cacheKey=vehicleId||'__list__',cached=publicCatalogueCache.get(cacheKey);let data,error;if(cached&&Date.now()-cached.at<60000){data=cached.data;error=null}else{const res=await client.rpc('get_public_catalogue',{p_vehicle_id:vehicleId});data=res.data;error=res.error;if(!error)publicCatalogueCache.set(cacheKey,{data,at:Date.now()})}
+  await settingsP;
   if(error){el('ada-login-box').hidden=false;msg('Catalogue gagal: '+error.message);return}
-  let rows=Array.isArray(data)?data:[]; rows=await mergePublicOffers(rows);
+  let rows=Array.isArray(data)?data:[]; rows=applyPublicOffers(rows,await offersP);
   const box=document.createElement('section');box.id='ada-public-catalogue';
   const logo=new URL('assets/embedded-300045c966fa.png',location.href).href;
   const brand=`<div class="ada-public-brand">${logo?`<img src="${safe(logo)}" alt="Abe Din Auto">`:''}<div><strong>ABE DIN AUTO</strong><small>Kereta terpilih · Urusan lebih mudah</small></div></div>`;
@@ -566,7 +574,7 @@ async function openPublicCatalogue(vehicleId=null){
     const models=[...new Set(rows.map(v=>catNorm(v.model)).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
     const brandChips=makes.map(x=>`<button class="ada-brand-chip" type="button" data-cat-brand="${safe(x)}"><span class="ada-brand-logo">${catBrandLogo(x)}</span><small>${safe(x)}</small></button>`).join('');
     box.innerHTML=`${nav}<div class="ada-public-shell">
-      <section class="ada-cat-hero"><img class="ada-cat-hero-bg" src="./catalogue-hero-showroom.png" alt="" fetchpriority="high" decoding="async"><div class="ada-cat-kicker">YOUR NO.1 PRE-OWNED CAR DEALER</div><h1>Cari Kereta Anda</h1><p>Perjalanan seterusnya bermula di sini.</p>
+      <section class="ada-cat-hero"><img class="ada-cat-hero-bg" src="./catalogue-hero-showroom.webp" alt="" fetchpriority="high" decoding="async"><div class="ada-cat-kicker">YOUR NO.1 PRE-OWNED CAR DEALER</div><h1>Cari Kereta Anda</h1><p>Perjalanan seterusnya bermula di sini.</p>
         <div class="ada-cat-visitor" id="ada-cat-visitor" hidden aria-live="polite"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg><span><strong id="ada-cat-visitor-count">0</strong> pengunjung</span></div>
         <label class="ada-cat-search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="ada-cat-search" placeholder="Cari jenama, model atau nombor pendaftaran..." autocomplete="off"></label>
       </section>
@@ -643,7 +651,7 @@ document.addEventListener('click',(e)=>{
 window.addEventListener('popstate',()=>{const q=new URLSearchParams(location.search);if(q.has('car'))openPublicCatalogue(q.get('car'));else if(q.has('catalogue'))openPublicCatalogue();});
 el('ada-open-catalogue').addEventListener('click',()=>{history.replaceState(null,'','?catalogue=1');document.documentElement.classList.add('ada-public-route');openPublicCatalogue()});el('ada-cloud-login').addEventListener('submit',async e=>{e.preventDefault();msg('Mengesahkan login...');const {error}=await client.auth.signInWithPassword({email:el('ada-cloud-email').value,password:el('ada-cloud-password').value});el('ada-cloud-password').value='';if(error){msg('Login gagal: '+error.message);return}await verify()});document.querySelectorAll('[data-cloud-page]').forEach(b=>b.addEventListener('click',()=>{current=b.dataset.cloudPage;renderCloud();window.scrollTo(0,0)}));el('ada-cloud-logout').addEventListener('click',async()=>{await client.auth.signOut();setRouteMode('auth');await verify()});el('ada-cloud-demo').addEventListener('click',()=>{if(confirm('Demo V3.7 hanya localStorage dan tidak disimpan ke Supabase. Teruskan untuk ujian sahaja?')){el('ada-cloud-gate').hidden=true;const b=document.createElement('button');b.textContent='Kembali ke Cloud';b.style.cssText='position:fixed;bottom:75px;right:12px;z-index:999999;background:#fbd748;color:#111;padding:12px;border-radius:12px';b.onclick=()=>{el('ada-cloud-gate').hidden=false;b.remove()};document.body.appendChild(b)}});const params=new URLSearchParams(location.search);
 const adminEntry=params.has('admin')||location.pathname.replace(/\/+$/,'').endsWith('/admin');
-await loadPublicSettings();
+if(adminEntry)await ensurePublicSettings();else ensurePublicSettings();
 if(adminEntry){
   history.replaceState(null,'','/admin/');
   await verify();
