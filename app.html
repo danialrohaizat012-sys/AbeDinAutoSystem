@@ -215,7 +215,7 @@ const client=createClient('https://buzpdyvvoiqgbeventwm.supabase.co','sb_publish
 const el=id=>document.getElementById(id), safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=v=>'RM '+Number(v||0).toLocaleString('en-MY',{maximumFractionDigits:0});
 const PUBLIC_BUCKET='https://buzpdyvvoiqgbeventwm.supabase.co/storage/v1/object/public/vehicle-images/';
-let profile=null, vehicles=[], suppliers=[], sales=[], customers=[], payments=[], vehicleImages=[], imageUrls={}, signedUrlCache=new Map(), publicCatalogueCache=new Map(), inspections=[], inspectionItems=[], publicSettings={whatsapp_number:'601156366925',whatsapp_message:'Hi Abe Din Auto, saya berminat dengan kereta ini: {link}',tiktok_url:'',maps_url:''}, current='dashboard', inspectionVehicleId=null, vehicleProfileId=null;
+let profile=null, vehicles=[], suppliers=[], sales=[], customers=[], payments=[], vehicleImages=[], imageUrls={}, signedUrlCache=new Map(), publicCatalogueCache=new Map(), inspections=[], inspectionItems=[], publicSettings={whatsapp_number:'601156366925',whatsapp_message:'Hi Abe Din Auto, saya berminat dengan kereta ini: {link}',tiktok_url:'',maps_url:''}, current=(()=>{try{const pg=new URLSearchParams(location.search).get('page');return ['dashboard','inventory','suppliers','pemeriksaan','runner','sales','customers','applications','sewa','reports','settings'].includes(pg)?pg:'dashboard'}catch(_){return 'dashboard'}})(), inspectionVehicleId=null, vehicleProfileId=null;
 const msg=s=>{el('ada-cloud-message').textContent=s;el('ada-cloud-message-login').textContent=s};
 const syncAuthViewport=()=>{
   const h=Math.round(window.visualViewport?.height||window.innerHeight);
