@@ -1607,3 +1607,345 @@ html #ada-public-catalogue.abx-home .abx-gallery{width:100%!important;max-width:
 html #ada-public-catalogue.abx-home .abx-main-photo{width:100%!important;max-width:100%!important;height:auto!important;min-height:0!important;max-height:none!important;margin:0!important;padding:0!important;border:0!important}
 html #ada-public-catalogue.abx-home .abx-main-photo>img{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-height:none!important}
 html #ada-public-catalogue.abx-home .abx-d-row .abx-btn,html #ada-public-catalogue.abx-home .abx-d-actions>.abx-btn{width:100%!important;margin:0!important;height:auto!important;min-width:0!important}
+
+/* V66 suis tema admin */
+.ada-head-tools{display:flex;align-items:center;gap:10px}
+.ada-theme-toggle{display:inline-flex!important;align-items:center;gap:7px;min-height:38px!important;padding:6px 14px!important;border-radius:999px!important;background:#ffffff0f!important;border:1px solid #ffffff24!important;color:#f3f1ea!important;font-size:12.5px!important;font-weight:700!important;box-shadow:none!important;cursor:pointer;width:auto!important;margin:0!important}
+.ada-theme-toggle svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ada-theme-toggle .ada-ico-moon{display:none}
+html.ada-light .ada-theme-toggle{background:#121417!important;border-color:#121417!important;color:#fff!important}
+html.ada-light .ada-theme-toggle .ada-ico-sun{display:none}
+html.ada-light .ada-theme-toggle .ada-ico-moon{display:block}
+@media(max-width:520px){.ada-theme-label{display:none}.ada-theme-toggle{padding:6px 10px!important}}
+/* V66 tema terang admin (dijana daripada tema gelap) */
+html.ada-light:not(.ada-public-route){color:#161410!important;background:#f5f5f6!important}
+html.ada-light:not(.ada-public-route) body{background:radial-gradient(ellipse at 78% -20%,#ffffff 0%,transparent 48%),#f5f5f6!important}
+html.ada-light:not(.ada-public-route) .top{border-bottom:1px solid #c7c9c9!important;background:rgba(247,247,248,0.929)!important}
+html.ada-light:not(.ada-public-route) .brand small{color:#616565!important}
+html.ada-light:not(.ada-public-route) .pill{background:#f5efe6!important;color:#b89200!important}
+html.ada-light:not(.ada-public-route) .side{border-right:1px solid #c6c8c8!important;background:linear-gradient(170deg,#f9f9fa,#f4f5f5)!important}
+html.ada-light:not(.ada-public-route) .nav button,html.ada-light:not(.ada-public-route) .bottom button{color:#45494a!important}
+html.ada-light:not(.ada-public-route) .nav button:hover,html.ada-light:not(.ada-public-route) .bottom button:hover{background:#ffffff!important}
+html.ada-light:not(.ada-public-route) .nav button.active,html.ada-light:not(.ada-public-route) .bottom button.active{background:linear-gradient(110deg,#f5eee5,#ffffff)!important;color:#b89300!important;box-shadow:inset 3px 0 rgba(255,223,95,0.5)!important}
+html.ada-light:not(.ada-public-route) .eyebrow{color:#b89300!important}
+html.ada-light:not(.ada-public-route) p{color:#525657!important}
+html.ada-light:not(.ada-public-route) .card{background:linear-gradient(145deg,#fdfdfd,#f8f9f9)!important;border:1px solid #c3c7c7!important;box-shadow:0 12px 32px rgba(15,23,42,0.047)!important}
+html.ada-light:not(.ada-public-route) .metric{color:#b89300!important}
+html.ada-light:not(.ada-public-route) .muted{color:#555c5c!important}
+html.ada-light:not(.ada-public-route) .btn{box-shadow:0 6px 20px rgba(216,169,80,0.049)!important}
+html.ada-light:not(.ada-public-route) .ghost{background:#ffffff!important;color:#191915!important;border:1px solid #babdbe!important}
+html.ada-light:not(.ada-public-route) .danger{color:#b80000!important}
+html.ada-light:not(.ada-public-route) .chip{border:1px solid #c1c4c4!important;background:#fdfdfd!important;color:#303333!important}
+html.ada-light:not(.ada-public-route) .item{background:linear-gradient(130deg,#fdfdfd,#f8f9f9)!important;border:1px solid #c2c6c7!important}
+html.ada-light:not(.ada-public-route) .item small{color:#575e5e!important}
+html.ada-light:not(.ada-public-route) .tag{background:#e4f6ef!important;color:#0ea961!important}
+html.ada-light:not(.ada-public-route) .tag.Reserved{background:#f6eee5!important;color:#b89400!important}
+html.ada-light:not(.ada-public-route) .tag.Preparation{background:#e5edf6!important;color:#0054b8!important}
+html.ada-light:not(.ada-public-route) .tag.Sold{color:#b80000!important}
+html.ada-light:not(.ada-public-route) .photo{background:linear-gradient(130deg,#ffffff,#f9f9f9)!important;color:#b18e07!important}
+html.ada-light:not(.ada-public-route) .field{color:#232523!important}
+html.ada-light:not(.ada-public-route) .field input,html.ada-light:not(.ada-public-route) .field select,html.ada-light:not(.ada-public-route) .field textarea,html.ada-light:not(.ada-public-route) .search{background:#fefefe!important;border:1px solid #bcc0c1!important;color:#080808!important}
+html.ada-light:not(.ada-public-route) .field input:focus,html.ada-light:not(.ada-public-route) .field select:focus,html.ada-light:not(.ada-public-route) .field textarea:focus,html.ada-light:not(.ada-public-route) .search:focus{box-shadow:0 0 0 3px rgba(217,168,73,0.047)!important}
+html.ada-light:not(.ada-public-route) .empty{border:1px dashed #b5b8b7!important;color:#4c5151!important}
+html.ada-light:not(.ada-public-route) .notice{background:#f4efe6!important;color:#b89300!important}
+html.ada-light:not(.ada-public-route) .check{border-bottom:1px solid #c4c7c7!important}
+html.ada-light:not(.ada-public-route) .bar{background:#ffffff!important}
+html.ada-light:not(.ada-public-route) .hero{border:1px solid #c6c2ba!important;background:linear-gradient(90deg,rgba(244,245,245,0.933),rgba(244,245,245,0.4)),radial-gradient(ellipse at 80% 35%,#ffffff,#f4f5f5 70%)!important;box-shadow:0 18px 42px rgba(15,23,42,0.117)!important}
+html.ada-light:not(.ada-public-route) .hero:before{background:linear-gradient(0deg,rgba(244,245,245,0.91),transparent 75%)!important}
+html.ada-light:not(.ada-public-route) .hero .slogan{color:#b89300!important}
+html.ada-light:not(.ada-public-route) .statcard:after{color:rgba(151,111,33,0.133)!important}
+html.ada-light:not(.ada-public-route) .statcard:nth-child(2){background:linear-gradient(135deg,#e5f5f0,#f8f9f9)!important}
+html.ada-light:not(.ada-public-route) .statcard:nth-child(3){background:linear-gradient(135deg,#f3ede7,#f9fafa)!important}
+html.ada-light:not(.ada-public-route) .statcard:nth-child(4){background:linear-gradient(135deg,#ffffff,#f9fafa)!important}
+html.ada-light:not(.ada-public-route) .stat-icon{color:#b89300!important}
+html.ada-light:not(.ada-public-route) .carcard{background:linear-gradient(140deg,#ffffff,#f9f9f9)!important;border:1px solid #c2c6c6!important}
+html.ada-light:not(.ada-public-route) .carcard .carimage{background:linear-gradient(130deg,#ffffff,#f9f9f9)!important}
+html.ada-light:not(.ada-public-route) .carcard small{color:#4d5353!important}
+html.ada-light:not(.ada-public-route) .carcard .price{color:#b89300!important}
+html.ada-light:not(.ada-public-route) .carcard .meta{color:#454b4b!important}
+html.ada-light:not(.ada-public-route) .wizard .step{color:#4f5353!important}
+html.ada-light:not(.ada-public-route) .wizard .step b{background:#ffffff!important;color:#080808!important}
+html.ada-light:not(.ada-public-route) .wizard .step.on{color:#b89400!important}
+html.ada-light:not(.ada-public-route) .uploadbox{background:#fdfdfd!important}
+html.ada-light:not(.ada-public-route) .uploadbox strong{color:#b89300!important}
+html.ada-light:not(.ada-public-route) .uploadtile{border:1px solid #bfc2c2!important;background:#fefefe!important}
+html.ada-light:not(.ada-public-route) .uploadtile button{background:rgba(247,247,247,0.91)!important;border:1px solid rgba(15,23,42,0.417)!important;color:#080808!important}
+html.ada-light:not(.ada-public-route) .uploadtile .cover{background:rgba(249,249,249,0.788)!important;color:#b89300!important}
+html.ada-light:not(.ada-public-route) .vhero{background:linear-gradient(125deg,#ffffff,#fafafa)!important;border:1px solid #bfc1c1!important}
+html.ada-light:not(.ada-public-route) .chartbars{border-bottom:1px solid #bfc1c1!important}
+html.ada-light:not(.ada-public-route) .chartlabels{color:#535858!important}
+html.ada-light:not(.ada-public-route) .safe-note{color:#5f6564!important}
+html.ada-light:not(.ada-public-route) .tabrow{border-bottom:1px solid #c1c4c4!important}
+html.ada-light:not(.ada-public-route) .tabrow button{color:#424746!important}
+html.ada-light:not(.ada-public-route) .tabrow button.active{color:#b89300!important}
+html.ada-light:not(.ada-public-route) .floatadd{box-shadow:0 9px 22px rgba(15,23,42,0.21)!important}
+html.ada-light:not(.ada-public-route) .userrole{color:#b08f07!important;border-top:1px solid #c4c7c7!important}
+@media(max-width:760px){html.ada-light:not(.ada-public-route) .bottom{background:rgba(247,248,248,0.961)!important;border-top:1px solid #c0c3c3!important}
+html.ada-light:not(.ada-public-route) .bottom button.active{background:linear-gradient(120deg,#fdf7dd,#ffffff)!important}}
+html.ada-light:not(.ada-public-route) .hero{background-image:linear-gradient(90deg,rgba(244,245,245,0.984) 0%,rgba(244,245,245,0.914) 30%,rgba(244,245,245,0.514) 55%,rgba(244,245,245,0.039) 100%),url("assets/embedded-9dbd434c4a60.webp")!important;box-shadow:inset 0 0 70px rgba(15,23,42,0.093),0 22px 55px rgba(15,23,42,0.163)!important}
+html.ada-light:not(.ada-public-route) .hero:before{background:linear-gradient(0deg,rgba(244,245,245,0.302),transparent 65%)!important}
+html.ada-light:not(.ada-public-route) .hero h1 .hero-name{color:#b89300!important}
+html.ada-light:not(.ada-public-route) .hero .hero-quote{color:#b28f05!important}
+html.ada-light:not(.ada-public-route) .statcard .stat-icon{color:#b89300!important}
+html.ada-light:not(.ada-public-route) .statcard:nth-child(1){background:linear-gradient(125deg,#ffffff,#f9fafa)!important}
+html.ada-light:not(.ada-public-route) .statcard:nth-child(2){background:linear-gradient(125deg,#e2f8f3,#f8f9f9)!important}
+html.ada-light:not(.ada-public-route) .statcard:nth-child(3){background:linear-gradient(125deg,#f4ede6,#f9fafa)!important}
+html.ada-light:not(.ada-public-route) .statcard:nth-child(4){background:linear-gradient(125deg,#ffffff,#f9fafa)!important}
+@media(max-width:760px){html.ada-light:not(.ada-public-route) .hero{background-image:linear-gradient(90deg,rgba(243,244,244,0.949) 0%,rgba(243,244,244,0.808) 43%,rgba(243,244,244,0.157) 100%),url("assets/embedded-9dbd434c4a60.webp")!important}}
+html.ada-light:not(.ada-public-route) .carcard .carimage{background:#f8f9f9!important}
+html.ada-light:not(.ada-public-route) .carcard .cardbody{background:linear-gradient(140deg,#ffffff,#f9f9f9)!important}
+html.ada-light:not(.ada-public-route) .ada-share-backdrop{background:rgba(244,244,244,0.667)!important}
+html.ada-light:not(.ada-public-route) .ada-share-card{background:#f8f8f9!important;border:1px solid #c4c8c8!important;box-shadow:0 -20px 60px rgba(15,23,42,0.187)!important}
+html.ada-light:not(.ada-public-route) .ada-share-handle{background:#ffffff!important}
+html.ada-light:not(.ada-public-route) .ada-share-card p{color:#6c7274!important}
+html.ada-light:not(.ada-public-route) .ada-settings-form input,html.ada-light:not(.ada-public-route) .ada-settings-form textarea{color:#0e0f0f!important;background:#f4f5f6!important;caret-color:#b18f07!important;border-color:#c0c3c4!important}
+html.ada-light:not(.ada-public-route) .ada-settings-form input::placeholder,html.ada-light:not(.ada-public-route) .ada-settings-form textarea::placeholder{color:#787e7f!important}
+html.ada-light:not(.ada-public-route) .ada-settings-form input:focus,html.ada-light:not(.ada-public-route) .ada-settings-form textarea:focus{color:#080808!important;background:#f4f5f6!important;box-shadow:0 0 0 2px rgba(243,208,68,0.06)!important}
+html.ada-light:not(.ada-public-route) .ada-settings-form small{color:#787e7f!important}
+html.ada-light:not(.ada-public-route) .ada-message-preview{border:1px solid #c4c8c8!important;background:#f6f7f7!important}
+html.ada-light:not(.ada-public-route) .ada-message-preview span{color:#b18f07!important}
+html.ada-light:not(.ada-public-route) .ada-message-preview p{color:#373c3b!important}
+html.ada-light:not(.ada-public-route) button:not(.secondary):not(.ada-share-x):not(.ada-icon-action),html.ada-light:not(.ada-public-route) .btn{box-shadow:0 1px 0 rgba(255,255,255,0.133) inset,0 7px 18px rgba(15,23,42,0.047)!important}
+html.ada-light:not(.ada-public-route) button.secondary{background:#f9fafa!important;color:#171916!important;border:1px solid #c3c6c7!important;box-shadow:0 1px 0 rgba(255,255,255,0.016) inset!important}
+html.ada-light:not(.ada-public-route) .ada-wa-cta,html.ada-light:not(.ada-public-route) .ada-wa-contact{box-shadow:0 10px 26px rgba(37,211,102,0.063)!important}
+html.ada-light:not(.ada-public-route) .ada-share-card{border-color:#c3c6c7!important;background:linear-gradient(180deg,#fafbfb,#f7f7f7)!important;box-shadow:0 -28px 80px rgba(15,23,42,0.257)!important}
+html.ada-light:not(.ada-public-route) .ada-share-kicker{color:#b18f07!important}
+html.ada-light:not(.ada-public-route) .ada-share-x{background:#ffffff!important;border:1px solid #c3c6c7!important;color:#1a1c1a!important}
+html.ada-light:not(.ada-public-route) .ada-share-option{background:#fcfcfd!important;border:1px solid #c3c6c7!important;color:#151815!important;box-shadow:0 1px 0 rgba(255,255,255,0.016) inset!important}
+html.ada-light:not(.ada-public-route) .ada-share-option:hover{background:#ffffff!important;border-color:#babdbd!important}
+html.ada-light:not(.ada-public-route) .ada-share-option small{color:#697070!important}
+html.ada-light:not(.ada-public-route) .ada-share-option>b{color:#6f7576!important}
+html.ada-light:not(.ada-public-route) .ada-share-icon{background:#ffffff!important}
+html.ada-light:not(.ada-public-route) .ada-share-wa{background:#fbfcfb!important;border-color:#abe3bf!important}
+html.ada-light:not(.ada-public-route) .ada-share-wa .ada-share-icon{background:#e2f8ea!important;color:#080808!important}
+html.ada-light:not(.ada-public-route) .ada-share-wa:hover{background:#e6f4eb!important}
+html.ada-light:not(.ada-public-route) .inspection-section summary span{color:#b69201!important}
+html.ada-light:not(.ada-public-route) .inspection-meta label,html.ada-light:not(.ada-public-route) .inspection-remark{color:#302f2c!important}
+html.ada-light:not(.ada-public-route) .inspection-meta input,html.ada-light:not(.ada-public-route) .inspection-remark textarea,html.ada-light:not(.ada-public-route) .inspection-panel textarea{background:#fdfdfd!important;color:#746135!important;border:1px solid #bcbebd!important}
+html.ada-light:not(.ada-public-route) .inspection-item{border-top:1px solid #c2c3c2!important}
+html.ada-light:not(.ada-public-route) .inspection-choice{border:1px solid #bcbdba!important}
+html.ada-light:not(.ada-public-route) .inspection-choice.chosen{background:#fdf7dd!important;color:#b89300!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate{background:#f6f7f7!important;color:#766232!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .panel{background:linear-gradient(145deg,#fefefe,#fafafa)!important;border:1px solid #c8c4bd!important;box-shadow:0 12px 35px rgba(15,23,42,0.07)!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate input{background:#ffffff!important;border:1px solid #bab8b4!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate button.secondary{background:#ffffff!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate h1,html.ada-light:not(.ada-public-route) #ada-cloud-gate .gold{color:#b69202!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .muted{color:#4f4f4f!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .item{border-bottom:1px solid #c6c6c6!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .tag{color:#b89300!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-side{border-right:1px solid #c7c6c2!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-side button{color:#282828!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-side button.active{background:#f5efe5!important;color:#b89300!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-stat{background:#ffffff!important;border:1px solid #c0c1c0!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-stat strong{color:#b89300!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-car{background:#fdfdfd!important;border:1px solid #c3c2bf!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-car .photo{background:linear-gradient(140deg,#ffffff,#fbfbfb)!important;color:#81765f!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-pill{background:#e6f4ee!important;color:#15a252!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-notice{background:#f4efe6!important;color:#b89300!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-table td,html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-table th{border-bottom:1px solid #c1c3c3!important}
+@media(max-width:700px){html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-bottom{background:#fcfcfc!important;border-top:1px solid #c5c2bd!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-bottom button{color:#b18f07!important}}
+html.ada-light:not(.ada-public-route) .ada-form-overlay{background:rgba(244,244,244,0.8)!important}
+html.ada-light:not(.ada-public-route) .ada-form{background:#fcfcfc!important;color:#af8d08!important;box-shadow:0 22px 70px rgba(15,23,42,0.21)!important}
+html.ada-light:not(.ada-public-route) .ada-form label{color:#b08e08!important}
+html.ada-light:not(.ada-public-route) .ada-form input,html.ada-light:not(.ada-public-route) .ada-form select,html.ada-light:not(.ada-public-route) .ada-form textarea{background:#f7f7f7!important;color:#080808!important;border:1px solid #b8b6b1!important}
+html.ada-light:not(.ada-public-route) .ada-form-error{color:#b89300!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate{background:radial-gradient(circle at 78% -12%,rgba(246,239,228,0.157) 0,transparent 31%),radial-gradient(circle at 12% 25%,rgba(229,245,240,0.125) 0,transparent 27%),var(--ada-bg)!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate> .wrap>header{background:rgba(244,245,246,0.91)!important}
+html.ada-light:not(.ada-public-route) .ada-cloud-brandcopy small{color:#6f7576!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-pill{background:#fbfbfb!important;border:1px solid #f9e595!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-side{background:linear-gradient(180deg,#f7f8f8,#f3f4f5)!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-side .ada-side-logo{border-bottom:1px solid #c9cccd!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-side button{color:#5b6263!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-side button:hover{background:#fbfbfb!important;color:#080808!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-side button.active{background:linear-gradient(100deg,#f5eee5,#fcfcfb)!important;color:#b89300!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-notice{background:#fafafa!important;border:1px solid #c4c7c7!important;color:#4d5253!important}
+html.ada-light:not(.ada-public-route) .cloud-stat{background:linear-gradient(145deg,#fbfbfb,#f7f7f8)!important}
+html.ada-light:not(.ada-public-route) .cloud-stat strong{color:#b89200!important}
+html.ada-light:not(.ada-public-route) .cloud-stat small{color:#787e7f!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .panel{background:linear-gradient(145deg,#fafafa,#f6f7f7)!important;box-shadow:0 12px 35px rgba(15,23,42,0.07)!important}
+html.ada-light:not(.ada-public-route) .cloud-car{background:linear-gradient(145deg,#fbfbfb,#f6f7f7)!important;box-shadow:0 12px 30px rgba(15,23,42,0.047)!important}
+html.ada-light:not(.ada-public-route) .cloud-car:hover{box-shadow:0 18px 38px rgba(15,23,42,0.117)!important}
+html.ada-light:not(.ada-public-route) .cloud-car .photo{background:#f7f7f7!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate main button:not(.secondary){box-shadow:0 7px 18px rgba(211,165,75,0.047)!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate input{border-color:#c1c4c5!important;background:#f7f8f8!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate input:focus{box-shadow:0 0 0 3px rgba(228,184,94,0.037)!important}
+html.ada-light:not(.ada-public-route) .cloud-table th{color:#b18f07!important}
+html.ada-light:not(.ada-public-route) .cloud-table tr:hover td{background:rgba(15,23,42,0.007)!important}
+html.ada-light:not(.ada-public-route) .ada-form{background:linear-gradient(150deg,#fbfbfb,#f5f6f6)!important;box-shadow:0 28px 90px rgba(15,23,42,0.28)!important}
+html.ada-light:not(.ada-public-route) .ada-form input,html.ada-light:not(.ada-public-route) .ada-form select,html.ada-light:not(.ada-public-route) .ada-form textarea{background:#f6f7f7!important;border-color:#c0c4c4!important}
+html.ada-light:not(.ada-public-route) .ada-form-head{border-bottom:1px solid #c6caca!important}
+@media(max-width:700px){html.ada-light:not(.ada-public-route) .cloud-bottom{background:rgba(245,246,246,0.961)!important;border-top:1px solid #c4c8c8!important}
+html.ada-light:not(.ada-public-route) .cloud-bottom button.active{background:#f4eee6!important;color:#b89300!important}}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-car{background:linear-gradient(160deg,#fafbfb 0%,#f7f7f8 100%)!important;border:1px solid #c5c9ca!important;box-shadow:0 12px 30px rgba(15,23,42,0.063)!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-car:hover{box-shadow:0 22px 48px rgba(15,23,42,0.119)!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-car .photo{background:radial-gradient(circle at 50% 40%,#ffffff,#f7f7f8 72%)!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-car .photo:after{background:linear-gradient(transparent,rgba(243,244,244,0.78))!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-pill{background:rgba(245,246,246,0.76)!important;color:#181c1c!important;border:1px solid rgba(15,23,42,0.163)!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-pill.status-available{color:#15a35d!important}
+html.ada-light:not(.ada-public-route) .cloud-pill.status-preparation{color:#0053b8!important}
+html.ada-light:not(.ada-public-route) .cloud-pill.status-reserved{color:#b89200!important}
+html.ada-light:not(.ada-public-route) .cloud-pill.status-sold{color:#b80000!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .ada-photo-count{background:rgba(245,246,246,0.76)!important;border:1px solid rgba(15,23,42,0.15)!important;color:#2c3030!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .ada-car-title h3{color:#171612!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .ada-price{color:#b89300!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .ada-car-meta{border-top:1px solid #c7cbcb!important;color:#787e7f!important}
+html.ada-light:not(.ada-public-route) .ada-car-meta b{color:#4d5253!important}
+html.ada-light:not(.ada-public-route) .ada-live-dot{box-shadow:0 0 0 3px rgba(98,216,165,0.05)!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .ada-icon-action{border:1px solid #c4c8c8!important;background:#fbfbfb!important;color:#4d5253!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .ada-icon-action:hover{color:#b89300!important;border-color:#f9e595!important;background:#fbfbfa!important}
+html.ada-light:not(.ada-public-route) .ada-icon-action.is-live{color:#1c9c5f!important;border-color:#b2dccb!important}
+html.ada-light:not(.ada-public-route) .ada-kpi{background:linear-gradient(150deg,#fbfbfb,#f5f6f6)!important}
+html.ada-light:not(.ada-public-route) .ada-kpi-label{color:#6e7476!important}
+html.ada-light:not(.ada-public-route) .ada-kpi-value{color:#b89200!important}
+html.ada-light:not(.ada-public-route) .ada-kpi-dot{box-shadow:0 0 0 4px rgba(220,176,90,0.035)!important}
+html.ada-light:not(.ada-public-route) .ada-dash-card{background:linear-gradient(150deg,#fafafa,#f5f6f6)!important}
+html.ada-light:not(.ada-public-route) .ada-attention-row{border:1px solid #c7cbcb!important;background:#f7f8f8!important}
+html.ada-light:not(.ada-public-route) .ada-attention-icon{background:#f4eee6!important;color:#b89300!important}
+html.ada-light:not(.ada-public-route) .ada-attention-count{color:#b89300!important}
+html.ada-light:not(.ada-public-route) .ada-dash-quick button{border:1px solid #c4c8c8!important;background:#f8f8f9!important;color:#282b2b!important}
+html.ada-light:not(.ada-public-route) .ada-dash-quick button:hover{background:#fafafa!important}
+html.ada-light:not(.ada-public-route) .ada-dash-quick b{color:#b89300!important}
+html.ada-light:not(.ada-public-route) .ada-dash-quick small{color:#787f80!important}
+html.ada-light:not(.ada-public-route) .ada-role-chip{border:1px solid #cac5bd!important;color:#b18f07!important;background:#fefefe!important}
+html.ada-light:not(.ada-public-route) .ada-vp-back{color:#515657!important}
+html.ada-light:not(.ada-public-route) .ada-vp-back:hover{color:#b89300!important}
+html.ada-light:not(.ada-public-route) .ada-vp-hero{border:1px solid #c2c6c7!important;background:#f4f5f6!important;box-shadow:0 22px 60px rgba(15,23,42,0.117)!important}
+html.ada-light:not(.ada-public-route) .ada-vp-hero-placeholder{background:radial-gradient(circle at 70% 25%,#ffffff,#f7f8f8 55%)!important}
+html.ada-light:not(.ada-public-route) .ada-vp-hero:after{background:linear-gradient(90deg,rgba(243,244,244,0.961) 0%,rgba(243,244,244,0.812) 35%,rgba(243,244,244,0.333) 68%,rgba(243,244,244,0.133) 100%),linear-gradient(0deg,rgba(243,244,244,0.91) 0%,transparent 55%)!important}
+html.ada-light:not(.ada-public-route) .ada-vp-copy h2{color:#080808!important}
+html.ada-light:not(.ada-public-route) .ada-vp-sub{color:#4b5050!important}
+html.ada-light:not(.ada-public-route) .ada-vp-price{color:#b89300!important}
+html.ada-light:not(.ada-public-route) .ada-vp-actions .secondary{background:rgba(248,248,249,0.851)!important}
+html.ada-light:not(.ada-public-route) .ada-vp-thumb{border:1px solid #c1c4c4!important;background:#f8f8f9!important}
+html.ada-light:not(.ada-public-route) .ada-vp-thumb.is-cover{box-shadow:0 0 0 2px rgba(216,173,90,0.073)!important}
+html.ada-light:not(.ada-public-route) .ada-vp-panel{border:1px solid #c5c9ca!important;background:linear-gradient(150deg,#fafafa,#f5f6f6)!important;box-shadow:0 12px 30px rgba(15,23,42,0.047)!important}
+html.ada-light:not(.ada-public-route) .ada-vp-panel h3{color:#171916!important}
+html.ada-light:not(.ada-public-route) .ada-vp-specs{background:#ffffff!important;border:1px solid #c7cbcb!important}
+html.ada-light:not(.ada-public-route) .ada-vp-spec{background:#f8f8f8!important}
+html.ada-light:not(.ada-public-route) .ada-vp-spec strong{color:#1b1d1b!important}
+html.ada-light:not(.ada-public-route) .ada-vp-step{border-bottom:1px solid #c8cccd!important}
+html.ada-light:not(.ada-public-route) .ada-vp-step i{background:#ffffff!important;border:1px solid #c1c5c6!important}
+html.ada-light:not(.ada-public-route) .ada-vp-step.done i{background:#e5f5f0!important;color:#219763!important;border-color:#aedfc9!important}
+html.ada-light:not(.ada-public-route) .ada-vp-step.active i{background:#f5efe5!important;color:#b89200!important}
+html.ada-light:not(.ada-public-route) .ada-vp-step em{color:#6a7172!important}
+html.ada-light:not(.ada-public-route) .ada-vp-inspection-score{border:1px solid #c5c9c9!important;background:#f7f8f8!important}
+html.ada-light:not(.ada-public-route) .ada-vp-inspection-score strong{color:#b89300!important}
+html.ada-light:not(.ada-public-route) .ada-vp-inspection-score small{color:#787e7f!important}
+html.ada-light:not(.ada-public-route) .ada-vp-sale-row{border-bottom:1px solid #c7cbcc!important}
+html.ada-light:not(.ada-public-route) .ada-vp-sale-row span{color:#707678!important}
+html.ada-light:not(.ada-public-route) .ada-profile-btn{color:#b89300!important;background:#fefefe!important}
+@media(max-width:700px){html.ada-light:not(.ada-public-route) .ada-vp-hero:after{background:linear-gradient(0deg,rgba(243,244,244,0.969) 0%,rgba(243,244,244,0.667) 52%,rgba(243,244,244,0.133) 100%)!important}}
+html.ada-light:not(.ada-public-route) .ada-vp-summary span{background:rgba(245,246,246,0.722)!important;border:1px solid rgba(15,23,42,0.132)!important;color:#3a3f3e!important}
+html.ada-light:not(.ada-public-route) .ada-vp-panel:hover{border-color:#bfc3c3!important}
+html.ada-light:not(.ada-public-route) .panel,html.ada-light:not(.ada-public-route) .ada-dash-card,html.ada-light:not(.ada-public-route) .cloud-stat{background:linear-gradient(180deg,rgba(15,23,42,0.05),rgba(15,23,42,0.023))!important;box-shadow:0 14px 42px rgba(15,23,42,0.063)!important}
+html.ada-light:not(.ada-public-route) input,html.ada-light:not(.ada-public-route) select,html.ada-light:not(.ada-public-route) textarea{border:1px solid rgba(15,23,42,0.138)!important;background:#f5f6f6!important}
+html.ada-light:not(.ada-public-route) input:focus,html.ada-light:not(.ada-public-route) select:focus,html.ada-light:not(.ada-public-route) textarea:focus{box-shadow:0 0 0 3px rgba(243,206,60,0.05)!important}
+html.ada-light:not(.ada-public-route) .cloud-table th{background:#fafafa!important;color:#494d52!important}
+html.ada-light:not(.ada-public-route) .cloud-table td{border-bottom:1px solid rgba(15,23,42,0.069)!important}
+html.ada-light:not(.ada-public-route) .cloud-table tr:hover td{background:rgba(15,23,42,0.023)!important}
+@media(max-width:720px){html.ada-light:not(.ada-public-route) .cloud-table tr{background:rgba(15,23,42,0.023)!important}}
+html.ada-light:not(.ada-public-route) .ada-form-overlay{background:rgba(244,244,244,0.72)!important}
+html.ada-light:not(.ada-public-route) .ada-form{border:1px solid rgba(15,23,42,0.15)!important;background:linear-gradient(180deg,#fafbfb,#f7f7f8)!important;box-shadow:0 30px 90px rgba(15,23,42,0.193)!important}
+html.ada-light:not(.ada-public-route) .ada-form-head{background:rgba(249,249,250,0.94)!important}
+html.ada-light:not(.ada-public-route) .ada-form label{color:#35373b!important}
+html.ada-light:not(.ada-public-route) .ada-form-error{color:#b80000!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-view .cloud-car{background:linear-gradient(180deg,#fafbfb,#f8f8f8)!important}
+html.ada-light:not(.ada-public-route) .ada-inspection-progress{background:rgba(245,246,246,0.92)!important}
+html.ada-light:not(.ada-public-route) .ada-inspection-progress-bar{background:#ffffff!important}
+html.ada-light:not(.ada-public-route) .cloud-stat strong{color:#080808!important}
+html.ada-light:not(.ada-public-route) .ada-report-note{background:rgba(15,23,42,0.023)!important}
+html.ada-light:not(.ada-public-route) .ada-message-preview{background:#f4f5f6!important}
+html.ada-light:not(.ada-public-route) .ada-ui-empty{border:1px dashed rgba(15,23,42,0.163)!important;background:rgba(15,23,42,0.018)!important}
+html.ada-light:not(.ada-public-route) .ada-login-sub{color:#6e7476!important}
+html.ada-light:not(.ada-public-route) .ada-login-secure:before{box-shadow:0 0 10px rgba(98,195,141,0.233)!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-message-login{color:#b18f07!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .ada-form,html.ada-light:not(.ada-public-route) #ada-cloud-gate .ada-form label,html.ada-light:not(.ada-public-route) #ada-cloud-gate .ada-form h2,html.ada-light:not(.ada-public-route) #ada-cloud-gate .ada-form p{color:#080808!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .ada-form .muted,html.ada-light:not(.ada-public-route) #ada-cloud-gate .ada-form small{color:#363a3b!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate input[readonly].ada-auto-id{color:#b89300!important;background:#fafafa!important}
+html.ada-light:not(.ada-public-route) .ada-share-sheet>[data-share-close]{background:rgba(244,244,244,0.72)!important}
+html.ada-light:not(.ada-public-route) .ada-share-card{background:linear-gradient(180deg,#f9f9f9 0%,#f3f4f4 100%)!important;box-shadow:0 -24px 80px rgba(15,23,42,0.252)!important;color:#181611!important}
+html.ada-light:not(.ada-public-route) .ada-share-kicker{color:#b79301!important}
+html.ada-light:not(.ada-public-route) .ada-share-title-row h3{color:#080808!important}
+html.ada-light:not(.ada-public-route) .ada-share-title-row p{color:#676c6e!important}
+html.ada-light:not(.ada-public-route) .ada-share-x{background:#ffffff!important;border:1px solid #c1c3c4!important;color:#080808!important}
+html.ada-light:not(.ada-public-route) .ada-share-option{background:linear-gradient(180deg,#fbfbfb,#f7f8f8)!important;border:1px solid #c3c6c7!important;color:#11110f!important;box-shadow:inset 0 1px rgba(255,255,255,0.013)!important}
+html.ada-light:not(.ada-public-route) .ada-share-option:hover{background:linear-gradient(180deg,#ffffff,#fafafa)!important;border-color:#b6b8b9!important}
+html.ada-light:not(.ada-public-route) .ada-share-option strong{color:#080808!important}
+html.ada-light:not(.ada-public-route) .ada-share-option small{color:#676c6e!important}
+html.ada-light:not(.ada-public-route) .ada-share-option>b{color:#b18f07!important}
+html.ada-light:not(.ada-public-route) .ada-share-wa:before{color:#080808!important}
+html.ada-light:not(.ada-public-route) .ada-share-option[data-native-share]:before{background:linear-gradient(145deg,#686e71,#ffffff)!important;color:#080808!important}
+html.ada-light:not(.ada-public-route) .ada-share-card .ada-share-cancel{background:#fefefe!important;border:1px solid #c2c4c4!important;color:#080808!important}
+html.ada-light:not(.ada-public-route) .ada-share-id{color:#6b7071!important}
+html.ada-light:not(.ada-public-route) .ada-share-v12-icon.link{box-shadow:inset 0 1px rgba(255,255,255,0.25),0 7px 18px rgba(243,208,68,0.06)!important}
+html.ada-light:not(.ada-public-route) .ada-share-v12-icon.wa{color:#080808!important;box-shadow:inset 0 1px rgba(255,255,255,0.125),0 7px 18px rgba(37,211,102,0.06)!important}
+html.ada-light:not(.ada-public-route) .ada-share-v12-icon.share{background:linear-gradient(145deg,#656b6e,#ffffff)!important;color:#080808!important;box-shadow:inset 0 1px rgba(255,255,255,0.06)!important}
+html.ada-light:not(.ada-public-route) .ada-master-box{border:1px solid #c4c7c8!important;background:#f5f6f6!important}
+html.ada-light:not(.ada-public-route) .ada-master-box h4{color:#131311!important}
+html.ada-light:not(.ada-public-route) .ada-master-row{border:1px solid #c7cacb!important;background:#f8f9f9!important}
+html.ada-light:not(.ada-public-route) .ada-all-car-icon{color:#b89300!important}
+html.ada-light:not(.ada-public-route) #inspection-view input,html.ada-light:not(.ada-public-route) #inspection-view textarea,html.ada-light:not(.ada-public-route) #inspection-view select,html.ada-light:not(.ada-public-route) #inspection-view option,html.ada-light:not(.ada-public-route) .inspection-view input,html.ada-light:not(.ada-public-route) .inspection-view textarea,html.ada-light:not(.ada-public-route) .inspection-view select,html.ada-light:not(.ada-public-route) .inspection-view option,html.ada-light:not(.ada-public-route) [data-view="inspection"] input,html.ada-light:not(.ada-public-route) [data-view="inspection"] textarea,html.ada-light:not(.ada-public-route) [data-view="inspection"] select,html.ada-light:not(.ada-public-route) [data-view="inspection"] option,html.ada-light:not(.ada-public-route) .ada-inspection input,html.ada-light:not(.ada-public-route) .ada-inspection textarea,html.ada-light:not(.ada-public-route) .ada-inspection select,html.ada-light:not(.ada-public-route) .ada-inspection option,html.ada-light:not(.ada-public-route) .ada-inspection-form input,html.ada-light:not(.ada-public-route) .ada-inspection-form textarea,html.ada-light:not(.ada-public-route) .ada-inspection-form select,html.ada-light:not(.ada-public-route) .ada-inspection-form option{color:#0e0f0f!important;-webkit-text-fill-color:#0e0f0f!important;caret-color:#b18f07!important}
+html.ada-light:not(.ada-public-route) #inspection-view input::placeholder,html.ada-light:not(.ada-public-route) #inspection-view textarea::placeholder,html.ada-light:not(.ada-public-route) .inspection-view input::placeholder,html.ada-light:not(.ada-public-route) .inspection-view textarea::placeholder,html.ada-light:not(.ada-public-route) [data-view="inspection"] input::placeholder,html.ada-light:not(.ada-public-route) [data-view="inspection"] textarea::placeholder,html.ada-light:not(.ada-public-route) .ada-inspection input::placeholder,html.ada-light:not(.ada-public-route) .ada-inspection textarea::placeholder,html.ada-light:not(.ada-public-route) .ada-inspection-form input::placeholder,html.ada-light:not(.ada-public-route) .ada-inspection-form textarea::placeholder{color:#6f7576!important;-webkit-text-fill-color:#6f7576!important}
+html.ada-light:not(.ada-public-route) #inspection-view input:-webkit-autofill,html.ada-light:not(.ada-public-route) .inspection-view input:-webkit-autofill,html.ada-light:not(.ada-public-route) [data-view="inspection"] input:-webkit-autofill,html.ada-light:not(.ada-public-route) .ada-inspection input:-webkit-autofill,html.ada-light:not(.ada-public-route) .ada-inspection-form input:-webkit-autofill{-webkit-text-fill-color:#0e0f0f!important;caret-color:#b18f07!important}
+html.ada-light:not(.ada-public-route) .inspection-panel textarea,html.ada-light:not(.ada-public-route) .inspection-panel input,html.ada-light:not(.ada-public-route) .inspection-panel select,html.ada-light:not(.ada-public-route) .inspection-remark textarea,html.ada-light:not(.ada-public-route) .inspection-meta input{color:#0e0f0f!important;-webkit-text-fill-color:#0e0f0f!important;caret-color:#b18f07!important}
+html.ada-light:not(.ada-public-route) .inspection-panel textarea::placeholder,html.ada-light:not(.ada-public-route) .inspection-panel input::placeholder,html.ada-light:not(.ada-public-route) .inspection-remark textarea::placeholder,html.ada-light:not(.ada-public-route) .inspection-meta input::placeholder{color:#787e7f!important;-webkit-text-fill-color:#787e7f!important}
+html.ada-light:not(.ada-public-route) .inspection-panel textarea:disabled,html.ada-light:not(.ada-public-route) .inspection-panel input:disabled,html.ada-light:not(.ada-public-route) .inspection-remark textarea:disabled,html.ada-light:not(.ada-public-route) .inspection-meta input:disabled{color:#353838!important;-webkit-text-fill-color:#353838!important}
+html.ada-light:not(.ada-public-route) .ada-offer-price strong{color:#b89300!important}
+html.ada-light:not(.ada-public-route) .ada-price-old{color:#6f7576!important}
+html.ada-light:not(.ada-public-route) .ada-discount-badge{background:#f6e6e4!important;color:#b81c00!important}
+html.ada-light:not(.ada-public-route) .ada-offer-price small{color:#262a2c!important}
+html.ada-light:not(.ada-public-route) #ada-inspection-overall,html.ada-light:not(.ada-public-route) #ada-inspection-defects,html.ada-light:not(.ada-public-route) #ada-cloud-view #ada-inspection-overall,html.ada-light:not(.ada-public-route) #ada-cloud-view #ada-inspection-defects{color:#0e0f0f!important;-webkit-text-fill-color:#0e0f0f!important;caret-color:#b18f07!important;background-color:#f4f5f6!important}
+html.ada-light:not(.ada-public-route) #ada-inspection-overall::placeholder,html.ada-light:not(.ada-public-route) #ada-inspection-defects::placeholder{color:#787e7f!important;-webkit-text-fill-color:#787e7f!important}
+html.ada-light:not(.ada-public-route) #ada-inspection-overall:focus,html.ada-light:not(.ada-public-route) #ada-inspection-defects:focus{color:#080808!important;-webkit-text-fill-color:#080808!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate #ada-cloud-view .cloud-car{background:linear-gradient(165deg,#fafbfb 0%,#f5f6f6 100%)!important;border:1px solid #c4c8c8!important;box-shadow:0 16px 36px rgba(15,23,42,0.077)!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate #ada-cloud-view .cloud-car .photo{background:radial-gradient(circle at 50% 42%,#ffffff,#f5f6f6 74%)!important;border-bottom:1px solid #c7cbcb!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate #ada-cloud-view .cloud-car .photo:before{background:linear-gradient(180deg,rgba(244,244,244,0.03) 38%,rgba(242,244,245,0.58) 100%)!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate #ada-cloud-view .cloud-car .photo:after{box-shadow:inset 0 0 0 1px rgba(255,255,255,0.013)!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate #ada-cloud-view .cloud-pill{background:rgba(244,245,245,0.78)!important;border:1px solid rgba(15,23,42,0.2)!important;box-shadow:0 6px 16px rgba(15,23,42,0.077)!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate #ada-cloud-view .cloud-pill.status-available{color:#18a05c!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate #ada-cloud-view .ada-photo-count{background:rgba(244,245,245,0.76)!important;border-color:rgba(15,23,42,0.175)!important;box-shadow:0 6px 16px rgba(15,23,42,0.07)!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate #ada-cloud-view .ada-car-title h3{color:#161511!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate #ada-cloud-view .ada-car-title small{color:#676c6d!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate #ada-cloud-view .ada-price{color:#b89300!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate #ada-cloud-view .ada-car-meta{border-top:1px solid #c7cbcb!important;border-bottom:1px solid #c9cdcd!important;color:#767c7d!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate #ada-cloud-view .ada-icon-action{border:1px solid #c4c8c8!important;background:#f9fafa!important;color:#44494a!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate #ada-cloud-view .ada-icon-action.is-live{border-color:#b2dccb!important;color:#249460!important;background:#f9faf9!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate #ada-cloud-view .ada-share-action{border-color:#f9e595!important;background:linear-gradient(135deg,#f4eee7,#f9f9f8)!important;color:#b89200!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate #ada-cloud-view .ada-share-action:hover{background:linear-gradient(135deg,#f5eee5,#fafaf9)!important}
+html.ada-light:not(.ada-public-route) .ada-v49-inspection-tools{background:linear-gradient(135deg,rgba(243,208,68,.09),rgba(244,245,245,0.7))!important;box-shadow:0 12px 32px rgba(15,23,42,0.049)!important}
+html.ada-light:not(.ada-public-route) .ada-v49-inspection-tools strong{color:#776231!important}
+html.ada-light:not(.ada-public-route) .ada-v49-inspection-tools small{color:#5d6262!important}
+html.ada-light:not(.ada-public-route) .ada-v49-cat-head span{color:#b18f07!important}
+html.ada-light:not(.ada-public-route) .ada-v49-live{color:#1c9c4f!important}
+html.ada-light:not(.ada-public-route) .ada-v49-offline{color:#5f6364!important;background:rgba(15,23,42,0.036)!important;border:1px solid rgba(15,23,42,0.112)!important}
+html.ada-light:not(.ada-public-route) .ada-v49-status-wrap{border:1px solid rgba(15,23,42,0.1)!important;background:#f4f5f5!important}
+html.ada-light:not(.ada-public-route) .ada-v49-status-wrap>label{color:#2a2d2e!important}
+html.ada-light:not(.ada-public-route) .ada-v49-status-wrap>small{color:#787e7f!important}
+html.ada-light:not(.ada-public-route) .ada-v49-status-toggle button{background:#f8f9f9!important;border:1px solid rgba(15,23,42,0.1)!important;color:#6f7576!important}
+html.ada-light:not(.ada-public-route) .ada-v49-status-toggle button i{background:#ffffff!important}
+html.ada-light:not(.ada-public-route) .ada-v49-status-toggle button.active{color:#080808!important;box-shadow:0 7px 18px rgba(15,23,42,0.063)!important}
+html.ada-light:not(.ada-public-route) .ada-recent-controls label{color:#6e7476!important}
+html.ada-light:not(.ada-public-route) .ada-recent-controls select{color:#1b1914!important;background-color:#fafbfb!important;border:1px solid rgba(15,23,42,0.176)!important}
+html.ada-light:not(.ada-public-route) .ada-recent-controls select option{color:#1b1914!important;background:#fafbfb!important}
+html.ada-light:not(.ada-public-route) .ada-inv-sort{color:#6e7476!important}
+html.ada-light:not(.ada-public-route) .ada-inv-sort select{color:#1b1914!important;background-color:#fafbfb!important;border:1px solid rgba(15,23,42,0.176)!important}
+html.ada-light:not(.ada-public-route) .ada-inv-sort select option{color:#1b1914!important;background:#fafbfb!important}
+html.ada-light:not(.ada-public-route) .ada-vp-actions .ada-danger-btn{background:#f5e5e5!important;color:#b81400!important}
+html.ada-light:not(.ada-public-route) .ada-vp-actions .ada-danger-btn:hover{background:#f6e4e4!important}
+
+/* V66 tema terang: pemboleh ubah warna */
+html.ada-light:not(.ada-public-route),html.ada-light:not(.ada-public-route) #ada-cloud-gate{--bg:#f4f5f7;--panel:#ffffff;--line:#dfe2e6;--muted:#5f6670;--green:#15803d;--ada-btn-line:#d6d9de;--ada-bg:#f4f5f7;--ada-card:#ffffff;--ada-card2:#fafafb;--ada-ink:#f4f5f7;--ada-panel:#ffffff;--ada-panel2:#fafafb;--ada-line:rgba(15,23,42,.1);--ada-soft:rgba(15,23,42,.04);--ada-muted:#5f6670;--ada-ok:#15803d;--ada-danger:#b42318}
+html.ada-light:not(.ada-public-route) #ada-cloud-panel,html.ada-light:not(.ada-public-route) #ada-cloud-view{background:#f4f5f7!important}
+/* warna sebaris dalam templat */
+html.ada-light:not(.ada-public-route) #ada-cloud-gate [style*="color:#f6d083"],html.ada-light:not(.ada-public-route) #ada-cloud-gate [style*="color: #f6d083"]{color:#8a6500!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate [style*="color:#5fd49a"]{color:#15803d!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate [style*="color:#f08a7e"]{color:#b42318!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate [style*="color:#899395"]{color:#5f6670!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate [style*="#ffffff10"]{border-color:rgba(15,23,42,.08)!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .ada-kpi-value{color:#8a6500!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate [style*="color:#ffe47a"]{color:#8a6500!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate [style*="color:#e7e6e1"]{color:#1d2125!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-hero h1{color:#ffffff!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-hero :is(p,small,span,div):not([class*=eyebrow]):not([class*=kicker]){color:#e8e9eb!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-hero :is([class*=eyebrow],[class*=kicker]){color:#f4c430!important}
