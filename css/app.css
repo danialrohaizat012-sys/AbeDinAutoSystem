@@ -1294,3 +1294,7 @@ radial-gradient(circle at 88% 18%,rgba(243,208,68,.25),transparent 34%),#0c1112}
 .ada-inv-sort select option{color:#f3f1ea;background:#151a1f}
 .ada-inv-sort select:focus{border-color:#f4c430!important;outline:none}
 @media(max-width:520px){.ada-inv-sort{flex:1 1 100%}.ada-inv-sort select{flex:1;min-width:0}}
+/* V63 padam kenderaan */
+.ada-vp-actions .ada-danger-btn{background:#2a1313!important;color:#ff9b8f!important;border:1px solid #f08a7e55!important;box-shadow:none!important}
+.ada-vp-actions .ada-danger-btn:hover{background:#3a1717!important;border-color:#f08a7e!important}
+.ada-vp-actions .ada-danger-btn:disabled{opacity:.6}
