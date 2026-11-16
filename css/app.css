@@ -1277,3 +1277,13 @@ radial-gradient(circle at 88% 18%,rgba(243,208,68,.25),transparent 34%),#0c1112}
 .ada-refresh-btn.is-spinning svg{animation:adaSpin .8s linear infinite}
 @keyframes adaSpin{to{transform:rotate(360deg)}}
 @media(max-width:520px){.cloud-toolbar .ada-inv-search{flex-basis:100%}}
+/* V56 dashboard: susun Inventori Terkini */
+.ada-recent-head{flex-wrap:wrap;gap:12px;align-items:flex-end}
+.ada-recent-head>div:first-child{margin-right:auto}
+.ada-recent-controls{display:flex;gap:10px;flex-wrap:wrap}
+.ada-recent-controls label{display:grid;gap:4px;margin:0;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#899395}
+.ada-recent-controls select{color:#f3f1ea!important;background-color:#151a1f!important;border:1px solid #ffffff24!important;font-weight:600;min-height:40px;padding:6px 34px 6px 12px;border-radius:12px;font-size:13px;letter-spacing:0;text-transform:none;min-width:150px;width:auto}
+.ada-recent-controls label:last-child select{min-width:100px}
+@media(max-width:640px){.ada-recent-head>div:first-child{flex-basis:100%}.ada-recent-controls{flex:1 1 100%}.ada-recent-controls label{flex:1 1 0}.ada-recent-controls select{width:100%;min-width:0}.ada-recent-head>button{flex:1 1 100%}}
+.ada-recent-controls select option{color:#f3f1ea;background:#151a1f}
+.ada-recent-controls select:focus{border-color:#f4c430!important;outline:none}
