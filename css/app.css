@@ -1993,3 +1993,30 @@ html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-hero :is([class*=ey
 .ada-cust-mode button.is-active{background:linear-gradient(135deg,#ffe878,#f4c430)!important;border-color:#f4c430!important;color:#111!important}
 .ada-cust-mode button:disabled{opacity:.45}
 .ada-cust-new{border:1px dashed var(--ada-line,#ffffff2a);border-radius:14px;padding:4px 12px 10px}
+
+/* V70 jualan: penapis bulan, status bayaran, padam */
+.ada-sales-filters{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin:4px 0 12px}
+.ada-sales-filters label{display:grid;gap:4px;margin:0;font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.85}
+.ada-sales-filters select{min-height:42px!important;padding:6px 32px 6px 12px!important;border-radius:12px!important;font-size:13.5px!important;letter-spacing:0;text-transform:none;min-width:160px;width:auto!important;margin:0!important}
+.ada-sales-filters button{min-height:42px!important;margin:0!important;padding:0 14px!important}
+.ada-sales-summary{display:grid;grid-template-columns:repeat(3,1fr) auto;gap:10px;margin:0 0 14px}
+.ada-sales-summary>div{border:1px solid var(--ada-line,#ffffff1f);border-radius:14px;padding:12px 14px;display:grid;gap:4px}
+.ada-sales-summary span{font-size:11.5px;opacity:.7}
+.ada-sales-summary strong{font-size:19px}
+.ada-sales-states{display:flex!important;gap:6px;align-items:center;align-content:center;flex-wrap:wrap}
+.ada-paybadge{display:inline-flex;align-items:center;gap:4px;padding:5px 10px;border-radius:999px;font-size:12px!important;font-weight:800;white-space:nowrap;opacity:1!important}
+.ada-paybadge.is-full{background:#16a34a;color:#fff}
+.ada-paybadge.is-dep{background:#f59e0b;color:#1a1200}
+.ada-paybadge.is-none{background:#6b7280;color:#fff}
+.ada-sales-table tr.ada-sale-full td:first-child{box-shadow:inset 4px 0 #16a34a}
+.ada-sales-table tr.ada-sale-deposit td:first-child{box-shadow:inset 4px 0 #f59e0b}
+.ada-sales-table tr.ada-sale-none td:first-child{box-shadow:inset 4px 0 #6b7280}
+.ada-sale-actions .ada-danger-mini{background:transparent!important;color:#ef4444!important;border:1px solid #ef444466!important;box-shadow:none!important}
+.ada-sale-actions .ada-danger-mini:hover{background:#ef44441a!important}
+@media(max-width:720px){.ada-sales-summary{grid-template-columns:1fr 1fr}.ada-sales-states{grid-column:1/-1}.ada-sales-filters label{flex:1 1 140px}.ada-sales-filters select{width:100%!important;min-width:0}.ada-sales-table tr.ada-sale-full{border-left:5px solid #16a34a!important}.ada-sales-table tr.ada-sale-deposit{border-left:5px solid #f59e0b!important}.ada-sales-table tr.ada-sale-none{border-left:5px solid #6b7280!important}.ada-sales-table tr td:first-child{box-shadow:none!important}}
+html.ada-light .ada-sales-summary>div{background:#fff}
+
+.ada-sales-filters select{color:#f3f1ea!important;background-color:#151a1f!important;border:1px solid #ffffff24!important}
+.ada-sales-filters select option{color:#f3f1ea;background:#151a1f}
+html.ada-light .ada-sales-filters select{color:#111!important;background-color:#fff!important;border-color:#d6d9de!important}
+html.ada-light .ada-sales-filters select option{color:#111;background:#fff}
