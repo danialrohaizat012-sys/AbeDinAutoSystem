@@ -1523,3 +1523,87 @@ html #ada-public-catalogue.abx-home .abx-company li svg{color:var(--y)!important
 html #ada-public-catalogue.abx-home .abx-company a{color:#fff!important;font-weight:700!important}
 html #ada-public-catalogue.abx-home .abx-staff{background:#0d0f11!important;margin:0!important;width:100%!important;padding:0 0 10px!important}
 @media(max-width:640px){html #ada-public-catalogue.abx-home .abx-company ul{flex-direction:column!important;gap:12px!important}html #ada-public-catalogue.abx-home .abx-company-id img{height:46px!important}}
+
+/* V65 halaman detail kereta */
+html #ada-public-catalogue.abx-home .abx-crumbs{display:flex!important;align-items:center!important;gap:10px!important;flex-wrap:wrap!important;padding:18px 0 14px!important;font-size:13px!important;color:#6b7280!important}
+html #ada-public-catalogue.abx-home .abx-crumbs i{font-style:normal!important;color:#b0b5bc!important}
+html #ada-public-catalogue.abx-home .abx-crumbs b{color:#111!important;font-weight:700!important}
+html #ada-public-catalogue.abx-home .abx-back{display:inline-flex!important;align-items:center!important;gap:6px!important;margin-right:8px!important;padding:8px 14px!important;border:1px solid var(--line)!important;border-radius:999px!important;background:#fff!important;color:#111!important;font-weight:700!important;font-size:13px!important;cursor:pointer!important;box-shadow:none!important;min-height:0!important}
+html #ada-public-catalogue.abx-home .abx-back svg{width:16px!important;height:16px!important}
+html #ada-public-catalogue.abx-home .abx-d-top{display:grid!important;grid-template-columns:1.45fr 1fr!important;gap:24px!important;align-items:start!important}
+html #ada-public-catalogue.abx-home .abx-gallery{min-width:0!important}
+html #ada-public-catalogue.abx-home .abx-main-photo{position:relative!important;aspect-ratio:16/10!important;border-radius:18px!important;overflow:hidden!important;background:#e5e7eb!important;box-shadow:0 10px 30px #0f172a1a!important}
+html #ada-public-catalogue.abx-home .abx-main-photo img{width:100%!important;height:100%!important;object-fit:cover!important;display:block!important;transition:opacity .15s!important}
+html #ada-public-catalogue.abx-home .abx-main-photo.is-switching img{opacity:.35!important}
+html #ada-public-catalogue.abx-home .abx-main-photo .abx-badge{top:14px!important;left:14px!important;font-size:12px!important;padding:6px 12px!important}
+html #ada-public-catalogue.abx-home .abx-counter{position:absolute!important;right:14px!important;bottom:14px!important;padding:5px 11px!important;border-radius:999px!important;background:#000000b3!important;color:#fff!important;font-size:12px!important;font-weight:700!important}
+html #ada-public-catalogue.abx-home .abx-nav-btn{position:absolute!important;top:50%!important;transform:translateY(-50%)!important;width:42px!important;height:42px!important;border-radius:50%!important;border:0!important;background:#ffffffe6!important;color:#111!important;display:grid!important;place-items:center!important;cursor:pointer!important;box-shadow:0 4px 14px #0003!important;padding:0!important;min-height:0!important}
+html #ada-public-catalogue.abx-home .abx-prev{left:12px!important}
+html #ada-public-catalogue.abx-home .abx-next{right:12px!important}
+html #ada-public-catalogue.abx-home .abx-nav-btn svg{width:22px!important;height:22px!important;stroke-width:2.4!important}
+html #ada-public-catalogue.abx-home .abx-thumbs{display:flex!important;gap:10px!important;overflow-x:auto!important;padding:12px 2px 4px!important;scrollbar-width:thin!important}
+html #ada-public-catalogue.abx-home .abx-thumb{flex:none!important;width:96px!important;aspect-ratio:4/3!important;padding:0!important;border:2px solid transparent!important;border-radius:10px!important;overflow:hidden!important;background:#e5e7eb!important;cursor:pointer!important;opacity:.75!important;box-shadow:none!important;min-height:0!important}
+html #ada-public-catalogue.abx-home .abx-thumb img{width:100%!important;height:100%!important;object-fit:cover!important;display:block!important}
+html #ada-public-catalogue.abx-home .abx-thumb.is-active{border-color:var(--y)!important;opacity:1!important}
+html #ada-public-catalogue.abx-home .abx-info-card{position:sticky!important;top:96px!important;background:#fff!important;border-radius:18px!important;padding:24px!important;box-shadow:0 10px 30px #0f172a14!important;border:1px solid #eceef1!important}
+html #ada-public-catalogue.abx-home .abx-status{display:inline-flex!important;align-items:center!important;gap:8px!important;padding:6px 12px!important;border-radius:999px!important;font-size:12.5px!important;font-weight:700!important;background:#dcfce7!important;color:#166534!important}
+html #ada-public-catalogue.abx-home .abx-status i{width:8px!important;height:8px!important;border-radius:50%!important;background:currentColor!important}
+html #ada-public-catalogue.abx-home .abx-status-reserved{background:#ffedd5!important;color:#9a3412!important}
+html #ada-public-catalogue.abx-home .abx-status-sold{background:#e5e7eb!important;color:#374151!important}
+html #ada-public-catalogue.abx-home .abx-info-card h1{margin:12px 0 8px!important;font-size:clamp(24px,2.6vw,32px)!important;line-height:1.15!important;font-weight:900!important;text-transform:uppercase!important;color:#111!important;letter-spacing:-.01em!important}
+html #ada-public-catalogue.abx-home .abx-sub{display:flex!important;gap:16px!important;flex-wrap:wrap!important;color:#5f6670!important;font-size:14px!important}
+html #ada-public-catalogue.abx-home .abx-sub span{display:flex!important;align-items:center!important;gap:6px!important}
+html #ada-public-catalogue.abx-home .abx-sub svg{width:16px!important;height:16px!important}
+html #ada-public-catalogue.abx-home .abx-d-price{margin:18px 0 6px!important;padding:16px 18px!important;border-radius:14px!important;background:#f8f8f5!important;border:1px solid #efece0!important;display:grid!important;gap:6px!important}
+html #ada-public-catalogue.abx-home .abx-d-was{display:flex!important;gap:8px!important;align-items:center!important}
+html #ada-public-catalogue.abx-home .abx-d-price strong{font-size:clamp(30px,3.4vw,38px)!important;font-weight:900!important;color:#111!important;line-height:1!important}
+html #ada-public-catalogue.abx-home .abx-d-price .abx-inst{margin-top:4px!important;font-size:13.5px!important}
+html #ada-public-catalogue.abx-home .abx-d-actions{display:grid!important;gap:10px!important;margin-top:16px!important}
+html #ada-public-catalogue.abx-home .abx-d-row{display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important}
+html #ada-public-catalogue.abx-home .abx-btn{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:9px!important;min-height:50px!important;padding:0 18px!important;border-radius:12px!important;font-weight:800!important;font-size:15px!important;cursor:pointer!important;border:0!important;box-shadow:none!important;text-align:center!important}
+html #ada-public-catalogue.abx-home .abx-btn svg{width:19px!important;height:19px!important}
+html #ada-public-catalogue.abx-home .abx-btn-wa{background:#25d366!important;color:#fff!important;font-size:16px!important;min-height:56px!important;box-shadow:0 8px 20px #25d36640!important}
+html #ada-public-catalogue.abx-home .abx-btn-wa svg{fill:#fff!important;stroke:none!important;width:22px!important;height:22px!important}
+html #ada-public-catalogue.abx-home .abx-btn-dark{background:#121417!important;color:#fff!important}
+html #ada-public-catalogue.abx-home .abx-btn-y{background:var(--y)!important;color:#111!important}
+html #ada-public-catalogue.abx-home .abx-btn-line{background:#fff!important;color:#111!important;border:1.5px solid #d6d9de!important}
+html #ada-public-catalogue.abx-home .abx-btn-line:hover{border-color:var(--y)!important}
+html #ada-public-catalogue.abx-home .abx-sold-note{padding:10px 12px!important;border-radius:10px!important;background:#f3f4f6!important;color:#374151!important;font-size:13px!important}
+html #ada-public-catalogue.abx-home .abx-d-trust{list-style:none!important;margin:18px 0 0!important;padding:14px 0 0!important;border-top:1px dashed #e2e4e8!important;display:flex!important;gap:14px!important;flex-wrap:wrap!important}
+html #ada-public-catalogue.abx-home .abx-d-trust li{display:flex!important;align-items:center!important;gap:6px!important;font-size:12.5px!important;font-weight:600!important;color:#374151!important}
+html #ada-public-catalogue.abx-home .abx-d-trust svg{width:18px!important;height:18px!important;color:#c99a10!important}
+html #ada-public-catalogue.abx-home .abx-specs-card{margin-top:24px!important;background:#fff!important;border-radius:18px!important;padding:24px!important;box-shadow:0 4px 16px #0f172a10!important}
+html #ada-public-catalogue.abx-home .abx-specs-card h2{margin:0 0 16px!important;font-size:22px!important;font-style:italic!important;font-weight:900!important;color:#111!important}
+html #ada-public-catalogue.abx-home .abx-specs{display:grid!important;grid-template-columns:repeat(4,1fr)!important;gap:12px!important}
+html #ada-public-catalogue.abx-home .abx-spec{display:flex!important;gap:12px!important;align-items:center!important;padding:14px!important;border-radius:12px!important;background:#f7f8fa!important;border:1px solid #eef0f3!important}
+html #ada-public-catalogue.abx-home .abx-spec-ico{flex:none!important;width:40px!important;height:40px!important;border-radius:10px!important;background:#fff4c7!important;color:#8a6500!important;display:grid!important;place-items:center!important}
+html #ada-public-catalogue.abx-home .abx-spec-ico svg{width:20px!important;height:20px!important}
+html #ada-public-catalogue.abx-home .abx-spec small{display:block!important;font-size:11.5px!important;color:#6b7280!important;text-transform:uppercase!important;letter-spacing:.06em!important}
+html #ada-public-catalogue.abx-home .abx-spec strong{display:block!important;font-size:15px!important;color:#111!important;word-break:break-word!important}
+html #ada-public-catalogue.abx-home .abx-missing{text-align:center!important;padding:60px 0 50px!important}
+html #ada-public-catalogue.abx-home .abx-missing-ico{display:inline-grid!important;place-items:center!important;width:84px!important;height:84px!important;border-radius:50%!important;background:#fff4c7!important;color:#8a6500!important}
+html #ada-public-catalogue.abx-home .abx-missing-ico svg{width:42px!important;height:42px!important}
+html #ada-public-catalogue.abx-home .abx-missing h1{font-size:28px!important;font-weight:900!important;color:#111!important;margin:16px 0 8px!important}
+html #ada-public-catalogue.abx-home .abx-missing p{color:#5f6670!important;margin:0 auto 20px!important;max-width:440px!important}
+html #ada-public-catalogue.abx-home .abx-missing .abx-btn{display:inline-flex!important}
+@media(max-width:900px){html #ada-public-catalogue.abx-home .abx-d-top{grid-template-columns:1fr!important}
+html #ada-public-catalogue.abx-home .abx-info-card{position:static!important}
+html #ada-public-catalogue.abx-home .abx-specs{grid-template-columns:repeat(2,1fr)!important}}
+@media(max-width:640px){html #ada-public-catalogue.abx-home .abx-crumbs span,html #ada-public-catalogue.abx-home .abx-crumbs i{display:none!important}
+html #ada-public-catalogue.abx-home .abx-crumbs b{font-size:13px!important}
+html #ada-public-catalogue.abx-home .abx-main-photo{border-radius:14px!important;aspect-ratio:4/3!important}
+html #ada-public-catalogue.abx-home .abx-nav-btn{width:36px!important;height:36px!important}
+html #ada-public-catalogue.abx-home .abx-thumb{width:76px!important}
+html #ada-public-catalogue.abx-home .abx-info-card{padding:18px!important}
+html #ada-public-catalogue.abx-home .abx-specs-card{padding:18px!important}
+html #ada-public-catalogue.abx-home .abx-specs{gap:8px!important}
+html #ada-public-catalogue.abx-home .abx-spec{padding:10px!important;gap:9px!important}
+html #ada-public-catalogue.abx-home .abx-spec-ico{width:34px!important;height:34px!important}
+html #ada-public-catalogue.abx-home .abx-spec strong{font-size:13.5px!important}
+html #ada-public-catalogue.abx-home .abx-btn{font-size:14px!important;padding:0 12px!important}}
+
+html #ada-public-catalogue.abx-home .abx-d-top{padding:0!important;margin-top:0!important;margin-bottom:0!important;max-width:none!important}
+html #ada-public-catalogue.abx-home .abx-gallery{width:100%!important;max-width:100%!important;overflow:hidden!important}
+html #ada-public-catalogue.abx-home .abx-main-photo{width:100%!important;max-width:100%!important;height:auto!important;min-height:0!important;max-height:none!important;margin:0!important;padding:0!important;border:0!important}
+html #ada-public-catalogue.abx-home .abx-main-photo>img{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-height:none!important}
+html #ada-public-catalogue.abx-home .abx-d-row .abx-btn,html #ada-public-catalogue.abx-home .abx-d-actions>.abx-btn{width:100%!important;margin:0!important;height:auto!important;min-width:0!important}
