@@ -22,6 +22,16 @@ const GRADES = {A:"Terus boleh jual",B:"Minor repair / detailing",C:"Perlu repai
 const STATUS = {draf:["Draf","p-draf"],hantar:["Menunggu semakan","p-hantar"],lulus:["Disahkan","p-lulus"],ulang:["Perlu dibetulkan","p-ng"]};
 
 const CSS=`
+.trail{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.trail>li{display:flex;gap:12px;position:relative;padding:0 0 14px 0}
+.trail>li:not(:last-child)::before{content:"";position:absolute;left:6px;top:16px;bottom:0;width:2px;background:var(--line)}
+.trail>li>i{flex:0 0 14px;height:14px;border-radius:50%;margin-top:3px;background:#8a8577;box-shadow:0 0 0 3px var(--card)}
+.trail>li.t-hantar>i{background:#f5c400}.trail>li.t-lulus>i{background:#3fbf73}.trail>li.t-ng>i{background:#e5534b}.trail>li.t-edit>i{background:#6ea8fe}
+.trail>li>div{min-width:0;flex:1}.trail .th{display:flex;flex-wrap:wrap;gap:6px;align-items:baseline}
+.trail ul{margin:6px 0 0;padding-left:18px;font-size:13.5px;color:var(--mute)}.trail ul li{margin:2px 0}
+.tplate{font:inherit;font-weight:700;font-size:12.5px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);background:transparent;color:inherit;cursor:pointer}
+.tplate:disabled{opacity:.6;cursor:default;text-decoration:line-through}
+.jbar{display:grid;grid-template-columns:1fr auto;gap:8px}
 :host{display:block;--bg:#0a0a09;--card:#151412;--fg:#f4efe2;--mute:#a69f8c;--line:#2e2a20;--soft:#1e1c17;
   --pri:#e8b10b;--pri-fg:#141000;--ok:#3fae6b;--ok-bg:#12321f;--ng:#e0473f;--ng-bg:#3a1513;--na:#77736a;
   --gA:#1f8a4c;--gB:#f0b400;--gC:#ef7d00;--gD:#d12b2b;--f:Inter,-apple-system,"Segoe UI",system-ui,sans-serif;color-scheme:dark}
@@ -414,7 +424,7 @@ function bodyOf(f){
 function go(view,id){ if(S.view==="form"&&S.dirty&&S.form?.id&&view!=="form"){ /* edits to saved record are discarded */ }
   S.view=view; S.id=id||null; if(view!=="form"){S.form=null;S.dirty=false;} render(); try{ (root.host||app).scrollIntoView({block:"start"}); }catch(e){} }
 function tabs(){
-  const t=[["pantau","Ringkasan"],["kereta","Kereta"],["senarai","Rekod"]];
+  const t=[["pantau","Ringkasan"],["kereta","Kereta"],["senarai","Rekod"],["jejak","Jejak"]];
   const on=S.view==="detail"?"senarai":S.view==="form"?"":S.view;
   return `<div class="tabs">${t.map(([k,l])=>`<button data-go="${k}" class="${on===k?"on":""}">${l}</button>`).join("")}<button class="refresh" data-act="refresh" title="Muat semula">⟳</button></div>`;
 }
@@ -427,11 +437,13 @@ function render(){
   else if(S.view==="kereta") h+=viewKereta();
   else if(S.view==="senarai") h+=viewSenarai();
   else if(S.view==="detail") h+=viewDetail();
+  else if(S.view==="jejak") h+=viewJejak();
   else h+=viewPantau();
   app.innerHTML=h; bindCommon();
   if(S.view==="kereta") bindKereta();
   if(S.view==="senarai") bindSenarai();
   if(S.view==="detail") bindDetail();
+  if(S.view==="jejak") bindJejak();
   if(S.view==="pantau") bindPantau();
 }
 function bindCommon(){
@@ -531,6 +543,63 @@ function bindSenarai(){
 }
 
 /* --- Detail --- */
+/* --- Jejak transaksi (V68) --- */
+const TRAIL={byId:{},all:null,err:"",q:"",act:""};
+const ACT={cipta:["Dicipta","t-draf"],cipta_hantar:["Dicipta & dihantar","t-hantar"],edit:["Dikemas kini","t-edit"],hantar:["Dihantar untuk semakan","t-hantar"],
+  sahkan:["Disahkan Owner","t-lulus"],pulangkan:["Dipulangkan untuk dibetulkan","t-ng"],barang_siap:["Barang ditanda siap","t-lulus"],tukar_status:["Status ditukar","t-edit"],padam:["Rekod dipadam","t-ng"]};
+const TRAIL_COLS="id,inspection_id,plate,action,from_status,to_status,changes,actor_id,actor_name,created_at";
+function trailItem(t, showPlate){
+  const a=ACT[t.action]||[t.action,"t-edit"];
+  const st=t.from_status&&t.to_status&&t.from_status!==t.to_status?` <small class="mute">(${esc((STATUS[t.from_status]||[t.from_status])[0])} → ${esc((STATUS[t.to_status]||[t.to_status])[0])})</small>`:"";
+  const ch=Array.isArray(t.changes)?t.changes:[];
+  const plate=showPlate?`<button class="tplate" data-trec="${esc(t.inspection_id)}" ${t.action==="padam"?"disabled":""}>${esc(t.plate||"(tiada plat)")}</button> `:"";
+  return `<li class="${a[1]}"><i></i><div><div class="th">${plate}<b>${esc(a[0])}</b>${st}</div>
+    <small class="mute">${esc(t.actor_name||"Sistem")} · ${fmtDT(t.created_at)}</small>
+    ${ch.length?`<ul>${ch.map(c=>`<li>${esc(c)}</li>`).join("")}</ul>`:""}</div></li>`;
+}
+function trailHtml(list, showPlate){
+  if(TRAIL.err) return `<div class="notice err">${esc(TRAIL.err)}</div>`;
+  if(!list) return `<p class="mute">Memuatkan jejak…</p>`;
+  if(!list.length) return `<p class="mute">Belum ada jejak. Rekod lama (sebelum ciri ini dipasang) hanya mula dijejak selepas perubahan seterusnya.</p>`;
+  return `<ol class="trail">${list.map(t=>trailItem(t,showPlate)).join("")}</ol>`;
+}
+async function loadTrail(id){
+  try{
+    const {data,error}=await S.client.from("checklist_trail").select(TRAIL_COLS).eq("inspection_id",id).order("created_at",{ascending:false}).limit(300);
+    if(error) throw error; TRAIL.err=""; TRAIL.byId[id]=data||[];
+  }catch(e){ TRAIL.err="Jejak tidak dapat dimuatkan: "+(e.message||e); }
+  const el=$("#trail"); if(el&&S.id===id) el.innerHTML=trailHtml(TRAIL.byId[id],false);
+}
+async function loadTrailAll(){
+  try{
+    const {data,error}=await S.client.from("checklist_trail").select(TRAIL_COLS).order("created_at",{ascending:false}).limit(500);
+    if(error) throw error; TRAIL.err=""; TRAIL.all=data||[];
+  }catch(e){ TRAIL.err="Jejak tidak dapat dimuatkan: "+(e.message||e); TRAIL.all=[]; }
+  if(S.view==="jejak") fillJejak();
+}
+function jejakFiltered(){
+  const q=TRAIL.q.trim().toLowerCase(), act=TRAIL.act;
+  return (TRAIL.all||[]).filter(t=>(!act||t.action===act||(act==="cipta"&&t.action==="cipta_hantar"))&&(!q||[t.plate,t.actor_name,...(t.changes||[])].join(" ").toLowerCase().includes(q)));
+}
+function viewJejak(){
+  const opts=[["","Semua tindakan"],["cipta","Dicipta"],["edit","Dikemas kini"],["hantar","Dihantar"],["sahkan","Disahkan"],["pulangkan","Dipulangkan"],["barang_siap","Barang siap"],["padam","Dipadam"]];
+  return `<div class="card"><div class="row"><h3>Jejak transaksi pemeriksaan</h3><span class="grow"></span><small class="mute" id="jcount"></small></div>
+    <p class="mute">Setiap cipta, edit, hantar, sahkan, pulangkan, tanda barang siap dan padam direkod automatik oleh pangkalan data. Jejak tidak boleh diubah atau dipadam.</p>
+    <div class="jbar"><input class="field" id="jq" placeholder="Cari plat, nama staf atau perubahan…" value="${esc(TRAIL.q)}">
+      <select class="field" id="jact">${opts.map(([k,l])=>`<option value="${k}" ${TRAIL.act===k?"selected":""}>${l}</option>`).join("")}</select></div>
+    <div id="jlist">${trailHtml(TRAIL.all?jejakFiltered():null,true)}</div></div>`;
+}
+function fillJejak(){
+  const el=$("#jlist"); if(!el) return; const l=TRAIL.all?jejakFiltered():null;
+  el.innerHTML=trailHtml(l,true); const c=$("#jcount"); if(c) c.textContent=l?`${l.length} rekod`:"";
+  $$("[data-trec]").forEach(b=>b.onclick=()=>{ if(S.rows.some(x=>x.id===b.dataset.trec)) go("detail",b.dataset.trec); else toast("Rekod ini sudah dipadam"); });
+}
+function bindJejak(){
+  const q=$("#jq"), a=$("#jact");
+  if(q) q.oninput=()=>{ TRAIL.q=q.value; fillJejak(); };
+  if(a) a.onchange=()=>{ TRAIL.act=a.value; fillJejak(); };
+  fillJejak(); loadTrailAll();
+}
 function viewDetail(){
   const r=S.rows.find(x=>x.id===S.id);
   if(!r) return `<div class="empty">Rekod tidak dijumpai.</div>`;
@@ -566,10 +635,13 @@ function viewDetail(){
       ${ngs.length?`<ul class="nglist">${ngs.map(x=>`<li><b class="ng">${esc(x.nm)}</b>${x.v.n?` <span class="mute">— ${esc(x.v.n)}</span>`:""}</li>`).join("")}</ul>`:""}
       ${notes.length?`<ul class="nglist">${notes.map(x=>`<li>${esc(x.nm)} <span class="mute">— ${esc(x.v.n)}</span></li>`).join("")}</ul>`:""}`;}).join("")}
     <small class="mute">Dicipta ${fmtDT(r.createdAt)} · Dikemas kini ${fmtDT(r.updatedAt)}</small></div>
+  <div class="card"><div class="row"><h3>Jejak transaksi</h3><span class="grow"></span><small class="mute">Direkod automatik</small></div>
+    <div id="trail">${trailHtml(TRAIL.byId[r.id], false)}</div></div>
   ${isOwner()?`<div class="row end"><button class="lnk bad" data-act="del">Padam rekod ini</button></div>`:""}`;
 }
 function bindDetail(){
   const r=S.rows.find(x=>x.id===S.id); if(!r) return;
+  loadTrail(r.id);
   $$("[data-edit]").forEach(b=>b.onclick=()=>openForm(b.dataset.edit));
   $('[data-act="pdf"]').onclick=e=>withBusy(e.target,()=>pdfInspection(r));
   $('[data-act="copy"]').onclick=()=>{ const t=summaryText(r); (navigator.clipboard?.writeText(t)||Promise.reject()).then(()=>toast("Ringkasan disalin"),()=>showCopy(t)); };
