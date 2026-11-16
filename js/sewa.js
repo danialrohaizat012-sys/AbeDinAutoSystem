@@ -77,7 +77,8 @@ textarea{resize:vertical;min-height:90px}
 .ovl .bar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 14px;padding-top:max(10px,env(safe-area-inset-top));background:#1f2f57;color:#fff;font-weight:700;font-size:14px}
 .ovl .bar a{color:#fff;font-size:13px;opacity:.85}
 .ovl iframe{flex:1;width:100%;border:0;background:#f5f7fd}
-.terma{white-space:pre-wrap;font-size:13.5px;color:#cfd3da;max-height:220px;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#0b0f10}
+.terma h4{margin:12px 0 4px;color:var(--gold);font-size:13px}.terma p{margin:0 0 6px}.terma p b{color:var(--gold)}
+.terma{font-size:13px;color:#cfd3da;max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#0b0f10}
 `;
 
 const STATUS = { baru: 'Baru', disahkan: 'Disahkan', selesai: 'Selesai', batal: 'Batal' };
@@ -107,6 +108,14 @@ function kiraHarga(k, jenis, a, b) {
   tambahan = Math.min(tambahan, hHari);
   const terang = `${hari} hari × ${fmtRM(hHari)}` + (baki ? ` + ${baki} jam ${hJam ? '× ' + fmtRM(hJam) : '(dikira sehari)'}${baki * hJam > hHari && hJam ? ' (had sehari)' : ''}` : '');
   return { hari, baki, caj_sewa: +(hari * hHari).toFixed(2), tambahan_masa: +tambahan.toFixed(2), deposit: Number(k.deposit) || 0, hHari, terang };
+}
+// Terma: baris "## Tajuk" = tajuk bahagian, "1. teks" = klausa bernombor
+function termaHtml(t) {
+  return String(t || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean).map(l => {
+    if (l.startsWith('## ')) return `<h4>${esc(l.slice(3))}</h4>`;
+    const m = l.match(/^(\d+)\.\s+(.*)$/);
+    return m ? `<p><b>${m[1]}.</b> ${esc(m[2])}</p>` : `<p>${esc(l)}</p>`;
+  }).join('') || '-';
 }
 const DOC_LABEL = { lesen: 'Lesen Memandu', kp: 'Kad Pengenalan', utiliti: 'Bil Utiliti', gambar: 'Gambar Pemandu' };
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -216,7 +225,7 @@ export function mountSewa(host, ctx) {
         return `<a class="doc" ${u ? `href="${esc(u)}" target="_blank" rel="noopener"` : ''}><div class="im" style="${u && !pdf ? `background-image:url('${esc(u)}')` : ''}">${pdf ? 'PDF' : u ? '' : '…'}</div><span>${DOC_LABEL[k] || k}</span></a>`;
       }).join('')}</div>` : '<p class="mute">Tiada dokumen.</p>'}</section>
       <section class="card"><h3>Tandatangan & Terma dipersetujui</h3><div class="sig"><img src="${esc(r.tandatangan)}" alt="Tandatangan ${esc(r.nama)}"></div>
-        <div class="terma" style="margin-top:12px">${esc(r.terma_snapshot || '-')}</div></section>
+        <div class="terma" style="margin-top:12px">${termaHtml(r.terma_snapshot)}</div></section>
       ${owner ? `<div class="row"><button class="btn danger" data-a="delete">Padam perjanjian & dokumen</button></div>` : ''}`;
   }
 
@@ -408,7 +417,7 @@ export function mountSewa(host, ctx) {
         <div class="row"><input id="wa" inputmode="tel" placeholder="60123456789" value="${esc(S.wa ?? '')}" style="flex:1;min-width:180px"><button class="btn pri" data-a="save-wa">Simpan</button></div>
         <p class="msg" id="w-msg"></p></section>` : ''}
       <h2 style="margin-top:6px">Terma & Syarat</h2>
-      <p class="mute">Teks ini dipaparkan pada borang pelanggan. Setiap perjanjian menyimpan salinan terma pada masa ia dihantar, jadi perubahan tidak menjejaskan perjanjian lama.</p>
+      <p class="mute">Teks ini dipaparkan pada borang pelanggan. Setiap perjanjian menyimpan salinan terma pada masa ia dihantar, jadi perubahan tidak menjejaskan perjanjian lama.<br>Format: tulis <b>## Tajuk</b> untuk tajuk bahagian, dan <b>1. teks</b> untuk setiap klausa.</p>
       <section class="card"><textarea id="terma" style="min-height:360px">${S.terma === null ? 'Memuatkan…' : esc(S.terma)}</textarea>
       <div class="row" style="margin-top:10px;align-items:center"><button class="btn pri" data-a="save-terma">Simpan Terma</button><span class="msg" id="t-msg"></span></div></section>`;
   }
@@ -445,9 +454,13 @@ export function mountSewa(host, ctx) {
       header img{height:70px} h1{font-size:20px;color:#1f2f57;margin:0;text-align:right} .ref{text-align:right;color:#555}
       h2{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#1f2f57;margin:18px 0 6px;border-bottom:1px solid #ccc;padding-bottom:3px}
       table{width:100%;border-collapse:collapse} th{width:34%;text-align:left;font-weight:600;color:#444;padding:4px 8px 4px 0;vertical-align:top} td{padding:4px 0;white-space:pre-wrap}
-      .terma{white-space:pre-wrap;font-size:11.5px;color:#333} .two th,.two td{width:auto} .tot th,.tot td{font-weight:800;font-size:14px;border-top:1px solid #333;padding-top:6px} h2{break-after:avoid} table{break-inside:avoid} .sign{display:flex;gap:40px;margin-top:26px}
+      .tc{page-break-before:always;break-before:page} .tc h1{text-align:center;font-size:16px;letter-spacing:.06em;color:#111;margin:0 0 6px}
+      .terma{columns:2;column-gap:18px;font-size:8.3px;line-height:1.3;color:#111;text-align:justify}
+      .terma h4{font-size:9px;margin:5px 0 1px;text-decoration:underline;break-after:avoid;color:#111}
+      .terma p{margin:0 0 2px} .agree{margin-top:10px;font-size:11.5px;break-inside:avoid} .agree .sign img{height:60px} .agree .sign>div>div[style]{height:60px!important}
+      .agree .sign{margin-top:8px} .foot{text-align:center;font-size:9px;color:#777;margin-top:10px} .two th,.two td{width:auto} .tot th,.tot td{font-weight:800;font-size:14px;border-top:1px solid #333;padding-top:6px} h2{break-after:avoid} table{break-inside:avoid} .sign{display:flex;gap:40px;margin-top:26px}
       .sign div{flex:1} .sign img{height:90px;display:block} .line{border-top:1px solid #333;padding-top:4px;margin-top:4px;font-size:12px}
-      @media print{body{margin:12mm}}</style></head><body>
+      @media print{body{margin:0}} @page{size:A4;margin:10mm}</style></head><body>
       <header><img src="${esc(logoSrc)}" alt="Abedin Car Rental"><div><h1>PERJANJIAN SEWA</h1><div class="ref">No Rujukan: <b>${esc(r.ref_no)}</b><br>Tarikh: ${when(r.created_at)}</div></div></header>
       <h2>Maklumat Peribadi</h2><table>${row('Sewaan', jenisTxt(r.jenis_sewa))}${row('Nama Penuh', r.nama)}${row('Email', r.email)}${row('No Telefon', r.telefon)}${row('No KP / Passport', r.no_kp)}${row('Alamat', [r.alamat, `${r.poskod} ${r.bandar}`, `${r.negeri}, ${r.negara}`].join('\n'))}${row('No Lesen', r.no_lesen)}${row('Tarikh Luput Lesen', r.lesen_luput ? dmy(r.lesen_luput) : '')}</table>
       <h2>Maklumat Kenderaan</h2><table>${row('Model', r.model)}${row('No Pendaftaran', r.no_pendaftaran)}${row('Kumpulan', r.kumpulan)}</table>
@@ -456,9 +469,12 @@ export function mountSewa(host, ctx) {
       <h2>Calculation</h2><table>${row('Sewa (Hari)', r.sewa_hari ?? '')}${CAJ.map(([k, l]) => row(l, rm(r[k]))).join('')}<tr class="tot"><th>Jumlah</th><td>${esc(rm(r.jumlah) || '-')}</td></tr>${row('Sekuriti Deposit', rm(r.deposit))}</table>
       <h2>Aksesori</h2><table>${AKSESORI.map(([k, l]) => row(l, (r.aksesori || {})[k])).join('')}</table>
       <h2>Remark</h2><table>${row('Pelanggan', r.remark)}${row('Abedin Car Rental', r.remark_admin)}</table>
-      <h2>Terma dan Syarat</h2><div class="terma">${esc(r.terma_snapshot)}</div>
-      <div class="sign"><div><img src="${esc(r.tandatangan)}" alt=""><div class="line">Tandatangan Penyewa<br>${esc(r.nama)}</div></div>
+      <div class="sign"><div><img src="${esc(r.tandatangan)}" alt=""><div class="line">Tandatangan Penyewa<br>${esc(r.nama)} · ${esc(r.no_kp)}</div></div>
       <div><div style="height:90px"></div><div class="line">Bagi pihak Abedin Car Rental<br>Nama & cop:</div></div></div>
+      <section class="tc"><h1>TERMA &amp; SYARAT</h1><div class="terma">${termaHtml(r.terma_snapshot)}</div>
+      <div class="agree"><b>Saya setuju dengan terma dan syarat yang dinyatakan.</b>
+        <div class="sign"><div><img src="${esc(r.tandatangan)}" alt=""><div class="line">(Tandatangan Penyewa)<br>${esc(r.nama)}</div></div>
+        <div style="text-align:right"><div style="height:90px;display:flex;align-items:flex-end;justify-content:flex-end;font-size:14px">${new Date(r.created_at).toLocaleDateString('en-GB')}</div><div class="line">(Tarikh)</div></div></div></div></section>
       <script>window.onload=()=>setTimeout(()=>print(),300)<\/script></body></html>`);
     w.document.close();
   }

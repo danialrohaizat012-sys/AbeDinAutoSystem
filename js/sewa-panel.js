@@ -3,7 +3,7 @@
 // Tiada login berasingan: panel ini guna login dashboard. Fungsi sewa-bridge (Supabase Sewa)
 // menyemak sesi dashboard dan memberi sesi Sewa secara automatik.
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import { mountSewa } from './sewa.js?v=5';
+import { mountSewa } from './sewa.js?v=6';
 
 const SEWA_URL = 'https://abqrgiebeoyzowvxeggj.supabase.co';
 const SEWA_KEY = 'sb_publishable_ofappLwL3Q_OZzlmlcbNqQ_y5y-fC3B';
