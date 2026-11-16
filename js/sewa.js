@@ -73,6 +73,10 @@ textarea{resize:vertical;min-height:90px}
 .seg2 input{width:auto;accent-color:var(--gold)}
 .tot input{font-weight:800;color:var(--gold);font-size:16px}
 .savebar{position:sticky;bottom:calc(76px + env(safe-area-inset-bottom));display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#0c1112f2;border:1px solid var(--line);border-radius:16px;padding:10px 12px;backdrop-filter:blur(10px);z-index:2}
+.ovl{position:fixed;inset:0;z-index:2147483000;background:#f5f7fd;display:flex;flex-direction:column}
+.ovl .bar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 14px;padding-top:max(10px,env(safe-area-inset-top));background:#1f2f57;color:#fff;font-weight:700;font-size:14px}
+.ovl .bar a{color:#fff;font-size:13px;opacity:.85}
+.ovl iframe{flex:1;width:100%;border:0;background:#f5f7fd}
 .terma{white-space:pre-wrap;font-size:13.5px;color:#cfd3da;max-height:220px;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#0b0f10}
 `;
 
@@ -149,7 +153,7 @@ export function mountSewa(host, ctx) {
       <div class="link">${esc(formUrl)}</div>
       <div class="row" style="margin-top:10px"><button class="btn pri" data-a="copy">Salin pautan</button>
       <a class="btn wa" href="${wa}" target="_blank" rel="noopener">Kongsi WhatsApp</a>
-      <a class="btn" href="${esc(formUrl)}" target="_blank" rel="noopener">Buka borang</a></div>
+      <button class="btn" data-a="buka-borang">Buka borang</button></div>
       <p class="msg" id="copy-msg"></p></section>`;
   }
 
@@ -470,6 +474,11 @@ export function mountSewa(host, ctx) {
     if (a === 'copy') {
       try { await navigator.clipboard.writeText(formUrl); app.querySelector('#copy-msg').textContent = 'Pautan disalin.'; }
       catch { prompt('Salin pautan ini:', formUrl); }
+    } else if (a === 'buka-borang') {
+      const o = document.createElement('div'); o.className = 'ovl';
+      o.innerHTML = `<div class="bar"><span>Borang Perjanjian Sewa</span><span class="row" style="align-items:center;gap:14px"><a href="${esc(formUrl)}" target="_blank" rel="noopener">Tab baru ↗</a><button class="btn sm" data-a="tutup-borang">✕ Tutup</button></span></div><iframe src="${esc(formUrl)}" title="Borang Perjanjian Sewa"></iframe>`;
+      app.appendChild(o);
+    } else if (a === 'tutup-borang') { app.querySelector('.ovl')?.remove(); load();
     } else if (a === 'refresh') { S.loaded = false; render(); load(); }
     else if (a === 'back') { S.view = 'list'; S.msg = ''; render(); }
     else if (a === 'nota' && r) { update(r.id, { nota_staf: app.querySelector('#nota').value.trim() || null }, 'Nota disimpan.'); }

@@ -2,7 +2,7 @@
 // Modul Sewa (Abedin Car Rental) guna projek Supabase berasingan (abedinauto's Project),
 // jadi panel ini ada login sendiri. Sesi disimpan dalam pelayar, jadi login sekali sahaja.
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import { mountSewa } from './sewa.js?v=4';
+import { mountSewa } from './sewa.js?v=5';
 
 const SEWA_URL = 'https://abqrgiebeoyzowvxeggj.supabase.co';
 const SEWA_KEY = 'sb_publishable_ofappLwL3Q_OZzlmlcbNqQ_y5y-fC3B';
