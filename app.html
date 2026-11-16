@@ -385,7 +385,7 @@ async function deleteCustomer(id,btn){
   if(linked.length){const plates=linked.map(x=>{const v=vehicles.find(y=>y.id===x.vehicle_id)||{};return String(v.plate||'').trim()||'-'}).join(', ');alert(`Pelanggan "${c.full_name}" tidak boleh dipadam kerana ada ${linked.length} rekod jualan (${plates}).\n\nPadam jualan tersebut dahulu di halaman Jualan jika memang perlu.`);return}
   if(!confirm(`Padam pelanggan "${c.full_name}"${c.phone?' ('+c.phone+')':''}?\n\nTindakan ini TIDAK boleh dipulihkan.`))return;
   if(btn){btn.disabled=true;btn.textContent='Memadam...'}
-  try{const {error}=await client.from('customers').delete().eq('id',id);if(error){if(error.code==='23503'||/foreign key/i.test(error.message||''))throw new Error('Pelanggan ini masih ada rekod jualan.');throw error}
+  try{const {error}=await client.rpc('delete_customer',{p_customer_id:String(id)});if(error){if(/function|schema cache/i.test(error.message||'')&&/find|exist|schema/i.test(error.message||''))throw new Error('Fungsi padam pelanggan belum dipasang (V70).');throw error}
     customers=customers.filter(x=>String(x.id)!==String(id));renderCloud();
   }catch(e){alert('Gagal padam pelanggan: '+(e.message||e));if(btn){btn.disabled=false;btn.textContent='🗑 Padam'}}
 }
