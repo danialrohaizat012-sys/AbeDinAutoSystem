@@ -2062,3 +2062,12 @@ html #ada-public-catalogue.abx-home .abx-main-photo .abx-sold-seal small{font-si
 .ada-wa-btn{background:#1f9d55!important;border-color:#1f9d55!important;color:#fff!important}
 .ada-sale-actions .ada-wa-mini{color:#4fd18b!important;border-color:#1f6b41!important}
 .ada-form textarea[name=watext]{font-size:14px;line-height:1.45}
+
+/* RESERVED seal (oren) */
+html #ada-public-catalogue.abx-home .is-res-card .abx-card-media img,html #ada-public-catalogue.abx-home .abx-main-photo.is-res-card img,.cloud-car.is-res-car .photo img{filter:brightness(.68) saturate(.9)!important}
+html #ada-public-catalogue.abx-home .abx-sold-seal.is-res,.ada-sold-seal.is-res{border-color:#ff9a2e!important;color:#ffb257!important;box-shadow:0 12px 30px rgba(0,0,0,.45),inset 0 0 0 6px rgba(255,154,46,.1)!important}
+html #ada-public-catalogue.abx-home .abx-sold-seal.is-res i,.ada-sold-seal.is-res i{border-color:#ff9a2e!important}
+html #ada-public-catalogue.abx-home .abx-sold-seal.is-res i svg,.ada-sold-seal.is-res i svg{stroke:#ffb257!important;stroke-width:2.2!important}
+html #ada-public-catalogue.abx-home .abx-sold-seal.is-res b,.ada-sold-seal.is-res b{color:#ffb257!important;letter-spacing:.03em!important;font-size:clamp(11px,5.4cqw,24px)!important}
+html #ada-public-catalogue.abx-home .abx-main-photo .abx-sold-seal.is-res b{font-size:clamp(14px,4.3cqw,28px)!important}
+html #ada-public-catalogue.abx-home .abx-sold-seal.is-res small,.ada-sold-seal.is-res small{border-top-color:rgba(255,154,46,.45)!important;color:#ffe0bd!important}
