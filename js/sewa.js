@@ -1,4 +1,4 @@
-import { SEWA_LOGO } from './sewa-logo.js';
+import { SEWA_LOGO, SEWA_QR } from './sewa-logo.js?v=2';
 // Abe Din Auto – modul Sewa (Abedin Car Rental: Perjanjian Sewa).
 // Borang awam: sewa.html → RPC submit_sewa. Jadual: sewa_agreements, sewa_settings; storan: sewa-docs
 // (lihat V60_SEWA_MIGRATION.sql). Dimuat oleh app.html melalui import('./js/sewa.js').
@@ -194,6 +194,14 @@ export function perjanjianHtml(r, opts = {}) {
     .calc .tot th{border-radius:6px 0 0 6px} .calc .tot td{border-radius:0 6px 6px 0}
     .calc .dep th,.calc .dep td{padding-top:6px;color:#1d2f5c}
     .ok{color:#14804a;font-weight:700}.no{color:#7b8496}.bad{color:#c62828;font-weight:700}.na{color:#aab1c0}
+    .pay{border:1.5px solid #0f1c3a}
+    .pay .pw{display:flex;gap:9px;align-items:center}
+    .pay img{width:27mm;height:27mm;object-fit:contain;flex:none}
+    .pay th{width:auto;padding:1.5px 6px 1.5px 0}.pay td{padding:1.5px 0;font-size:10px}
+    .pay .acc{font-size:12.5px;letter-spacing:.06em;color:#9a7424}
+    .pay .pn{margin-top:5px;font-size:9px;color:#4b5468}
+    .pay .ps{margin-top:5px;padding-top:5px;border-top:1px dashed #c3cad8;font-size:10px;color:#4b5468}
+    .pay .ps b{color:#0f1c3a}
     .sig{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:10px;break-inside:avoid}
     .sig.one{grid-template-columns:minmax(0,55%)}
     .sig .box{border:1px dashed #c3cad8;border-radius:10px;padding:8px 11px;min-height:118px;display:flex;flex-direction:column;justify-content:flex-end}
@@ -235,7 +243,13 @@ export function perjanjianHtml(r, opts = {}) {
           <tr class="tot"><th>JUMLAH</th><td class="num">${v(rm(r.jumlah))}</td></tr>
           <tr class="dep"><th>Sekuriti Deposit</th><td class="num">${v(rm(r.deposit))}</td></tr>
           <tr><th>Status Bayaran</th><td class="num">${r.penuh_dibayar_at ? '<span class="ok">✓ Dibayar penuh ' + new Date(r.penuh_dibayar_at).toLocaleDateString('en-GB') + '</span>' : r.deposit_dibayar_at ? '<span class="ok">✓ Deposit dibayar ' + new Date(r.deposit_dibayar_at).toLocaleDateString('en-GB') + '</span>' : 'Belum dibayar'}${r.deposit_pulang_at ? '<br><span class="na">Deposit dipulangkan ' + new Date(r.deposit_pulang_at).toLocaleDateString('en-GB') + '</span>' : ''}</td></tr></table></div>
-        <div class="card"><h3>Catatan</h3><table>${kv('Pelanggan', r.remark)}${kv('Abe Din Car Rental', r.remark_admin)}</table></div>
+        <div class="card pay"><h3>Pembayaran</h3>
+          <div class="pw"><img src="${esc(SEWA_QR)}" alt="DuitNow QR">
+            <table><tr><th>Akaun</th><td>ABEDIN AUTO</td></tr><tr><th>Bank</th><td>OCBC Bank (Malaysia) Berhad</td></tr>
+            <tr><th>No. Akaun</th><td class="acc">7551072447</td></tr></table></div>
+          <div class="pn">Imbas DuitNow QR atau pindahan ke akaun di atas. Nyatakan No Rujukan <b>${esc(r.ref_no)}</b>.</div>
+          <div class="ps">${r.penuh_dibayar_at ? '<b class="ok">✓ DIBAYAR PENUH</b>' : r.deposit_dibayar_at ? '<b class="ok">✓ DEPOSIT DIBAYAR</b>' : '<b>BELUM DIBAYAR</b>'}${r.jumlah != null ? ' · Jumlah ' + esc(rm(Number(r.jumlah) + Number(r.deposit || 0))) : ''}</div></div>
+        ${r.remark || r.remark_admin ? `<div class="card full"><h3>Catatan</h3><table>${r.remark ? kv('Pelanggan', r.remark) : ''}${r.remark_admin ? kv('Abe Din Car Rental', r.remark_admin) : ''}</table></div>` : ''}
       </div>
       <div class="decl">Penyewa mengesahkan maklumat di atas adalah benar, telah menerima kenderaan dalam keadaan seperti yang dinyatakan, dan bersetuju dengan Terma &amp; Syarat di muka surat berikutnya.</div>
       <div class="sig one">
