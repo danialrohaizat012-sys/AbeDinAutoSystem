@@ -214,8 +214,8 @@ export function mountProfile(app, ctx, staff, onBack) {
     const cur = ym(), active = P.adv.filter(a => a.status === "active");
     const thisMonth = active.reduce((s, a) => cur >= a.start_month && cur <= addMonths(a.start_month, a.months - 1) ? s + +a.monthly : s, 0);
     const owing = active.reduce((s, a) => { const paid = Math.max(0, Math.min(a.months, monthsBetween(a.start_month, cur))); return s + Math.max(0, +a.amount - paid * +a.monthly); }, 0);
-    return `<div class="sec"><div class="row"><h4 class="grow">Advance Ansuran</h4><span class="note">Fasa 1: rekod plan sahaja. Belum auto potong gaji.</span></div>
-      <div class="cols"><form class="box" data-add="adv"><b>Tambah Plan</b>
+    return `<div class="sec"><div class="row"><h4 class="grow">Advance Ansuran</h4><span class="note">Dipotong automatik dalam Kehadiran → Gaji ikut bulan.</span></div>
+      <div class="cols"><form class="box" data-add="adv"><b>Tambah Plan</b><p class="note" style="margin:4px 0 0">Ansuran akhir dilaras supaya jumlah tepat.</p>
         <label style="margin-top:8px">Jumlah advance (RM)</label><input class="field" name="amount" type="number" min="1" step="0.01" placeholder="1200" required>
         <label style="margin-top:8px">Bilangan bulan</label><input class="field" name="months" type="number" min="1" max="36" value="1" required>
         <label style="margin-top:8px">Bulan mula potongan</label><input class="field" name="start_month" type="month" value="${cur}" required>

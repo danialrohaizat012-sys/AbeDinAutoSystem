@@ -118,6 +118,9 @@ async function loadBase() {
   S.settings = st.data || { work_start:"09:00", work_end:"18:00", work_days:[0,1,2,3,4,6], grace_min:10, ot_min_minutes:30, ot_offday_all:true, enforce_geofence:true, require_selfie:true };
   S.locs = lc.data || [];
   S.pay = {}; (py.data || []).forEach(p => S.pay[p.staff_id] = p);
+  // Advance ansuran (V73). Jika jadual belum wujud, abaikan.
+  const av = await (S.owner ? c.from("staff_advances").select("*").neq("status", "cancelled") : c.from("staff_advances").select("*").eq("staff_id", S.me).neq("status", "cancelled"));
+  S.adv = av.error ? [] : (av.data || []);
   if (S.owner) {
     const { data, error } = await c.from("profiles").select("id,full_name,role,enabled").order("full_name");
     if (error) throw error; S.staff = data || [];
@@ -160,7 +163,20 @@ function computeDays(punches, staffId, fromKey, toKeyExcl) {
   }
   return out;
 }
-function computePay(days, pay) {
+const mAdd = (m, n) => { const [y, mo] = m.split("-").map(Number), t = y * 12 + mo - 1 + n; return `${Math.floor(t / 12)}-${String(t % 12 + 1).padStart(2, "0")}`; };
+const mIdx = (a, b) => { const [y1, m1] = a.split("-").map(Number), [y2, m2] = b.split("-").map(Number); return (y2 - y1) * 12 + (m2 - m1); };
+// Potongan advance untuk bulan S.month: pelan aktif yang bulan ini dalam tempoh potongan; ansuran akhir laras baki sen.
+function advanceFor(sid) {
+  const out = [];
+  for (const a of (S.adv || [])) {
+    if (a.staff_id !== sid || a.status !== "active") continue;
+    const i = mIdx(a.start_month, S.month); if (i < 0 || i >= a.months) continue;
+    const amt = i === a.months - 1 ? +(+a.amount - (+a.monthly) * (a.months - 1)).toFixed(2) : +a.monthly;
+    if (amt > 0) out.push({ amt, n: i + 1, of: a.months, note: a.note, total: +a.amount });
+  }
+  return out;
+}
+function computePay(days, pay, sid) {
   const p = pay || { pay_type:"daily", rate:0, ot_rate:0, late_mode:"none", late_rate:0, monthly_workdays:26, allowance:0 };
   const presentDays = days.filter(d => d.present).length, workPresent = days.filter(d => d.present && d.workday).length;
   const absent = days.filter(d => d.workday && !d.present && !d.future).length;
@@ -173,8 +189,9 @@ function computePay(days, pay) {
   const otPay = otMin / 60 * (+p.ot_rate || 0);
   const lateDeduct = p.late_mode === "per_minute" ? lateMin * (+p.late_rate || 0) : p.late_mode === "per_late" ? lateCount * (+p.late_rate || 0) : 0;
   const allowance = +p.allowance || 0;
-  const net = base + otPay + allowance - lateDeduct - absentDeduct;
-  return { presentDays, absent, workedMin, regMin, otMin, lateMin, lateCount, openCount, base, baseNote, otPay, lateDeduct, absentDeduct, allowance, net, pay:p, hasPay:!!pay };
+  const adv = sid ? advanceFor(sid) : [], advDeduct = adv.reduce((t, a) => t + a.amt, 0);
+  const net = base + otPay + allowance - lateDeduct - absentDeduct - advDeduct;
+  return { adv, advDeduct, presentDays, absent, workedMin, regMin, otMin, lateMin, lateCount, openCount, base, baseNote, otPay, lateDeduct, absentDeduct, allowance, net, pay:p, hasPay:!!pay };
 }
 
 /* ---------- render ---------- */
@@ -238,6 +255,7 @@ function payBox(c) {
     <span>OT <small class="mute">${(c.otMin / 60).toFixed(2)} jam × ${rm(p.ot_rate)}</small></span><span>${rm(c.otPay)}</span>
     ${c.allowance ? `<span>Elaun</span><span>${rm(c.allowance)}</span>` : ""}
     ${p.late_mode !== "none" ? `<span>Potongan lewat <small class="mute">${p.late_mode === "per_minute" ? `${Math.round(c.lateMin)} min × ${rm(p.late_rate)}` : `${c.lateCount} kali × ${rm(p.late_rate)}`}</small></span><span>−${rm(c.lateDeduct)}</span>` : ""}
+    ${c.adv.map(a => `<span>Potongan advance <small class="mute">ansuran ${a.n}/${a.of} · ${rm(a.total)}${a.note ? " · " + esc(a.note) : ""}</small></span><span>−${rm(a.amt)}</span>`).join("")}
     <span class="tot">Jumlah bersih</span><span class="tot">${rm(c.net)}</span></div>`;
 }
 function statsRow(c) {
@@ -246,7 +264,7 @@ function statsRow(c) {
 }
 function monthInput() { return `<input type="month" class="field" id="month" value="${esc(S.month)}" style="max-width:200px">`; }
 function viewRekod() {
-  const [a, b] = monthRange(S.month), days = computeDays(S.punches, S.me, a, b), c = computePay(days, S.pay[S.me]);
+  const [a, b] = monthRange(S.month), days = computeDays(S.punches, S.me, a, b), c = computePay(days, S.pay[S.me], S.me);
   return `<div class="card"><div class="r"><h3>Rekod bulan</h3>${monthInput()}</div>${statsRow(c)}</div>
     <div class="card"><h3>Anggaran gaji</h3>${payBox(c)}<small class="mute">Anggaran sahaja. Jumlah muktamad disahkan oleh Owner.</small></div>
     <div class="card"><h3>Harian</h3>${dayTable(days)}</div>`;
@@ -271,7 +289,7 @@ function viewGaji() {
   const [a, b] = monthRange(S.month), list = activeStaff();
   let total = 0;
   const cards = list.map(s => {
-    const days = computeDays(S.punches, s.id, a, b), c = computePay(days, S.pay[s.id]); if (c.hasPay) total += c.net;
+    const days = computeDays(S.punches, s.id, a, b), c = computePay(days, S.pay[s.id], s.id); if (c.hasPay) total += c.net;
     const open = S.payOpen[s.id];
     return `<div class="card"><div class="r"><div><h3>${esc(s.full_name || "Staf")}</h3><span class="mute">${c.hasPay ? `${PAY_LABEL[c.pay.pay_type]} · ${rm(c.pay.rate)}` : "Tetapan gaji belum dibuat"}</span></div><div class="big">${c.hasPay ? rm(c.net) : "–"}</div></div>
       ${statsRow(c)}${payBox(c)}
@@ -442,9 +460,9 @@ function parseCoord(s) {
 function locPreview() { const f = $("#f-loc"), c = parseCoord(f?.coord.value), box = $("#locprev"); if (!box) return; box.innerHTML = c ? `<iframe class="map" loading="lazy" src="${mapUrl(c.lat, c.lng)}" title="Pratonton lokasi"></iframe>` : ""; }
 function csv() {
   const [a, b] = monthRange(S.month);
-  const rows = [["Staf","Cara gaji","Kadar","Hari hadir","Tidak hadir","Jam kerja","Lewat (kali)","Lewat (minit)","OT (jam)","Gaji asas","Potongan tidak hadir","OT (RM)","Elaun","Potongan lewat","Bersih"]];
-  activeStaff().forEach(s => { const c = computePay(computeDays(S.punches, s.id, a, b), S.pay[s.id]);
-    rows.push([s.full_name, c.hasPay ? PAY_LABEL[c.pay.pay_type] : "-", c.pay.rate, c.presentDays, c.absent, (c.workedMin / 60).toFixed(2), c.lateCount, Math.round(c.lateMin), (c.otMin / 60).toFixed(2), c.base.toFixed(2), c.absentDeduct.toFixed(2), c.otPay.toFixed(2), c.allowance.toFixed(2), c.lateDeduct.toFixed(2), c.net.toFixed(2)]); });
+  const rows = [["Staf","Cara gaji","Kadar","Hari hadir","Tidak hadir","Jam kerja","Lewat (kali)","Lewat (minit)","OT (jam)","Gaji asas","Potongan tidak hadir","OT (RM)","Elaun","Potongan lewat","Potongan advance","Bersih"]];
+  activeStaff().forEach(s => { const c = computePay(computeDays(S.punches, s.id, a, b), S.pay[s.id], s.id);
+    rows.push([s.full_name, c.hasPay ? PAY_LABEL[c.pay.pay_type] : "-", c.pay.rate, c.presentDays, c.absent, (c.workedMin / 60).toFixed(2), c.lateCount, Math.round(c.lateMin), (c.otMin / 60).toFixed(2), c.base.toFixed(2), c.absentDeduct.toFixed(2), c.otPay.toFixed(2), c.allowance.toFixed(2), c.lateDeduct.toFixed(2), c.advDeduct.toFixed(2), c.net.toFixed(2)]); });
   const txt = "﻿" + rows.map(r => r.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
   const a2 = document.createElement("a"); a2.href = URL.createObjectURL(new Blob([txt], { type:"text/csv" })); a2.download = `gaji-${S.month}.csv`; a2.click();
 }
