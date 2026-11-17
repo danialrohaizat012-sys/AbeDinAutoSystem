@@ -55,6 +55,18 @@ input:focus,select:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 
 .msg{display:none;color:var(--err);font-size:13px;margin-top:5px}
 .field.bad .msg{display:block}
 .hint{font-size:12.5px;color:var(--muted);margin-top:5px}
+.paybox{margin-top:12px;border:1.5px solid #1f2f57;border-radius:14px;overflow:hidden;background:#fff}
+.pb-head{background:#1f2f57;color:#fff;padding:10px 14px;font-size:14px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.pb-head b{color:#e8c875}.pb-head span{font-weight:800;color:#e8c875}
+.pb-grid{display:grid;grid-template-columns:200px 1fr;gap:14px;padding:14px}
+@media (max-width:560px){.pb-grid{grid-template-columns:1fr}}
+.pb-qr{text-align:center}.pb-qr img{width:100%;max-width:220px;border-radius:12px;border:1px solid var(--line);display:block;margin:0 auto}
+.pb-dl{display:inline-block;margin-top:8px;font-size:13px;font-weight:700;color:var(--navy);text-decoration:none;border:1.5px solid var(--navy);border-radius:999px;padding:7px 14px}
+.pb-row{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:14px}
+.pb-row span{color:var(--muted)}.pb-acc{font-size:18px;letter-spacing:.06em;color:var(--gold)}
+.pb-copy{margin:10px 0 4px;font:inherit;font-size:13.5px;font-weight:700;border:0;border-radius:999px;padding:9px 16px;background:var(--gold-soft);color:var(--navy);cursor:pointer}
+.pb-steps{margin:8px 0 0;padding-left:18px;font-size:13px;color:var(--muted)}.pb-steps li{margin:3px 0}
+.pb-note{background:#f7f9fd;border-top:1px solid var(--line);padding:10px 14px;font-size:13px;color:var(--ink)}
 .agen-box{border:1.5px dashed var(--line);border-radius:12px;padding:12px 14px;background:#fafbfe}
 .agen-box:has(#is_agen:checked){border-style:solid;border-color:var(--blue);background:#eef3fd}
 #model-harga b{color:var(--gold)}
@@ -204,7 +216,23 @@ body.sent .done{display:block}
             <label><input type="radio" name="pilihan_bayaran" value="deposit"><span>Bayar Deposit Dahulu<small id="pb-dep">Baki dibayar semasa ambil kenderaan</small></span></label>
             <label><input type="radio" name="pilihan_bayaran" value="penuh"><span>Bayar Penuh<small id="pb-penuh">Sewa + deposit sekali gus</small></span></label>
           </div><div class="msg">Sila pilih cara bayaran.</div>
-          <div class="hint">Butiran akaun bank / QR akan diberikan oleh Abe Din Car Rental. Bayaran disahkan oleh pihak kami.</div></div>
+          <div class="paybox">
+            <div class="pb-head">Pembayaran ke akaun <b>ABEDIN AUTO</b><span id="pb-amaun"></span></div>
+            <div class="pb-grid">
+              <div class="pb-qr"><img src="duitnow-qr-abedin.jpg" alt="DuitNow QR ABE DIN AUTO" loading="lazy">
+                <a class="pb-dl" href="duitnow-qr-abedin.jpg" download="DuitNow-QR-Abe-Din-Auto.jpg">⬇ Simpan QR</a></div>
+              <div class="pb-bank">
+                <div class="pb-row"><span>Nama Akaun</span><b>ABEDIN AUTO</b></div>
+                <div class="pb-row"><span>Bank</span><b>OCBC Bank (Malaysia) Berhad</b></div>
+                <div class="pb-row"><span>No. Akaun</span><b class="pb-acc">7551072447</b></div>
+                <button type="button" class="pb-copy" id="pb-copy">Salin No. Akaun</button>
+                <ol class="pb-steps"><li>Imbas QR DuitNow dengan aplikasi bank / e-wallet, <i>atau</i> pindahan ke akaun di atas.</li>
+                  <li>Di telefon? Tekan <b>Simpan QR</b>, kemudian pilih QR dari galeri dalam aplikasi bank.</li>
+                  <li>Simpan resit dan muat naik di bahagian <a href="#docs">Upload Dokumen → Resit Bayaran</a>.</li></ol>
+              </div>
+            </div>
+            <div class="pb-note">🔒 Bayaran booking diperlukan untuk mengesahkan dan <b>lock tarikh</b> tempahan anda. Bayaran akan disahkan oleh Abe Din Car Rental.</div>
+          </div></div>
       </div>
     </section>
 
@@ -382,7 +410,18 @@ function syncJenis() {
   DOCS.forEach(d => { if (d.reqPs) d.el.querySelector('.req').style.display = ps ? '' : 'none'; });
 }
 form.querySelectorAll('input[name=jenis_sewa]').forEach(r => r.addEventListener('change', () => { syncJenis(); clearBad(r); }));
-form.querySelectorAll('input[name=pilihan_bayaran]').forEach(r => r.addEventListener('change', () => clearBad(r)));
+form.querySelectorAll('input[name=pilihan_bayaran]').forEach(r => r.addEventListener('change', () => { clearBad(r); amaunBayar(); }));
+function amaunBayar() {
+  const pb = form.querySelector('input[name=pilihan_bayaran]:checked')?.value, k = BAYARAN, el = $('#pb-amaun');
+  if (!el) return;
+  el.textContent = !k || !pb ? '' : pb === 'penuh' ? 'Jumlah: ' + rmF(k.total) : (k.deposit ? 'Deposit: ' + rmF(k.deposit) : '');
+}
+$('#pb-copy').addEventListener('click', async () => {
+  const b = $('#pb-copy');
+  try { await navigator.clipboard.writeText('7551072447'); b.textContent = '✓ Disalin'; }
+  catch { prompt('Salin no. akaun:', '7551072447'); }
+  setTimeout(() => b.textContent = 'Salin No. Akaun', 2000);
+});
 
 // ---------- Lokasi pulang sama ----------
 $('#sama').addEventListener('change', e => {
@@ -422,6 +461,7 @@ function tempoh() {
   BAYARAN = k;
   $('#pb-dep').textContent = k && k.deposit ? `Deposit ${rmF(k.deposit)} sekarang, baki ${rmF(k.jumlahSewa)} semasa ambil kenderaan` : 'Baki dibayar semasa ambil kenderaan';
   $('#pb-penuh').textContent = k ? `${rmF(k.total)} sekali gus (sewa + deposit)` : 'Sewa + deposit sekali gus';
+  amaunBayar();
   if (!k) { an.hidden = true; return; }
   an.innerHTML = `<h4>Ringkasan Bayaran</h4>
     <div class="r"><span>${k.label}</span><span>${rmF(k.sewa)}</span></div>
@@ -596,6 +636,8 @@ function showDone(ref, p) {
     const msg = `Salam Abedin Car Rental, saya telah menghantar Perjanjian Sewa.\n\nNo Rujukan: ${ref}\nNama: ${p.nama}${p.is_agen ? '\nAgen: ' + p.nama_agen : ''}\nSewaan: ${p.jenis_sewa === 'chauffeur' ? 'Chauffeur' : 'Pandu Sendiri'}\nModel: ${p.model}\nBayaran: ${p.pilihan_bayaran === 'penuh' ? 'Bayar Penuh' : 'Deposit Dahulu'}\nAmbil: ${p.ambil_lokasi}, ${dmy(p.ambil_tarikh)} ${p.ambil_masa}\nPulang: ${p.pulang_lokasi}, ${dmy(p.pulang_tarikh)} ${p.pulang_masa}` + (k ? `\n\nAnggaran bayaran: ${rmF(k.total)} (sewa ${rmF(k.jumlahSewa)}${k.deposit ? ' + deposit ' + rmF(k.deposit) : ''})` : '');
     const a = $('#wa'); a.href = `https://wa.me/${waNumber}?text=${encodeURIComponent(msg)}`; a.hidden = false;
   }
+  const pbx = document.querySelector('.paybox'), nx = document.querySelector('#done .next');
+  if (pbx && nx) { pbx.style.textAlign = 'left'; pbx.style.maxWidth = '560px'; pbx.style.margin = '14px auto 0'; nx.after(pbx); }
   document.body.classList.add('sent');
   scrollTo({ top: 0, behavior: 'smooth' });
 }
