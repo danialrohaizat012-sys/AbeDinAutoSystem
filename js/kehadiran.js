@@ -121,6 +121,9 @@ async function loadBase() {
   // Advance ansuran (V73). Jika jadual belum wujud, abaikan.
   const av = await (S.owner ? c.from("staff_advances").select("*").neq("status", "cancelled") : c.from("staff_advances").select("*").eq("staff_id", S.me).neq("status", "cancelled"));
   S.adv = av.error ? [] : (av.data || []);
+  // Cuti diluluskan (V73): cuti berbayar tidak dikira tidak hadir; cuti tanpa gaji dipotong.
+  const lv = await (S.owner ? c.from("staff_leaves").select("*").eq("status", "approved") : c.from("staff_leaves").select("*").eq("staff_id", S.me).eq("status", "approved"));
+  S.leaves = lv.error ? [] : (lv.data || []);
   if (S.owner) {
     const { data, error } = await c.from("profiles").select("id,full_name,role,enabled").order("full_name");
     if (error) throw error; S.staff = data || [];
@@ -176,22 +179,46 @@ function advanceFor(sid) {
   }
   return out;
 }
+const LEAVE_NAME = { annual:"Cuti Tahunan", mc:"Cuti Sakit", hosp:"Hospitalisasi", unpaid:"Cuti Tanpa Gaji", paternity:"Cuti Paterniti", maternity:"Cuti Bersalin", emergency:"Cuti Kecemasan", other:"Cuti" };
+// Peta tarikh → {kind, w}. Cuti separuh hari (satu tarikh, < 1 hari) diberi pemberat 0.5.
+function leaveMap(sid) {
+  const m = {};
+  for (const l of (S.leaves || [])) {
+    if (l.staff_id !== sid) continue;
+    const w = l.date_from === l.date_to && +l.days < 1 ? +l.days : 1;
+    for (let k = l.date_from; k <= l.date_to; k = nextDay(k)) m[k] = { kind: l.kind, w };
+  }
+  return m;
+}
 function computePay(days, pay, sid) {
   const p = pay || { pay_type:"daily", rate:0, ot_rate:0, late_mode:"none", late_rate:0, monthly_workdays:26, allowance:0 };
   const presentDays = days.filter(d => d.present).length, workPresent = days.filter(d => d.present && d.workday).length;
-  const absent = days.filter(d => d.workday && !d.present && !d.future).length;
+  const lm = sid ? leaveMap(sid) : {};
+  let paidLeave = 0, unpaidLeave = 0, absent = 0;
+  for (const d of days) {
+    d.leave = null;
+    if (!d.workday || d.future) continue;
+    const L = lm[d.key];
+    if (L && !d.present) { d.leave = L; if (L.kind === "unpaid") unpaidLeave += L.w; else paidLeave += L.w; if (L.w < 1) absent += 1 - L.w; }
+    else if (L && d.present) d.leave = L;
+    else if (!d.present) absent++;
+  }
   const workedMin = days.reduce((a, d) => a + d.worked, 0), regMin = days.reduce((a, d) => a + d.regular, 0), otMin = days.reduce((a, d) => a + d.ot, 0);
   const lateMin = days.reduce((a, d) => a + d.late, 0), lateCount = days.filter(d => d.late > 0).length, openCount = days.filter(d => d.open && d.key < nowKey()).length;
-  const rate = +p.rate || 0; let base = 0, baseNote = "", absentDeduct = 0;
+  const rate = +p.rate || 0; let base = 0, baseNote = "", absentDeduct = 0, unpaidDeduct = 0, leavePay = 0;
+  const dayMin = Math.max(0, tMin(S.settings.work_end) - tMin(S.settings.work_start));
   if (p.pay_type === "daily") { const n = S.settings.ot_offday_all ? workPresent : presentDays; base = n * rate; baseNote = `${n} hari × ${rm(rate)}`; }
   else if (p.pay_type === "hourly") { base = regMin / 60 * rate; baseNote = `${(regMin / 60).toFixed(2)} jam × ${rm(rate)}`; }
-  else { base = rate; absentDeduct = absent * rate / (+p.monthly_workdays || 26); baseNote = `Gaji bulanan`; }
+  else { base = rate; absentDeduct = absent * rate / (+p.monthly_workdays || 26); unpaidDeduct = unpaidLeave * rate / (+p.monthly_workdays || 26); baseNote = `Gaji bulanan`; }
+  // Gaji harian / sejam: cuti berbayar dibayar ikut kadar biasa; cuti tanpa gaji memang tidak dibayar.
+  if (p.pay_type === "daily") leavePay = paidLeave * rate;
+  else if (p.pay_type === "hourly") leavePay = paidLeave * dayMin / 60 * rate;
   const otPay = otMin / 60 * (+p.ot_rate || 0);
   const lateDeduct = p.late_mode === "per_minute" ? lateMin * (+p.late_rate || 0) : p.late_mode === "per_late" ? lateCount * (+p.late_rate || 0) : 0;
   const allowance = +p.allowance || 0;
   const adv = sid ? advanceFor(sid) : [], advDeduct = adv.reduce((t, a) => t + a.amt, 0);
-  const net = base + otPay + allowance - lateDeduct - absentDeduct - advDeduct;
-  return { adv, advDeduct, presentDays, absent, workedMin, regMin, otMin, lateMin, lateCount, openCount, base, baseNote, otPay, lateDeduct, absentDeduct, allowance, net, pay:p, hasPay:!!pay };
+  const net = base + leavePay + otPay + allowance - lateDeduct - absentDeduct - unpaidDeduct - advDeduct;
+  return { adv, advDeduct, paidLeave, unpaidLeave, leavePay, unpaidDeduct, presentDays, absent, workedMin, regMin, otMin, lateMin, lateCount, openCount, base, baseNote, otPay, lateDeduct, absentDeduct, allowance, net, pay:p, hasPay:!!pay };
 }
 
 /* ---------- render ---------- */
@@ -242,7 +269,7 @@ function dayTable(days) {
   if (!rows.length) return `<p class="mute">Tiada rekod.</p>`;
   return `<div class="tw"><table><thead><tr><th>Hari</th><th>Masuk</th><th>Balik</th><th class="n">Jam</th><th>Catatan</th></tr></thead><tbody>${rows.map(d => {
     const fi = d.list.find(p => p.kind === "in"), lo = [...d.list].reverse().find(p => p.kind === "out");
-    const tags = [!d.present ? `<span class="chip bad">Tidak hadir</span>` : "", d.late ? `<span class="chip bad">Lewat ${fmtMin(d.late)}</span>` : "", d.ot ? `<span class="chip blue">OT ${fmtMin(d.ot)}</span>` : "", d.early ? `<span class="chip warn">Balik awal ${fmtMin(d.early)}</span>` : "", d.open ? (d.key < nowKey() ? `<span class="chip warn">Tiada punch balik</span>` : `<span class="chip ok">Sedang bekerja</span>`) : "", !d.workday && d.present ? `<span class="chip">Hari cuti</span>` : ""].join(" ");
+    const tags = [d.leave ? `<span class="chip ${d.leave.kind === "unpaid" ? "warn" : "blue"}">${LEAVE_NAME[d.leave.kind] || "Cuti"}${d.leave.w < 1 ? " (½)" : ""}</span>` : "", !d.present && !d.leave ? `<span class="chip bad">Tidak hadir</span>` : "", d.late ? `<span class="chip bad">Lewat ${fmtMin(d.late)}</span>` : "", d.ot ? `<span class="chip blue">OT ${fmtMin(d.ot)}</span>` : "", d.early ? `<span class="chip warn">Balik awal ${fmtMin(d.early)}</span>` : "", d.open ? (d.key < nowKey() ? `<span class="chip warn">Tiada punch balik</span>` : `<span class="chip ok">Sedang bekerja</span>`) : "", !d.workday && d.present ? `<span class="chip">Hari cuti</span>` : ""].join(" ");
     return `<tr><td>${dayLabel(d.key)}</td><td>${fi ? hm(fi.punched_at) : "–"}</td><td>${lo ? hm(lo.punched_at) : "–"}</td><td class="n">${d.worked ? fmtMin(d.worked) : "–"}</td><td>${tags}</td></tr>`;
   }).join("")}</tbody></table></div>`;
 }
@@ -251,6 +278,9 @@ function payBox(c) {
   const p = c.pay;
   return `<div class="kv">
     <span>Gaji asas (${PAY_LABEL[p.pay_type]}) <small class="mute">${esc(c.baseNote)}</small></span><span>${rm(c.base)}</span>
+    ${c.leavePay ? `<span>Bayaran cuti berbayar <small class="mute">${c.paidLeave} hari</small></span><span>${rm(c.leavePay)}</span>` : ""}
+    ${c.unpaidDeduct ? `<span>Potongan cuti tanpa gaji <small class="mute">${c.unpaidLeave} hari</small></span><span>−${rm(c.unpaidDeduct)}</span>` : c.unpaidLeave ? `<span>Cuti tanpa gaji <small class="mute">${c.unpaidLeave} hari · tidak dibayar</small></span><span>${rm(0)}</span>` : ""}
+    ${c.paidLeave && !c.leavePay ? `<span>Cuti berbayar <small class="mute">${c.paidLeave} hari · tidak dipotong</small></span><span>${rm(0)}</span>` : ""}
     ${c.absentDeduct ? `<span>Potongan tidak hadir <small class="mute">${c.absent} hari</small></span><span>−${rm(c.absentDeduct)}</span>` : ""}
     <span>OT <small class="mute">${(c.otMin / 60).toFixed(2)} jam × ${rm(p.ot_rate)}</small></span><span>${rm(c.otPay)}</span>
     ${c.allowance ? `<span>Elaun</span><span>${rm(c.allowance)}</span>` : ""}
@@ -259,7 +289,7 @@ function payBox(c) {
     <span class="tot">Jumlah bersih</span><span class="tot">${rm(c.net)}</span></div>`;
 }
 function statsRow(c) {
-  return `<div class="g3"><div><div class="mute">Hadir</div><div class="num">${c.presentDays} hari</div></div><div><div class="mute">Jam kerja</div><div class="num">${fmtMin(c.workedMin)}</div></div><div><div class="mute">Tidak hadir</div><div class="num">${c.absent} hari</div></div>
+  return `<div class="g3"><div><div class="mute">Hadir</div><div class="num">${c.presentDays} hari</div></div><div><div class="mute">Jam kerja</div><div class="num">${fmtMin(c.workedMin)}</div></div><div><div class="mute">Tidak hadir</div><div class="num">${c.absent} hari</div></div>${c.paidLeave || c.unpaidLeave ? `<div><div class="mute">Cuti</div><div class="num">${c.paidLeave} berbayar${c.unpaidLeave ? ` · ${c.unpaidLeave} tanpa gaji` : ""}</div></div>` : ""}
     <div><div class="mute">Lewat</div><div class="num">${c.lateCount} kali · ${fmtMin(c.lateMin)}</div></div><div><div class="mute">OT</div><div class="num">${fmtMin(c.otMin)}</div></div><div><div class="mute">Lupa punch balik</div><div class="num">${c.openCount}</div></div></div>`;
 }
 function monthInput() { return `<input type="month" class="field" id="month" value="${esc(S.month)}" style="max-width:200px">`; }
@@ -460,9 +490,9 @@ function parseCoord(s) {
 function locPreview() { const f = $("#f-loc"), c = parseCoord(f?.coord.value), box = $("#locprev"); if (!box) return; box.innerHTML = c ? `<iframe class="map" loading="lazy" src="${mapUrl(c.lat, c.lng)}" title="Pratonton lokasi"></iframe>` : ""; }
 function csv() {
   const [a, b] = monthRange(S.month);
-  const rows = [["Staf","Cara gaji","Kadar","Hari hadir","Tidak hadir","Jam kerja","Lewat (kali)","Lewat (minit)","OT (jam)","Gaji asas","Potongan tidak hadir","OT (RM)","Elaun","Potongan lewat","Potongan advance","Bersih"]];
+  const rows = [["Staf","Cara gaji","Kadar","Hari hadir","Tidak hadir","Jam kerja","Lewat (kali)","Lewat (minit)","OT (jam)","Gaji asas","Potongan tidak hadir","OT (RM)","Elaun","Potongan lewat","Cuti berbayar (hari)","Bayaran cuti","Cuti tanpa gaji (hari)","Potongan cuti tanpa gaji","Potongan advance","Bersih"]];
   activeStaff().forEach(s => { const c = computePay(computeDays(S.punches, s.id, a, b), S.pay[s.id], s.id);
-    rows.push([s.full_name, c.hasPay ? PAY_LABEL[c.pay.pay_type] : "-", c.pay.rate, c.presentDays, c.absent, (c.workedMin / 60).toFixed(2), c.lateCount, Math.round(c.lateMin), (c.otMin / 60).toFixed(2), c.base.toFixed(2), c.absentDeduct.toFixed(2), c.otPay.toFixed(2), c.allowance.toFixed(2), c.lateDeduct.toFixed(2), c.advDeduct.toFixed(2), c.net.toFixed(2)]); });
+    rows.push([s.full_name, c.hasPay ? PAY_LABEL[c.pay.pay_type] : "-", c.pay.rate, c.presentDays, c.absent, (c.workedMin / 60).toFixed(2), c.lateCount, Math.round(c.lateMin), (c.otMin / 60).toFixed(2), c.base.toFixed(2), c.absentDeduct.toFixed(2), c.otPay.toFixed(2), c.allowance.toFixed(2), c.lateDeduct.toFixed(2), c.paidLeave, c.leavePay.toFixed(2), c.unpaidLeave, c.unpaidDeduct.toFixed(2), c.advDeduct.toFixed(2), c.net.toFixed(2)]); });
   const txt = "﻿" + rows.map(r => r.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
   const a2 = document.createElement("a"); a2.href = URL.createObjectURL(new Blob([txt], { type:"text/csv" })); a2.download = `gaji-${S.month}.csv`; a2.click();
 }
