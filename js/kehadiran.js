@@ -124,6 +124,9 @@ async function loadBase() {
   // Cuti diluluskan (V73): cuti berbayar tidak dikira tidak hadir; cuti tanpa gaji dipotong.
   const lv = await (S.owner ? c.from("staff_leaves").select("*").eq("status", "approved") : c.from("staff_leaves").select("*").eq("staff_id", S.me).eq("status", "approved"));
   S.leaves = lv.error ? [] : (lv.data || []);
+  // Tuntutan diluluskan (V74) dibayar bersama gaji bulan pay_month.
+  const cl = await (S.owner ? c.from("staff_claims").select("*").in("status", ["approved","paid"]) : c.from("staff_claims").select("*").eq("staff_id", S.me).in("status", ["approved","paid"]));
+  S.claims = cl.error ? [] : (cl.data || []);
   if (S.owner) {
     const { data, error } = await c.from("profiles").select("id,full_name,role,enabled").order("full_name");
     if (error) throw error; S.staff = data || [];
@@ -217,8 +220,9 @@ function computePay(days, pay, sid) {
   const lateDeduct = p.late_mode === "per_minute" ? lateMin * (+p.late_rate || 0) : p.late_mode === "per_late" ? lateCount * (+p.late_rate || 0) : 0;
   const allowance = +p.allowance || 0;
   const adv = sid ? advanceFor(sid) : [], advDeduct = adv.reduce((t, a) => t + a.amt, 0);
-  const net = base + leavePay + otPay + allowance - lateDeduct - absentDeduct - unpaidDeduct - advDeduct;
-  return { adv, advDeduct, paidLeave, unpaidLeave, leavePay, unpaidDeduct, presentDays, absent, workedMin, regMin, otMin, lateMin, lateCount, openCount, base, baseNote, otPay, lateDeduct, absentDeduct, allowance, net, pay:p, hasPay:!!pay };
+  const claims = sid ? (S.claims || []).filter(x => x.staff_id === sid && x.pay_month === S.month) : [], claimPay = claims.reduce((t, x) => t + +x.amount, 0);
+  const net = claimPay + base + leavePay + otPay + allowance - lateDeduct - absentDeduct - unpaidDeduct - advDeduct;
+  return { claims, claimPay, adv, advDeduct, paidLeave, unpaidLeave, leavePay, unpaidDeduct, presentDays, absent, workedMin, regMin, otMin, lateMin, lateCount, openCount, base, baseNote, otPay, lateDeduct, absentDeduct, allowance, net, pay:p, hasPay:!!pay };
 }
 
 /* ---------- render ---------- */
@@ -285,6 +289,7 @@ function payBox(c) {
     <span>OT <small class="mute">${(c.otMin / 60).toFixed(2)} jam × ${rm(p.ot_rate)}</small></span><span>${rm(c.otPay)}</span>
     ${c.allowance ? `<span>Elaun</span><span>${rm(c.allowance)}</span>` : ""}
     ${p.late_mode !== "none" ? `<span>Potongan lewat <small class="mute">${p.late_mode === "per_minute" ? `${Math.round(c.lateMin)} min × ${rm(p.late_rate)}` : `${c.lateCount} kali × ${rm(p.late_rate)}`}</small></span><span>−${rm(c.lateDeduct)}</span>` : ""}
+    ${c.claimPay ? `<span>Tuntutan (claim) <small class="mute">${c.claims.length} resit</small></span><span>${rm(c.claimPay)}</span>` : ""}
     ${c.adv.map(a => `<span>Potongan advance <small class="mute">ansuran ${a.n}/${a.of} · ${rm(a.total)}${a.note ? " · " + esc(a.note) : ""}</small></span><span>−${rm(a.amt)}</span>`).join("")}
     <span class="tot">Jumlah bersih</span><span class="tot">${rm(c.net)}</span></div>`;
 }
@@ -490,9 +495,9 @@ function parseCoord(s) {
 function locPreview() { const f = $("#f-loc"), c = parseCoord(f?.coord.value), box = $("#locprev"); if (!box) return; box.innerHTML = c ? `<iframe class="map" loading="lazy" src="${mapUrl(c.lat, c.lng)}" title="Pratonton lokasi"></iframe>` : ""; }
 function csv() {
   const [a, b] = monthRange(S.month);
-  const rows = [["Staf","Cara gaji","Kadar","Hari hadir","Tidak hadir","Jam kerja","Lewat (kali)","Lewat (minit)","OT (jam)","Gaji asas","Potongan tidak hadir","OT (RM)","Elaun","Potongan lewat","Cuti berbayar (hari)","Bayaran cuti","Cuti tanpa gaji (hari)","Potongan cuti tanpa gaji","Potongan advance","Bersih"]];
+  const rows = [["Staf","Cara gaji","Kadar","Hari hadir","Tidak hadir","Jam kerja","Lewat (kali)","Lewat (minit)","OT (jam)","Gaji asas","Potongan tidak hadir","OT (RM)","Elaun","Potongan lewat","Cuti berbayar (hari)","Bayaran cuti","Cuti tanpa gaji (hari)","Potongan cuti tanpa gaji","Potongan advance","Tuntutan","Bersih"]];
   activeStaff().forEach(s => { const c = computePay(computeDays(S.punches, s.id, a, b), S.pay[s.id], s.id);
-    rows.push([s.full_name, c.hasPay ? PAY_LABEL[c.pay.pay_type] : "-", c.pay.rate, c.presentDays, c.absent, (c.workedMin / 60).toFixed(2), c.lateCount, Math.round(c.lateMin), (c.otMin / 60).toFixed(2), c.base.toFixed(2), c.absentDeduct.toFixed(2), c.otPay.toFixed(2), c.allowance.toFixed(2), c.lateDeduct.toFixed(2), c.paidLeave, c.leavePay.toFixed(2), c.unpaidLeave, c.unpaidDeduct.toFixed(2), c.advDeduct.toFixed(2), c.net.toFixed(2)]); });
+    rows.push([s.full_name, c.hasPay ? PAY_LABEL[c.pay.pay_type] : "-", c.pay.rate, c.presentDays, c.absent, (c.workedMin / 60).toFixed(2), c.lateCount, Math.round(c.lateMin), (c.otMin / 60).toFixed(2), c.base.toFixed(2), c.absentDeduct.toFixed(2), c.otPay.toFixed(2), c.allowance.toFixed(2), c.lateDeduct.toFixed(2), c.paidLeave, c.leavePay.toFixed(2), c.unpaidLeave, c.unpaidDeduct.toFixed(2), c.advDeduct.toFixed(2), c.claimPay.toFixed(2), c.net.toFixed(2)]); });
   const txt = "﻿" + rows.map(r => r.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
   const a2 = document.createElement("a"); a2.href = URL.createObjectURL(new Blob([txt], { type:"text/csv" })); a2.download = `gaji-${S.month}.csv`; a2.click();
 }
@@ -563,6 +568,37 @@ async function onSubmit(e) {
 }
 
 /* host = elemen kosong dalam #ada-cloud-view. ctx = {client, profile} */
+// Slip gaji seorang staf untuk satu bulan (dipakai oleh Profil Saya & Profil staf). Keadaan modul dipulihkan selepas kira.
+export async function computeSlip(client, profile, staffId, month) {
+  const keep = { ...S };
+  try {
+    Object.assign(S, { client, profile, me: profile?.id, owner: profile?.role === "owner", month, settings: null });
+    await loadBase();
+    const [a, b] = monthRange(month);
+    let q = client.from("attendance_punches").select("*").eq("staff_id", staffId).gte("punched_at", klIso(a, "00:00")).lt("punched_at", klIso(b, "00:00")).order("punched_at", { ascending:true }).limit(2000);
+    const { data, error } = await q; if (error) throw error;
+    const days = computeDays(data || [], staffId, a, b), c = computePay(days, S.pay[staffId], staffId);
+    const lines = [];
+    if (c.hasPay) {
+      lines.push(["Gaji asas (" + PAY_LABEL[c.pay.pay_type] + ")", c.baseNote, c.base]);
+      if (c.leavePay) lines.push(["Bayaran cuti berbayar", c.paidLeave + " hari", c.leavePay]);
+      if (c.otPay || c.otMin) lines.push(["Kerja lebih masa (OT)", (c.otMin / 60).toFixed(2) + " jam × " + rm(c.pay.ot_rate), c.otPay]);
+      if (c.allowance) lines.push(["Elaun tetap", "", c.allowance]);
+      if (c.claimPay) lines.push(["Tuntutan (claim)", c.claims.length + " resit", c.claimPay]);
+      if (c.absentDeduct) lines.push(["Potongan tidak hadir", c.absent + " hari", -c.absentDeduct]);
+      if (c.unpaidDeduct) lines.push(["Potongan cuti tanpa gaji", c.unpaidLeave + " hari", -c.unpaidDeduct]);
+      if (c.lateDeduct) lines.push(["Potongan lewat", c.lateCount + " kali · " + Math.round(c.lateMin) + " min", -c.lateDeduct]);
+      c.adv.forEach(x => lines.push(["Potongan advance", "ansuran " + x.n + "/" + x.of + (x.note ? " · " + x.note : ""), -x.amt]));
+    }
+    const rows = days.filter(d => d.present || (d.workday && !d.future)).map(d => {
+      const fi = d.list.find(p => p.kind === "in"), lo = [...d.list].reverse().find(p => p.kind === "out");
+      return { label: dayLabel(d.key), in: fi ? hm(fi.punched_at) : "–", out: lo ? hm(lo.punched_at) : "–", worked: d.worked ? fmtMin(d.worked) : "–",
+        note: [d.leave ? (LEAVE_NAME[d.leave.kind] || "Cuti") : (!d.present ? "Tidak hadir" : ""), d.late ? "Lewat " + fmtMin(d.late) : "", d.ot ? "OT " + fmtMin(d.ot) : "", d.open && d.key < nowKey() ? "Tiada punch balik" : ""].filter(Boolean).join(" · ") };
+    });
+    return { c, lines, rows, stats: { present: c.presentDays, absent: c.absent, worked: fmtMin(c.workedMin), late: c.lateCount, lateMin: fmtMin(c.lateMin), ot: fmtMin(c.otMin), paidLeave: c.paidLeave, unpaidLeave: c.unpaidLeave } };
+  } finally { Object.assign(S, keep); }
+}
+
 export function mountKehadiran(host, ctx) {
   S.client = ctx.client; S.profile = ctx.profile; S.me = ctx.profile?.id; S.owner = ctx.profile?.role === "owner";
   if (!S.day) S.day = nowKey(); if (!S.month) S.month = nowKey().slice(0, 7);

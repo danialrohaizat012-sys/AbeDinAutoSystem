@@ -54,7 +54,8 @@ const PAY = { daily: "Harian", hourly: "Sejam", monthly: "Bulanan" };
 const SOCSO = { jenis1: "Jenis Pertama (Bencana + Ilat)", jenis2: "Jenis Kedua (Bencana sahaja, umur 60+)" };
 const STAT = { default: "Auto / Lalai", custom: "Custom (pilih potongan)" };
 const CHRONO = { lantikan: "Lantikan", pengesahan: "Pengesahan jawatan", kenaikan_gaji: "Kenaikan gaji", naik_pangkat: "Naik pangkat", tukar_jawatan: "Tukar jawatan", tukar_lokasi: "Tukar lokasi", amaran: "Surat amaran", disiplin: "Tindakan disiplin", penghargaan: "Penghargaan", berhenti: "Berhenti", lain: "Lain-lain" };
-const LEAVE = { annual: "Cuti Tahunan", mc: "Cuti Sakit (MC)", hosp: "Hospitalisasi", unpaid: "Cuti Tanpa Gaji", paternity: "Cuti Paterniti", maternity: "Cuti Bersalin", emergency: "Cuti Kecemasan", other: "Lain-lain" };
+export const LEAVE = { annual: "Cuti Tahunan", mc: "Cuti Sakit (MC)", hosp: "Hospitalisasi", unpaid: "Cuti Tanpa Gaji", paternity: "Cuti Paterniti", maternity: "Cuti Bersalin", emergency: "Cuti Kecemasan", other: "Lain-lain" };
+export const CLAIM = { minyak: "Minyak", tol: "Tol", parking: "Parking", makan: "Makan / Elaun makan", perjalanan: "Perjalanan / Penginapan", alat_ganti: "Alat ganti / Barang kerja", perubatan: "Perubatan", telefon: "Telefon / Internet", lain: "Lain-lain" };
 const LSTAT = { approved: "Lulus", pending: "Menunggu", rejected: "Ditolak" };
 const BANKS = ["Maybank", "CIMB Bank", "Public Bank", "RHB Bank", "Hong Leong Bank", "AmBank", "Bank Islam", "Bank Rakyat", "BSN", "Affin Bank", "Alliance Bank", "Bank Muamalat", "Agrobank", "OCBC Bank", "UOB", "HSBC", "Standard Chartered", "MBSB Bank", "Al Rajhi Bank", "Kuwait Finance House", "GXBank", "AEON Bank", "Boost Bank"];
 const EDU = ["Tiada", "UPSR / PT3", "SPM", "SKM", "STPM", "Sijil", "Diploma", "Ijazah", "Master", "PhD"];
@@ -114,7 +115,7 @@ async function shrink(file) {
 
 export function mountProfile(app, ctx, staff, onBack) {
   const client = ctx.client, me = ctx.profile || {}, id = staff.id;
-  const P = { hr: null, pay: null, hist: [], chrono: [], adv: [], leaves: [], edit: null, msg: "", cls: "", urls: {}, err: "" };
+  const P = { hr: null, pay: null, hist: [], chrono: [], adv: [], leaves: [], claims: [], slip: null, slipMonth: ym(), slipBusy: false, edit: null, msg: "", cls: "", urls: {}, err: "" };
   const say = (t, c) => { P.msg = t; P.cls = c || ""; const m = app.querySelector("#pmsg"); if (m) { m.textContent = t; m.className = "msg " + (c || ""); } };
 
   async function load() {
@@ -122,8 +123,10 @@ export function mountProfile(app, ctx, staff, onBack) {
       client.from("staff_work_history").select("*").eq("staff_id", id).order("start_date", { ascending: false }),
       client.from("staff_chronology").select("*").eq("staff_id", id).order("event_date", { ascending: false }),
       client.from("staff_advances").select("*").eq("staff_id", id).order("created_at", { ascending: false }),
-      client.from("staff_leaves").select("*").eq("staff_id", id).order("date_from", { ascending: false })];
-    const [hr, pay, hist, chrono, adv, lv] = await Promise.all(q);
+      client.from("staff_leaves").select("*").eq("staff_id", id).order("date_from", { ascending: false }),
+      client.from("staff_claims").select("*").eq("staff_id", id).order("claim_date", { ascending: false })];
+    const [hr, pay, hist, chrono, adv, lv, cl] = await Promise.all(q);
+    P.claims = cl.data || [];
     const err = [hr, pay, hist, chrono, adv, lv].find(r => r.error)?.error;
     if (err) P.err = /does not exist|schema cache/i.test(err.message) ? "Jadual profil staf belum dipasang. Jalankan V73_STAFF_HR.sql." : "Gagal memuatkan profil: " + err.message;
     P.hr = hr.data || { staff_id: id, category: "staff_biasa", employment_type: "permanent", contract_status: "active", statutory_mode: "default", socso_type: "jenis1", deduct_epf: true, deduct_socso: true, deduct_sip: true, children: 0, dependents: 0, citizenship: "Malaysia", al_extra: 0, al_carry: 0 };
@@ -131,7 +134,7 @@ export function mountProfile(app, ctx, staff, onBack) {
     await signUrls(); render();
   }
   async function signUrls() {
-    const paths = [P.hr.photo_path, P.hr.ic_photo_path, ...P.chrono.map(c => c.doc_path)].filter(p => p && !P.urls[p]);
+    const paths = [P.hr.photo_path, P.hr.ic_photo_path, ...P.chrono.map(c => c.doc_path), ...P.leaves.map(l => l.attachment_path), ...P.claims.map(c => c.receipt_path)].filter(p => p && !P.urls[p]);
     if (!paths.length) return;
     const { data } = await client.storage.from("staff-docs").createSignedUrls(paths, 3600);
     (data || []).forEach(d => { if (d.signedUrl) P.urls[d.path] = d.signedUrl; });
@@ -206,12 +209,12 @@ export function mountProfile(app, ctx, staff, onBack) {
         <div><label>Hari</label><input class="field" type="number" name="days" min="0.5" step="0.5" value="1" required></div><div><label>Status</label><select class="field" name="status"><option value="approved">Lulus</option><option value="pending">Menunggu</option></select></div>
         <div class="full"><label>Sebab</label><input class="field" name="reason"></div><div class="full"><button class="btn pri sm" type="submit">+ Rekod cuti</button></div></form>
       ${P.leaves.length ? `<div class="tw" style="margin-top:10px"><table><tr><th>Tarikh</th><th>Jenis</th><th>Hari</th><th>Status</th><th>Sebab</th><th></th></tr>${P.leaves.slice(0, 30).map(l => `<tr><td>${dmy(l.date_from)}${l.date_to !== l.date_from ? " – " + dmy(l.date_to) : ""}</td><td>${LEAVE[l.kind]}</td><td>${+l.days}</td>
-        <td><span class="chip ${l.status === "approved" ? "c-on" : l.status === "pending" ? "c-role" : "c-warn"}">${LSTAT[l.status]}</span></td><td>${esc(l.reason || "")}</td>
+        <td><span class="chip ${l.status === "approved" ? "c-on" : l.status === "pending" ? "c-role" : "c-warn"}">${LSTAT[l.status]}</span></td><td>${esc(l.reason || "")}${l.attachment_path && P.urls[l.attachment_path] ? ` · <a href="${esc(P.urls[l.attachment_path])}" target="_blank" style="color:var(--pri)">Lampiran</a>` : ""}${l.review_note ? `<div class="note">Nota: ${esc(l.review_note)}</div>` : ""}</td>
         <td style="white-space:nowrap">${l.status === "pending" ? `<button class="btn sm" data-lv="approved:${l.id}">Lulus</button> <button class="btn sm" data-lv="rejected:${l.id}">Tolak</button> ` : ""}<button class="btn sm bad" data-del="staff_leaves:${l.id}">✕</button></td></tr>`).join("")}</table></div>` : ""}</div>`;
   }
 
   function advView() {
-    const cur = ym(), active = P.adv.filter(a => a.status === "active");
+    const cur = ym(), active = P.adv.filter(a => a.status === "active"), ASTAT = { requested: ["Dimohon staf", "c-warn"], active: ["Aktif", "c-role"], done: ["Selesai", "c-on"], cancelled: ["Batal", "c-gry"], rejected: ["Ditolak", "c-gry"] };
     const thisMonth = active.reduce((s, a) => cur >= a.start_month && cur <= addMonths(a.start_month, a.months - 1) ? s + +a.monthly : s, 0);
     const owing = active.reduce((s, a) => { const paid = Math.max(0, Math.min(a.months, monthsBetween(a.start_month, cur))); return s + Math.max(0, +a.amount - paid * +a.monthly); }, 0);
     return `<div class="sec"><div class="row"><h4 class="grow">Advance Ansuran</h4><span class="note">Dipotong automatik dalam Kehadiran → Gaji ikut bulan.</span></div>
@@ -225,14 +228,37 @@ export function mountProfile(app, ctx, staff, onBack) {
       <div><div class="row"><b class="grow">Senarai Plan</b><span class="note">${P.adv.length} plan</span></div>
         ${active.length ? `<div class="tiles" style="margin:8px 0"><div class="tile t-y"><small>Potongan ${esc(monthName(cur))}</small><b>${rm(thisMonth)}</b></div><div class="tile"><small>Baki tertunggak</small><b>${rm(owing)}</b></div></div>` : ""}
         ${P.adv.length ? P.adv.map(a => { const end = addMonths(a.start_month, a.months - 1), done = Math.max(0, Math.min(a.months, monthsBetween(a.start_month, cur)));
-          return `<div class="box" style="margin-top:8px"><div class="row"><b class="grow">${rm(a.amount)} · ${a.months} bulan × ${rm(a.monthly)}</b><span class="chip ${a.status === "active" ? "c-role" : a.status === "done" ? "c-on" : "c-gry"}">${{ active: "Aktif", done: "Selesai", cancelled: "Batal" }[a.status]}</span></div>
+          return `<div class="box" style="margin-top:8px"><div class="row"><b class="grow">${rm(a.amount)} · ${a.months} bulan × ${rm(a.monthly)}</b><span class="chip ${ASTAT[a.status][1]}">${ASTAT[a.status][0]}</span></div>
             <div class="note">${esc(monthName(a.start_month))} – ${esc(monthName(end))} · ${a.status === "active" ? `${done}/${a.months} bulan dipotong` : ""} ${a.note ? "· " + esc(a.note) : ""}</div>
             <div class="bar"><i style="width:${a.status === "done" ? 100 : Math.round(done / a.months * 100)}%"></i></div>
-            <div class="row" style="margin-top:8px">${a.status === "active" ? `<button class="btn sm" data-adv="done:${a.id}">Tanda selesai</button><button class="btn sm" data-adv="cancelled:${a.id}">Batal</button>` : ""}<button class="btn sm bad" data-del="staff_advances:${a.id}">Padam</button></div></div>`; }).join("")
+            <div class="row" style="margin-top:8px">${a.review_note ? `<div class="note">Nota: ${esc(a.review_note)}</div>` : ""}${a.status === "requested" ? `<button class="btn sm pri" data-adv="active:${a.id}">Lulus</button><button class="btn sm" data-adv="rejected:${a.id}">Tolak</button>` : ""}${a.status === "active" ? `<button class="btn sm" data-adv="done:${a.id}">Tanda selesai</button><button class="btn sm" data-adv="cancelled:${a.id}">Batal</button>` : ""}<button class="btn sm bad" data-del="staff_advances:${a.id}">Padam</button></div></div>`; }).join("")
           : `<div class="box" style="margin-top:8px">Belum ada plan advance ansuran untuk staf ini.</div>`}</div></div></div>`;
   }
   const monthsBetween = (a, b) => { const [y1, m1] = a.split("-").map(Number), [y2, m2] = b.split("-").map(Number); return (y2 - y1) * 12 + (m2 - m1) + 1; };
 
+  function claimView() {
+    const sum = st => P.claims.filter(c => c.status === st).reduce((t, c) => t + +c.amount, 0), CS = { pending: ["Menunggu", "c-warn"], approved: ["Lulus", "c-on"], rejected: ["Ditolak", "c-gry"], paid: ["Dibayar", "c-blue"] };
+    const opts = [-1, 0, 1, 2].map(n => addMonths(ym(), n));
+    return `<div class="sec"><div class="row"><h4 class="grow">Tuntutan (Claim)</h4><span class="note">Diluluskan = dibayar bersama gaji bulan dipilih</span></div>
+      <div class="tiles"><div class="tile t-y"><small>Menunggu</small><b>${rm(sum("pending"))}</b></div><div class="tile t-g"><small>Lulus (belum bayar)</small><b>${rm(sum("approved"))}</b></div><div class="tile t-b"><small>Dibayar</small><b>${rm(sum("paid"))}</b></div></div>
+      <div class="tw" style="margin-top:10px"><table><tr><th>Tarikh</th><th>Kategori</th><th>Butiran</th><th>RM</th><th>Status</th><th></th></tr>
+      ${P.claims.map(c => `<tr><td>${dmy(c.claim_date)}</td><td>${esc(CLAIM[c.category] || c.category)}</td><td>${esc(c.description)}${c.receipt_path && P.urls[c.receipt_path] ? ` · <a href="${esc(P.urls[c.receipt_path])}" target="_blank" style="color:var(--pri)">Resit</a>` : ` <span class="note">(tiada resit)</span>`}${c.review_note ? `<div class="note">Nota: ${esc(c.review_note)}</div>` : ""}</td>
+        <td>${rm(c.amount)}</td><td><span class="chip ${CS[c.status][1]}">${CS[c.status][0]}</span>${c.pay_month && c.status !== "rejected" ? `<div class="note">Gaji ${esc(monthName(c.pay_month))}</div>` : ""}</td>
+        <td style="white-space:nowrap">${c.status === "pending" ? `<select class="field" data-cm="${c.id}" style="width:auto;padding:6px;font-size:13px">${opts.map(m => `<option value="${m}" ${m === ym() ? "selected" : ""}>${esc(monthName(m))}</option>`).join("")}</select> <button class="btn sm pri" data-cl="approved:${c.id}">Lulus</button> <button class="btn sm" data-cl="rejected:${c.id}">Tolak</button>` : ""}
+          ${c.status === "approved" ? `<button class="btn sm" data-cl="paid:${c.id}">Tanda dibayar</button>` : ""} <button class="btn sm bad" data-del="staff_claims:${c.id}">✕</button></td></tr>`).join("") || `<tr><td colspan="6" class="note"><i>Tiada tuntutan.</i></td></tr>`}</table></div></div>`;
+  }
+  function slipView() {
+    const opts = []; for (let i = 0; i < 12; i++) opts.push(addMonths(ym(), -i));
+    return `<div class="sec"><div class="row"><h4 class="grow">Slip Gaji</h4><select class="field" id="slipm" style="width:auto">${opts.map(m => `<option value="${m}" ${m === P.slipMonth ? "selected" : ""}>${esc(monthName(m))}</option>`).join("")}</select>
+      <button class="btn sm" data-a="slip">${P.slip ? "Kira semula" : "Kira slip"}</button>${P.slip ? `<button class="btn sm pri" data-a="slipprint">⎙ PDF</button>` : ""}</div>
+      <div style="margin-top:8px">${P.slipBusy ? `<p class="note">Mengira…</p>` : P.slip ? P.slipHtml(P.slip) : `<p class="note">Tekan "Kira slip" untuk lihat gaji bulan ini (dari rekod kehadiran, cuti, tuntutan dan advance).</p>`}</div></div>`;
+  }
+  async function loadSlip() {
+    P.slipBusy = true; render();
+    try { const [k, sl] = await Promise.all([import("./kehadiran.js?v=4"), import("./slip.js?v=1")]); P.slipHtml = sl.slipHtml; P.printSlip = sl.printSlip; P.slip = await k.computeSlip(client, me, id, P.slipMonth); }
+    catch (e) { P.slip = null; say(e?.message || String(e), "err"); }
+    P.slipBusy = false; render();
+  }
   function histView() {
     return `<div class="sec"><div class="row"><h4 class="grow">Pengalaman Kerja</h4><button class="btn sm" data-tg="hist">+ Tambah</button></div>
       <div class="tw"><table><tr><th>Nama syarikat</th><th>Mula</th><th>Berhenti</th><th>Jawatan</th><th>Gaji (RM)</th><th>Sebab</th><th></th></tr>
@@ -261,7 +287,7 @@ export function mountProfile(app, ctx, staff, onBack) {
     const payNote = `<p class="note full" style="margin:0">Jenis gaji, kadar dan elaun dikongsi dengan modul Kehadiran (kiraan gaji).</p>`;
     app.innerHTML = `<div class="pf">${header()}${P.err ? `<p class="msg err">${esc(P.err)}</p>` : ""}<p class="msg ${P.cls}" id="pmsg">${esc(P.msg)}</p>
       ${photoBox()}${section("personal")}${section("job", `<div class="kv"><div><span>Peranan sistem</span><span>${esc({ owner: "Owner", operations: "Operations", sales_advisor: "Sales Advisor" }[staff.role] || staff.role)}</span></div><div><span>Tempoh khidmat</span><span>${esc(serviceText(P.hr.join_date))}</span></div></div>`)}
-      ${section("contract")}${section("payroll", "", payNote)}${advView()}${leaveView()}${histView()}${chronoView()}${section("docs", docsExtra())}</div>`;
+      ${section("contract")}${section("payroll", "", payNote)}${slipView()}${claimView()}${advView()}${leaveView()}${histView()}${chronoView()}${section("docs", docsExtra())}</div>`;
     bind();
   }
 
@@ -285,8 +311,18 @@ export function mountProfile(app, ctx, staff, onBack) {
       if (a === "back") return onBack();
       if (a === "cancel") { P.edit = null; render(); }
       if (a === "pdf") printPdf();
+      if (a === "slip") loadSlip();
+      if (a === "slipprint" && P.slip && !P.printSlip(P.slip, { name: staff.full_name, month: P.slipMonth, ic: P.hr.ic_no, code: P.hr.staff_code, position: P.hr.position, bank: [P.hr.bank_name, P.hr.bank_account].filter(Boolean).join(" "), epf: P.hr.epf_no, socso: P.hr.socso_no })) say("Benarkan pop-up untuk cetak.", "err");
       if (a === "pledge") run(() => saveHr({ pledge_signed_at: new Date().toISOString(), pledge_signer: P.hr.pledge_signer || staff.full_name, pledge_signer_ic: P.hr.pledge_signer_ic || P.hr.ic_no }), "Ikrar direkodkan.");
     });
+    const sm = app.querySelector("#slipm"); if (sm) sm.onchange = () => { P.slipMonth = sm.value; P.slip = null; loadSlip(); };
+    app.querySelectorAll("[data-cl]").forEach(b => b.onclick = () => { const [s, rid] = b.dataset.cl.split(":");
+      const note = s === "rejected" ? prompt("Sebab tolak (pilihan):", "") : null; if (note === null && s === "rejected") return;
+      const patch = { status: s, reviewed_by: me.id || null, reviewed_at: new Date().toISOString() };
+      if (s === "approved") patch.pay_month = app.querySelector(`[data-cm="${rid}"]`)?.value || ym();
+      if (s === "rejected") { patch.review_note = note || null; patch.pay_month = null; }
+      run(async () => { const { error } = await client.from("staff_claims").update(patch).eq("id", rid); if (error) throw error; await reloadLists(); P.slip = null; },
+        s === "approved" ? "Tuntutan diluluskan dan akan masuk gaji." : s === "paid" ? "Tuntutan ditanda dibayar." : "Tuntutan ditolak."); });
     app.querySelectorAll("[data-ed]").forEach(b => b.onclick = () => { P.edit = b.dataset.ed; P.msg = ""; render(); app.querySelector(`[data-sf="${P.edit}"]`)?.scrollIntoView({ block: "nearest" }); });
     app.querySelectorAll("[data-tg]").forEach(b => b.onclick = () => { P.tg = P.tg === b.dataset.tg ? null : b.dataset.tg; render(); });
     const ic = app.querySelector('[data-sf="personal"] [name=ic_no]');
@@ -316,9 +352,11 @@ export function mountProfile(app, ctx, staff, onBack) {
     app.querySelectorAll("[data-del]").forEach(b => b.onclick = () => { const [t, rid] = b.dataset.del.split(":"); if (!confirm("Padam rekod ini?")) return;
       run(async () => { const { error } = await client.from(t).delete().eq("id", rid); if (error) throw error; await reloadLists(); }, "Rekod dipadam."); });
     app.querySelectorAll("[data-lv]").forEach(b => b.onclick = () => { const [s, rid] = b.dataset.lv.split(":");
-      run(async () => { const { error } = await client.from("staff_leaves").update({ status: s }).eq("id", rid); if (error) throw error; await reloadLists(); }, s === "approved" ? "Cuti diluluskan." : "Cuti ditolak."); });
+      const note = s === "rejected" ? prompt("Sebab tolak (pilihan):", "") : null; if (note === null && s === "rejected") return;
+      run(async () => { const { error } = await client.from("staff_leaves").update({ status: s, review_note: note || null, reviewed_by: me.id || null, reviewed_at: new Date().toISOString() }).eq("id", rid); if (error) throw error; await reloadLists(); }, s === "approved" ? "Cuti diluluskan." : "Cuti ditolak."); });
     app.querySelectorAll("[data-adv]").forEach(b => b.onclick = () => { const [s, rid] = b.dataset.adv.split(":");
-      run(async () => { const { error } = await client.from("staff_advances").update({ status: s }).eq("id", rid); if (error) throw error; await reloadLists(); }, "Plan dikemas kini."); });
+      const note = s === "rejected" ? prompt("Sebab tolak (pilihan):", "") : null; if (note === null && s === "rejected") return;
+      run(async () => { const { error } = await client.from("staff_advances").update(s === "rejected" ? { status: s, review_note: note || null } : { status: s }).eq("id", rid); if (error) throw error; await reloadLists(); }, "Plan dikemas kini."); });
     const af = app.querySelector('[data-add="adv"]');
     if (af) { const calc = () => { const a = +af.amount.value, m = +af.months.value; af.monthly.value = a > 0 && m > 0 ? (a / m).toFixed(2) : ""; }; af.amount.oninput = af.months.oninput = calc; }
     app.querySelectorAll("[data-add]").forEach(f => f.onsubmit = ev => {
@@ -338,10 +376,12 @@ export function mountProfile(app, ctx, staff, onBack) {
     });
   }
   async function reloadLists() {
-    const [h, c, a, l] = await Promise.all([client.from("staff_work_history").select("*").eq("staff_id", id).order("start_date", { ascending: false }),
+    const [h, c, a, l, cl] = await Promise.all([client.from("staff_work_history").select("*").eq("staff_id", id).order("start_date", { ascending: false }),
       client.from("staff_chronology").select("*").eq("staff_id", id).order("event_date", { ascending: false }),
       client.from("staff_advances").select("*").eq("staff_id", id).order("created_at", { ascending: false }),
-      client.from("staff_leaves").select("*").eq("staff_id", id).order("date_from", { ascending: false })]);
+      client.from("staff_leaves").select("*").eq("staff_id", id).order("date_from", { ascending: false }),
+      client.from("staff_claims").select("*").eq("staff_id", id).order("claim_date", { ascending: false })]);
+    P.claims = cl.data || [];
     P.hist = h.data || []; P.chrono = c.data || []; P.adv = a.data || []; P.leaves = l.data || [];
   }
 

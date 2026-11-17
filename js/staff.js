@@ -2,8 +2,8 @@
 // Cipta akaun log masuk baharu melalui Supabase Auth (klien sementara, sesi Owner tidak terjejas),
 // kemudian aktifkan profil melalui RPC staff_save. Senarai melalui RPC staff_list (lihat V66_STAFF_MIGRATION.sql).
 // UI dalam Shadow DOM supaya tidak bercampur dengan CSS sistem sedia ada.
-import { mountProfile, PROFILE_CSS, CATEGORY, EMP_TYPE, CONTRACT, completeness } from "./staff-profile.js?v=2";
-const CSS = `
+import { mountProfile, PROFILE_CSS, CATEGORY, EMP_TYPE, CONTRACT, completeness, LEAVE, CLAIM } from "./staff-profile.js?v=3";
+export const CSS = `
 :host{display:block;--card:#151412;--fg:#f4efe2;--mute:#a69f8c;--line:#2e2a20;--soft:#1e1c17;--pri:#e8b10b;--pri-fg:#141000;
   --ok:#3fae6b;--bad:#e0473f;--f:Inter,-apple-system,"Segoe UI",system-ui,sans-serif;color-scheme:dark}
 *{box-sizing:border-box}
@@ -45,7 +45,12 @@ label{display:block;font-size:11.5px;color:var(--mute);margin-bottom:4px;text-tr
 .ava{width:44px;height:44px;border-radius:50%;object-fit:cover;background:#3a2f0a;color:#ffd257;display:flex;align-items:center;justify-content:center;font-weight:800;flex:0 0 44px}
 .pbar{height:4px;border-radius:9px;background:#2c2a25;margin-top:6px;max-width:220px;overflow:hidden}.pbar i{display:block;height:100%;background:var(--pri)}
 .c-blue{background:#12263a;color:#8cc4ff}.c-pur{background:#2a1a3a;color:#d6a8ff}
-` + PROFILE_CSS;
+`;
+const FULL_CSS = CSS + PROFILE_CSS + `.inbox{border-color:#5a4a14}.inbox .it{display:flex;gap:8px;align-items:center;flex-wrap:wrap;border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--soft)}
+.inbox .it .grow{min-width:200px}.badge{background:#e0473f;color:#fff;border-radius:99px;font-size:12px;padding:1px 7px;margin-left:6px}`;
+const rmx = n => "RM" + Number(n || 0).toLocaleString("en-MY", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const dmyx = s => { if (!s) return "-"; const [y, m, d] = String(s).slice(0, 10).split("-"); return `${d}/${m}/${y}`; };
+const KLx = 8 * 3600000, ymx = () => new Date(Date.now() + KLx).toISOString().slice(0, 7);
 const ROLES = { operations: "Operations (staf)", sales_advisor: "Sales Advisor", owner: "Owner" };
 const ROLE_HINT = { operations: "Lalai: semua menu kecuali Jualan, Pelanggan dan Laporan. Boleh ubah di bawah.", sales_advisor: "Lalai: semua menu kecuali Runner. Boleh ubah di bawah.", owner: "Akses penuh termasuk sahkan pemeriksaan, modal dan urus staf." };
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -58,9 +63,9 @@ const SUPA_ESM = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 export function mountStaff(host, ctx) {
   const client = ctx.client, me = ctx.profile || {};
   const root = host.shadowRoot || host.attachShadow({ mode: "open" });
-  root.innerHTML = `<style>${CSS}</style><section class="shell" id="app"></section>`;
+  root.innerHTML = `<style>${FULL_CSS}</style><section class="shell" id="app"></section>`;
   const app = root.getElementById("app");
-  const S = { rows: null, err: "", mode: null, edit: null, msg: "", msgCls: "", share: "", hr: {}, cat: "all", q: "", prof: null, urls: {} };
+  const S = { rows: null, err: "", mode: null, edit: null, msg: "", msgCls: "", share: "", hr: {}, cat: "all", q: "", prof: null, urls: {}, inbox: { leaves: [], claims: [], adv: [] } };
   const $ = s => root.querySelector(s);
 
   async function load() {
@@ -73,7 +78,10 @@ export function mountStaff(host, ctx) {
     } else { S.rows = data || []; S.err = ""; }
     const hr = await client.from("staff_hr").select("staff_id,staff_code,ic_no,phone,address,dob,gender,emergency_name,emergency_phone,join_date,position,department,category,employment_type,contract_status,bank_name,bank_account,epf_no,socso_no,photo_path,ic_photo_path");
     S.hr = {}; (hr.data || []).forEach(h => S.hr[h.staff_id] = h);
-    const paths = Object.values(S.hr).map(h => h.photo_path).filter(Boolean);
+    const [il, ic, ia] = await Promise.all([client.from("staff_leaves").select("*").eq("status", "pending").order("date_from"),
+      client.from("staff_claims").select("*").eq("status", "pending").order("claim_date"), client.from("staff_advances").select("*").eq("status", "requested").order("created_at")]);
+    S.inbox = { leaves: il.data || [], claims: ic.data || [], adv: ia.data || [] };
+    const paths = [...Object.values(S.hr).map(h => h.photo_path), ...S.inbox.claims.map(c => c.receipt_path), ...S.inbox.leaves.map(l => l.attachment_path)].filter(Boolean);
     if (paths.length) { const { data: u } = await client.storage.from("staff-docs").createSignedUrls(paths, 3600); (u || []).forEach(x => { if (x.signedUrl) S.urls[x.path] = x.signedUrl; }); }
     render();
   }
@@ -98,11 +106,35 @@ export function mountStaff(host, ctx) {
       ${S.mode ? formView() : ""}
       ${S.share ? `<div class="share" id="share">${esc(S.share)}</div><div class="row"><button class="btn sm" data-a="copy">Salin untuk WhatsApp</button><button class="btn sm" data-a="hide">Tutup</button></div>` : ""}
       <p class="msg ${S.msgCls}" id="msg">${esc(S.msg)}</p>
+      ${S.mode ? "" : inboxView()}
       ${S.mode ? "" : catBar}
       <div class="list">${rows === null ? `<div class="empty">Memuatkan…</div>` : rows.map(item).join("") || `<div class="empty">Tiada akaun.</div>`}</div>`;
     bind();
   }
 
+  function inboxView() {
+    const I = S.inbox, n = I.leaves.length + I.claims.length + I.adv.length; if (!n) return "";
+    const nm = id => esc((S.rows || []).find(r => r.id === id)?.full_name || "Staf");
+    const link = p => p && S.urls[p] ? ` · <a href="${esc(S.urls[p])}" target="_blank" style="color:var(--pri)">${/\.pdf$/i.test(p) ? "PDF" : "Lampiran"}</a>` : "";
+    const btns = (t, id) => `<button class="btn sm pri" data-ok="${t}:${id}">Lulus</button><button class="btn sm" data-no="${t}:${id}">Tolak</button>`;
+    return `<div class="sec inbox"><div class="row"><h4 class="grow">Menunggu kelulusan<span class="badge">${n}</span></h4></div><div class="list" style="margin-top:8px">
+      ${I.leaves.map(l => `<div class="it"><div class="grow"><b>${nm(l.staff_id)}</b> · ${LEAVE[l.kind]} ${+l.days} hari<div class="mute">${dmyx(l.date_from)}${l.date_to !== l.date_from ? " – " + dmyx(l.date_to) : ""}${l.reason ? " · " + esc(l.reason) : ""}${link(l.attachment_path)}</div></div>${btns("staff_leaves", l.id)}</div>`).join("")}
+      ${I.claims.map(c => `<div class="it"><div class="grow"><b>${nm(c.staff_id)}</b> · Tuntutan ${esc(CLAIM[c.category])} <b>${rmx(c.amount)}</b><div class="mute">${dmyx(c.claim_date)} · ${esc(c.description)}${c.receipt_path ? link(c.receipt_path) : " · tiada resit"}</div></div>${btns("staff_claims", c.id)}</div>`).join("")}
+      ${I.adv.map(a => `<div class="it"><div class="grow"><b>${nm(a.staff_id)}</b> · Advance <b>${rmx(a.amount)}</b> / ${a.months} bulan<div class="mute">Mula potong ${esc(a.start_month)} · ${rmx(a.monthly)} sebulan${a.note ? " · " + esc(a.note) : ""}</div></div>${btns("staff_advances", a.id)}</div>`).join("")}
+      </div><p class="mute" style="margin-top:6px">Tuntutan yang diluluskan di sini dibayar bersama gaji bulan ${esc(ymx())}. Untuk pilih bulan lain, buka Profil staf.</p></div>`;
+  }
+  async function decide(btn, ok) {
+    const [t, id] = (ok ? btn.dataset.ok : btn.dataset.no).split(":");
+    const note = ok ? null : prompt("Sebab tolak (pilihan):", ""); if (!ok && note === null) return;
+    const now = new Date().toISOString();
+    const patch = t === "staff_leaves" ? { status: ok ? "approved" : "rejected", review_note: note || null, reviewed_by: me.id, reviewed_at: now }
+      : t === "staff_claims" ? { status: ok ? "approved" : "rejected", pay_month: ok ? ymx() : null, review_note: note || null, reviewed_by: me.id, reviewed_at: now }
+      : { status: ok ? "active" : "rejected", review_note: note || null };
+    btn.disabled = true;
+    const { error } = await client.from(t).update(patch).eq("id", id);
+    if (error) { btn.disabled = false; return say("Gagal: " + error.message, "err"); }
+    say(ok ? "Diluluskan ✓" : "Ditolak.", "ok"); load();
+  }
   function item(u) {
     const self = u.id === me.id, h = S.hr[u.id] || {}, c = completeness(h), ph = h.photo_path && S.urls[h.photo_path];
     const ini = (u.full_name || "?").split(/\s+/).filter(w => !/^(bin|binti|bt|b)$/i.test(w)).slice(0, 2).map(w => w[0]).join("").toUpperCase();
@@ -154,6 +186,8 @@ export function mountStaff(host, ctx) {
       if (a === "hide") { S.share = ""; render(); }
       if (a === "copy") navigator.clipboard?.writeText(S.share).then(() => say("Disalin ✓", "ok"), () => say("Pilih teks di atas dan salin.", ""));
     });
+    app.querySelectorAll("[data-ok]").forEach(b => b.onclick = () => decide(b, true));
+    app.querySelectorAll("[data-no]").forEach(b => b.onclick = () => decide(b, false));
     app.querySelectorAll("[data-prof]").forEach(b => b.onclick = () => openProfile(b.dataset.prof));
     app.querySelectorAll("[data-cat]").forEach(b => b.onclick = () => { S.cat = b.dataset.cat; render(); });
     const qi = $("#q"); if (qi) qi.oninput = () => { S.q = qi.value; const pos = qi.selectionStart; render(); const n = $("#q"); n.focus(); n.setSelectionRange(pos, pos); };
