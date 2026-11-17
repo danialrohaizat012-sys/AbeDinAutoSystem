@@ -2043,3 +2043,12 @@ html #ada-public-catalogue.abx-home .abx-sold-seal i svg{width:62%!important;hei
 html #ada-public-catalogue.abx-home .abx-sold-seal small{font-size:clamp(5.5px,2.1cqw,9.5px)!important;margin-top:clamp(3px,1.6cqw,8px)!important;padding-top:clamp(3px,1.4cqw,7px)!important;letter-spacing:.12em!important}
 html #ada-public-catalogue.abx-home .abx-main-photo .abx-sold-seal small{font-size:clamp(7px,1.7cqw,10px)!important}
 }
+
+/* SOLD seal dalam Inventori (admin) */
+.cloud-car .photo{position:relative;container-type:inline-size}
+.cloud-car.is-sold-car .photo img{filter:grayscale(.35) brightness(.55) contrast(1.05)}
+.ada-sold-seal{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;width:clamp(84px,38cqw,170px);aspect-ratio:1/1;border-radius:50%;background:rgba(14,15,14,.86);border:2px solid #e2b93b;box-shadow:0 12px 30px rgba(0,0,0,.45),inset 0 0 0 6px rgba(226,185,59,.08);color:#f0c94a;pointer-events:none;text-align:center}
+.ada-sold-seal i{display:grid;place-items:center;width:clamp(15px,5cqw,24px);height:clamp(15px,5cqw,24px);border:1.5px solid #e2b93b;border-radius:50%;margin-bottom:clamp(2px,1.2cqw,5px)}
+.ada-sold-seal i svg{width:62%;height:62%;fill:none;stroke:#f0c94a;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.ada-sold-seal b{font-size:clamp(16px,7.5cqw,34px);font-weight:900;letter-spacing:.08em;line-height:1;color:#f0c94a}
+.ada-sold-seal small{display:block;margin-top:clamp(3px,1.5cqw,7px);padding-top:clamp(3px,1.3cqw,6px);width:76%;border-top:1px solid rgba(226,185,59,.45);font-size:clamp(5.5px,2cqw,9px);font-weight:800;letter-spacing:.12em;color:#e9dcae}
