@@ -86,7 +86,7 @@
 <link rel="preconnect" href="https://buzpdyvvoiqgbeventwm.supabase.co" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm" crossorigin>
-<link rel="stylesheet" href="css/app.css?v=50.25">
+<link rel="stylesheet" href="css/app.css?v=50.26">
 <style id="ada-sold-overlay-midnight-gold">
 /* Midnight Gold SOLD seal, limited to sold public catalogue cards. */
 html.ada-public-route .ada-public-card.is-sold .ada-public-card-media{position:relative!important}
@@ -902,7 +902,7 @@ async function openPublicCatalogue(vehicleId=null){
     ${abxWhy}
     ${abxCta}
     ${abxFooter}
-    <div class="abx-wrap abx-staff"><button id="ada-cat-back" type="button">Staff Login</button></div>`;
+    <div class="abx-wrap abx-staff"><a class="abx-staff-login" href="/admin" data-staff-login>Staff Login</a></div>`;
 
     const grid=box.querySelector('#ada-cat-grid'),pagination=box.querySelector('#ada-cat-pagination'),search=box.querySelector('#ada-cat-search'),makeSel=box.querySelector('#ada-cat-make'),modelSel=box.querySelector('#ada-cat-model'),priceSel=box.querySelector('#ada-cat-price'),instSel=box.querySelector('#abx-inst'),yearSel=box.querySelector('#abx-year'),sortSel=box.querySelector('#ada-cat-sort'),count=box.querySelector('#ada-cat-count');
     registerPublicCatalogueVisitor().then(n=>{if(n===null)return;const vis=box.querySelector('#ada-cat-visitor'),c=box.querySelector('#ada-cat-visitor-count');if(vis&&c){c.textContent=n.toLocaleString('en-MY');vis.hidden=false}});
@@ -939,7 +939,7 @@ async function openPublicCatalogue(vehicleId=null){
     const v=rows[0];
     box.classList.add('abx-detail');
     if(!v){
-      box.innerHTML=`${abxHeader}<section class="abx-wrap abx-missing"><span class="abx-missing-ico">${ico.car}</span><h1>Unit ini tidak lagi tersedia</h1><p>Kenderaan mungkin telah dijual, dikeluarkan daripada katalog atau pautan tidak lagi aktif.</p><button id="ada-public-back-list" type="button" class="abx-btn abx-btn-y">${ico.arrow}Lihat kereta lain</button></section>${abxCta}${abxFooter}<div class="abx-wrap abx-staff"><button id="ada-cat-back" type="button">Staff Login</button></div>`;
+      box.innerHTML=`${abxHeader}<section class="abx-wrap abx-missing"><span class="abx-missing-ico">${ico.car}</span><h1>Unit ini tidak lagi tersedia</h1><p>Kenderaan mungkin telah dijual, dikeluarkan daripada katalog atau pautan tidak lagi aktif.</p><button id="ada-public-back-list" type="button" class="abx-btn abx-btn-y">${ico.arrow}Lihat kereta lain</button></section>${abxCta}${abxFooter}<div class="abx-wrap abx-staff"><a class="abx-staff-login" href="/admin" data-staff-login>Staff Login</a></div>`;
     }else{
       const imgs=Array.isArray(v.images)?[...v.images].sort((a,b)=>(b.is_cover?1:0)-(a.is_cover?1:0)):[],cover=imgs[0],coverUrl=cover?PUBLIC_BUCKET+cover.storage_path:'';
       const t=safe(titleOf(v)),st=publicStatus(v),[bl,bc]=badgeOf(v),km=Number(v.mileage_km||0).toLocaleString('en-MY');
@@ -975,7 +975,7 @@ async function openPublicCatalogue(vehicleId=null){
       ${abxCalc(publicOfferPrice(v)||30000)}
       ${others.length?`<section class="abx-section abx-wrap"><div class="abx-head"><h2>Kereta Lain Untuk Anda</h2><a href="/" data-abx-home="stok">Lihat Semua Kereta ${ico.arrow}</a></div><div class="abx-grid">${others.map(x=>card(x)).join('')}</div></section>`:''}
       ${abxWhy}${abxCta}${abxFooter}
-      <div class="abx-wrap abx-staff"><button id="ada-cat-back" type="button">Staff Login</button></div>`;
+      <div class="abx-wrap abx-staff"><a class="abx-staff-login" href="/admin" data-staff-login>Staff Login</a></div>`;
       abxBindCalc();
       const step=d=>{const tb=[...box.querySelectorAll('[data-public-image]')];if(!tb.length)return;const cur=tb.findIndex(x=>x.classList.contains('is-active'));tb[(cur+d+tb.length)%tb.length].click()};
       box.querySelector('.abx-prev')?.addEventListener('click',()=>step(-1));box.querySelector('.abx-next')?.addEventListener('click',()=>step(1));
@@ -988,7 +988,7 @@ async function openPublicCatalogue(vehicleId=null){
   box.insertAdjacentHTML('beforeend',signature);
   el('ada-cloud-gate').querySelector('.wrap').appendChild(box);
   box.querySelectorAll('a.ada-public-view').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const u=new URL(a.href,location.href),id=u.searchParams.get('car');if(!id)return;history.pushState({publicCar:id},'','/?car='+encodeURIComponent(id));openPublicCatalogue(id);window.scrollTo({top:0,behavior:'instant'})}));
-  box.querySelector('#ada-cat-back').onclick=()=>{if(vehicleId){box.remove();history.replaceState(null,'','/?catalogue=1');openPublicCatalogue()}else{location.href='/admin'}};
+  box.querySelector('#ada-cat-back')&&(box.querySelector('#ada-cat-back').onclick=()=>{if(vehicleId){box.remove();history.replaceState(null,'','/?catalogue=1');openPublicCatalogue()}else{location.href='/admin'}});box.querySelectorAll('[data-staff-login]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();location.href='/admin'}));
   box.querySelector('#ada-public-back-list')?.addEventListener('click',()=>{history.replaceState(null,'','/?catalogue=1');openPublicCatalogue()});
   box.querySelectorAll('[data-public-image]').forEach(b=>b.addEventListener('click',()=>{const main=box.querySelector('#ada-public-main-image'),frame=box.querySelector('.ada-public-main-photo');if(main){if(main.src===b.dataset.publicImage)return;frame?.classList.add('is-switching');const apply=()=>{main.src=b.dataset.publicImage;box.querySelectorAll('[data-public-image]').forEach(x=>x.classList.toggle('is-active',x===b));const counter=box.querySelector('.ada-public-image-counter');if(counter)counter.textContent=(Number(b.dataset.publicIndex)+1)+'/'+box.querySelectorAll('[data-public-image]').length;setTimeout(()=>frame?.classList.remove('is-switching'),80)};setTimeout(apply,90)}}));
   

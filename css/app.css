@@ -1449,7 +1449,7 @@ html #ada-public-catalogue.abx-home .abx-cta h2{margin:0 0 4px!important;font-si
 html #ada-public-catalogue.abx-home .abx-cta p{margin:0!important;color:#d6d8db!important;font-size:14px!important}
 html #ada-public-catalogue.abx-home .abx-wa-big{padding:14px 30px!important;font-size:16px!important;margin-left:auto!important;margin-right:38%!important}
 html #ada-public-catalogue.abx-home .abx-staff{display:flex!important;justify-content:center!important;padding:18px 0 8px!important}
-html #ada-public-catalogue.abx-home .abx-staff button{border:0!important;background:transparent!important;color:#8a9099!important;font-size:12.5px!important;text-decoration:underline!important;cursor:pointer!important;box-shadow:none!important;padding:6px!important}
+html #ada-public-catalogue.abx-home .abx-staff button,.abx-staff a{border:0!important;background:transparent!important;color:#8a9099!important;font-size:12.5px!important;text-decoration:underline!important;cursor:pointer!important;box-shadow:none!important;padding:6px!important}
 html #ada-public-catalogue.abx-home .ada-binalab-signature{background:var(--ink)!important;color:#aeb3ba!important;border-top:1px solid #ffffff14!important;margin:0!important}
 html #ada-public-catalogue.abx-home .ada-binalab-signature a{color:var(--y)!important}
 /* Responsif */
@@ -2020,3 +2020,5 @@ html.ada-light .ada-sales-summary>div{background:#fff}
 .ada-sales-filters select option{color:#f3f1ea;background:#151a1f}
 html.ada-light .ada-sales-filters select{color:#111!important;background-color:#fff!important;border-color:#d6d9de!important}
 html.ada-light .ada-sales-filters select option{color:#111;background:#fff}
+
+.abx-staff a{display:inline-block!important}
