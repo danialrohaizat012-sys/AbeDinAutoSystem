@@ -140,7 +140,7 @@ function statusBayar(r) {
   if (r.deposit_dibayar_at) return { cls: 'st-disahkan', t: 'Deposit ✓' };
   return { cls: 'st-baru', t: 'Belum bayar' };
 }
-const DOC_LABEL = { lesen: 'Lesen Memandu', kp: 'Kad Pengenalan', utiliti: 'Bil Utiliti', gambar: 'Gambar Pemandu' };
+const DOC_LABEL = { lesen: 'Lesen Memandu', kp: 'Kad Pengenalan', utiliti: 'Bil Utiliti', gambar: 'Gambar Pemandu', resit: 'Resit Bayaran (pelanggan)' };
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const dmy = s => s ? String(s).slice(0, 10).split('-').reverse().join('/') : '-';
 const hm = s => s ? String(s).slice(0, 5) : '';
@@ -591,7 +591,7 @@ export function mountSewa(host, ctx) {
   }
 
   async function signDocs(r) {
-    const paths = Object.values(r.docs || {}).filter(p => !S.urls[p]);
+    const paths = [...Object.values(r.docs || {}), r.deposit_resit, r.penuh_resit].filter(p => p && !S.urls[p]);
     if (!paths.length) return;
     const { data } = await client.storage.from('sewa-docs').createSignedUrls(paths, 3600);
     (data || []).forEach(x => { if (x.signedUrl) S.urls[x.path] = x.signedUrl; });
@@ -601,6 +601,9 @@ export function mountSewa(host, ctx) {
   function bayaranCard(r) {
     const nama = ctx.profile?.full_name || 'Staf';
     const sel = id => `<select id="${id}" style="width:auto;min-width:150px;padding:8px 10px">${KAEDAH.map(k => `<option>${k}</option>`).join('')}</select>`;
+    const resitIn = k => `<label class="btn sm" style="cursor:pointer" title="Pilihan">📎 <span id="rs-${k}-n">Lampir resit (pilihan)</span><input type="file" id="rs-${k}" accept="image/*,application/pdf" hidden></label>`;
+    const lihat = (path, label = 'Lihat resit') => path ? (S.urls[path] ? `<a class="btn sm" href="${esc(S.urls[path])}" target="_blank" rel="noopener">🧾 ${label}</a>` : `<span class="mute">🧾 ${label} (memuatkan…)</span>`) : '';
+    const rsCust = (r.docs || {}).resit;
     const done = (at, kaedah, oleh) => `<span style="color:var(--ok);font-weight:700">✓ Diterima</span> <span class="mute">${tsMY(at)}${kaedah ? ' · ' + esc(kaedah) : ''}${oleh ? ' · ' + esc(oleh) : ''}</span>`;
     const jumlah = r.jumlah != null ? Number(r.jumlah) : null, dep = r.deposit != null ? Number(r.deposit) : null;
     const dibayar = (r.deposit_dibayar_at ? dep || 0 : 0) + (r.penuh_dibayar_at ? (jumlah || 0) + (r.deposit_dibayar_at ? 0 : dep || 0) : 0);
@@ -609,10 +612,11 @@ export function mountSewa(host, ctx) {
     const row = (title, amt, body) => `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid var(--line)"><div><b>${title}</b><div class="mute">${amt}</div></div><div class="row" style="align-items:center">${body}</div></div>`;
     return `<section class="card"><h3>Bayaran</h3>
       <p class="mute" style="margin-bottom:4px">Pilihan pelanggan: <b style="color:var(--fg)">${r.pilihan_bayaran === 'penuh' ? 'Bayar Penuh' : r.pilihan_bayaran === 'deposit' ? 'Bayar Deposit Dahulu' : '-'}</b>${jumlah == null ? ' · <span style="color:var(--warn)">Isi caj dalam Edit Dokumen Sewa untuk jumlah sebenar</span>' : ''}</p>
-      ${row('Deposit', dep != null ? rm(dep) : 'Belum ditetapkan', r.deposit_dibayar_at ? done(r.deposit_dibayar_at, r.deposit_kaedah, r.deposit_oleh) + ' <button class="btn sm" data-a="pay-undo" data-k="deposit">Batal</button>'
-        : `${sel('kd-deposit')}<button class="btn sm pri" data-a="pay" data-k="deposit">✓ Sahkan Deposit Diterima</button>`)}
-      ${row('Bayaran Penuh', jumlah != null ? `${rm(jumlah)} sewa${r.deposit_dibayar_at || !dep ? '' : ' + ' + rm(dep) + ' deposit'}` : 'Belum ditetapkan', r.penuh_dibayar_at ? done(r.penuh_dibayar_at, r.penuh_kaedah, r.penuh_oleh) + ' <button class="btn sm" data-a="pay-undo" data-k="penuh">Batal</button>'
-        : `${sel('kd-penuh')}<button class="btn sm pri" data-a="pay" data-k="penuh">✓ Sahkan Bayaran Penuh</button>`)}
+      ${rsCust ? `<div style="padding:8px 0;border-bottom:1px solid var(--line)" class="row"><span class="mute" style="align-self:center">Resit dimuat naik oleh pelanggan:</span>${lihat(rsCust, 'Resit pelanggan')}</div>` : ''}
+      ${row('Deposit', dep != null ? rm(dep) : 'Belum ditetapkan', r.deposit_dibayar_at ? done(r.deposit_dibayar_at, r.deposit_kaedah, r.deposit_oleh) + ' ' + lihat(r.deposit_resit) + ' <button class="btn sm" data-a="pay-undo" data-k="deposit">Batal</button>'
+        : `${sel('kd-deposit')}${resitIn('deposit')}<button class="btn sm pri" data-a="pay" data-k="deposit">✓ Sahkan Deposit Diterima</button>`)}
+      ${row('Bayaran Penuh', jumlah != null ? `${rm(jumlah)} sewa${r.deposit_dibayar_at || !dep ? '' : ' + ' + rm(dep) + ' deposit'}` : 'Belum ditetapkan', r.penuh_dibayar_at ? done(r.penuh_dibayar_at, r.penuh_kaedah, r.penuh_oleh) + ' ' + lihat(r.penuh_resit) + ' <button class="btn sm" data-a="pay-undo" data-k="penuh">Batal</button>'
+        : `${sel('kd-penuh')}${resitIn('penuh')}<button class="btn sm pri" data-a="pay" data-k="penuh">✓ Sahkan Bayaran Penuh</button>`)}
       ${r.deposit_dibayar_at || r.penuh_dibayar_at ? row('Deposit Dipulangkan', 'Selepas kenderaan dipulangkan & diperiksa', r.deposit_pulang_at ? `<span style="color:var(--ok);font-weight:700">✓ Dipulangkan</span> <span class="mute">${tsMY(r.deposit_pulang_at)}${r.deposit_pulang_oleh ? ' · ' + esc(r.deposit_pulang_oleh) : ''}</span> <button class="btn sm" data-a="pay-undo" data-k="pulang">Batal</button>`
         : '<button class="btn sm" data-a="pay" data-k="pulang">Sahkan Deposit Dipulangkan</button>') : ''}
       <div style="display:flex;justify-content:space-between;margin-top:10px;font-weight:800"><span>${baki > 0 ? 'Baki perlu dibayar' : 'Status'}</span><span style="color:${baki > 0 ? 'var(--warn)' : 'var(--ok)'}">${perlu ? (baki > 0 ? rm(baki) : 'LUNAS ✓') : '-'}</span></div>
@@ -669,12 +673,25 @@ export function mountSewa(host, ctx) {
       const k = t.dataset.k, nama = ctx.profile?.full_name || 'Staf', now = new Date().toISOString();
       const kaedah = app.querySelector('#kd-' + k)?.value || null;
       const labels = { deposit: 'Deposit diterima', penuh: 'Bayaran penuh diterima', pulang: 'Deposit dipulangkan' };
-      if (a === 'pay' && !confirm(`Sahkan: ${labels[k]}${kaedah ? ' (' + kaedah + ')' : ''} untuk ${r.ref_no}?`)) return;
+      const fail = app.querySelector('#rs-' + k)?.files?.[0] || null;
+      if (a === 'pay' && !confirm(`Sahkan: ${labels[k]}${kaedah ? ' (' + kaedah + ')' : ''}${fail ? ' + resit' : ''} untuk ${r.ref_no}?`)) return;
       if (a === 'pay-undo' && !confirm(`Batalkan rekod "${labels[k]}"?`)) return;
-      const patch = k === 'deposit' ? { deposit_dibayar_at: a === 'pay' ? now : null, deposit_kaedah: a === 'pay' ? kaedah : null, deposit_oleh: a === 'pay' ? nama : null }
-        : k === 'penuh' ? { penuh_dibayar_at: a === 'pay' ? now : null, penuh_kaedah: a === 'pay' ? kaedah : null, penuh_oleh: a === 'pay' ? nama : null }
+      let resit = null;
+      if (a === 'pay' && fail) {
+        const pm = app.querySelector('#pay-msg');
+        if (fail.size > 8 * 1024 * 1024) { pm.textContent = 'Fail resit melebihi 8MB.'; pm.classList.add('err'); return; }
+        pm.classList.remove('err'); pm.textContent = 'Memuat naik resit…';
+        const ext = (fail.type === 'application/pdf' ? 'pdf' : (fail.name.split('.').pop() || 'jpg')).toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 5) || 'jpg';
+        const path = `sewa/${r.id}/resit-${k}-${Date.now()}.${ext}`;
+        const up = await client.storage.from('sewa-docs').upload(path, fail, { contentType: fail.type || 'application/octet-stream', upsert: false });
+        if (up.error) { pm.textContent = 'Gagal muat naik resit: ' + up.error.message; pm.classList.add('err'); return; }
+        resit = path;
+      }
+      const patch = k === 'deposit' ? { deposit_dibayar_at: a === 'pay' ? now : null, deposit_kaedah: a === 'pay' ? kaedah : null, deposit_oleh: a === 'pay' ? nama : null, deposit_resit: a === 'pay' ? resit : null }
+        : k === 'penuh' ? { penuh_dibayar_at: a === 'pay' ? now : null, penuh_kaedah: a === 'pay' ? kaedah : null, penuh_oleh: a === 'pay' ? nama : null, penuh_resit: a === 'pay' ? resit : null }
         : { deposit_pulang_at: a === 'pay' ? now : null, deposit_pulang_oleh: a === 'pay' ? nama : null };
-      update(r.id, patch, a === 'pay' ? labels[k] + ' — direkodkan.' : 'Rekod bayaran dibatalkan.');
+      await update(r.id, patch, a === 'pay' ? labels[k] + ' — direkodkan.' : 'Rekod bayaran dibatalkan.');
+      signDocs(S.rows.find(x => x.id === r.id));
       return;
     }
     if (a && a.startsWith('share-') && r) {
@@ -788,5 +805,9 @@ export function mountSewa(host, ctx) {
     }
   });
 
+  app.addEventListener('change', e => {
+    const f = e.target; if (!f.id || !f.id.startsWith('rs-') || f.type !== 'file') return;
+    const n = app.querySelector('#' + f.id + '-n'); if (n) n.textContent = f.files[0] ? '✓ ' + f.files[0].name.slice(0, 22) : 'Lampir resit (pilihan)';
+  });
   render(); load();
 }
