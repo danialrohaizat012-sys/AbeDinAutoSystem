@@ -86,6 +86,55 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px}
 .err{color:var(--red-ink);font-size:13px;margin-top:8px;min-height:1em}
 .copybox{width:100%;min-height:220px;font-size:13px;font-family:ui-monospace,Menlo,monospace;border:1px solid var(--line);background:var(--soft);border-radius:11px;padding:10px}
 .toast{font:15px/1.45 var(--f);position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:var(--y);color:#0b0b0b;font-weight:800;padding:10px 16px;border-radius:12px;display:none;z-index:10000}
+
+/* --- Kad dikemas (v3): warna ikut status --- */
+.list{gap:12px;grid-template-columns:repeat(auto-fill,minmax(310px,1fr))}
+.car{--sc:#6b6b6b;background:#131311;border:1px solid #2a2722;border-left:0;border-radius:16px;padding:14px 14px 12px;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:10px}
+.car::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--sc)}
+.car.st-tempah{--sc:#4f8ff7}.car.st-lulus{--sc:#34b36b}.car.st-gagal{--sc:#e5534b}.car.st-belum{--sc:#6b6b6b}
+.car.is-alert{border-color:#6b2420;box-shadow:0 0 0 1px #6b2420 inset}
+.top{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
+.id{display:flex;align-items:center;gap:8px}
+.plate{font-size:15px;padding:4px 10px;border-radius:7px;background:#000;border:1.5px solid #6d6d6d;color:#fff;letter-spacing:.07em}
+.vid{margin:0;font-size:12px;color:#8c8778}
+.badges{display:flex;gap:5px;flex-wrap:wrap}
+.pill{font-size:11.5px;font-weight:800;padding:4px 9px;border-radius:999px;letter-spacing:.02em}
+.p-belum{background:#26241f;color:#cfc8b6;border:1px solid #3a372f}
+.p-tempah{background:#13233f;color:#9cc2ff;border:1px solid #2b4a7e}
+.p-lulus{background:#10301e;color:#8ce3ad;border:1px solid #1f5a37}
+.p-gagal{background:#3a1513;color:#ffaaa4;border:1px solid #6b2420}
+.p-B5{background:#2e2608;color:#ffd84d;border:1px solid #5a4a10}.p-B7{background:#000;color:#ffd84d;border:1px solid #5a4a10}.p-B5B7{background:#f5c400;color:#0b0b0b;border:1px solid #f5c400}
+.model{margin:0;font-size:14.5px;font-weight:800;letter-spacing:.01em;color:#f4efe2;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.yr{font-size:12.5px;font-weight:700;color:#8c8778}
+.invrow{display:flex;gap:6px;flex-wrap:wrap}
+.inv{font-size:11.5px;font-weight:800;padding:3px 9px;border-radius:7px;background:#26241f;color:#cfc8b6}
+.inv-sold{background:#2a1d3d;color:#cdb2ff}.inv-res{background:#3d2d0c;color:#ffcc66}.inv-warn{background:#3a1513;color:#ffaaa4}
+.appt{display:flex;gap:12px;align-items:center;background:#0c0c0b;border:1px solid #2a2722;border-radius:12px;padding:9px 11px}
+.cal{flex:none;width:50px;border-radius:10px;overflow:hidden;text-align:center;background:#1b1a17;border:1px solid #3a372f}
+.cal b{display:block;font-size:21px;line-height:1.15;padding-top:4px;color:#fff}
+.cal span{display:block;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;background:var(--sc);color:#fff;padding:2px 0}
+.appt-i{min-width:0;display:flex;flex-direction:column;gap:2px}
+.appt-t{font-size:15px;font-weight:800;color:#fff;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.appt-s{font-size:13px;color:#b3ad9c;font-weight:600}.appt-s.pad{padding:0 2px}
+.tag{margin:0;font-size:11px;font-weight:900;border-radius:6px;padding:2px 7px}
+.tag.t-today{background:#e5534b;color:#fff}.tag.t-soon{background:#f5c400;color:#0b0b0b}
+.todo{margin:0;padding:9px 11px;border-radius:10px;background:#1b1a17;border:1px solid #2a2722;color:#e8e2d2;font-size:13px;font-weight:600;line-height:1.4;align-items:flex-start}
+.todo .ti{flex:none;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:900;background:var(--sc);color:#fff;margin-top:-1px}
+.todo.alert{background:#2a1110;border-color:#6b2420;color:#ffc9c4}.todo.alert .ti{background:#e5534b}
+.note{margin:0;font-size:12.5px;color:#9e988a;font-style:italic}
+.docs{margin:0;align-items:center;gap:5px}
+.dl{font-size:11.5px;font-weight:800;color:#ffaaa4;margin-right:2px}.dl.all{color:#8ce3ad}
+.doc{border:1px dashed #4a463c;color:#9e988a;border-radius:8px;padding:4px 9px;font-size:12px}
+.doc.ok{border:1px solid #1f5a37;background:#10301e;color:#8ce3ad}
+.foot{display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;border-top:1px solid #24221d;padding-top:10px;margin-top:2px}
+.acts{margin:0;gap:5px}
+.chip{border-radius:9px;padding:5px 9px;font-size:12px;color:#b3ad9c}
+.chip.cur{background:var(--sc);border-color:var(--sc);color:#fff}
+.edit{border:1px solid #3a372f;border-radius:9px;padding:5px 11px;color:#f4efe2;font-size:12.5px}
+.ro .foot{display:none}
+.grp-h{background:#0c0c0b;border-color:#2a2722;color:#f4efe2}
+.car .plate{font-size:18px;font-weight:900;letter-spacing:.1em;padding:5px 12px;border-radius:8px;background:#000;color:#fff;border:2px solid #f5c400;box-shadow:0 0 0 3px rgba(245,196,0,.12)}
+.slot .pl{font-size:15px;font-weight:900;letter-spacing:.08em;color:#fff}
 `;
 const TYPES = [{v:"B5",l:"B5 (MV15)",c:"p-B5"},{v:"B7",l:"B7",c:"p-B7"},{v:"B5+B7",l:"B5 + B7",c:"p-B5B7"}];
 const STATUSES = [{v:"belum",l:"Belum tempah"},{v:"tempah",l:"Booking"},{v:"lulus",l:"✓ Lulus"},{v:"gagal",l:"Gagal"}];
@@ -244,20 +293,27 @@ function renderLocs(all) {
 function card(c) {
   const t = find(TYPES, c.type), n = nextStep(c);
   const dl = c.status === "tempah" && c.date ? dayLabel(c.date) : "";
-  return `<div class="car" data-card="${esc(c.plate)}">
-    <div class="top"><div><span class="plate">${esc(c.plate)}</span>${c.vid ? `<span class="vid">${esc(c.vid)}</span>` : ""}
-      <div class="model">${esc(c.model || "—")}${c.year ? " · " + esc(c.year) : ""}</div>
-      ${!c.inv ? `<div class="warnline">⚠ Tiada dalam inventori (mungkin dah dijual)</div>` : ""}
-      ${INV_LABEL[c.vstatus] ? `<div class="warnline" style="color:var(--y-ink)">${INV_LABEL[c.vstatus]}</div>` : ""}</div>
-      <button class="edit" data-edit="${esc(c.plate)}" type="button">Edit</button></div>
-    <div class="meta"><span class="pill ${t.c}">${t.l}</span><span class="pill p-${c.status}">${find(STATUSES, c.status).l}</span>
-      ${c.date && c.status !== "belum" ? `<span class="date">📅 ${fmtDate(c.date)}${c.time ? " · 🕘 " + fmtTime(c.time) : ""}${dl ? `<span class="tag">${dl}</span>` : ""}</span>` : ""}</div>
-    ${where(c) ? `<div class="where">📍 ${esc(where(c))}</div>` : ""}
-    ${c.runner ? `<div class="runner">🧑 Runner: ${esc(c.runner)}</div>` : ""}
-    <div class="todo${n.alert ? " alert" : ""}"><span>${n.alert ? "⚠️" : "👉"}</span><span>${esc(n.txt)}</span></div>
+  const dd = c.date ? c.date.split("-") : null;
+  const docOk = DOCS.filter(x => c.docs[x.k]).length;
+  const inv = c.vstatus === "sold" ? `<span class="inv inv-sold">Dah dijual · perlu tukar milik</span>` : c.vstatus === "reserved" ? `<span class="inv inv-res">Reserved</span>` : c.vstatus === "preparation" ? `<span class="inv">Preparation</span>` : "";
+  const appt = c.date && c.status !== "belum" ? `<div class="appt">
+      <div class="cal"><b>${+dd[2]}</b><span>${MONTHS[+dd[1] - 1]}</span></div>
+      <div class="appt-i">
+        <div class="appt-t">${c.time ? fmtTime(c.time) : "Masa belum ditetapkan"}${dl ? `<span class="tag t-${dl === "Hari ini" ? "today" : "soon"}">${dl}</span>` : ""}</div>
+        <div class="appt-s">${where(c) ? "📍 " + esc(where(c)) : "Lokasi belum ditetapkan"}</div>
+        ${c.runner ? `<div class="appt-s">🧑 ${esc(c.runner)}</div>` : ""}
+      </div></div>` : (where(c) || c.runner) ? `<div class="appt-s pad">${where(c) ? "📍 " + esc(where(c)) : ""}${where(c) && c.runner ? " · " : ""}${c.runner ? "🧑 " + esc(c.runner) : ""}</div>` : "";
+  return `<div class="car st-${c.status}${n.alert ? " is-alert" : ""}" data-card="${esc(c.plate)}">
+    <div class="top"><div class="id"><span class="plate">${esc(c.plate)}</span>${c.vid ? `<span class="vid">${esc(c.vid)}</span>` : ""}</div>
+      <div class="badges"><span class="pill ${t.c}">${t.l}</span><span class="pill p-${c.status}">${find(STATUSES, c.status).l}</span></div></div>
+    <div class="model">${esc(c.model || "—")}${c.year ? `<span class="yr">${esc(c.year)}</span>` : ""}</div>
+    ${!c.inv || inv ? `<div class="invrow">${!c.inv ? `<span class="inv inv-warn">⚠ Tiada dalam inventori</span>` : ""}${inv}</div>` : ""}
+    ${appt}
+    <div class="todo${n.alert ? " alert" : ""}"><span class="ti">${n.alert ? "!" : "→"}</span><span>${esc(n.txt)}</span></div>
     ${c.note ? `<div class="note">${esc(c.note)}</div>` : ""}
-    ${c.status === "tempah" || c.status === "belum" ? `<div class="docs">${DOCS.map(x => { const ok = !!c.docs[x.k]; return `<button class="doc${ok ? " ok" : ""}" data-doc="${x.k}" data-plate="${esc(c.plate)}" type="button">${ok ? "✓ " : "○ "}${x.l}</button>`; }).join("")}</div>` : ""}
-    <div class="acts">${STATUSES.map(s => `<button class="chip${s.v === c.status ? " cur" : ""}" data-st="${s.v}" data-plate="${esc(c.plate)}" type="button">${s.l}</button>`).join("")}</div>
+    ${c.status === "tempah" || c.status === "belum" ? `<div class="docs"><span class="dl ${docOk === DOCS.length ? "all" : ""}">Dokumen ${docOk}/${DOCS.length}</span>${DOCS.map(x => { const ok = !!c.docs[x.k]; return `<button class="doc${ok ? " ok" : ""}" data-doc="${x.k}" data-plate="${esc(c.plate)}" type="button">${ok ? "✓" : "○"} ${x.l}</button>`; }).join("")}</div>` : ""}
+    <div class="foot"><div class="acts">${STATUSES.map(s => `<button class="chip${s.v === c.status ? " cur" : ""}" data-st="${s.v}" data-plate="${esc(c.plate)}" type="button">${s.l}</button>`).join("")}</div>
+      <button class="edit" data-edit="${esc(c.plate)}" type="button">✎ Edit</button></div>
   </div>`;
 }
 function renderList() {
