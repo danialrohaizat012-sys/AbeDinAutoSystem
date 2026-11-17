@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Pendaftaran Staf · Abe Din Auto</title>
+<link rel="icon" href="icon-32.png">
+<style>
+:root{--bg:#0a0a09;--card:#151412;--fg:#f4efe2;--mute:#a69f8c;--line:#2e2a20;--soft:#1e1c17;--pri:#e8b10b;--pri-fg:#141000;--bad:#ff9a93;--ok:#8be0aa;
+  --f:Inter,-apple-system,"Segoe UI",system-ui,sans-serif;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.45 var(--f)}
+.wrap{max-width:620px;margin:0 auto;padding:18px max(16px,env(safe-area-inset-left)) 80px}
+.brand{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 0 4px;text-align:center}
+.brand img{width:min(62%,230px);height:auto}
+.kick{font-size:11.5px;letter-spacing:.16em;color:var(--pri);font-weight:800}
+h1{margin:4px 0 0;font-size:26px;font-weight:800;letter-spacing:-.015em}
+.mute{color:var(--mute);font-size:14px}
+form{display:flex;flex-direction:column;gap:14px;margin-top:16px}
+fieldset{border:1px solid var(--line);background:var(--card);border-radius:16px;padding:16px;margin:0;display:grid;grid-template-columns:1fr 1fr;gap:12px;min-width:0}
+legend{font-weight:800;font-size:15px;padding:0 6px;color:var(--pri)}
+.full{grid-column:1/-1}
+@media(max-width:540px){fieldset{grid-template-columns:1fr}}
+label{display:block;font-size:12px;color:var(--mute);margin-bottom:5px;font-weight:600;letter-spacing:.02em}
+label b{color:var(--pri)}
+input,select,textarea{width:100%;min-width:0;font:inherit;font-size:16px;color:var(--fg);background:var(--soft);border:1px solid var(--line);border-radius:11px;padding:11px 12px}
+textarea{min-height:76px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--pri);outline-offset:1px}
+.file{display:flex;gap:12px;align-items:center;background:var(--soft);border:1px dashed #5a4a14;border-radius:12px;padding:10px;cursor:pointer}
+.file img{width:64px;height:64px;border-radius:10px;object-fit:cover;background:#222;flex:none}
+.file span{font-size:14px}
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--fg);cursor:pointer;line-height:1.4}
+.chk input{width:22px;height:22px;flex:none;accent-color:var(--pri);margin:0}
+.btn{border:0;border-radius:14px;padding:15px;font:inherit;font-weight:800;font-size:17px;cursor:pointer;background:var(--pri);color:var(--pri-fg);width:100%}
+.btn:disabled{opacity:.6}
+.msg{border-radius:12px;padding:12px 14px;font-size:14.5px}
+.msg.err{background:#3e1b19;color:#ffb3ad}.msg.ok{background:#1d3a28;color:var(--ok)}
+.done{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;text-align:center;display:flex;flex-direction:column;gap:12px;margin-top:18px}
+.done .big{font-size:46px}
+.done a{color:var(--pri);font-weight:700}
+.pw{position:relative}.pw button{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:0;color:var(--mute);font:inherit;font-size:13px;cursor:pointer;padding:6px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand"><img src="abe-din-logo.png" alt="Abe Din Auto"><span class="kick">PENDAFTARAN STAF</span><h1>Sertai Abe Din Auto</h1>
+    <p class="mute">Isi maklumat anda. Akaun boleh digunakan selepas diluluskan oleh Owner.</p></div>
+
+  <div id="bad" class="msg err" hidden style="margin-top:16px"></div>
+
+  <form id="f" hidden novalidate>
+    <fieldset><legend>Akaun log masuk</legend>
+      <div class="full"><label>Nama penuh (seperti dalam IC) <b>*</b></label><input name="full_name" autocomplete="name" required></div>
+      <div><label>Emel <b>*</b></label><input name="email" type="email" autocomplete="email" inputmode="email" required></div>
+      <div><label>No. telefon <b>*</b></label><input name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="01x-xxxxxxx" required></div>
+      <div><label>Kata laluan (min. 8 aksara) <b>*</b></label><div class="pw"><input name="pw" type="password" autocomplete="new-password" minlength="8" required><button type="button" data-eye>Lihat</button></div></div>
+      <div><label>Ulang kata laluan <b>*</b></label><input name="pw2" type="password" autocomplete="new-password" required></div>
+    </fieldset>
+
+    <fieldset><legend>Maklumat peribadi</legend>
+      <div><label>No. IC <b>*</b></label><input name="ic_no" inputmode="numeric" placeholder="900101-03-xxxx" required></div>
+      <div><label>Jantina <b>*</b></label><select name="gender" required><option value="">Pilih…</option><option value="male">Lelaki</option><option value="female">Perempuan</option></select></div>
+      <div><label>Tarikh lahir <b>*</b></label><input name="dob" type="date" required></div>
+      <div><label>Jawatan dipohon</label><input name="position_applied" placeholder="cth: Sales, Mekanik, Runner"></div>
+      <div class="full"><label>Alamat rumah <b>*</b></label><textarea name="address" autocomplete="street-address" required></textarea></div>
+      <div class="full"><label>Pendidikan tertinggi</label><input name="education" placeholder="cth: SPM, Diploma Automotif"></div>
+    </fieldset>
+
+    <fieldset><legend>Waris kecemasan</legend>
+      <div><label>Nama waris <b>*</b></label><input name="emergency_name" required></div>
+      <div><label>Hubungan</label><input name="emergency_relation" placeholder="cth: Ibu, Isteri"></div>
+      <div class="full"><label>No. telefon waris <b>*</b></label><input name="emergency_phone" type="tel" inputmode="tel" required></div>
+    </fieldset>
+
+    <fieldset><legend>Bank &amp; caruman (untuk gaji)</legend>
+      <div><label>Nama bank</label><input name="bank_name" placeholder="cth: Maybank"></div>
+      <div><label>No. akaun bank</label><input name="bank_account" inputmode="numeric"></div>
+      <div><label>No. KWSP</label><input name="epf_no" inputmode="numeric"></div>
+      <div><label>No. PERKESO</label><input name="socso_no"></div>
+    </fieldset>
+
+    <fieldset><legend>Dokumen</legend>
+      <label class="file full"><img id="pv-photo" alt="" hidden><span id="tx-photo">📷 Gambar diri (berukuran pasport)</span><input type="file" name="photo" accept="image/*" hidden></label>
+      <label class="file full"><img id="pv-ic" alt="" hidden><span id="tx-ic">🪪 Salinan IC (depan)</span><input type="file" name="icimg" accept="image/*" hidden></label>
+    </fieldset>
+
+    <label class="chk"><input type="checkbox" name="akuan" required> Saya mengaku semua maklumat yang diberikan adalah benar, dan bersetuju maklumat ini disimpan oleh Abe Din Auto untuk urusan pekerjaan.</label>
+
+    <div id="msg" class="msg err" hidden></div>
+    <button class="btn" type="submit" id="go">Hantar pendaftaran</button>
+    <p class="mute" style="text-align:center">Sudah ada akaun aktif? <a href="app.html" style="color:var(--pri)">Log masuk di sini</a></p>
+  </form>
+
+  <div id="done" class="done" hidden>
+    <div class="big">✅</div>
+    <h1 style="font-size:22px">Pendaftaran dihantar</h1>
+    <p class="mute" id="done-tx">Owner akan menyemak dan meluluskan akaun anda. Selepas diluluskan, log masuk dengan emel dan kata laluan yang anda daftar tadi.</p>
+    <a href="app.html">Pergi ke halaman log masuk →</a>
+  </div>
+</div>
+
+<script type="module">
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+const sb = createClient("https://buzpdyvvoiqgbeventwm.supabase.co", "sb_publishable_zuuNipsMpalN_38SJwXpFA_MRzQ6eZ0",
+  { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: "ada-daftar-staf" } });
+const $ = s => document.querySelector(s);
+const token = new URLSearchParams(location.search).get("k") || "";
+const f = $("#f"), msg = $("#msg");
+const files = { photo: null, icimg: null };
+
+function bad(t) { $("#bad").textContent = t; $("#bad").hidden = false; f.hidden = true; }
+function say(t) { msg.textContent = t; msg.hidden = !t; if (t) msg.scrollIntoView({ behavior: "smooth", block: "center" }); }
+
+(async () => {
+  if (!token) return bad("Link pendaftaran tidak lengkap. Minta link daripada Owner Abe Din Auto.");
+  const { data, error } = await sb.rpc("staff_reg_check", { p_token: token });
+  if (error) return bad("Tidak dapat menyemak link: " + error.message);
+  if (!data) return bad("Link pendaftaran ini sudah tidak sah atau ditutup. Minta link baharu daripada Owner.");
+  f.hidden = false;
+})();
+
+document.querySelector("[data-eye]").onclick = e => { const i = f.pw; i.type = i.type === "password" ? "text" : "password"; e.target.textContent = i.type === "password" ? "Lihat" : "Sorok"; };
+for (const [name, pv, tx] of [["photo", "#pv-photo", "#tx-photo"], ["icimg", "#pv-ic", "#tx-ic"]]) {
+  f[name].onchange = e => { const file = e.target.files?.[0]; if (!file) return; files[name] = file; const im = $(pv); im.src = URL.createObjectURL(file); im.hidden = false; $(tx).textContent = "✓ " + file.name + " (tekan untuk tukar)"; };
+}
+async function shrink(file) {
+  try { const bmp = await createImageBitmap(file, { imageOrientation: "from-image" }); const sc = Math.min(1, 1400 / Math.max(bmp.width, bmp.height));
+    const c = document.createElement("canvas"); c.width = Math.round(bmp.width * sc); c.height = Math.round(bmp.height * sc); c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+    const b = await new Promise(r => c.toBlob(r, "image/jpeg", 0.82)); if (b) return b; } catch (_) {}
+  return file;
+}
+
+f.onsubmit = async e => {
+  e.preventDefault(); say("");
+  const v = Object.fromEntries(new FormData(f)); for (const k in v) if (typeof v[k] === "string") v[k] = v[k].trim();
+  const need = [["full_name", "Nama penuh"], ["email", "Emel"], ["phone", "No. telefon"], ["pw", "Kata laluan"], ["ic_no", "No. IC"], ["gender", "Jantina"], ["dob", "Tarikh lahir"], ["address", "Alamat"], ["emergency_name", "Nama waris"], ["emergency_phone", "Telefon waris"]];
+  const miss = need.filter(([k]) => !v[k]).map(([, l]) => l);
+  if (miss.length) return say("Sila isi: " + miss.join(", ") + ".");
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v.email)) return say("Emel tidak sah.");
+  if (v.pw.length < 8) return say("Kata laluan sekurang-kurangnya 8 aksara.");
+  if (v.pw !== v.pw2) return say("Kata laluan tidak sama.");
+  if (!f.akuan.checked) return say("Sila tandakan pengakuan di bawah.");
+  const btn = $("#go"); btn.disabled = true; btn.textContent = "Mendaftar akaun…";
+  try {
+    let session = null, user = null;
+    const su = await sb.auth.signUp({ email: v.email, password: v.pw, options: { data: { full_name: v.full_name } } });
+    const exists = su.error ? /already registered|already exists/i.test(su.error.message) : (su.data?.user && Array.isArray(su.data.user.identities) && su.data.user.identities.length === 0);
+    if (su.error && !exists) { if (/not allowed|disabled/i.test(su.error.message)) throw new Error("Pendaftaran akaun baharu sedang ditutup. Hubungi Owner."); throw su.error; }
+    if (exists) {
+      const si = await sb.auth.signInWithPassword({ email: v.email, password: v.pw });
+      if (si.error) throw new Error("Emel ini sudah didaftarkan. Jika ini akaun anda, masukkan kata laluan yang betul.");
+      session = si.data.session; user = si.data.user;
+    } else { session = su.data.session; user = su.data.user; }
+
+    const data = { full_name: v.full_name, phone: v.phone, ic_no: v.ic_no, gender: v.gender, dob: v.dob, address: v.address,
+      emergency_name: v.emergency_name, emergency_relation: v.emergency_relation, emergency_phone: v.emergency_phone,
+      bank_name: v.bank_name, bank_account: v.bank_account, epf_no: v.epf_no, socso_no: v.socso_no,
+      position_applied: v.position_applied, education: v.education };
+    let skipped = false;
+    if (session && user) {
+      btn.textContent = "Memuat naik dokumen…";
+      for (const [k, col] of [["photo", "photo_path"], ["icimg", "ic_photo_path"]]) {
+        if (!files[k]) continue;
+        const path = `${user.id}/daftar/${col === "photo_path" ? "gambar" : "ic"}-${Date.now()}.jpg`;
+        const { error } = await sb.storage.from("staff-docs").upload(path, await shrink(files[k]), { contentType: "image/jpeg", upsert: false });
+        if (error) throw new Error("Gagal muat naik dokumen: " + error.message);
+        data[col] = path;
+      }
+    } else if (files.photo || files.icimg) skipped = true;
+
+    btn.textContent = "Menghantar…";
+    const { error } = await sb.rpc("staff_register", { p_token: token, p_email: v.email, p_data: data });
+    if (error) throw error;
+    try { await sb.auth.signOut(); } catch (_) {}
+    f.hidden = true; $("#done").hidden = false;
+    if (!session) $("#done-tx").textContent = "Semak emel anda untuk mengesahkan akaun. Owner akan meluluskan pendaftaran anda; selepas itu log masuk dengan emel dan kata laluan tadi." + (skipped ? " Gambar dan IC boleh diserahkan terus kepada Owner." : "");
+    window.scrollTo(0, 0);
+  } catch (err) {
+    say(err?.message || String(err)); btn.disabled = false; btn.textContent = "Hantar pendaftaran";
+  }
+};
+</script>
+</body>
+</html>
