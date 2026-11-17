@@ -78,6 +78,10 @@ textarea{resize:vertical;min-height:90px}
 .ovl .bar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 14px;padding-top:max(10px,env(safe-area-inset-top));background:#1f2f57;color:#fff;font-weight:700;font-size:14px}
 .ovl .bar a{color:#fff;font-size:13px;opacity:.85}
 .ovl iframe{flex:1;width:100%;border:0;background:#f5f7fd}
+.pk{width:100%;border-collapse:separate;border-spacing:0 6px}
+.pk th{text-align:left;font-size:12px;color:var(--mute);font-weight:600;padding:0 6px 0 0}
+.pk td{padding:0 6px 0 0}.pk td:first-child{width:22%}.pk td:last-child{width:44px;padding:0}
+.pk input{padding:9px 10px}
 .terma h4{margin:12px 0 4px;color:var(--gold);font-size:13px}.terma p{margin:0 0 6px}.terma p b{color:var(--gold)}
 .terma{font-size:13px;color:#cfd3da;max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#0b0f10}
 `;
@@ -97,19 +101,31 @@ const fmtRM = v => 'RM ' + Number(v || 0).toLocaleString('ms-MY', { minimumFract
 const aktifSewa = r => r.status === 'baru' || r.status === 'disahkan';
 const mula = r => new Date(`${r.ambil_tarikh}T${hm(r.ambil_masa)}`);
 const akhir = r => new Date(`${r.pulang_tarikh}T${hm(r.pulang_masa)}`);
-// Kiraan harga: hari penuh x harga hari + baki jam x harga jam (maksimum harga sehari)
+// Harga pakej: [{hari, harga}] — jumlah bagi tempoh tepat (1 hari, 2 hari, 3 hari…).
+// Tempoh tiada pakej tepat: hari × kadar sehari pakej terbesar yang tidak melebihi tempoh itu.
+function pakejTier(k, jenis) {
+  return (Array.isArray(k?.pakej) ? k.pakej : []).map(x => ({ hari: +x.hari, harga: +(jenis === 'agen' ? x.agen : x.customer) }))
+    .filter(x => x.hari > 0 && x.harga > 0).sort((a, b) => a.hari - b.hari);
+}
+function kiraPakej(t, n, fallbackHari) {
+  if (!t.length) return fallbackHari > 0 ? { total: n * fallbackHari, kadar: fallbackHari, label: `${n} hari × ${fmtRM(fallbackHari)}` } : null;
+  const ex = t.find(x => x.hari === n);
+  if (ex) return { total: ex.harga, kadar: ex.harga / n, label: `Pakej ${n} hari` };
+  const base = [...t].reverse().find(x => x.hari <= n) || t[0], kadar = base.harga / base.hari;
+  return { total: +(n * kadar).toFixed(2), kadar, label: `${n} hari × ${fmtRM(kadar)} (kadar pakej ${base.hari} hari)` };
+}
+// Kiraan caj (ikut T&C): minimum sehari; baki >12 jam = sehari penuh; baki ≤12 jam × harga sejam (had kadar sehari)
 function kiraHarga(k, jenis, a, b) {
   const jam = (b - a) / 36e5; if (!k || !(jam > 0)) return null;
-  const hHari = Number(jenis === 'agen' ? k.harga_hari_agen : k.harga_hari_customer) || 0;
   const hJam = Number(jenis === 'agen' ? k.harga_jam_agen : k.harga_jam_customer) || 0;
   let hari = Math.floor(jam / 24), baki = Math.ceil(jam - hari * 24 - 1e-9);
   if (hari === 0) { hari = 1; baki = 0; }
-  if (baki > 12) { hari += 1; baki = 0; }   // T&C: lebih 12 jam dikira sehari penuh
-  let tambahan = baki * hJam;
-  if (!hJam && baki) { tambahan = hHari; }
-  tambahan = Math.min(tambahan, hHari);
-  const terang = `${hari} hari × ${fmtRM(hHari)}` + (baki ? ` + ${baki} jam ${hJam ? '× ' + fmtRM(hJam) : '(dikira sehari)'}${baki * hJam > hHari && hJam ? ' (had sehari)' : ''}` : '');
-  return { hari, baki, caj_sewa: +(hari * hHari).toFixed(2), tambahan_masa: +tambahan.toFixed(2), deposit: Number(k.deposit) || 0, hHari, terang };
+  if (baki > 12) { hari += 1; baki = 0; }
+  const p = kiraPakej(pakejTier(k, jenis), hari, Number(jenis === 'agen' ? k.harga_hari_agen : k.harga_hari_customer) || 0);
+  if (!p) return null;
+  const tambahan = baki ? Math.min(hJam ? baki * hJam : p.kadar, p.kadar) : 0;
+  const terang = p.label + (baki ? ` + ${baki} jam ${hJam ? '× ' + fmtRM(hJam) : '(dikira sehari)'}` : '');
+  return { hari, baki, caj_sewa: +p.total.toFixed(2), tambahan_masa: +tambahan.toFixed(2), deposit: Number(k.deposit) || 0, hHari: p.kadar, terang };
 }
 // Terma: baris "## Tajuk" = tajuk bahagian, "1. teks" = klausa bernombor
 function termaHtml(t) {
@@ -369,8 +385,7 @@ export function mountSewa(host, ctx) {
         return `<button class="item" data-kereta="${esc(k.id)}"${owner ? '' : ' style="cursor:default"'}><div><span class="ref">${esc(k.no_pendaftaran)}</span><br><b>${esc(k.model)}</b></div>${kst(k)}
           <span class="sub">${[k.kumpulan, k.warna, k.tahun].filter(Boolean).map(esc).join(' · ') || '&nbsp;'}</span>
           <div class="sub" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px">
-            <div style="border:1px solid var(--line);border-radius:10px;padding:8px 10px"><small style="display:block">Customer</small><b style="color:var(--gold);font-size:15px">${fmtRM(k.harga_hari_customer)}</b>/hari<br>${fmtRM(k.harga_jam_customer)}/jam</div>
-            <div style="border:1px solid var(--line);border-radius:10px;padding:8px 10px"><small style="display:block">Agen</small><b style="color:var(--blue);font-size:15px">${fmtRM(k.harga_hari_agen)}</b>/hari<br>${fmtRM(k.harga_jam_agen)}/jam</div></div>
+            ${[['customer', 'Customer', 'gold'], ['agen', 'Agen', 'blue']].map(([j, l, c]) => { const t = pakejTier(k, j); return `<div style="border:1px solid var(--line);border-radius:10px;padding:8px 10px"><small style="display:block">${l}</small>${t.length ? t.map(x => `<div style="display:flex;justify-content:space-between;gap:6px"><span>${x.hari} hari</span><b style="color:var(--${c})">${fmtRM(x.harga)}</b></div>`).join('') : `<b style="color:var(--${c});font-size:15px">${fmtRM(k['harga_hari_' + j])}</b>/hari`}<div style="margin-top:3px">${fmtRM(k['harga_jam_' + j])}/jam</div></div>`; }).join('')}</div>
           <span class="sub">Deposit ${fmtRM(k.deposit)}${now ? ` · <b style="color:var(--warn)">Sedang disewa (${esc(now.ref_no)}) hingga ${dmy(now.pulang_tarikh)}</b>` : next ? ` · Tempahan seterusnya ${dmy(next.ambil_tarikh)}` : ' · Tiada tempahan'}</span></button>`;
       }).join('') || '<div class="empty">Belum ada kereta dalam stok.</div>'}</div>`;
   }
@@ -383,18 +398,53 @@ export function mountSewa(host, ctx) {
         ${f('kumpulan', 'Kumpulan', { ph: 'cth: MPV' })}${f('warna', 'Warna')}${f('tahun', 'Tahun', { type: 'number', step: '1', ph: 'cth: 2022' })}
         <div><label for="k-status">Status</label><select id="k-status" data-kk="status">${Object.entries(KSTATUS).map(([v, l]) => `<option value="${v}"${k.status === v ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
       </div></section>
-      <section class="card"><h3>Harga</h3><div class="ed">
-        <h4>Customer</h4>${f('harga_hari_customer', 'Harga sehari (RM)', { type: 'number', ph: '0.00' })}${f('harga_jam_customer', 'Harga sejam – tambahan masa (RM)', { type: 'number', ph: '0.00' })}
-        <h4>Agen</h4>${f('harga_hari_agen', 'Harga sehari (RM)', { type: 'number', ph: '0.00' })}${f('harga_jam_agen', 'Harga sejam – tambahan masa (RM)', { type: 'number', ph: '0.00' })}
-        <h4>Lain-lain</h4>${f('deposit', 'Sekuriti Deposit (RM)', { type: 'number', ph: '0.00' })}<div id="k-untung" class="mute" style="align-self:end"></div>
+      <section class="card"><h3>Harga Pakej (jumlah bagi tempoh)</h3>
+        <p class="mute" style="margin-bottom:10px">Isi <b>jumlah harga</b> bagi setiap tempoh. Contoh: 1 hari RM120, 2 hari RM230, 3 hari RM330. Tekan <b>+ Tambah pakej</b> untuk 7 hari, 30 hari dan lain-lain.</p>
+        <table class="pk"><thead><tr><th>Hari</th><th>Customer (RM)</th><th>Agen (RM)</th><th></th></tr></thead><tbody id="pk-body">${pakejRows(k)}</tbody></table>
+        <div class="row" style="margin-top:10px;align-items:center"><button type="button" class="btn sm" data-a="pk-add">+ Tambah pakej</button><span class="mute" id="k-untung"></span></div>
+        <p class="mute" style="margin-top:10px">Tempoh tanpa pakej tepat (cth 5 hari) dikira: hari × kadar sehari pakej terbesar di bawahnya (cth kadar pakej 3 hari).</p></section>
+      <section class="card"><h3>Tambahan Masa & Deposit</h3><div class="ed">
+        ${f('harga_jam_customer', 'Customer: harga sejam (RM)', { type: 'number', ph: '0.00' })}${f('harga_jam_agen', 'Agen: harga sejam (RM)', { type: 'number', ph: '0.00' })}
+        ${f('deposit', 'Sekuriti Deposit (RM)', { type: 'number', ph: '0.00' })}<div></div>
         <div class="full"><label for="k-nota">Nota</label><textarea id="k-nota" data-kk="nota" maxlength="1000">${esc(k.nota || '')}</textarea></div>
-      </div><p class="mute" style="margin-top:10px">Baki jam selepas hari penuh dicaj ikut harga sejam, maksimum harga sehari. Jika harga sejam kosong, baki jam dicaj sehari.</p></section>
+      </div><p class="mute" style="margin-top:10px">Baki 12 jam ke bawah dicaj ikut harga sejam (tidak melebihi kadar sehari). Baki lebih 12 jam dikira sehari penuh.</p></section>
       <div class="savebar"><button class="btn pri" data-a="save-kereta">Simpan</button>${S.kid !== 'baru' ? '<button class="btn danger" data-a="del-kereta">Padam</button>' : ''}<span class="msg" id="k-msg"></span></div>`;
   }
+  function pakejRow(x = {}) {
+    return `<tr><td><input type="number" min="1" step="1" inputmode="numeric" data-pk="hari" value="${esc(x.hari ?? '')}" placeholder="cth 7"></td>
+      <td><input type="number" min="0" step="0.01" inputmode="decimal" data-pk="customer" value="${esc(x.customer ?? '')}" placeholder="0.00"></td>
+      <td><input type="number" min="0" step="0.01" inputmode="decimal" data-pk="agen" value="${esc(x.agen ?? '')}" placeholder="0.00"></td>
+      <td><button type="button" class="btn sm danger" data-a="pk-del" title="Buang">✕</button></td></tr>`;
+  }
+  function pakejRows(k) {
+    const ada = (Array.isArray(k.pakej) ? k.pakej : []).slice().sort((a, b) => a.hari - b.hari);
+    const rows = ada.length ? ada : (Number(k.harga_hari_customer) > 0 ? [{ hari: 1, customer: k.harga_hari_customer, agen: k.harga_hari_agen }] : []);
+    for (const h of [1, 2, 3]) if (!rows.some(x => +x.hari === h)) rows.push({ hari: h });
+    return rows.sort((a, b) => a.hari - b.hari).map(pakejRow).join('');
+  }
+  function bacaPakej() {
+    const out = [], seen = new Set();
+    for (const tr of app.querySelectorAll('#pk-body tr')) {
+      const v = k => tr.querySelector(`[data-pk=${k}]`).value.trim();
+      const hari = v('hari'), c = v('customer'), ag = v('agen');
+      if (!hari && !c && !ag) continue;
+      const h = Number(hari);
+      if (!Number.isInteger(h) || h < 1) throw new Error('Bilangan hari pakej mesti nombor bulat 1 ke atas.');
+      if (seen.has(h)) throw new Error(`Pakej ${h} hari diisi lebih sekali.`);
+      const cc = c === '' ? 0 : Number(c), aa = ag === '' ? 0 : Number(ag);
+      if (isNaN(cc) || isNaN(aa) || cc < 0 || aa < 0) throw new Error('Semak harga pakej.');
+      if (!cc && !aa) continue;
+      seen.add(h); out.push({ hari: h, customer: cc, agen: aa });
+    }
+    return out.sort((a, b) => a.hari - b.hari);
+  }
   function wireKereta() {
-    const g = id => app.querySelector('#k-' + id), n = id => Number(g(id).value || 0);
-    const u = () => { const d = n('harga_hari_customer') - n('harga_hari_agen'); g('untung').textContent = n('harga_hari_customer') ? `Beza Customer − Agen: ${fmtRM(d)} sehari` : ''; };
-    ['harga_hari_customer', 'harga_hari_agen'].forEach(k => g(k).addEventListener('input', u)); u();
+    const u = () => {
+      let t = []; try { t = bacaPakej(); } catch { }
+      const one = t[0], el = app.querySelector('#k-untung');
+      el.textContent = one && one.customer && one.agen ? `Beza Customer − Agen (pakej ${one.hari} hari): ${fmtRM(one.customer - one.agen)}` : '';
+    };
+    app.querySelector('#pk-body').addEventListener('input', u); u();
   }
 
   function stafView() {
@@ -567,6 +617,8 @@ export function mountSewa(host, ctx) {
     else if (a === 'print' && r) printAgreement(r);
     else if (a === 'stok') { S.view = 'stok'; render(); scrollTo(0, 0); }
     else if (a === 'kira') kira(true);
+    else if (a === 'pk-add') { app.querySelector('#pk-body').insertAdjacentHTML('beforeend', pakejRow()); app.querySelector('#pk-body tr:last-child input').focus(); }
+    else if (a === 'pk-del') { t.closest('tr').remove(); app.querySelector('#pk-body').dispatchEvent(new Event('input')); }
     else if (a === 'save-kereta') {
       const m = app.querySelector('#k-msg'), row = {}; m.classList.remove('err');
       app.querySelectorAll('[data-kk]').forEach(el => {
@@ -574,6 +626,10 @@ export function mountSewa(host, ctx) {
         row[k] = el.type === 'number' ? (v === '' ? (k === 'tahun' ? null : 0) : Number(v)) : (v || null);
       });
       if (!row.model || !row.no_pendaftaran) { m.textContent = 'Model dan No Pendaftaran wajib.'; m.classList.add('err'); return; }
+      try { row.pakej = bacaPakej(); } catch (err) { m.textContent = err.message; m.classList.add('err'); return; }
+      const asas = row.pakej[0];
+      row.harga_hari_customer = asas ? +(asas.customer / asas.hari).toFixed(2) : 0;
+      row.harga_hari_agen = asas ? +(asas.agen / asas.hari).toFixed(2) : 0;
       if (Object.entries(row).some(([k, v]) => typeof v === 'number' && (isNaN(v) || v < 0))) { m.textContent = 'Semak nilai harga.'; m.classList.add('err'); return; }
       row.no_pendaftaran = row.no_pendaftaran.toUpperCase(); row.status ||= 'aktif'; row.updated_at = new Date().toISOString();
       m.textContent = 'Menyimpan…';

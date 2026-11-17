@@ -325,7 +325,7 @@ client.rpc('get_sewa_models').then(({ data, error }) => {
   MODELS = !error && Array.isArray(data) ? data : [];
   if (!MODELS.length) return;                       // tiada stok: kekal medan taip biasa
   const groups = {};
-  MODELS.forEach((m, i) => { (groups[m.kumpulan] ||= []).push(`<option value="${i}">${escH(m.model)}${Number(m.harga_hari) > 0 ? ' — ' + rmF(m.harga_hari) + '/hari' : ''}</option>`); });
+  MODELS.forEach((m, i) => { (groups[m.kumpulan] ||= []).push(`<option value="${i}">${escH(m.model)}${Number(m.harga_hari) > 0 ? ' — dari ' + rmF(Math.min(...((m.pakej || []).length ? m.pakej.map(x => x.harga / x.hari) : [m.harga_hari]))) + '/hari' : ''}</option>`); });
   pick.innerHTML = '<option value="">— Pilih kereta —</option>' + Object.entries(groups).map(([g, o]) => `<optgroup label="${escH(g)}">${o.join('')}</optgroup>`).join('') + '<option value="lain">Lain-lain / model lain (taip sendiri)</option>';
   pick.hidden = false; pick.required = true; modelIn.hidden = true; modelIn.placeholder = 'Taip model yang dikehendaki';
   kumpIn.readOnly = true; kumpIn.placeholder = 'Diisi automatik';
@@ -335,7 +335,8 @@ pick.addEventListener('change', () => {
   if (v === 'lain') { modelIn.hidden = false; modelIn.value = ''; kumpIn.readOnly = false; kumpIn.value = ''; kumpIn.placeholder = 'cth: Sedan / MPV / SUV'; modelIn.focus(); }
   else if (m) { modelIn.hidden = true; modelIn.value = m.model; kumpIn.value = m.kumpulan === 'Lain-lain' ? '' : m.kumpulan; kumpIn.readOnly = true; }
   else { modelIn.hidden = true; modelIn.value = ''; kumpIn.value = ''; }
-  $('#model-harga').innerHTML = m && Number(m.harga_hari) > 0 ? `Harga sewa: <b>${rmF(m.harga_hari)} sehari</b>` : '';
+  const pk = m && Array.isArray(m.pakej) ? m.pakej : [];
+  $('#model-harga').innerHTML = pk.length ? 'Harga: ' + pk.map(x => `<b>${x.hari} hari ${rmF(x.harga)}</b>`).join(' · ') : (m && Number(m.harga_hari) > 0 ? `Harga sewa: <b>${rmF(m.harga_hari)} sehari</b>` : '');
   clearBad(pick); tempoh();
 });
 
@@ -361,15 +362,22 @@ let BAYARAN = null;
 // Kiraan ikut Terma & Syarat: minimum sehari (24 jam); baki melebihi 12 jam dikira sehari penuh;
 // baki 12 jam ke bawah dicaj ikut harga sejam (tidak melebihi harga sehari).
 function kiraBayaran(m, a, b) {
-  if (!m || !(Number(m.harga_hari) > 0) || !a || !b || !(b > a)) return null;
-  const hHari = Number(m.harga_hari), hJam = Number(m.harga_jam) || 0, deposit = Number(m.deposit) || 0;
+  if (!m || !a || !b || !(b > a)) return null;
+  const hJam = Number(m.harga_jam) || 0, deposit = Number(m.deposit) || 0;
+  const t = (Array.isArray(m.pakej) ? m.pakej : []).map(x => ({ hari: +x.hari, harga: +x.harga })).filter(x => x.hari > 0 && x.harga > 0).sort((x, y) => x.hari - y.hari);
   const jam = (b - a) / 36e5;
   let hari = Math.floor(jam / 24), baki = Math.ceil(jam - hari * 24 - 1e-9);
   if (hari === 0) { hari = 1; baki = 0; }
   if (baki > 12) { hari += 1; baki = 0; }
-  const tambahan = baki ? Math.min(hJam ? baki * hJam : hHari, hHari) : 0;
-  const sewa = hari * hHari, jumlahSewa = sewa + tambahan;
-  return { hari, baki, hHari, hJam, sewa, tambahan, jumlahSewa, deposit, total: jumlahSewa + deposit };
+  let sewa, kadar, label;
+  const ex = t.find(x => x.hari === hari);
+  if (ex) { sewa = ex.harga; kadar = ex.harga / hari; label = `Pakej ${hari} hari`; }
+  else if (t.length) { const base = [...t].reverse().find(x => x.hari <= hari) || t[0]; kadar = base.harga / base.hari; sewa = Math.round(hari * kadar * 100) / 100; label = `Sewa ${hari} hari × ${rmF(kadar)}`; }
+  else if (Number(m.harga_hari) > 0) { kadar = Number(m.harga_hari); sewa = hari * kadar; label = `Sewa ${hari} hari × ${rmF(kadar)}`; }
+  else return null;
+  const tambahan = baki ? Math.min(hJam ? baki * hJam : kadar, kadar) : 0;
+  const jumlahSewa = Math.round((sewa + tambahan) * 100) / 100;
+  return { hari, baki, hJam, sewa, label, tambahan, jumlahSewa, deposit, total: Math.round((jumlahSewa + deposit) * 100) / 100 };
 }
 function tempoh() {
   const a = dt($('#ambil_tarikh').value, $('#ambil_masa').value), b = dt($('#pulang_tarikh').value, $('#pulang_masa').value);
@@ -381,7 +389,7 @@ function tempoh() {
   BAYARAN = k;
   if (!k) { an.hidden = true; return; }
   an.innerHTML = `<h4>Ringkasan Bayaran</h4>
-    <div class="r"><span>Sewa ${k.hari} hari × ${rmF(k.hHari)}</span><span>${rmF(k.sewa)}</span></div>
+    <div class="r"><span>${k.label}</span><span>${rmF(k.sewa)}</span></div>
     ${k.baki ? `<div class="r"><span>Tambahan masa ${k.baki} jam${k.hJam ? ' × ' + rmF(k.hJam) : ''}</span><span>${rmF(k.tambahan)}</span></div>` : ''}
     <div class="r"><span>Jumlah sewa</span><span>${rmF(k.jumlahSewa)}</span></div>
     ${k.deposit ? `<div class="r"><span>Sekuriti deposit <small>(dipulangkan)</small></span><span>${rmF(k.deposit)}</span></div>` : ''}
