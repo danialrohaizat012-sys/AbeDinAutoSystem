@@ -80,7 +80,7 @@ begin
   end if;
 
   if exists (select 1 from public.profiles p where p.id = v_uid and p.enabled) then
-    raise exception 'Akaun ini sudah aktif sebagai staf. Terus log masuk di abedinauto.my/app.html';
+    raise exception 'Akaun ini sudah aktif sebagai staf. Terus log masuk di abedinauto.my/admin';
   end if;
   if exists (select 1 from public.staff_registrations r where r.user_id = v_uid and r.status = 'approved') then
     raise exception 'Pendaftaran anda sudah diluluskan.';

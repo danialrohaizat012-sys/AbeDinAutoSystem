@@ -101,7 +101,7 @@ export function mountStaff(host, ctx) {
       <input class="field" id="q" placeholder="Cari nama, IC, Staff ID, jawatan…" value="${esc(S.q)}">` : "";
     app.innerHTML = `<div class="row"><div class="grow"><div class="kick">TETAPAN</div><h3>Staf &amp; Akses</h3></div>
         ${S.mode ? "" : `<button class="btn pri" data-a="new">+ Tambah staf</button>`}</div>
-      <p class="mute">Setiap staf log masuk dengan emel dan kata laluan sendiri. Pautan kerja: <b>abedinauto.my/app.html?page=pemeriksaan</b></p>
+      <p class="mute">Setiap staf log masuk dengan emel dan kata laluan sendiri. Pautan kerja: <b>abedinauto.my/admin</b></p>
       ${S.err ? `<p class="msg err">${esc(S.err)}</p>` : ""}
       ${S.mode ? formView() : ""}
       ${S.share ? `<div class="share" id="share">${esc(S.share)}</div><div class="row"><button class="btn sm" data-a="copy">Salin untuk WhatsApp</button><button class="btn sm" data-a="hide">Tutup</button></div>` : ""}
@@ -223,7 +223,7 @@ export function mountStaff(host, ctx) {
         const needConfirm = !data?.session;
         const r = await client.rpc("staff_save", { p_email: email, p_full_name: nama, p_role: role, p_enabled: true, p_permissions: perms });
         if (r.error) throw r.error;
-        S.share = `Akaun Abe Din Auto anda:\nPautan: https://abedinauto.my/app.html?page=pemeriksaan\nEmel: ${email}\nKata laluan: ${pw}\n${needConfirm ? "\nSila sahkan emel anda dahulu (semak inbox/spam) sebelum log masuk.\n" : ""}Tukar kata laluan selepas log masuk pertama jika perlu.`;
+        S.share = `Akaun Abe Din Auto anda:\nPautan: https://abedinauto.my/admin\nEmel: ${email}\nKata laluan: ${pw}\n${needConfirm ? "\nSila sahkan emel anda dahulu (semak inbox/spam) sebelum log masuk.\n" : ""}Tukar kata laluan selepas log masuk pertama jika perlu.`;
         S.mode = null; say(`Akaun ${nama} dicipta${needConfirm ? ". Staf perlu sahkan emel dahulu (Supabase hantar emel pengesahan)." : " dan diaktifkan."}`, "ok");
       } else {
         const enabled = S.mode === "edit" ? !!S.edit.enabled : true;
