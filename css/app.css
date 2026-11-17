@@ -2022,3 +2022,24 @@ html.ada-light .ada-sales-filters select{color:#111!important;background-color:#
 html.ada-light .ada-sales-filters select option{color:#111;background:#fff}
 
 .abx-staff a{display:inline-block!important}
+
+/* V71 SOLD seal (kad katalog & gambar utama detail) */
+html #ada-public-catalogue.abx-home .is-sold-card .abx-card-media img,html #ada-public-catalogue.abx-home .abx-main-photo.is-sold-card img{filter:grayscale(.35) brightness(.55) contrast(1.05)!important}
+html #ada-public-catalogue.abx-home .abx-sold-seal{position:absolute!important;top:50%!important;left:50%!important;transform:translate(-50%,-50%)!important;z-index:4!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;width:clamp(124px,36%,170px)!important;aspect-ratio:1/1!important;border-radius:50%!important;background:rgba(14,15,14,.86)!important;border:2px solid #e2b93b!important;box-shadow:0 12px 30px rgba(0,0,0,.45),inset 0 0 0 6px rgba(226,185,59,.08)!important;color:#f0c94a!important;pointer-events:none!important;text-align:center!important;backdrop-filter:blur(2px)}
+html #ada-public-catalogue.abx-home .abx-sold-seal i{display:grid!important;place-items:center!important;width:24px!important;height:24px!important;border:1.5px solid #e2b93b!important;border-radius:50%!important;margin-bottom:5px!important}
+html #ada-public-catalogue.abx-home .abx-sold-seal i svg{width:14px!important;height:14px!important;fill:none!important;stroke:#f0c94a!important;stroke-width:2.6!important;stroke-linecap:round!important;stroke-linejoin:round!important}
+html #ada-public-catalogue.abx-home .abx-sold-seal b{font-size:clamp(26px,3vw,34px)!important;font-weight:900!important;letter-spacing:.08em!important;line-height:1!important;color:#f0c94a!important}
+html #ada-public-catalogue.abx-home .abx-sold-seal small{display:block!important;margin-top:7px!important;padding-top:6px!important;width:76%!important;border-top:1px solid rgba(226,185,59,.45)!important;font-size:8.5px!important;font-weight:800!important;letter-spacing:.14em!important;color:#e9dcae!important}
+html #ada-public-catalogue.abx-home .abx-main-photo .abx-sold-seal{width:clamp(140px,30%,200px)!important}
+@media(max-width:650px){html #ada-public-catalogue.abx-home .abx-sold-seal{width:clamp(118px,40%,150px)!important}}
+html #ada-public-catalogue.abx-home .abx-card-media,html #ada-public-catalogue.abx-home .abx-main-photo{container-type:inline-size}
+@supports (width:1cqw){
+html #ada-public-catalogue.abx-home .abx-sold-seal,html #ada-public-catalogue.abx-home .abx-main-photo .abx-sold-seal{width:clamp(78px,42cqw,190px)!important;border-width:clamp(1.5px,.6cqw,2.5px)!important}
+html #ada-public-catalogue.abx-home .abx-main-photo .abx-sold-seal{width:clamp(110px,34cqw,210px)!important}
+html #ada-public-catalogue.abx-home .abx-sold-seal b{font-size:clamp(15px,8cqw,36px)!important}
+html #ada-public-catalogue.abx-home .abx-main-photo .abx-sold-seal b{font-size:clamp(20px,6.4cqw,40px)!important}
+html #ada-public-catalogue.abx-home .abx-sold-seal i{width:clamp(15px,5.5cqw,26px)!important;height:clamp(15px,5.5cqw,26px)!important;margin-bottom:clamp(2px,1.2cqw,6px)!important}
+html #ada-public-catalogue.abx-home .abx-sold-seal i svg{width:62%!important;height:62%!important}
+html #ada-public-catalogue.abx-home .abx-sold-seal small{font-size:clamp(5.5px,2.1cqw,9.5px)!important;margin-top:clamp(3px,1.6cqw,8px)!important;padding-top:clamp(3px,1.4cqw,7px)!important;letter-spacing:.12em!important}
+html #ada-public-catalogue.abx-home .abx-main-photo .abx-sold-seal small{font-size:clamp(7px,1.7cqw,10px)!important}
+}
