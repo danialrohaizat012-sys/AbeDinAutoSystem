@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Perjanjian Sewa – Abe Din Car Rental</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta property="og:title" content="Perjanjian Sewa – Abe Din Car Rental">
+<meta property="og:description" content="Perjanjian Sewa anda telah disahkan. Buka untuk melihat dan memuat turun PDF.">
+<meta property="og:image" content="https://abedinauto.my/og-sewa.jpg">
+<link rel="icon" href="icon-32.png">
+<style>
+/* Halaman pelanggan: lihat & muat turun PDF Perjanjian Sewa yang telah disahkan (pautan rahsia ?t=token). */
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0f1c3a;color:#fff;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;padding:24px;box-sizing:border-box;text-align:center}
+.box{max-width:420px}
+.box img{width:96px;height:96px;margin-bottom:12px}
+h1{font:700 20px Georgia,serif;color:#e8c875;margin:0 0 8px;letter-spacing:.05em}
+p{color:#c8cfe0;margin:0}
+.spin{width:28px;height:28px;border:3px solid rgba(255,255,255,.25);border-top-color:#e8c875;border-radius:50%;animation:s .8s linear infinite;margin:18px auto 0}
+@keyframes s{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="box" id="box"><img id="logo" alt="Abe Din Car Rental"><h1>PERJANJIAN SEWA</h1><p id="msg">Memuatkan perjanjian anda…</p><div class="spin" id="spin"></div></div>
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+import { perjanjianHtml } from './js/sewa.js?v=14';
+import { SEWA_LOGO } from './js/sewa-logo.js';
+document.getElementById('logo').src = SEWA_LOGO;
+const fail = t => { document.getElementById('msg').textContent = t; document.getElementById('spin').remove(); };
+const tok = new URLSearchParams(location.search).get('t') || '';
+if (!/^[0-9a-f-]{36}$/i.test(tok)) fail('Pautan perjanjian tidak sah. Sila hubungi Abe Din Car Rental.');
+else {
+  const client = createClient('https://abqrgiebeoyzowvxeggj.supabase.co', 'sb_publishable_ofappLwL3Q_OZzlmlcbNqQ_y5y-fC3B',
+    { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: 'acr-perjanjian' } });
+  const { data, error } = await client.rpc('get_perjanjian', { p_token: tok });
+  if (error) fail('Perjanjian tidak dapat dimuatkan. Sila cuba lagi atau hubungi Abe Din Car Rental.');
+  else if (!data) fail('Perjanjian tidak ditemui atau belum disahkan. Sila hubungi Abe Din Car Rental.');
+  else {
+    const tool = `<div class="pj-bar"><div><b>Perjanjian Sewa ${String(data.ref_no).replace(/[<>&]/g, '')}</b><span>Terima kasih kerana memilih Abe Din Car Rental.</span></div>
+      <button onclick="print()">⬇ Muat Turun PDF</button></div>
+      <p class="pj-tip">Tekan <b>Muat Turun PDF</b>, kemudian pilih <b>Simpan sebagai PDF</b> (Save as PDF). Di iPhone: Kongsi → Simpan ke Fail.</p>
+      <style>.pj-bar{position:fixed;top:0;left:0;right:0;z-index:9;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 14px;padding-top:max(10px,env(safe-area-inset-top));background:#0f1c3a;color:#fff;font:14px Arial,sans-serif;box-shadow:0 2px 10px rgba(0,0,0,.25)}
+      .pj-bar span{display:block;font-size:12px;color:#c8cfe0}.pj-bar button{flex:none;font:700 14px Arial,sans-serif;border:0;border-radius:999px;padding:11px 16px;background:#e8c875;color:#0f1c3a;cursor:pointer}
+      .pj-tip{max-width:210mm;margin:0 auto 10px;font:12.5px Arial,sans-serif;color:#4b5468;text-align:center}
+      @media screen{body{padding-top:84px!important}} @media screen and (max-width:820px){.page{width:auto!important;padding:4mm!important;margin:0 6px 12px!important}.grid{grid-template-columns:1fr!important}.hero{flex-wrap:wrap}.hero h1{font-size:18px!important}.hero .meta{text-align:left!important;width:100%}.sig.one{grid-template-columns:1fr!important}}
+      @media print{.pj-bar,.pj-tip{display:none!important}}</style>`;
+    const html = perjanjianHtml(data, {}).replace('<body>', '<body>' + tool);
+    document.open(); document.write(html); document.close();
+    document.title = `Perjanjian Sewa ${data.ref_no} – Abe Din Car Rental`;
+  }
+}
+</script>
+</body>
+</html>
