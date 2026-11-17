@@ -485,6 +485,7 @@ export function mountSewa(host, ctx) {
       .calc .dep th,.calc .dep td{padding-top:6px;color:#1d2f5c}
       .ok{color:#14804a;font-weight:700}.no{color:#7b8496}.bad{color:#c62828;font-weight:700}.na{color:#aab1c0}
       .sig{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:10px;break-inside:avoid}
+      .sig.one{grid-template-columns:minmax(0,55%)}
       .sig .box{border:1px dashed #c3cad8;border-radius:10px;padding:8px 11px;min-height:118px;display:flex;flex-direction:column;justify-content:flex-end}
       .sig img{height:62px;width:auto;object-fit:contain;align-self:flex-start;margin-bottom:2px}
       .sig .ln{border-top:1px solid #1b2236;padding-top:4px;font-size:9.5px;color:#4b5468}
@@ -526,9 +527,8 @@ export function mountSewa(host, ctx) {
           <div class="card"><h3>Catatan</h3><table>${kv('Pelanggan', r.remark)}${kv('Abe Din Car Rental', r.remark_admin)}</table></div>
         </div>
         <div class="decl">Penyewa mengesahkan maklumat di atas adalah benar, telah menerima kenderaan dalam keadaan seperti yang dinyatakan, dan bersetuju dengan Terma &amp; Syarat di muka surat berikutnya.</div>
-        <div class="sig">
+        <div class="sig one">
           <div class="box"><img src="${esc(r.tandatangan)}" alt=""><div class="ln"><b>${esc(r.nama)}</b><br>Tandatangan Penyewa · ${esc(r.no_kp)} · ${tarikhBuat}</div></div>
-          <div class="box"><div class="ln"><b>Abe Din Car Rental</b><br>Tandatangan, Nama &amp; Cop · Tarikh:</div></div>
         </div>
         <div class="foot">ABE DIN CAR RENTAL · ${esc(r.ref_no)} · Perjanjian</div>
       </div>
