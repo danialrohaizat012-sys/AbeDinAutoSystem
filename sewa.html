@@ -55,6 +55,9 @@ input:focus,select:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 
 .msg{display:none;color:var(--err);font-size:13px;margin-top:5px}
 .field.bad .msg{display:block}
 .hint{font-size:12.5px;color:var(--muted);margin-top:5px}
+#model-harga b{color:var(--gold)}
+.anggar{margin-top:10px;border:1.5px solid var(--gold);background:var(--gold-soft);border-radius:12px;padding:10px 12px;font-size:14px}
+.anggar b{color:var(--navy);font-size:16px}
 .seg{display:grid;grid-template-columns:1fr 1fr;gap:8px;border:1.5px solid transparent;border-radius:13px}
 .seg label{margin:0;display:flex;align-items:center;gap:10px;border:1.5px solid var(--line);border-radius:12px;padding:13px 14px;cursor:pointer;font-weight:600;background:var(--field)}
 .seg input{width:18px;height:18px;min-height:0;margin:0;accent-color:var(--blue)}
@@ -158,7 +161,10 @@ body.sent .done{display:block}
       <h2><span class="n">2</span>Maklumat Kenderaan</h2>
       <p class="lead">Kereta yang ingin disewa.</p>
       <div class="grid">
-        <div class="field"><label for="model">1. Model <span class="req">*</span></label><input id="model" name="model" placeholder="cth: Perodua Bezza / Toyota Vellfire" maxlength="120" required><div class="msg">Sila masukkan model kereta.</div></div>
+        <div class="field"><label for="model-pick">1. Model <span class="req">*</span></label>
+          <select id="model-pick" hidden><option value="">— Pilih kereta —</option></select>
+          <input id="model" name="model" placeholder="cth: Perodua Bezza / Toyota Vellfire" maxlength="120" required style="margin-top:8px">
+          <div class="hint" id="model-harga"></div><div class="msg">Sila pilih model kereta.</div></div>
         <div class="field"><label for="kumpulan">2. Kumpulan <span class="opt">(jika ada)</span></label><input id="kumpulan" name="kumpulan" list="senarai-kumpulan" placeholder="cth: Sedan / MPV / SUV" maxlength="80"></div>
       </div>
     </section>
@@ -177,6 +183,7 @@ body.sent .done{display:block}
         <div class="field"><label for="pulang_tarikh">2. Tarikh Akhir <span class="req">*</span></label><input id="pulang_tarikh" name="pulang_tarikh" type="date" required><div class="msg">Tarikh akhir mesti selepas tarikh mula.</div></div>
         <div class="field"><label for="pulang_masa">3. Masa Akhir <span class="req">*</span></label><input id="pulang_masa" name="pulang_masa" type="time" required><div class="msg">Sila pilih masa akhir.</div></div>
         <div class="full hint" id="tempoh"></div>
+        <div class="full anggar" id="anggar" hidden></div>
       </div>
     </section>
 
@@ -301,6 +308,28 @@ document.querySelectorAll('[data-open-terma]').forEach(b => b.addEventListener('
 dlg.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => dlg.close()));
 dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
 
+// ---------- Model dari stok kereta (dashboard) ----------
+let MODELS = [];
+const pick = $('#model-pick'), modelIn = $('#model'), kumpIn = $('#kumpulan');
+const rmF = n => 'RM' + Number(n).toLocaleString('ms-MY', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+client.rpc('get_sewa_models').then(({ data, error }) => {
+  MODELS = !error && Array.isArray(data) ? data : [];
+  if (!MODELS.length) return;                       // tiada stok: kekal medan taip biasa
+  const groups = {};
+  MODELS.forEach((m, i) => { (groups[m.kumpulan] ||= []).push(`<option value="${i}">${escH(m.model)}${Number(m.harga_hari) > 0 ? ' — ' + rmF(m.harga_hari) + '/hari' : ''}</option>`); });
+  pick.innerHTML = '<option value="">— Pilih kereta —</option>' + Object.entries(groups).map(([g, o]) => `<optgroup label="${escH(g)}">${o.join('')}</optgroup>`).join('') + '<option value="lain">Lain-lain / model lain (taip sendiri)</option>';
+  pick.hidden = false; pick.required = true; modelIn.hidden = true; modelIn.placeholder = 'Taip model yang dikehendaki';
+  kumpIn.readOnly = true; kumpIn.placeholder = 'Diisi automatik';
+});
+pick.addEventListener('change', () => {
+  const v = pick.value, m = MODELS[+v];
+  if (v === 'lain') { modelIn.hidden = false; modelIn.value = ''; kumpIn.readOnly = false; kumpIn.value = ''; kumpIn.placeholder = 'cth: Sedan / MPV / SUV'; modelIn.focus(); }
+  else if (m) { modelIn.hidden = true; modelIn.value = m.model; kumpIn.value = m.kumpulan === 'Lain-lain' ? '' : m.kumpulan; kumpIn.readOnly = true; }
+  else { modelIn.hidden = true; modelIn.value = ''; kumpIn.value = ''; }
+  $('#model-harga').innerHTML = m && Number(m.harga_hari) > 0 ? `Harga sewa: <b>${rmF(m.harga_hari)} sehari</b>` : '';
+  clearBad(pick); tempoh();
+});
+
 // ---------- Jenis sewa ----------
 const jenis = () => form.querySelector('input[name=jenis_sewa]:checked')?.value || '';
 function syncJenis() {
@@ -322,9 +351,16 @@ function dt(t, m) { return t && m ? new Date(`${t}T${m}`) : null; }
 function tempoh() {
   const a = dt($('#ambil_tarikh').value, $('#ambil_masa').value), b = dt($('#pulang_tarikh').value, $('#pulang_masa').value);
   if ($('#ambil_tarikh').value) $('#pulang_tarikh').min = $('#ambil_tarikh').value;
-  if (!a || !b || b <= a) { $('#tempoh').textContent = ''; return; }
+  if (!a || !b || b <= a) { $('#tempoh').textContent = ''; $('#anggar').hidden = true; return; }
   const h = Math.round((b - a) / 36e5), d = Math.floor(h / 24), r = h % 24;
   $('#tempoh').textContent = `Tempoh sewaan: ${d ? d + ' hari ' : ''}${r ? r + ' jam' : ''}`.trim();
+  const m = MODELS[+pick.value], an = $('#anggar');
+  if (m && Number(m.harga_hari) > 0) {
+    // ikut T&C: minimum sehari; baki melebihi 12 jam dikira sehari penuh
+    let hari = Math.max(1, d + (r > 12 ? 1 : 0)); const bakiJam = d >= 1 && r > 0 && r <= 12 ? r : 0;
+    an.innerHTML = `Anggaran sewa: <b>${rmF(hari * m.harga_hari)}</b> (${hari} hari × ${rmF(m.harga_hari)})${bakiJam ? ` + ${bakiJam} jam tambahan` : ''}<br><span style="font-size:12.5px;color:var(--muted)">Anggaran sahaja. Caj sebenar, deposit dan caj penghantaran akan disahkan oleh Abe Din Car Rental.</span>`;
+    an.hidden = false;
+  } else an.hidden = true;
 }
 ['ambil_tarikh', 'ambil_masa', 'pulang_tarikh', 'pulang_masa'].forEach(id => $('#' + id).addEventListener('input', tempoh));
 
