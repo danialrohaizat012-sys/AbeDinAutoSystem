@@ -2052,3 +2052,8 @@ html #ada-public-catalogue.abx-home .abx-main-photo .abx-sold-seal small{font-si
 .ada-sold-seal i svg{width:62%;height:62%;fill:none;stroke:#f0c94a;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
 .ada-sold-seal b{font-size:clamp(16px,7.5cqw,34px);font-weight:900;letter-spacing:.08em;line-height:1;color:#f0c94a}
 .ada-sold-seal small{display:block;margin-top:clamp(3px,1.5cqw,7px);padding-top:clamp(3px,1.3cqw,6px);width:76%;border-top:1px solid rgba(226,185,59,.45);font-size:clamp(5.5px,2cqw,9px);font-weight:800;letter-spacing:.12em;color:#e9dcae}
+
+/* Bayaran: no. rujukan auto + bank loan */
+.ada-ref-wrap{display:flex;gap:6px;align-items:stretch;margin-top:4px}.ada-ref-wrap input{flex:1;min-width:0;font-family:ui-monospace,Menlo,monospace;letter-spacing:.03em}
+.ada-ref-wrap .ada-ref-gen{flex:none;width:44px;padding:0;font-size:18px;font-weight:800}
+[data-loanbank][hidden]{display:none!important}
