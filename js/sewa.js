@@ -1,3 +1,4 @@
+import { SEWA_LOGO } from './sewa-logo.js';
 // Abe Din Auto – modul Sewa (Abedin Car Rental: Perjanjian Sewa).
 // Borang awam: sewa.html → RPC submit_sewa. Jadual: sewa_agreements, sewa_settings; storan: sewa-docs
 // (lihat V60_SEWA_MIGRATION.sql). Dimuat oleh app.html melalui import('./js/sewa.js').
@@ -136,9 +137,7 @@ export function mountSewa(host, ctx) {
   root.innerHTML = `<style>${CSS}</style><div class="shell"><div class="wrap" id="app"></div></div>`;
   const app = root.getElementById('app');
   const formUrl = new URL(ctx.formPath || 'sewa.html', location.href.split('#')[0].split('?')[0]).href;
-  let logoSrc = new URL('abedin-car-rental-badge.webp', location.href).href;
-  // simpan logo sebagai data URL supaya sentiasa muncul dalam tetingkap cetak
-  fetch(logoSrc).then(r => r.blob()).then(b => new Promise(ok => { const f = new FileReader(); f.onload = () => ok(f.result); f.readAsDataURL(b); })).then(d => { logoSrc = d; }).catch(() => {});
+  const logoSrc = SEWA_LOGO;
   const S = { staf: null, wa: null, kereta: [], keretaErr: '', kid: null, rows: [], loaded: false, error: '', filter: 'semua', q: '', view: 'list', id: null, terma: null, urls: {}, msg: '' };
 
   async function load() {
@@ -493,17 +492,18 @@ export function mountSewa(host, ctx) {
       .decl{margin-top:9px;font-size:9.5px;color:#4b5468;border-left:3px solid #c9a24b;padding:3px 0 3px 8px}
       .foot{margin-top:8px;text-align:center;font-size:8.5px;color:#8a93a6;letter-spacing:.06em}
       .tc-head{display:flex;align-items:center;gap:10px;border-bottom:2px solid #0f1c3a;padding-bottom:6px;margin-bottom:6px}
-      .tc-head img{width:44px;height:44px}
+      .tc-head img{width:52px;height:52px}
       .tc-head h2{margin:0;flex:1;font:700 17px Georgia,serif;letter-spacing:.1em;color:#0f1c3a}
       .tc-head span{font-size:9px;color:#6a7389;text-align:right}
-      .terma{columns:2;column-gap:16px;column-rule:1px solid #e6e9f0;font-size:8.1px;line-height:1.3;text-align:justify}
-      .terma h4{font:700 8.8px Arial,sans-serif;margin:5px 0 1px;color:#0f1c3a;text-transform:uppercase;letter-spacing:.04em;break-after:avoid}
-      .terma h4:first-child{margin-top:0}
-      .terma p{margin:0 0 2px} .terma p b{color:#9a7424}
-      .agree{margin-top:8px;border:1px solid #dfe4ee;border-radius:10px;padding:8px 11px;break-inside:avoid}
-      .agree .q{font:700 11px Georgia,serif;color:#0f1c3a}
-      .agree .sig{margin-top:4px}.agree .sig .box{min-height:86px;border:0;padding:0}
-      .agree .sig img{height:52px}
+      .terma{font-size:10.2px;line-height:1.43;text-align:justify}
+      .terma h4{font:700 10.8px Arial,sans-serif;margin:7px 0 2px;color:#0f1c3a;text-decoration:underline;text-underline-offset:2px;break-after:avoid;page-break-after:avoid}
+      .terma h4:first-child{margin-top:2px}
+      .terma p{margin:0 0 3px;padding-left:20px;text-indent:-20px;break-inside:avoid;page-break-inside:avoid}
+      .terma p b{display:inline-block;width:20px;text-indent:0;color:#9a7424}
+      .agree{margin-top:14px;border:1px solid #dfe4ee;border-radius:10px;padding:10px 13px;break-inside:avoid;page-break-inside:avoid}
+      .agree .q{font:700 12.5px Georgia,serif;color:#0f1c3a}
+      .agree .sig{margin-top:4px}.agree .sig .box{min-height:96px;border:0;padding:0}
+      .agree .sig img{height:60px}
       @media screen{body{background:#e9edf4;padding:16px 0}.page{background:#fff;padding:9mm;box-shadow:0 4px 24px rgba(0,0,0,.12);margin-bottom:16px;width:210mm}}`;
     w.document.write(`<!DOCTYPE html><html lang="ms"><head><meta charset="utf-8"><title>Perjanjian Sewa ${esc(r.ref_no)} – ${esc(r.nama)}</title><style>${css}</style></head><body>
       <div class="page">
@@ -530,7 +530,7 @@ export function mountSewa(host, ctx) {
           <div class="box"><img src="${esc(r.tandatangan)}" alt=""><div class="ln"><b>${esc(r.nama)}</b><br>Tandatangan Penyewa · ${esc(r.no_kp)} · ${tarikhBuat}</div></div>
           <div class="box"><div class="ln"><b>Abe Din Car Rental</b><br>Tandatangan, Nama &amp; Cop · Tarikh:</div></div>
         </div>
-        <div class="foot">ABE DIN CAR RENTAL · ${esc(r.ref_no)} · Muka surat 1 / 2</div>
+        <div class="foot">ABE DIN CAR RENTAL · ${esc(r.ref_no)} · Perjanjian</div>
       </div>
       <div class="page tc-page">
         <div class="tc-head"><img src="${esc(logoSrc)}" alt=""><h2>TERMA &amp; SYARAT</h2><span>${esc(r.ref_no)}<br>${esc(r.nama)}</span></div>
@@ -538,9 +538,9 @@ export function mountSewa(host, ctx) {
         <div class="agree"><div class="q">Saya setuju dengan terma dan syarat yang dinyatakan.</div>
           <div class="sig"><div class="box"><img src="${esc(r.tandatangan)}" alt=""><div class="ln"><b>${esc(r.nama)}</b><br>(Tandatangan Penyewa)</div></div>
           <div class="box" style="align-items:flex-end;text-align:right"><div style="font-size:13px;font-weight:700;margin-bottom:4px">${tarikhBuat}</div><div class="ln" style="width:100%">(Tarikh)</div></div></div></div>
-        <div class="foot">ABE DIN CAR RENTAL · ${esc(r.ref_no)} · Muka surat 2 / 2</div>
+        <div class="foot">ABE DIN CAR RENTAL · ${esc(r.ref_no)} · Terma &amp; Syarat</div>
       </div>
-      <script>window.onload=()=>setTimeout(()=>print(),400)<\/script></body></html>`);
+      <script>window.onload=()=>Promise.all([...document.images].map(i=>i.decode?i.decode().catch(()=>{}):0)).then(()=>setTimeout(()=>print(),350))<\/script></body></html>`);
     w.document.close();
   }
 
