@@ -14,6 +14,10 @@
     location.replace('/app.html?admin=1');
     return;
   }
+  if(/\/(sewa|borang-sewa)$/.test(path)){
+    location.replace('/sewa.html'+location.search);
+    return;
+  }
   if(/\/permohonan(\.html)?$/.test(path)){
     location.replace('/permohonan.html'+location.search);
     return;

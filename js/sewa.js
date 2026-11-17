@@ -136,7 +136,7 @@ export function mountSewa(host, ctx) {
   const root = host.shadowRoot || host.attachShadow({ mode: 'open' });
   root.innerHTML = `<style>${CSS}</style><div class="shell"><div class="wrap" id="app"></div></div>`;
   const app = root.getElementById('app');
-  const formUrl = new URL(ctx.formPath || 'sewa.html', location.href.split('#')[0].split('?')[0]).href;
+  const formUrl = ctx.publicFormUrl || new URL(ctx.formPath || 'sewa.html', location.href.split('#')[0].split('?')[0]).href;
   const logoSrc = SEWA_LOGO;
   const S = { staf: null, wa: null, kereta: [], keretaErr: '', kid: null, rows: [], loaded: false, error: '', filter: 'semua', q: '', view: 'list', id: null, terma: null, urls: {}, msg: '' };
 

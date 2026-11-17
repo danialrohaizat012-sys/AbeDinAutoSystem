@@ -50,7 +50,7 @@ button{font:inherit;font-weight:700;cursor:pointer;border-radius:12px;border:1px
 </div>
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import { mountSewa } from './js/sewa.js?v=8';
+import { mountSewa } from './js/sewa.js?v=9';
 const client = createClient('https://abqrgiebeoyzowvxeggj.supabase.co', 'sb_publishable_ofappLwL3Q_OZzlmlcbNqQ_y5y-fC3B',
   { auth: { persistSession: true, autoRefreshToken: true, storageKey: 'acr-sewa-admin' } });
 const $ = id => document.getElementById(id);
@@ -76,7 +76,7 @@ async function start() {
   }
   $('login').hidden = true; $('top').hidden = false;
   $('who').textContent = `${profile.full_name || session.user.email} · ${profile.role}`;
-  mountSewa($('host'), { client, profile, formPath: 'sewa.html', manageStaff: true });
+  mountSewa($('host'), { client, profile, formPath: 'sewa.html', publicFormUrl: 'https://abedinauto.my/sewa.html', manageStaff: true });
 }
 $('login').addEventListener('submit', async e => {
   e.preventDefault(); say(''); $('go').disabled = true;

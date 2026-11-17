@@ -3,7 +3,7 @@
 // Tiada login berasingan: panel ini guna login dashboard. Fungsi sewa-bridge (Supabase Sewa)
 // menyemak sesi dashboard dan memberi sesi Sewa secara automatik.
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import { mountSewa } from './sewa.js?v=8';
+import { mountSewa } from './sewa.js?v=9';
 
 const SEWA_URL = 'https://abqrgiebeoyzowvxeggj.supabase.co';
 const SEWA_KEY = 'sb_publishable_ofappLwL3Q_OZzlmlcbNqQ_y5y-fC3B';
@@ -48,7 +48,7 @@ export async function mountSewaPanel(host, opts = {}) {
     if (!profile || profile.enabled !== true) throw new Error('Akaun anda dinyahaktifkan dalam Sewa. Minta Owner aktifkan di Sewa → 👤 Staf.');
 
     host.innerHTML = '<div data-sewa-mod></div>';
-    mountSewa(host.querySelector('[data-sewa-mod]'), { client, profile, formPath: opts.formPath || 'sewa.html', manageStaff: true });
+    mountSewa(host.querySelector('[data-sewa-mod]'), { client, profile, formPath: opts.formPath || 'sewa.html', publicFormUrl: 'https://abedinauto.my/sewa.html', manageStaff: true });
   } catch (e) {
     info(host, e?.message || String(e), true, opts);
   }
