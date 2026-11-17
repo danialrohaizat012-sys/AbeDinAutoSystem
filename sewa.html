@@ -56,8 +56,16 @@ input:focus,select:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 
 .field.bad .msg{display:block}
 .hint{font-size:12.5px;color:var(--muted);margin-top:5px}
 #model-harga b{color:var(--gold)}
-.anggar{margin-top:10px;border:1.5px solid var(--gold);background:var(--gold-soft);border-radius:12px;padding:10px 12px;font-size:14px}
-.anggar b{color:var(--navy);font-size:16px}
+.anggar{margin-top:12px;border:1.5px solid var(--gold);background:linear-gradient(180deg,#fffaf0,#f7efdf);border-radius:14px;padding:14px 14px 12px;font-size:14px}
+.anggar h4{margin:0 0 8px;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--navy)}
+.anggar .r{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px dashed #e6d6ad}
+.anggar .r span:first-child{color:var(--muted)} .anggar .r span:last-child{font-weight:700;white-space:nowrap}
+.anggar .tot{display:flex;justify-content:space-between;align-items:center;margin-top:10px;background:var(--navy);color:#fff;border-radius:11px;padding:12px 14px}
+.anggar .tot span{font-size:13px;letter-spacing:.06em;text-transform:uppercase}
+.anggar .tot b{font-size:24px;color:#e8c875;letter-spacing:.02em}
+.anggar .note{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.45}
+.done .bayar{display:inline-block;margin:0 0 12px;font-size:15px}
+.done .bayar b{font-size:20px;color:var(--navy)}
 .seg{display:grid;grid-template-columns:1fr 1fr;gap:8px;border:1.5px solid transparent;border-radius:13px}
 .seg label{margin:0;display:flex;align-items:center;gap:10px;border:1.5px solid var(--line);border-radius:12px;padding:13px 14px;cursor:pointer;font-weight:600;background:var(--field)}
 .seg input{width:18px;height:18px;min-height:0;margin:0;accent-color:var(--blue)}
@@ -227,6 +235,7 @@ body.sent .done{display:block}
     <p class="sub" style="margin-top:6px">Terima kasih. Simpan nombor rujukan ini:</p>
     <div class="ref" id="ref"></div>
     <p class="sub" id="done-sum"></p>
+    <p class="bayar" id="done-bayar"></p>
     <div class="acts">
       <a class="btn wa" id="wa" target="_blank" rel="noopener" hidden>Maklumkan melalui WhatsApp</a>
       <button class="btn ghost" type="button" onclick="location.reload()">Isi borang baharu</button>
@@ -348,19 +357,37 @@ $('#ambil_lokasi').addEventListener('input', e => { if ($('#sama').checked) $('#
 
 // ---------- Tempoh ----------
 function dt(t, m) { return t && m ? new Date(`${t}T${m}`) : null; }
+let BAYARAN = null;
+// Kiraan ikut Terma & Syarat: minimum sehari (24 jam); baki melebihi 12 jam dikira sehari penuh;
+// baki 12 jam ke bawah dicaj ikut harga sejam (tidak melebihi harga sehari).
+function kiraBayaran(m, a, b) {
+  if (!m || !(Number(m.harga_hari) > 0) || !a || !b || !(b > a)) return null;
+  const hHari = Number(m.harga_hari), hJam = Number(m.harga_jam) || 0, deposit = Number(m.deposit) || 0;
+  const jam = (b - a) / 36e5;
+  let hari = Math.floor(jam / 24), baki = Math.ceil(jam - hari * 24 - 1e-9);
+  if (hari === 0) { hari = 1; baki = 0; }
+  if (baki > 12) { hari += 1; baki = 0; }
+  const tambahan = baki ? Math.min(hJam ? baki * hJam : hHari, hHari) : 0;
+  const sewa = hari * hHari, jumlahSewa = sewa + tambahan;
+  return { hari, baki, hHari, hJam, sewa, tambahan, jumlahSewa, deposit, total: jumlahSewa + deposit };
+}
 function tempoh() {
   const a = dt($('#ambil_tarikh').value, $('#ambil_masa').value), b = dt($('#pulang_tarikh').value, $('#pulang_masa').value);
   if ($('#ambil_tarikh').value) $('#pulang_tarikh').min = $('#ambil_tarikh').value;
   if (!a || !b || b <= a) { $('#tempoh').textContent = ''; $('#anggar').hidden = true; return; }
   const h = Math.round((b - a) / 36e5), d = Math.floor(h / 24), r = h % 24;
   $('#tempoh').textContent = `Tempoh sewaan: ${d ? d + ' hari ' : ''}${r ? r + ' jam' : ''}`.trim();
-  const m = MODELS[+pick.value], an = $('#anggar');
-  if (m && Number(m.harga_hari) > 0) {
-    // ikut T&C: minimum sehari; baki melebihi 12 jam dikira sehari penuh
-    let hari = Math.max(1, d + (r > 12 ? 1 : 0)); const bakiJam = d >= 1 && r > 0 && r <= 12 ? r : 0;
-    an.innerHTML = `Anggaran sewa: <b>${rmF(hari * m.harga_hari)}</b> (${hari} hari × ${rmF(m.harga_hari)})${bakiJam ? ` + ${bakiJam} jam tambahan` : ''}<br><span style="font-size:12.5px;color:var(--muted)">Anggaran sahaja. Caj sebenar, deposit dan caj penghantaran akan disahkan oleh Abe Din Car Rental.</span>`;
-    an.hidden = false;
-  } else an.hidden = true;
+  const m = MODELS[+pick.value], an = $('#anggar'), k = kiraBayaran(m, a, b);
+  BAYARAN = k;
+  if (!k) { an.hidden = true; return; }
+  an.innerHTML = `<h4>Ringkasan Bayaran</h4>
+    <div class="r"><span>Sewa ${k.hari} hari × ${rmF(k.hHari)}</span><span>${rmF(k.sewa)}</span></div>
+    ${k.baki ? `<div class="r"><span>Tambahan masa ${k.baki} jam${k.hJam ? ' × ' + rmF(k.hJam) : ''}</span><span>${rmF(k.tambahan)}</span></div>` : ''}
+    <div class="r"><span>Jumlah sewa</span><span>${rmF(k.jumlahSewa)}</span></div>
+    ${k.deposit ? `<div class="r"><span>Sekuriti deposit <small>(dipulangkan)</small></span><span>${rmF(k.deposit)}</span></div>` : ''}
+    <div class="tot"><span>Jumlah perlu dibayar</span><b>${rmF(k.total)}</b></div>
+    <div class="note">Caj penghantaran &amp; pengambilan (RM15 dalam 10KM), pemandu tambahan dan perlindungan imbuhan (jika ada) akan dimaklumkan oleh Abe Din Car Rental.</div>`;
+  an.hidden = false;
 }
 ['ambil_tarikh', 'ambil_masa', 'pulang_tarikh', 'pulang_masa'].forEach(id => $('#' + id).addEventListener('input', tempoh));
 
@@ -514,8 +541,10 @@ form.addEventListener('submit', async e => {
 function showDone(ref, p) {
   $('#ref').textContent = ref;
   $('#done-sum').textContent = `${p.nama} · ${p.model} · ${dmy(p.ambil_tarikh)} ${p.ambil_masa} → ${dmy(p.pulang_tarikh)} ${p.pulang_masa}`;
+  const k = BAYARAN;
+  $('#done-bayar').innerHTML = k ? `Anggaran jumlah perlu dibayar: <b>${rmF(k.total)}</b><br><small style="color:var(--muted)">Sewa ${rmF(k.jumlahSewa)}${k.deposit ? ' + deposit ' + rmF(k.deposit) : ''}</small>` : '';
   if (waNumber) {
-    const msg = `Salam Abedin Car Rental, saya telah menghantar Perjanjian Sewa.\n\nNo Rujukan: ${ref}\nNama: ${p.nama}\nSewaan: ${p.jenis_sewa === 'chauffeur' ? 'Chauffeur' : 'Pandu Sendiri'}\nModel: ${p.model}\nAmbil: ${p.ambil_lokasi}, ${dmy(p.ambil_tarikh)} ${p.ambil_masa}\nPulang: ${p.pulang_lokasi}, ${dmy(p.pulang_tarikh)} ${p.pulang_masa}`;
+    const msg = `Salam Abedin Car Rental, saya telah menghantar Perjanjian Sewa.\n\nNo Rujukan: ${ref}\nNama: ${p.nama}\nSewaan: ${p.jenis_sewa === 'chauffeur' ? 'Chauffeur' : 'Pandu Sendiri'}\nModel: ${p.model}\nAmbil: ${p.ambil_lokasi}, ${dmy(p.ambil_tarikh)} ${p.ambil_masa}\nPulang: ${p.pulang_lokasi}, ${dmy(p.pulang_tarikh)} ${p.pulang_masa}` + (k ? `\n\nAnggaran bayaran: ${rmF(k.total)} (sewa ${rmF(k.jumlahSewa)}${k.deposit ? ' + deposit ' + rmF(k.deposit) : ''})` : '');
     const a = $('#wa'); a.href = `https://wa.me/${waNumber}?text=${encodeURIComponent(msg)}`; a.hidden = false;
   }
   document.body.classList.add('sent');

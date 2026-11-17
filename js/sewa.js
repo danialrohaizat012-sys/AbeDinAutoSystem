@@ -104,6 +104,7 @@ function kiraHarga(k, jenis, a, b) {
   const hJam = Number(jenis === 'agen' ? k.harga_jam_agen : k.harga_jam_customer) || 0;
   let hari = Math.floor(jam / 24), baki = Math.ceil(jam - hari * 24 - 1e-9);
   if (hari === 0) { hari = 1; baki = 0; }
+  if (baki > 12) { hari += 1; baki = 0; }   // T&C: lebih 12 jam dikira sehari penuh
   let tambahan = baki * hJam;
   if (!hJam && baki) { tambahan = hHari; }
   tambahan = Math.min(tambahan, hHari);
