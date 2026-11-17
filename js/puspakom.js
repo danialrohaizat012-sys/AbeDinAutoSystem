@@ -70,7 +70,7 @@ h2{margin:0;font-size:20px;font-weight:800}
 .ro .acts,.ro .edit{display:none}.ro .doc{cursor:default}
 .more{width:100%;margin-top:8px}
 .empty{text-align:center;padding:30px;color:var(--mute);background:var(--card);border:1px dashed var(--line);border-radius:14px}
-.ov{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:flex-end;justify-content:center;z-index:9999}
+.ov{font:15px/1.45 var(--f);color:var(--fg);position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:flex-end;justify-content:center;z-index:9999}
 .ov.show{display:flex}@media(min-width:640px){.ov{align-items:center}}
 .sheet{background:var(--card);border:1px solid var(--line);width:100%;max-width:520px;border-radius:18px 18px 0 0;padding:18px;max-height:92vh;overflow:auto}
 @media(min-width:640px){.sheet{border-radius:18px}}
@@ -85,7 +85,7 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px}
 .row{display:flex;gap:8px;margin-top:16px}.row .btn{flex:1}
 .err{color:var(--red-ink);font-size:13px;margin-top:8px;min-height:1em}
 .copybox{width:100%;min-height:220px;font-size:13px;font-family:ui-monospace,Menlo,monospace;border:1px solid var(--line);background:var(--soft);border-radius:11px;padding:10px}
-.toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:var(--y);color:#0b0b0b;font-weight:800;padding:10px 16px;border-radius:12px;display:none;z-index:10000}
+.toast{font:15px/1.45 var(--f);position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:var(--y);color:#0b0b0b;font-weight:800;padding:10px 16px;border-radius:12px;display:none;z-index:10000}
 `;
 const TYPES = [{v:"B5",l:"B5 (MV15)",c:"p-B5"},{v:"B7",l:"B7",c:"p-B7"},{v:"B5+B7",l:"B5 + B7",c:"p-B5B7"}];
 const STATUSES = [{v:"belum",l:"Belum tempah"},{v:"tempah",l:"Booking"},{v:"lulus",l:"✓ Lulus"},{v:"gagal",l:"Gagal"}];
@@ -142,9 +142,13 @@ function cars() {
   const byPlate = {};
   S.rows.forEach(r => { byPlate[normPlate(r.plate)] = r; });
   const out = [], seen = {};
-  S.vehicles.filter(v => String(v.status || "").toLowerCase() !== "sold").forEach(v => {
-    const k = normPlate(v.plate); if (!k || seen[k]) return; seen[k] = 1;
-    out.push(toCar(k, byPlate[k], v));
+  // Semua kereta dipaparkan, termasuk Reserved dan yang dah dijual dalam katalog (masih perlu Puspakom untuk tukar milik).
+  // Kereta yang dah Sold sepenuhnya disembunyikan, kecuali ada booking / gagal yang masih aktif.
+  S.vehicles.forEach(v => {
+    const k = normPlate(v.plate); if (!k || seen[k]) return;
+    const r = byPlate[k];
+    if (String(v.status || "").toLowerCase() === "sold" && !(r && (r.status === "tempah" || r.status === "gagal"))) return;
+    seen[k] = 1; out.push(toCar(k, r, v));
   });
   S.rows.forEach(r => { const k = normPlate(r.plate); if (seen[k]) return; seen[k] = 1; out.push(toCar(k, r, null)); });
   return out;
@@ -153,11 +157,20 @@ function toCar(plate, r, v) {
   r = r || {};
   return { plate, rec: r, v, inv: !!v, vid: v?.vehicle_id || "", vuuid: v?.id || r.vehicle_id || null,
     model: v ? ((v.make || "") + " " + (v.model || "")).replace(/\s+/g, " ").trim().toUpperCase() : "", year: v?.model_year || "",
-    vstatus: String(v?.status || "").toLowerCase(),
+    vstatus: invStatus(v),
     type: r.jenis || "B5", status: r.status || "belum", date: r.tarikh || "", time: r.masa ? String(r.masa).slice(0, 5) : "",
     state: r.negeri || "", runner: r.runner || "", docs: r.dokumen || {}, note: r.catatan || "" };
 }
 
+// Sama seperti effStatus() dalam app.html
+function invStatus(v) {
+  if (!v) return "";
+  const c = String(v.catalogue_status || "").toLowerCase(), st = String(v.status || "").toLowerCase();
+  if (st === "sold" || c === "sold") return "sold";
+  if (st === "reserved" || (c === "reserved" && st === "available")) return "reserved";
+  return st;
+}
+const INV_LABEL = { reserved: "● Reserved", sold: "● Dah dijual — perlu Puspakom untuk tukar milik", preparation: "● Preparation" };
 function where(c) { return c.state ? "Puspakom " + c.state : ""; }
 function nextStep(c) {
   const t = todayStr();
@@ -235,7 +248,7 @@ function card(c) {
     <div class="top"><div><span class="plate">${esc(c.plate)}</span>${c.vid ? `<span class="vid">${esc(c.vid)}</span>` : ""}
       <div class="model">${esc(c.model || "—")}${c.year ? " · " + esc(c.year) : ""}</div>
       ${!c.inv ? `<div class="warnline">⚠ Tiada dalam inventori (mungkin dah dijual)</div>` : ""}
-      ${c.vstatus === "reserved" ? `<div class="warnline" style="color:var(--y-ink)">● Reserved dalam inventori</div>` : ""}</div>
+      ${INV_LABEL[c.vstatus] ? `<div class="warnline" style="color:var(--y-ink)">${INV_LABEL[c.vstatus]}</div>` : ""}</div>
       <button class="edit" data-edit="${esc(c.plate)}" type="button">Edit</button></div>
     <div class="meta"><span class="pill ${t.c}">${t.l}</span><span class="pill p-${c.status}">${find(STATUSES, c.status).l}</span>
       ${c.date && c.status !== "belum" ? `<span class="date">📅 ${fmtDate(c.date)}${c.time ? " · 🕘 " + fmtTime(c.time) : ""}${dl ? `<span class="tag">${dl}</span>` : ""}</span>` : ""}</div>
@@ -254,7 +267,7 @@ function renderList() {
     if (S.filter === "tindakan" && !isAlert(c)) return false;
     if (S.filter !== "semua" && S.filter !== "tindakan" && c.status !== S.filter) return false;
     if (S.loc !== "semua" && (c.state || "—") !== S.loc) return false;
-    if (q && [c.plate, c.model, c.vid, c.state, c.runner, c.note].join(" ").toLowerCase().indexOf(q) < 0) return false;
+    if (q && [c.plate, c.model, c.vid, c.state, c.runner, c.note, c.vstatus, INV_LABEL[c.vstatus] || ""].join(" ").toLowerCase().indexOf(q) < 0) return false;
     return true;
   }).sort((a, b) => {
     const aa = isAlert(a) ? 0 : 1, bb = isAlert(b) ? 0 : 1; if (aa !== bb) return aa - bb;
