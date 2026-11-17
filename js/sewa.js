@@ -157,6 +157,7 @@ function tempoh(r) {
 export function perjanjianHtml(r, opts = {}) {
   const v = x => esc(x === null || x === undefined || x === '' ? '-' : x);
   const kv = (k, x) => `<tr><th>${k}</th><td>${v(x)}</td></tr>`;
+  const fld = (k, x, c = '') => `<div class="f ${c}"><small>${k}</small><b>${v(x)}</b></div>`;
   const tarikhBuat = new Date(r.created_at).toLocaleDateString('en-GB');
   const ak = r.aksesori || {};
   const akMark = x => x === 'Ada' ? '<span class="ok">✓ Ada</span>' : x === 'Tiada' ? '<span class="no">✗ Tiada</span>' : x === 'Rosak' ? '<span class="bad">! Rosak</span>' : '<span class="na">—</span>';
@@ -177,19 +178,27 @@ export function perjanjianHtml(r, opts = {}) {
     .chips{display:flex;gap:6px;margin:9px 0 2px;flex-wrap:wrap}
     .chip{border:1px solid #d9dfeb;background:#f6f8fc;border-radius:99px;padding:3px 10px;font-size:9.5px;font-weight:700;color:#1d2f5c;text-transform:uppercase;letter-spacing:.06em}
     .chip.gold{background:#fbf3df;border-color:#e2c47c;color:#7a5a12}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:9px}
-    .card{border:1px solid #dfe4ee;border-radius:10px;padding:8px 11px;break-inside:avoid}
-    .card h3{margin:0 0 5px;font:700 9.5px/1 Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#1d2f5c;display:flex;align-items:center;gap:6px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:7px}
+    .card{border:1px solid #dfe4ee;border-radius:10px;padding:0;overflow:hidden;break-inside:avoid;display:flex;flex-direction:column}
+    .card h3{margin:0;padding:5px 10px;background:#f3f6fb;border-bottom:1px solid #e3e8f1;font:700 9.5px/1 Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#1d2f5c;display:flex;align-items:center;gap:6px}
+    .card .bd{padding:6px 10px;flex:1}
+    .fg{display:grid;grid-template-columns:repeat(4,1fr);gap:5px 14px}.fg.c2{grid-template-columns:1fr 1fr}
+    .f{min-width:0;border-bottom:1px solid #eef1f6;padding-bottom:3px}
+    .f small{display:block;font-size:8.3px;color:#7b849a;text-transform:uppercase;letter-spacing:.07em;margin-bottom:1px}
+    .f b{display:block;font-size:10.6px;font-weight:700;color:#1b2236;overflow-wrap:anywhere}
+    .s2{grid-column:span 2}.s4{grid-column:1/-1}
+    .ak div{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:3px 0;border-bottom:1px solid #eef1f6}
+    .ak div:last-child{border-bottom:0}.ak span:first-child{color:#4b5468}
     .card h3:before{content:"";width:3px;height:11px;background:#c9a24b;border-radius:2px}
     .full{grid-column:1/-1}
     table{width:100%;border-collapse:collapse}
     th{text-align:left;font-weight:600;color:#6a7389;width:40%;padding:2.5px 6px 2.5px 0;vertical-align:top}
     td{padding:2.5px 0;vertical-align:top;white-space:pre-wrap;font-weight:600}
-    .sched th,.sched td{border-bottom:1px solid #eef1f6;padding:4px 6px 4px 0;width:auto}
+    .sched th,.sched td{border-bottom:1px solid #eef1f6;padding:3px 6px 3px 0;width:auto}
     .sched thead th{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#1d2f5c;border-bottom:1.5px solid #c9a24b}
     .sched tbody th{width:22%}
     .num{text-align:right}
-    .calc th{width:auto}
+    .calc th{width:auto}.calc tr:not(.tot):not(.dep) th,.calc tr:not(.tot):not(.dep) td{border-bottom:1px solid #eef1f6;padding:3px 0}
     .calc .tot th,.calc .tot td{background:#0f1c3a;color:#e8c875;font-size:12.5px;font-weight:800;padding:6px 8px}
     .calc .tot th{border-radius:6px 0 0 6px} .calc .tot td{border-radius:0 6px 6px 0}
     .calc .dep th,.calc .dep td{padding-top:6px;color:#1d2f5c}
@@ -200,15 +209,15 @@ export function perjanjianHtml(r, opts = {}) {
     .pay th{width:auto;padding:1.5px 6px 1.5px 0}.pay td{padding:1.5px 0;font-size:10px}
     .pay .acc{font-size:12.5px;letter-spacing:.06em;color:#9a7424}
     .pay .pn{margin-top:5px;font-size:9px;color:#4b5468}
-    .pay .ps{margin-top:5px;padding-top:5px;border-top:1px dashed #c3cad8;font-size:10px;color:#4b5468}
+    .pay .ps{display:flex;justify-content:space-between;gap:8px;margin-top:4px;padding-top:4px;border-top:1px dashed #d5dbe6;font-size:10px;color:#4b5468}
     .pay .ps b{color:#0f1c3a}
-    .sig{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:10px;break-inside:avoid}
+    .sig{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:7px;break-inside:avoid}
     .sig.one{grid-template-columns:minmax(0,55%)}
-    .sig .box{border:1px dashed #c3cad8;border-radius:10px;padding:8px 11px;min-height:118px;display:flex;flex-direction:column;justify-content:flex-end}
+    .sig .box{border:1px dashed #c3cad8;border-radius:10px;padding:7px 11px;min-height:100px;display:flex;flex-direction:column;justify-content:flex-end}
     .sig img{height:62px;width:auto;object-fit:contain;align-self:flex-start;margin-bottom:2px}
     .sig .ln{border-top:1px solid #1b2236;padding-top:4px;font-size:9.5px;color:#4b5468}
     .sig .ln b{color:#1b2236;font-size:10.5px}
-    .decl{margin-top:9px;font-size:9.5px;color:#4b5468;border-left:3px solid #c9a24b;padding:3px 0 3px 8px}
+    .decl{margin-top:7px;font-size:9.5px;color:#4b5468;border-left:3px solid #c9a24b;padding:3px 0 3px 8px}
     .foot{margin-top:8px;text-align:center;font-size:8.5px;color:#8a93a6;letter-spacing:.06em}
     .tc-head{display:flex;align-items:center;gap:10px;border-bottom:2px solid #0f1c3a;padding-bottom:6px;margin-bottom:6px}
     .tc-head img{width:52px;height:52px}
@@ -231,31 +240,39 @@ export function perjanjianHtml(r, opts = {}) {
         <div class="meta">No Rujukan<b>${esc(r.ref_no)}</b>Tarikh: ${tarikhBuat}</div></div>
       <div class="chips"><span class="chip gold">${jenisTxt(r.jenis_sewa)}</span><span class="chip">${esc(STATUS[r.status] || r.status)}</span>${r.no_pendaftaran ? `<span class="chip">${esc(r.no_pendaftaran)}</span>` : ''}${tempoh(r) ? `<span class="chip">${esc(tempoh(r))}</span>` : ''}</div>
       <div class="grid">
-        <div class="card"><h3>Maklumat Penyewa</h3><table>${kv('Nama Penuh', r.nama)}${kv('No KP / Passport', r.no_kp)}${kv('No Telefon', r.telefon)}${kv('Email', r.email)}${kv('Alamat', [r.alamat, `${r.poskod} ${r.bandar}`, `${r.negeri}, ${r.negara}`].join('\n'))}${kv('No Lesen', r.no_lesen)}${kv('Luput Lesen', r.lesen_luput ? dmy(r.lesen_luput) : '')}</table></div>
-        <div class="card"><h3>Maklumat Kenderaan</h3><table>${kv('Model', r.model)}${kv('No Pendaftaran', r.no_pendaftaran)}${kv('Kumpulan', r.kumpulan)}${kv('Jenis Sewaan', jenisTxt(r.jenis_sewa))}</table>
-          <h3 style="margin-top:9px">Aksesori</h3><table>${AKSESORI.map(([k, l]) => `<tr><th>${l}</th><td>${akMark(ak[k])}</td></tr>`).join('')}</table></div>
-        <div class="card full"><h3>Penghantaran &amp; Pengambilan</h3><table class="sched"><thead><tr><th></th><th>Ambil</th><th>Pulang</th></tr></thead><tbody>
+        <div class="card full"><h3>Maklumat Penyewa</h3><div class="bd fg">
+          ${fld('Nama Penuh', r.nama, 's2')}${fld('No KP / Passport', r.no_kp)}${fld('No Telefon', r.telefon)}
+          ${fld('Email', r.email, 's2')}${fld('No Lesen Memandu', r.no_lesen)}${fld('Tarikh Luput Lesen', r.lesen_luput ? dmy(r.lesen_luput) : '')}
+          ${fld('Alamat', [r.alamat, `${r.poskod} ${r.bandar}`, r.negeri, r.negara].filter(x => x && String(x).trim()).join(', '), 's4')}
+        </div></div>
+        <div class="card"><h3>Maklumat Kenderaan</h3><div class="bd fg c2">
+          ${fld('Model', r.model, 's2')}${fld('No Pendaftaran', r.no_pendaftaran)}${fld('Kumpulan', r.kumpulan)}
+          ${fld('Jenis Sewaan', jenisTxt(r.jenis_sewa))}${fld('Tempoh', tempoh(r))}
+        </div></div>
+        <div class="card"><h3>Aksesori</h3><div class="bd ak">${AKSESORI.map(([k, l]) => `<div><span>${l}</span>${akMark(ak[k])}</div>`).join('')}</div></div>
+        <div class="card full"><h3>Penghantaran &amp; Pengambilan</h3><div class="bd"><table class="sched"><thead><tr><th></th><th>Ambil</th><th>Pulang</th></tr></thead><tbody>
           <tr><th>Lokasi</th><td>${v(r.ambil_lokasi)}</td><td>${v(r.pulang_lokasi)}</td></tr>
           <tr><th>Tarikh &amp; Masa</th><td>${dmy(r.ambil_tarikh)} · ${hm(r.ambil_masa)}</td><td>${dmy(r.pulang_tarikh)} · ${hm(r.pulang_masa)}</td></tr>
           <tr><th>Jarak (odometer)</th><td>${v(km(r.ambil_jarak))}</td><td>${v(km(r.pulang_jarak))}</td></tr>
-          <tr><th>Minyak</th><td>${v(r.ambil_minyak)}</td><td>${v(r.pulang_minyak)}</td></tr></tbody></table></div>
-        <div class="card"><h3>Caj Sewaan</h3><table class="calc">${kv('Sewa (Hari)', r.sewa_hari ?? '')}${caj}
+          <tr><th>Minyak</th><td>${v(r.ambil_minyak)}</td><td>${v(r.pulang_minyak)}</td></tr></tbody></table></div></div>
+        <div class="card"><h3>Caj Sewaan</h3><div class="bd"><table class="calc"><tr><th>Sewa (Hari)</th><td class="num">${v(r.sewa_hari ?? '')}</td></tr>${caj}
           <tr class="tot"><th>JUMLAH</th><td class="num">${v(rm(r.jumlah))}</td></tr>
-          <tr class="dep"><th>Sekuriti Deposit</th><td class="num">${v(rm(r.deposit))}</td></tr>
-          <tr><th>Status Bayaran</th><td class="num">${r.penuh_dibayar_at ? '<span class="ok">✓ Dibayar penuh ' + new Date(r.penuh_dibayar_at).toLocaleDateString('en-GB') + '</span>' : r.deposit_dibayar_at ? '<span class="ok">✓ Deposit dibayar ' + new Date(r.deposit_dibayar_at).toLocaleDateString('en-GB') + '</span>' : 'Belum dibayar'}${r.deposit_pulang_at ? '<br><span class="na">Deposit dipulangkan ' + new Date(r.deposit_pulang_at).toLocaleDateString('en-GB') + '</span>' : ''}</td></tr></table></div>
-        <div class="card pay"><h3>Pembayaran</h3>
+          <tr class="dep"><th>Sekuriti Deposit</th><td class="num">${v(rm(r.deposit))}</td></tr></table></div></div>
+        <div class="card pay"><h3>Pembayaran</h3><div class="bd">
           <div class="pw"><img src="${esc(SEWA_QR)}" alt="DuitNow QR">
             <table><tr><th>Akaun</th><td>ABEDIN AUTO</td></tr><tr><th>Bank</th><td>OCBC Bank (Malaysia) Berhad</td></tr>
             <tr><th>No. Akaun</th><td class="acc">7551072447</td></tr></table></div>
           <div class="pn">Imbas DuitNow QR atau pindahan ke akaun di atas. Nyatakan No Rujukan <b>${esc(r.ref_no)}</b>.</div>
-          <div class="ps">${r.penuh_dibayar_at ? '<b class="ok">✓ DIBAYAR PENUH</b>' : r.deposit_dibayar_at ? '<b class="ok">✓ DEPOSIT DIBAYAR</b>' : '<b>BELUM DIBAYAR</b>'}${r.jumlah != null ? ' · Jumlah ' + esc(rm(Number(r.jumlah) + Number(r.deposit || 0))) : ''}</div></div>
-        ${r.remark || r.remark_admin ? `<div class="card full"><h3>Catatan</h3><table>${r.remark ? kv('Pelanggan', r.remark) : ''}${r.remark_admin ? kv('Abe Din Car Rental', r.remark_admin) : ''}</table></div>` : ''}
+          <div class="ps"><span>Status bayaran</span>${r.penuh_dibayar_at ? '<b class="ok">✓ Dibayar penuh · ' + new Date(r.penuh_dibayar_at).toLocaleDateString('en-GB') + '</b>' : r.deposit_dibayar_at ? '<b class="ok">✓ Deposit dibayar · ' + new Date(r.deposit_dibayar_at).toLocaleDateString('en-GB') + '</b>' : '<b>Belum dibayar</b>'}</div>
+          ${r.jumlah != null ? `<div class="ps"><span>Jumlah perlu dibayar</span><b>${esc(rm(Number(r.jumlah) + Number(r.deposit || 0)))}</b></div>` : ''}
+          ${r.deposit_pulang_at ? `<div class="ps"><span>Deposit dipulangkan</span><b>${new Date(r.deposit_pulang_at).toLocaleDateString('en-GB')}</b></div>` : ''}
+        </div></div>
+        ${r.remark || r.remark_admin ? `<div class="card full"><h3>Catatan</h3><div class="bd"><table>${r.remark ? kv('Pelanggan', r.remark) : ''}${r.remark_admin ? kv('Abe Din Car Rental', r.remark_admin) : ''}</table></div></div>` : ''}
       </div>
       <div class="decl">Penyewa mengesahkan maklumat di atas adalah benar, telah menerima kenderaan dalam keadaan seperti yang dinyatakan, dan bersetuju dengan Terma &amp; Syarat di muka surat berikutnya.</div>
       <div class="sig one">
         <div class="box"><img src="${esc(r.tandatangan)}" alt=""><div class="ln"><b>${esc(r.nama)}</b><br>Tandatangan Penyewa · ${esc(r.no_kp)} · ${tarikhBuat}</div></div>
       </div>
-      <div class="foot">ABE DIN CAR RENTAL · ${esc(r.ref_no)} · Perjanjian</div>
     </div>
     <div class="page tc-page">
       <div class="tc-head"><img src="${esc(SEWA_LOGO)}" alt=""><h2>TERMA &amp; SYARAT</h2><span>${esc(r.ref_no)}<br>${esc(r.nama)}</span></div>
