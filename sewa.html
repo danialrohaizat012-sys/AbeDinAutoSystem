@@ -199,6 +199,12 @@ body.sent .done{display:block}
         <div class="field"><label for="pulang_masa">3. Masa Akhir <span class="req">*</span></label><input id="pulang_masa" name="pulang_masa" type="time" required><div class="msg">Sila pilih masa akhir.</div></div>
         <div class="full hint" id="tempoh"></div>
         <div class="full anggar" id="anggar" hidden></div>
+        <div class="field full" id="f-bayar"><label>Pilihan Bayaran <span class="req">*</span></label>
+          <div class="seg">
+            <label><input type="radio" name="pilihan_bayaran" value="deposit"><span>Bayar Deposit Dahulu<small id="pb-dep">Baki dibayar semasa ambil kenderaan</small></span></label>
+            <label><input type="radio" name="pilihan_bayaran" value="penuh"><span>Bayar Penuh<small id="pb-penuh">Sewa + deposit sekali gus</small></span></label>
+          </div><div class="msg">Sila pilih cara bayaran.</div>
+          <div class="hint">Butiran akaun bank / QR akan diberikan oleh Abe Din Car Rental. Bayaran disahkan oleh pihak kami.</div></div>
       </div>
     </section>
 
@@ -247,9 +253,10 @@ body.sent .done{display:block}
       <b>Apa seterusnya?</b>
       <ol><li>Pasukan kami akan menyemak tempahan dan dokumen anda.</li>
       <li>Selepas <b>disahkan</b>, salinan <b>PDF Perjanjian Sewa</b> akan dihantar kepada anda melalui WhatsApp / emel.</li>
-      <li>Bayaran dan penyerahan kenderaan akan diuruskan oleh Abe Din Car Rental.</li></ol>
+      <li>Butiran bayaran akan diberikan oleh Abe Din Car Rental. Setiap bayaran (deposit / penuh) akan disahkan oleh pihak kami.</li></ol>
     </div>
     <p class="bayar" id="done-bayar"></p>
+    <p class="sub" id="done-pilihan" style="font-weight:600;color:var(--navy)"></p>
     <div class="acts">
       <a class="btn wa" id="wa" target="_blank" rel="noopener" hidden>Maklumkan melalui WhatsApp</a>
       <button class="btn ghost" type="button" onclick="location.reload()">Isi borang baharu</button>
@@ -375,6 +382,7 @@ function syncJenis() {
   DOCS.forEach(d => { if (d.reqPs) d.el.querySelector('.req').style.display = ps ? '' : 'none'; });
 }
 form.querySelectorAll('input[name=jenis_sewa]').forEach(r => r.addEventListener('change', () => { syncJenis(); clearBad(r); }));
+form.querySelectorAll('input[name=pilihan_bayaran]').forEach(r => r.addEventListener('change', () => clearBad(r)));
 
 // ---------- Lokasi pulang sama ----------
 $('#sama').addEventListener('change', e => {
@@ -412,6 +420,8 @@ function tempoh() {
   $('#tempoh').textContent = `Tempoh sewaan: ${d ? d + ' hari ' : ''}${r ? r + ' jam' : ''}`.trim();
   const m = MODELS[+pick.value], an = $('#anggar'), k = isAgen() ? null : kiraBayaran(m, a, b);
   BAYARAN = k;
+  $('#pb-dep').textContent = k && k.deposit ? `Deposit ${rmF(k.deposit)} sekarang, baki ${rmF(k.jumlahSewa)} semasa ambil kenderaan` : 'Baki dibayar semasa ambil kenderaan';
+  $('#pb-penuh').textContent = k ? `${rmF(k.total)} sekali gus (sewa + deposit)` : 'Sewa + deposit sekali gus';
   if (!k) { an.hidden = true; return; }
   an.innerHTML = `<h4>Ringkasan Bayaran</h4>
     <div class="r"><span>${k.label}</span><span>${rmF(k.sewa)}</span></div>
@@ -510,6 +520,7 @@ function validate() {
   const ps = jenis() === 'pandu_sendiri';
   if (!jenis()) fail(form.querySelector('input[name=jenis_sewa]'));
   if (isAgen() && !$('#nama_agen').value.trim()) fail($('#nama_agen'));
+  if (!form.querySelector('input[name=pilihan_bayaran]:checked')) fail(form.querySelector('input[name=pilihan_bayaran]'));
   form.querySelectorAll('[required]').forEach(el => { if (!el.value.trim()) fail(el); });
   const em = $('#email'); if (em.value && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em.value.trim())) fail(em);
   const tel = $('#telefon'); if (tel.value && tel.value.replace(/\D/g, '').length < 9) fail(tel);
@@ -562,7 +573,8 @@ form.addEventListener('submit', async e => {
       ambil_lokasi: v('ambil_lokasi'), ambil_tarikh: v('ambil_tarikh'), ambil_masa: v('ambil_masa'),
       pulang_lokasi: v('pulang_lokasi'), pulang_tarikh: v('pulang_tarikh'), pulang_masa: v('pulang_masa'),
       remark: v('remark'), docs, tandatangan: sigData(), setuju: $('#setuju').checked,
-      is_agen: isAgen(), nama_agen: isAgen() ? v('nama_agen') : ''
+      is_agen: isAgen(), nama_agen: isAgen() ? v('nama_agen') : '',
+      pilihan_bayaran: form.querySelector('input[name=pilihan_bayaran]:checked')?.value || ''
     };
     const { data: ref, error } = await client.rpc('submit_sewa', { p: payload });
     if (error) throw new Error(error.message);
@@ -577,9 +589,10 @@ function showDone(ref, p) {
   $('#ref').textContent = ref;
   $('#done-sum').textContent = `${p.nama} · ${p.model} · ${dmy(p.ambil_tarikh)} ${p.ambil_masa} → ${dmy(p.pulang_tarikh)} ${p.pulang_masa}`;
   const k = BAYARAN;
+  $('#done-pilihan').textContent = p.pilihan_bayaran === 'penuh' ? 'Pilihan bayaran: Bayar Penuh' : 'Pilihan bayaran: Bayar Deposit Dahulu';
   $('#done-bayar').innerHTML = k ? `Anggaran jumlah perlu dibayar: <b>${rmF(k.total)}</b><br><small style="color:var(--muted)">Sewa ${rmF(k.jumlahSewa)}${k.deposit ? ' + deposit ' + rmF(k.deposit) : ''}</small>` : '';
   if (waNumber) {
-    const msg = `Salam Abedin Car Rental, saya telah menghantar Perjanjian Sewa.\n\nNo Rujukan: ${ref}\nNama: ${p.nama}${p.is_agen ? '\nAgen: ' + p.nama_agen : ''}\nSewaan: ${p.jenis_sewa === 'chauffeur' ? 'Chauffeur' : 'Pandu Sendiri'}\nModel: ${p.model}\nAmbil: ${p.ambil_lokasi}, ${dmy(p.ambil_tarikh)} ${p.ambil_masa}\nPulang: ${p.pulang_lokasi}, ${dmy(p.pulang_tarikh)} ${p.pulang_masa}` + (k ? `\n\nAnggaran bayaran: ${rmF(k.total)} (sewa ${rmF(k.jumlahSewa)}${k.deposit ? ' + deposit ' + rmF(k.deposit) : ''})` : '');
+    const msg = `Salam Abedin Car Rental, saya telah menghantar Perjanjian Sewa.\n\nNo Rujukan: ${ref}\nNama: ${p.nama}${p.is_agen ? '\nAgen: ' + p.nama_agen : ''}\nSewaan: ${p.jenis_sewa === 'chauffeur' ? 'Chauffeur' : 'Pandu Sendiri'}\nModel: ${p.model}\nBayaran: ${p.pilihan_bayaran === 'penuh' ? 'Bayar Penuh' : 'Deposit Dahulu'}\nAmbil: ${p.ambil_lokasi}, ${dmy(p.ambil_tarikh)} ${p.ambil_masa}\nPulang: ${p.pulang_lokasi}, ${dmy(p.pulang_tarikh)} ${p.pulang_masa}` + (k ? `\n\nAnggaran bayaran: ${rmF(k.total)} (sewa ${rmF(k.jumlahSewa)}${k.deposit ? ' + deposit ' + rmF(k.deposit) : ''})` : '');
     const a = $('#wa'); a.href = `https://wa.me/${waNumber}?text=${encodeURIComponent(msg)}`; a.hidden = false;
   }
   document.body.classList.add('sent');

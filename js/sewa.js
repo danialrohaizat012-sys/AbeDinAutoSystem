@@ -133,6 +133,13 @@ function termaHtml(t) {
     return m ? `<p><b>${m[1]}.</b> ${esc(m[2])}</p>` : `<p>${esc(l)}</p>`;
   }).join('') || '-';
 }
+const KAEDAH = ['Tunai', 'Pindahan Bank', 'DuitNow QR', 'Kad Debit/Kredit'];
+const tsMY = t => t ? new Date(t).toLocaleString('ms-MY', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+function statusBayar(r) {
+  if (r.penuh_dibayar_at) return { cls: 'st-selesai', t: 'Lunas' };
+  if (r.deposit_dibayar_at) return { cls: 'st-disahkan', t: 'Deposit ✓' };
+  return { cls: 'st-baru', t: 'Belum bayar' };
+}
 const DOC_LABEL = { lesen: 'Lesen Memandu', kp: 'Kad Pengenalan', utiliti: 'Bil Utiliti', gambar: 'Gambar Pemandu' };
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const dmy = s => s ? String(s).slice(0, 10).split('-').reverse().join('/') : '-';
@@ -226,7 +233,8 @@ export function perjanjianHtml(r, opts = {}) {
           <tr><th>Minyak</th><td>${v(r.ambil_minyak)}</td><td>${v(r.pulang_minyak)}</td></tr></tbody></table></div>
         <div class="card"><h3>Caj Sewaan</h3><table class="calc">${kv('Sewa (Hari)', r.sewa_hari ?? '')}${caj}
           <tr class="tot"><th>JUMLAH</th><td class="num">${v(rm(r.jumlah))}</td></tr>
-          <tr class="dep"><th>Sekuriti Deposit</th><td class="num">${v(rm(r.deposit))}</td></tr></table></div>
+          <tr class="dep"><th>Sekuriti Deposit</th><td class="num">${v(rm(r.deposit))}</td></tr>
+          <tr><th>Status Bayaran</th><td class="num">${r.penuh_dibayar_at ? '<span class="ok">✓ Dibayar penuh ' + new Date(r.penuh_dibayar_at).toLocaleDateString('en-GB') + '</span>' : r.deposit_dibayar_at ? '<span class="ok">✓ Deposit dibayar ' + new Date(r.deposit_dibayar_at).toLocaleDateString('en-GB') + '</span>' : 'Belum dibayar'}${r.deposit_pulang_at ? '<br><span class="na">Deposit dipulangkan ' + new Date(r.deposit_pulang_at).toLocaleDateString('en-GB') + '</span>' : ''}</td></tr></table></div>
         <div class="card"><h3>Catatan</h3><table>${kv('Pelanggan', r.remark)}${kv('Abe Din Car Rental', r.remark_admin)}</table></div>
       </div>
       <div class="decl">Penyewa mengesahkan maklumat di atas adalah benar, telah menerima kenderaan dalam keadaan seperti yang dinyatakan, dan bersetuju dengan Terma &amp; Syarat di muka surat berikutnya.</div>
@@ -296,7 +304,7 @@ export function mountSewa(host, ctx) {
       ${S.error ? `<div class="card" style="border-color:#5a2a26;color:var(--bad)">${esc(S.error)}</div>` : ''}
       <div class="list">${!S.loaded ? '<div class="empty">Memuatkan…</div>' : rows.map(r => `
         <button class="item" data-open="${r.id}"><div><span class="ref">${esc(r.ref_no)}</span><br><b>${esc(r.nama)}</b></div>
-        <span class="chip st-${r.status}">${STATUS[r.status] || r.status}</span>
+        <span style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><span class="chip st-${r.status}">${STATUS[r.status] || r.status}</span>${(b => `<span class="chip ${b.cls}" style="opacity:.9">${b.t}</span>`)(statusBayar(r))}</span>
         <span class="sub">${esc(r.model)}${r.no_pendaftaran ? ' (' + esc(r.no_pendaftaran) + ')' : ''} · ${jenisTxt(r.jenis_sewa)}${r.jenis_harga === 'agen' ? ' · Agen' + (r.nama_agen ? ': ' + esc(r.nama_agen) : '') : ''} · ${dmy(r.ambil_tarikh)} ${hm(r.ambil_masa)} → ${dmy(r.pulang_tarikh)} ${hm(r.pulang_masa)}<br>${esc(r.telefon)} · dihantar ${when(r.created_at)}</span></button>`).join('')
         || `<div class="empty">${S.rows.length ? 'Tiada padanan.' : 'Belum ada Perjanjian Sewa. Kongsi pautan borang kepada pelanggan.'}</div>`}</div>`;
   }
@@ -313,6 +321,7 @@ export function mountSewa(host, ctx) {
       <div class="row"><button class="btn pri" data-a="edit">✎ Edit Dokumen Sewa</button><button class="btn" data-a="print">Cetak / PDF Perjanjian</button>
         ${tel ? `<a class="btn wa" href="https://wa.me/${tel}" target="_blank" rel="noopener">WhatsApp pelanggan</a>` : ''}
         <a class="btn" href="tel:${esc(r.telefon)}">Telefon</a></div>
+      ${bayaranCard(r)}
       ${hantarCard(r)}
       <section class="card"><h3>Status</h3><div class="stbar">${Object.keys(STATUS).map(k => `<button class="btn sm" data-st="${k}" aria-pressed="${r.status === k}">${STATUS[k]}</button>`).join('')}</div>
         <label class="mute" style="display:block;margin:12px 0 6px">Nota staf (tidak dilihat pelanggan)</label>
@@ -589,6 +598,27 @@ export function mountSewa(host, ctx) {
     if (S.view === 'detail' && S.id === r.id) render();
   }
 
+  function bayaranCard(r) {
+    const nama = ctx.profile?.full_name || 'Staf';
+    const sel = id => `<select id="${id}" style="width:auto;min-width:150px;padding:8px 10px">${KAEDAH.map(k => `<option>${k}</option>`).join('')}</select>`;
+    const done = (at, kaedah, oleh) => `<span style="color:var(--ok);font-weight:700">✓ Diterima</span> <span class="mute">${tsMY(at)}${kaedah ? ' · ' + esc(kaedah) : ''}${oleh ? ' · ' + esc(oleh) : ''}</span>`;
+    const jumlah = r.jumlah != null ? Number(r.jumlah) : null, dep = r.deposit != null ? Number(r.deposit) : null;
+    const dibayar = (r.deposit_dibayar_at ? dep || 0 : 0) + (r.penuh_dibayar_at ? (jumlah || 0) + (r.deposit_dibayar_at ? 0 : dep || 0) : 0);
+    const perlu = (jumlah || 0) + (dep || 0);
+    const baki = Math.max(0, perlu - dibayar);
+    const row = (title, amt, body) => `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid var(--line)"><div><b>${title}</b><div class="mute">${amt}</div></div><div class="row" style="align-items:center">${body}</div></div>`;
+    return `<section class="card"><h3>Bayaran</h3>
+      <p class="mute" style="margin-bottom:4px">Pilihan pelanggan: <b style="color:var(--fg)">${r.pilihan_bayaran === 'penuh' ? 'Bayar Penuh' : r.pilihan_bayaran === 'deposit' ? 'Bayar Deposit Dahulu' : '-'}</b>${jumlah == null ? ' · <span style="color:var(--warn)">Isi caj dalam Edit Dokumen Sewa untuk jumlah sebenar</span>' : ''}</p>
+      ${row('Deposit', dep != null ? rm(dep) : 'Belum ditetapkan', r.deposit_dibayar_at ? done(r.deposit_dibayar_at, r.deposit_kaedah, r.deposit_oleh) + ' <button class="btn sm" data-a="pay-undo" data-k="deposit">Batal</button>'
+        : `${sel('kd-deposit')}<button class="btn sm pri" data-a="pay" data-k="deposit">✓ Sahkan Deposit Diterima</button>`)}
+      ${row('Bayaran Penuh', jumlah != null ? `${rm(jumlah)} sewa${r.deposit_dibayar_at || !dep ? '' : ' + ' + rm(dep) + ' deposit'}` : 'Belum ditetapkan', r.penuh_dibayar_at ? done(r.penuh_dibayar_at, r.penuh_kaedah, r.penuh_oleh) + ' <button class="btn sm" data-a="pay-undo" data-k="penuh">Batal</button>'
+        : `${sel('kd-penuh')}<button class="btn sm pri" data-a="pay" data-k="penuh">✓ Sahkan Bayaran Penuh</button>`)}
+      ${r.deposit_dibayar_at || r.penuh_dibayar_at ? row('Deposit Dipulangkan', 'Selepas kenderaan dipulangkan & diperiksa', r.deposit_pulang_at ? `<span style="color:var(--ok);font-weight:700">✓ Dipulangkan</span> <span class="mute">${tsMY(r.deposit_pulang_at)}${r.deposit_pulang_oleh ? ' · ' + esc(r.deposit_pulang_oleh) : ''}</span> <button class="btn sm" data-a="pay-undo" data-k="pulang">Batal</button>`
+        : '<button class="btn sm" data-a="pay" data-k="pulang">Sahkan Deposit Dipulangkan</button>') : ''}
+      <div style="display:flex;justify-content:space-between;margin-top:10px;font-weight:800"><span>${baki > 0 ? 'Baki perlu dibayar' : 'Status'}</span><span style="color:${baki > 0 ? 'var(--warn)' : 'var(--ok)'}">${perlu ? (baki > 0 ? rm(baki) : 'LUNAS ✓') : '-'}</span></div>
+      <p class="msg" id="pay-msg"></p></section>`;
+  }
+
   const perjanjianBase = new URL('perjanjian.html', ctx.publicFormUrl || location.href.split('#')[0].split('?')[0]).href;
   function hantarCard(r) {
     const sah = r.status === 'disahkan' || r.status === 'selesai';
@@ -635,6 +665,18 @@ export function mountSewa(host, ctx) {
     if (t.dataset.open) { S.id = t.dataset.open; S.view = 'detail'; S.msg = ''; render(); scrollTo(0, 0); signDocs(S.rows.find(x => x.id === S.id)); return; }
     const r = S.rows.find(x => x.id === S.id);
     if (t.dataset.st && r) { if (t.dataset.st !== r.status) update(r.id, { status: t.dataset.st }, t.dataset.st === 'disahkan' ? 'Perjanjian disahkan. Hantar PDF kepada pelanggan di atas.' : 'Status dikemas kini.'); return; }
+    if ((a === 'pay' || a === 'pay-undo') && r) {
+      const k = t.dataset.k, nama = ctx.profile?.full_name || 'Staf', now = new Date().toISOString();
+      const kaedah = app.querySelector('#kd-' + k)?.value || null;
+      const labels = { deposit: 'Deposit diterima', penuh: 'Bayaran penuh diterima', pulang: 'Deposit dipulangkan' };
+      if (a === 'pay' && !confirm(`Sahkan: ${labels[k]}${kaedah ? ' (' + kaedah + ')' : ''} untuk ${r.ref_no}?`)) return;
+      if (a === 'pay-undo' && !confirm(`Batalkan rekod "${labels[k]}"?`)) return;
+      const patch = k === 'deposit' ? { deposit_dibayar_at: a === 'pay' ? now : null, deposit_kaedah: a === 'pay' ? kaedah : null, deposit_oleh: a === 'pay' ? nama : null }
+        : k === 'penuh' ? { penuh_dibayar_at: a === 'pay' ? now : null, penuh_kaedah: a === 'pay' ? kaedah : null, penuh_oleh: a === 'pay' ? nama : null }
+        : { deposit_pulang_at: a === 'pay' ? now : null, deposit_pulang_oleh: a === 'pay' ? nama : null };
+      update(r.id, patch, a === 'pay' ? labels[k] + ' — direkodkan.' : 'Rekod bayaran dibatalkan.');
+      return;
+    }
     if (a && a.startsWith('share-') && r) {
       const m = app.querySelector('#share-msg'), tel = String(r.telefon || '').replace(/\D/g, '').replace(/^0/, '60');
       const w = a === 'share-wa' || a === 'share-open' ? window.open('', '_blank') : null;
