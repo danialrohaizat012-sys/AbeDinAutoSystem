@@ -55,6 +55,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 
 .msg{display:none;color:var(--err);font-size:13px;margin-top:5px}
 .field.bad .msg{display:block}
 .hint{font-size:12.5px;color:var(--muted);margin-top:5px}
+.agen-box{border:1.5px dashed var(--line);border-radius:12px;padding:12px 14px;background:#fafbfe}
+.agen-box:has(#is_agen:checked){border-style:solid;border-color:var(--blue);background:#eef3fd}
 #model-harga b{color:var(--gold)}
 .anggar{margin-top:12px;border:1.5px solid var(--gold);background:linear-gradient(180deg,#fffaf0,#f7efdf);border-radius:14px;padding:14px 14px 12px;font-size:14px}
 .anggar h4{margin:0 0 8px;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--navy)}
@@ -146,6 +148,8 @@ body.sent .done{display:block}
       <p class="lead">Medan bertanda <span class="req">*</span> wajib diisi.</p>
       <div class="grid">
         <div class="field"><label for="tarikh">Tarikh</label><input id="tarikh" readonly></div>
+        <div class="field full agen-box"><label class="check" style="margin:0"><input type="checkbox" id="is_agen"><span><b>Saya agen</b> <span class="opt">(tempahan dibuat oleh agen bagi pihak pelanggan)</span></span></label>
+          <div id="w-agen" hidden style="margin-top:10px"><label for="nama_agen">Nama Agen / Syarikat <span class="req">*</span></label><input id="nama_agen" maxlength="120" placeholder="cth: ABC Travel / Ahmad (agen)"><div class="msg">Sila masukkan nama agen / syarikat.</div></div></div>
         <div class="field full"><label>Sewaan <span class="req">*</span></label>
           <div class="seg">
             <label><input type="radio" name="jenis_sewa" value="pandu_sendiri"><span>Pandu Sendiri<small>Anda memandu sendiri</small></span></label>
@@ -324,19 +328,32 @@ const rmF = n => 'RM' + Number(n).toLocaleString('ms-MY', { minimumFractionDigit
 client.rpc('get_sewa_models').then(({ data, error }) => {
   MODELS = !error && Array.isArray(data) ? data : [];
   if (!MODELS.length) return;                       // tiada stok: kekal medan taip biasa
-  const groups = {};
-  MODELS.forEach((m, i) => { (groups[m.kumpulan] ||= []).push(`<option value="${i}">${escH(m.model)}${Number(m.harga_hari) > 0 ? ' — dari ' + rmF(Math.min(...((m.pakej || []).length ? m.pakej.map(x => +x.harga) : [m.harga_hari]))) + '/hari' : ''}</option>`); });
-  pick.innerHTML = '<option value="">— Pilih kereta —</option>' + Object.entries(groups).map(([g, o]) => `<optgroup label="${escH(g)}">${o.join('')}</optgroup>`).join('') + '<option value="lain">Lain-lain / model lain (taip sendiri)</option>';
+  binaPilihan();
   pick.hidden = false; pick.required = true; modelIn.hidden = true; modelIn.placeholder = 'Taip model yang dikehendaki';
   kumpIn.readOnly = true; kumpIn.placeholder = 'Diisi automatik';
+});
+const isAgen = () => $('#is_agen').checked;
+function binaPilihan() {
+  const sel = pick.value, groups = {};
+  MODELS.forEach((m, i) => { (groups[m.kumpulan] ||= []).push(`<option value="${i}">${escH(m.model)}${!isAgen() && Number(m.harga_hari) > 0 ? ' — dari ' + rmF(Math.min(...((m.pakej || []).length ? m.pakej.map(x => +x.harga) : [m.harga_hari]))) + '/hari' : ''}</option>`); });
+  pick.innerHTML = '<option value="">— Pilih kereta —</option>' + Object.entries(groups).map(([g, o]) => `<optgroup label="${escH(g)}">${o.join('')}</optgroup>`).join('') + '<option value="lain">Lain-lain / model lain (taip sendiri)</option>';
+  pick.value = sel;
+}
+function paparHarga() {
+  const m = MODELS[+pick.value], pk = m && Array.isArray(m.pakej) ? m.pakej : [];
+  $('#model-harga').innerHTML = isAgen() ? '' : pk.length ? 'Harga sehari: ' + pk.map((x, i) => `<b>${x.hari} hari${i === pk.length - 1 && pk.length > 1 ? '+' : ''} ${rmF(x.harga)}</b>`).join(' · ') : (m && Number(m.harga_hari) > 0 ? `Harga sewa: <b>${rmF(m.harga_hari)} sehari</b>` : '');
+}
+$('#is_agen').addEventListener('change', () => {
+  $('#w-agen').hidden = !isAgen(); $('#nama_agen').required = isAgen(); clearBad($('#nama_agen'));
+  if (MODELS.length) binaPilihan();
+  paparHarga(); tempoh();
 });
 pick.addEventListener('change', () => {
   const v = pick.value, m = MODELS[+v];
   if (v === 'lain') { modelIn.hidden = false; modelIn.value = ''; kumpIn.readOnly = false; kumpIn.value = ''; kumpIn.placeholder = 'cth: Sedan / MPV / SUV'; modelIn.focus(); }
   else if (m) { modelIn.hidden = true; modelIn.value = m.model; kumpIn.value = m.kumpulan === 'Lain-lain' ? '' : m.kumpulan; kumpIn.readOnly = true; }
   else { modelIn.hidden = true; modelIn.value = ''; kumpIn.value = ''; }
-  const pk = m && Array.isArray(m.pakej) ? m.pakej : [];
-  $('#model-harga').innerHTML = pk.length ? 'Harga sehari: ' + pk.map((x, i) => `<b>${x.hari} hari${i === pk.length - 1 && pk.length > 1 ? '+' : ''} ${rmF(x.harga)}</b>`).join(' · ') : (m && Number(m.harga_hari) > 0 ? `Harga sewa: <b>${rmF(m.harga_hari)} sehari</b>` : '');
+  paparHarga();
   clearBad(pick); tempoh();
 });
 
@@ -380,10 +397,10 @@ function kiraBayaran(m, a, b) {
 function tempoh() {
   const a = dt($('#ambil_tarikh').value, $('#ambil_masa').value), b = dt($('#pulang_tarikh').value, $('#pulang_masa').value);
   if ($('#ambil_tarikh').value) $('#pulang_tarikh').min = $('#ambil_tarikh').value;
-  if (!a || !b || b <= a) { $('#tempoh').textContent = ''; $('#anggar').hidden = true; return; }
+  if (!a || !b || b <= a) { $('#tempoh').textContent = ''; $('#anggar').hidden = true; BAYARAN = null; return; }
   const h = Math.round((b - a) / 36e5), d = Math.floor(h / 24), r = h % 24;
   $('#tempoh').textContent = `Tempoh sewaan: ${d ? d + ' hari ' : ''}${r ? r + ' jam' : ''}`.trim();
-  const m = MODELS[+pick.value], an = $('#anggar'), k = kiraBayaran(m, a, b);
+  const m = MODELS[+pick.value], an = $('#anggar'), k = isAgen() ? null : kiraBayaran(m, a, b);
   BAYARAN = k;
   if (!k) { an.hidden = true; return; }
   an.innerHTML = `<h4>Ringkasan Bayaran</h4>
@@ -482,6 +499,7 @@ function validate() {
   const fail = el => { bad(el); first ||= el; };
   const ps = jenis() === 'pandu_sendiri';
   if (!jenis()) fail(form.querySelector('input[name=jenis_sewa]'));
+  if (isAgen() && !$('#nama_agen').value.trim()) fail($('#nama_agen'));
   form.querySelectorAll('[required]').forEach(el => { if (!el.value.trim()) fail(el); });
   const em = $('#email'); if (em.value && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em.value.trim())) fail(em);
   const tel = $('#telefon'); if (tel.value && tel.value.replace(/\D/g, '').length < 9) fail(tel);
@@ -533,7 +551,8 @@ form.addEventListener('submit', async e => {
       no_lesen: v('no_lesen'), lesen_luput: v('lesen_luput'), model: v('model'), kumpulan: v('kumpulan'),
       ambil_lokasi: v('ambil_lokasi'), ambil_tarikh: v('ambil_tarikh'), ambil_masa: v('ambil_masa'),
       pulang_lokasi: v('pulang_lokasi'), pulang_tarikh: v('pulang_tarikh'), pulang_masa: v('pulang_masa'),
-      remark: v('remark'), docs, tandatangan: sigData(), setuju: $('#setuju').checked
+      remark: v('remark'), docs, tandatangan: sigData(), setuju: $('#setuju').checked,
+      is_agen: isAgen(), nama_agen: isAgen() ? v('nama_agen') : ''
     };
     const { data: ref, error } = await client.rpc('submit_sewa', { p: payload });
     if (error) throw new Error(error.message);
@@ -550,7 +569,7 @@ function showDone(ref, p) {
   const k = BAYARAN;
   $('#done-bayar').innerHTML = k ? `Anggaran jumlah perlu dibayar: <b>${rmF(k.total)}</b><br><small style="color:var(--muted)">Sewa ${rmF(k.jumlahSewa)}${k.deposit ? ' + deposit ' + rmF(k.deposit) : ''}</small>` : '';
   if (waNumber) {
-    const msg = `Salam Abedin Car Rental, saya telah menghantar Perjanjian Sewa.\n\nNo Rujukan: ${ref}\nNama: ${p.nama}\nSewaan: ${p.jenis_sewa === 'chauffeur' ? 'Chauffeur' : 'Pandu Sendiri'}\nModel: ${p.model}\nAmbil: ${p.ambil_lokasi}, ${dmy(p.ambil_tarikh)} ${p.ambil_masa}\nPulang: ${p.pulang_lokasi}, ${dmy(p.pulang_tarikh)} ${p.pulang_masa}` + (k ? `\n\nAnggaran bayaran: ${rmF(k.total)} (sewa ${rmF(k.jumlahSewa)}${k.deposit ? ' + deposit ' + rmF(k.deposit) : ''})` : '');
+    const msg = `Salam Abedin Car Rental, saya telah menghantar Perjanjian Sewa.\n\nNo Rujukan: ${ref}\nNama: ${p.nama}${p.is_agen ? '\nAgen: ' + p.nama_agen : ''}\nSewaan: ${p.jenis_sewa === 'chauffeur' ? 'Chauffeur' : 'Pandu Sendiri'}\nModel: ${p.model}\nAmbil: ${p.ambil_lokasi}, ${dmy(p.ambil_tarikh)} ${p.ambil_masa}\nPulang: ${p.pulang_lokasi}, ${dmy(p.pulang_tarikh)} ${p.pulang_masa}` + (k ? `\n\nAnggaran bayaran: ${rmF(k.total)} (sewa ${rmF(k.jumlahSewa)}${k.deposit ? ' + deposit ' + rmF(k.deposit) : ''})` : '');
     const a = $('#wa'); a.href = `https://wa.me/${waNumber}?text=${encodeURIComponent(msg)}`; a.hidden = false;
   }
   document.body.classList.add('sent');
