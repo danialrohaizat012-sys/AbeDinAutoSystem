@@ -2057,3 +2057,8 @@ html #ada-public-catalogue.abx-home .abx-main-photo .abx-sold-seal small{font-si
 .ada-ref-wrap{display:flex;gap:6px;align-items:stretch;margin-top:4px}.ada-ref-wrap input{flex:1;min-width:0;font-family:ui-monospace,Menlo,monospace;letter-spacing:.03em}
 .ada-ref-wrap .ada-ref-gen{flex:none;width:44px;padding:0;font-size:18px;font-weight:800}
 [data-loanbank][hidden]{display:none!important}
+
+/* Resit ke WhatsApp */
+.ada-wa-btn{background:#1f9d55!important;border-color:#1f9d55!important;color:#fff!important}
+.ada-sale-actions .ada-wa-mini{color:#4fd18b!important;border-color:#1f6b41!important}
+.ada-form textarea[name=watext]{font-size:14px;line-height:1.45}

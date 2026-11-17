@@ -86,7 +86,7 @@
 <link rel="preconnect" href="https://buzpdyvvoiqgbeventwm.supabase.co" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm" crossorigin>
-<link rel="stylesheet" href="css/app.css?v=50.30">
+<link rel="stylesheet" href="css/app.css?v=50.31">
 <style id="ada-sold-overlay-midnight-gold">
 /* Midnight Gold SOLD seal, limited to sold public catalogue cards. */
 html.ada-public-route .ada-public-card.is-sold .ada-public-card-media{position:relative!important}
@@ -386,7 +386,7 @@ function salesPageHtml(){
   return `<h2>Jualan & Pembayaran Cloud</h2><div class="cloud-toolbar ada-sales-toolbar"><div class="ada-inv-search"><input id="ada-sales-search" placeholder="Cari plat, model, pelanggan atau no. rujukan..." aria-label="Cari jualan" value="${safe(salesQuery)}"></div><button id="ada-new-sale">+ Jual Kereta</button></div>
   <div class="ada-sales-filters"><label><span>Bulan</span><select id="ada-sales-month">${o('','Semua bulan',salesMonth)}${months.map(m=>o(m,monthLabel(m),salesMonth)).join('')}</select></label><label><span>Bayaran</span><select id="ada-sales-pay">${o('','Semua',salesPay)}${o('full','✓ Bayar penuh',salesPay)}${o('deposit','● Deposit sahaja',salesPay)}${o('none','○ Belum bayar',salesPay)}</select></label><label><span>Susun</span><select id="ada-sales-sort">${o('new','Terbaru',salesSort)}${o('old','Paling lama',salesSort)}${o('price_high','Harga tertinggi',salesSort)}${o('price_low','Harga terendah',salesSort)}${o('bal_high','Baki tertinggi',salesSort)}</select></label>${filtered?'<button type="button" class="secondary" id="ada-sales-reset">↻ Reset</button>':''}</div>
   <div class="ada-sales-summary"><div><span>${salesMonth?monthLabel(salesMonth):'Semua'} · ${rows.length} transaksi</span><strong>${money(tot)}</strong></div><div><span>Diterima</span><strong>${money(got)}</strong></div><div><span>Baki belum dibayar</span><strong>${money(bal)}</strong></div><div class="ada-sales-states"><span class="ada-paybadge is-full">✓ ${nFull} bayar penuh</span><span class="ada-paybadge is-dep">● ${nDep} deposit</span><span class="ada-paybadge is-none">○ ${nNone} belum bayar</span></div></div>
-  <div class="panel cloud-table-wrap"><table class="cloud-table ada-sales-table"><tr><th>Kenderaan</th><th>Pelanggan</th><th>Harga</th><th>Dibayar</th><th>Baki</th><th>Bayaran</th><th>Tindakan</th></tr>${rows.map(r=>`<tr class="ada-sale-${r.state}"><td data-label="Kenderaan"><strong>${safe(r.v.plate||r.x.vehicle_id)}</strong><small>${safe([r.v.model_year,r.v.make,r.v.model].filter(Boolean).join(' '))}</small><small>${dmy(r.x.created_at)} · ${safe(saleStatusLabel(r.x.status))}</small></td><td data-label="Pelanggan">${safe(r.c.full_name||'-')}${r.c.phone?`<small>${safe(r.c.phone)}</small>`:''}</td><td data-label="Harga">${money(r.x.agreed_price)}</td><td data-label="Dibayar">${money(r.paid)}</td><td data-label="Baki">${money(r.bal)}</td><td data-label="Bayaran">${badge(r)}</td><td data-label="Tindakan"><div class="ada-sale-actions">${r.x.status==='reserved'?`<button data-pay="${r.x.id}">+ Payment</button>`:''}${profile?.role==='owner'?`<button class="secondary" data-edit-sale="${r.x.id}">✎ Edit</button>`:''}<button class="secondary" data-receipt="${r.x.id}">⬇ Resit PDF</button>${profile?.role==='owner'?`<button class="ada-danger-mini" data-delete-sale="${r.x.id}" title="Padam jualan">🗑 Padam</button>`:''}</div></td></tr>`).join('')||`<tr><td colspan="7">${filtered?'Tiada jualan sepadan dengan pilihan ini.':'Belum ada transaksi.'}</td></tr>`}</table></div>`;
+  <div class="panel cloud-table-wrap"><table class="cloud-table ada-sales-table"><tr><th>Kenderaan</th><th>Pelanggan</th><th>Harga</th><th>Dibayar</th><th>Baki</th><th>Bayaran</th><th>Tindakan</th></tr>${rows.map(r=>`<tr class="ada-sale-${r.state}"><td data-label="Kenderaan"><strong>${safe(r.v.plate||r.x.vehicle_id)}</strong><small>${safe([r.v.model_year,r.v.make,r.v.model].filter(Boolean).join(' '))}</small><small>${dmy(r.x.created_at)} · ${safe(saleStatusLabel(r.x.status))}</small></td><td data-label="Pelanggan">${safe(r.c.full_name||'-')}${r.c.phone?`<small>${safe(r.c.phone)}</small>`:''}</td><td data-label="Harga">${money(r.x.agreed_price)}</td><td data-label="Dibayar">${money(r.paid)}</td><td data-label="Baki">${money(r.bal)}</td><td data-label="Bayaran">${badge(r)}</td><td data-label="Tindakan"><div class="ada-sale-actions">${r.x.status==='reserved'?`<button data-pay="${r.x.id}">+ Payment</button>`:''}${profile?.role==='owner'?`<button class="secondary" data-edit-sale="${r.x.id}">✎ Edit</button>`:''}<button class="secondary" data-receipt="${r.x.id}">⬇ Resit PDF</button><button class="secondary ada-wa-mini" data-receipt-wa="${r.x.id}" title="Hantar resit ke WhatsApp pelanggan">WhatsApp</button>${profile?.role==='owner'?`<button class="ada-danger-mini" data-delete-sale="${r.x.id}" title="Padam jualan">🗑 Padam</button>`:''}</div></td></tr>`).join('')||`<tr><td colspan="7">${filtered?'Tiada jualan sepadan dengan pilihan ini.':'Belum ada transaksi.'}</td></tr>`}</table></div>`;
 }
 async function deleteCustomer(id,btn){
   if(profile?.role!=='owner'){alert('Hanya Owner boleh padam pelanggan.');return}
@@ -417,7 +417,7 @@ function bindSalesPage(){
   el('ada-sales-pay')?.addEventListener('change',e=>{salesPay=e.target.value;renderCloud()});
   el('ada-sales-sort')?.addEventListener('change',e=>{salesSort=e.target.value;renderCloud()});
   el('ada-sales-reset')?.addEventListener('click',()=>{salesQuery='';salesMonth='';salesPay='';salesSort='new';renderCloud()});
-  el('ada-cloud-view').querySelectorAll('[data-receipt]').forEach(b=>b.addEventListener('click',()=>downloadSaleReceipt(b.dataset.receipt,b)));el('ada-cloud-view').querySelectorAll('[data-edit-sale]').forEach(b=>b.addEventListener('click',()=>showEditSaleForm(b.dataset.editSale)));
+  el('ada-cloud-view').querySelectorAll('[data-receipt]').forEach(b=>b.addEventListener('click',()=>downloadSaleReceipt(b.dataset.receipt,b)));el('ada-cloud-view').querySelectorAll('[data-receipt-wa]').forEach(b=>b.addEventListener('click',()=>downloadSaleReceipt(b.dataset.receiptWa,b,'wa')));el('ada-cloud-view').querySelectorAll('[data-edit-sale]').forEach(b=>b.addEventListener('click',()=>showEditSaleForm(b.dataset.editSale)));
   el('ada-cloud-view').querySelectorAll('[data-delete-sale]').forEach(b=>b.addEventListener('click',()=>deleteSale(b.dataset.deleteSale,b)));
 }
 function attachPickerSearch(form,name,placeholder,textOf){
@@ -431,7 +431,7 @@ function attachPickerSearch(form,name,placeholder,textOf){
 }
 let pdfLibPromise=null;
 function loadPdfLib(){if(window.PDFLib)return Promise.resolve(window.PDFLib);return pdfLibPromise||(pdfLibPromise=new Promise((ok,no)=>{const s=document.createElement('script');s.src='/assets/vendor/pdf-lib.min.js';s.onload=()=>window.PDFLib?ok(window.PDFLib):no(new Error('PDF tidak dapat dimuat'));s.onerror=()=>{pdfLibPromise=null;no(new Error('Fail PDF tidak dapat dimuat. Semak sambungan internet.'))};document.head.appendChild(s)}))}
-async function downloadSaleReceipt(saleId,btn){
+async function downloadSaleReceipt(saleId,btn,mode){
   const x=sales.find(s=>s.id===saleId);if(!x)return;
   const old=btn?.textContent;if(btn){btn.disabled=true;btn.textContent='Menjana...'}
   try{
@@ -503,16 +503,38 @@ async function downloadSaleReceipt(saleId,btn){
     else{for(let k=ny+nh-34;k>ny+8;k-=16)page.drawRectangle({x:M+10,y:k,width:W-2*M-20,height:0.5,color:line})}
     // Tandatangan
     const sy=62;
-    [[M,'Disediakan oleh (Abe Din Auto)'],[W-M-180,'Diterima oleh (Pelanggan)']].forEach(([xx,t])=>{page.drawRectangle({x:xx,y:sy,width:180,height:0.8,color:mut});txt(t,xx,sy-12,{size:8,color:mut})});
+    {const sw=220,sx=W-M-sw;page.drawRectangle({x:sx,y:sy,width:sw,height:0.8,color:mut});txt('Tandatangan Pelanggan',sx,sy-12,{size:8,bold:true,color:mut});txt(clean(c.full_name||''),sx,sy-23,{size:8,color:mut,max:sw});txt('Tarikh: '+dmy(x.created_at),M,sy-12,{size:8,bold:true,color:mut})}
     txt('Resit ini dijana oleh sistem Abe Din Auto. Terima kasih kerana memilih Abe Din Auto.',W/2,22,{size:8,color:mut,center:true});
     page.drawRectangle({x:0,y:0,width:W,height:6,color:y});
     doc.setTitle('Resit '+no);doc.setAuthor('Abe Din Auto');doc.setCreator('Abe Din Auto Management System');
     const bytes=await doc.save();const blob=new Blob([bytes],{type:'application/pdf'});
     const fname=`Resit-${clean(v.plate||v.vehicle_id||'jualan').replace(/\s+/g,'')}-${no}.pdf`;
+    if(mode==='wa'){receiptWhatsApp({blob,fname,no,x,v,c,paid,bal});return}
     const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=fname;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
     msg('Resit PDF dimuat turun: '+fname);
   }catch(e){msg('Gagal jana resit: '+(e.message||e));alert('Gagal jana resit: '+(e.message||e))}
   finally{if(btn){btn.disabled=false;btn.textContent=old}}
+}
+function waPhone(p){let d=String(p||'').replace(/\D/g,'');if(!d)return '';if(d.startsWith('0'))d='6'+d;else if(d.startsWith('1'))d='60'+d;return d}
+function receiptWhatsApp({blob,fname,no,x,v,c,paid,bal}){
+  const rmx=n=>'RM'+Number(n||0).toLocaleString('en-MY',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const car=[v.model_year,v.make,v.model].filter(Boolean).join(' ');
+  const text=`Assalamualaikum ${c.full_name||''},\n\nTerima kasih kerana berurusan dengan *ABE DIN AUTO* 🙏\n\nBersama ini kami sertakan resit bayaran anda:\n🚗 ${car}${v.plate?' ('+v.plate+')':''}\n🧾 No. Resit: ${no}\n💰 Jumlah dibayar: ${rmx(paid)}${bal>0?`\n📌 Baki: ${rmx(bal)}`:'\n✅ Bayaran selesai sepenuhnya'}\n\nSemoga kereta ini membawa rezeki dan perjalanan yang selamat. Sebarang pertanyaan, hubungi kami di 011-5636 6925.\n\nSalam hormat,\n*ABE DIN AUTO*`;
+  const ph=waPhone(c.phone),file=new File([blob],fname,{type:'application/pdf'});
+  const canFile=!!(navigator.canShare&&navigator.canShare({files:[file]}));
+  const o=cloudModal('Hantar Resit ke WhatsApp',`<div class="cloud-notice">${safe(c.full_name||'Pelanggan')}${ph?' · +'+safe(ph):' · <b>tiada no. telefon</b>'}</div>
+    <label>Mesej<textarea name="watext" rows="9">${safe(text)}</textarea></label>
+    ${canFile?`<button type="button" data-wa-share class="ada-wa-btn">📎 Kongsi resit PDF ke WhatsApp</button>`:''}
+    <button type="button" data-wa-open class="${canFile?'secondary':'ada-wa-btn'}">💬 ${canFile?'Hantar mesej sahaja':'Buka WhatsApp pelanggan'}</button>
+    <button type="button" data-wa-dl class="secondary">⬇ Muat turun PDF</button>
+    <p class="muted" style="font-size:12.5px;margin:4px 0 0">${canFile?'"Kongsi resit PDF" akan buka senarai aplikasi — pilih WhatsApp dan pelanggan.':'WhatsApp tidak boleh melampirkan fail secara automatik dari komputer. PDF akan dimuat turun — lampirkan dalam chat WhatsApp yang dibuka.'}</p>`);
+  const msgText=()=>o.querySelector('[name=watext]').value;
+  const dl=()=>{const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download=fname;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000)};
+  const openWa=()=>window.open(`https://wa.me/${ph}?text=${encodeURIComponent(msgText())}`,'_blank','noopener');
+  o.querySelector('[data-wa-dl]').onclick=dl;
+  o.querySelector('[data-wa-open]').onclick=()=>{if(!canFile)dl();openWa()};
+  o.querySelector('[data-wa-share]')?.addEventListener('click',async()=>{try{await navigator.share({files:[file],text:msgText(),title:'Resit '+no});msg('Resit dikongsi.')}catch(e){if(e?.name!=='AbortError'){dl();openWa()}}});
+  o.querySelector('form').onsubmit=e=>e.preventDefault();
 }
 function isoDate(d){if(!d)return '';const x=new Date(d);if(isNaN(x))return '';const k=new Date(x.getTime()+8*3600e3);return k.toISOString().slice(0,10)}
 function showEditSaleForm(saleId){
