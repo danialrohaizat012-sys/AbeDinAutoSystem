@@ -2,6 +2,7 @@
 // Cipta akaun log masuk baharu melalui Supabase Auth (klien sementara, sesi Owner tidak terjejas),
 // kemudian aktifkan profil melalui RPC staff_save. Senarai melalui RPC staff_list (lihat V66_STAFF_MIGRATION.sql).
 // UI dalam Shadow DOM supaya tidak bercampur dengan CSS sistem sedia ada.
+import { mountProfile, PROFILE_CSS, CATEGORY, EMP_TYPE, CONTRACT, completeness } from "./staff-profile.js?v=1";
 const CSS = `
 :host{display:block;--card:#151412;--fg:#f4efe2;--mute:#a69f8c;--line:#2e2a20;--soft:#1e1c17;--pri:#e8b10b;--pri-fg:#141000;
   --ok:#3fae6b;--bad:#e0473f;--f:Inter,-apple-system,"Segoe UI",system-ui,sans-serif;color-scheme:dark}
@@ -39,7 +40,12 @@ label{display:block;font-size:11.5px;color:var(--mute);margin-bottom:4px;text-tr
 .sw input:checked{background:var(--ok)}.sw input:checked::after{left:21px}
 .sw input:disabled{opacity:.4}
 .mods{font-size:12.5px;color:var(--mute);margin-top:4px}.mods b{color:var(--fg);font-weight:600}
-`;
+.cats{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}.cat{white-space:nowrap;border:1px solid var(--line);background:var(--soft);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:700;cursor:pointer}
+.cat.on{background:var(--pri);color:var(--pri-fg);border-color:var(--pri)}.cat i{font-style:normal;opacity:.7;margin-left:4px}
+.ava{width:44px;height:44px;border-radius:50%;object-fit:cover;background:#3a2f0a;color:#ffd257;display:flex;align-items:center;justify-content:center;font-weight:800;flex:0 0 44px}
+.pbar{height:4px;border-radius:9px;background:#2c2a25;margin-top:6px;max-width:220px;overflow:hidden}.pbar i{display:block;height:100%;background:var(--pri)}
+.c-blue{background:#12263a;color:#8cc4ff}.c-pur{background:#2a1a3a;color:#d6a8ff}
+` + PROFILE_CSS;
 const ROLES = { operations: "Operations (staf)", sales_advisor: "Sales Advisor", owner: "Owner" };
 const ROLE_HINT = { operations: "Lalai: semua menu kecuali Jualan, Pelanggan dan Laporan. Boleh ubah di bawah.", sales_advisor: "Lalai: semua menu kecuali Runner. Boleh ubah di bawah.", owner: "Akses penuh termasuk sahkan pemeriksaan, modal dan urus staf." };
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -54,7 +60,7 @@ export function mountStaff(host, ctx) {
   const root = host.shadowRoot || host.attachShadow({ mode: "open" });
   root.innerHTML = `<style>${CSS}</style><section class="shell" id="app"></section>`;
   const app = root.getElementById("app");
-  const S = { rows: null, err: "", mode: null, edit: null, msg: "", msgCls: "", share: "" };
+  const S = { rows: null, err: "", mode: null, edit: null, msg: "", msgCls: "", share: "", hr: {}, cat: "all", q: "", prof: null, urls: {} };
   const $ = s => root.querySelector(s);
 
   async function load() {
@@ -65,11 +71,26 @@ export function mountStaff(host, ctx) {
         ? "Fungsi staf belum dipasang. Jalankan V66_STAFF_MIGRATION.sql dalam Supabase SQL Editor."
         : "Gagal memuatkan staf: " + error.message;
     } else { S.rows = data || []; S.err = ""; }
+    const hr = await client.from("staff_hr").select("staff_id,staff_code,ic_no,phone,address,dob,gender,emergency_name,emergency_phone,join_date,position,department,category,employment_type,contract_status,bank_name,bank_account,epf_no,socso_no,photo_path,ic_photo_path");
+    S.hr = {}; (hr.data || []).forEach(h => S.hr[h.staff_id] = h);
+    const paths = Object.values(S.hr).map(h => h.photo_path).filter(Boolean);
+    if (paths.length) { const { data: u } = await client.storage.from("staff-docs").createSignedUrls(paths, 3600); (u || []).forEach(x => { if (x.signedUrl) S.urls[x.path] = x.signedUrl; }); }
     render();
   }
 
+  function openProfile(uid) {
+    const u = S.rows.find(r => r.id === uid); if (!u) return;
+    S.prof = uid; mountProfile(app, ctx, u, () => { S.prof = null; load(); });
+    host.scrollIntoView?.({ block: "start" });
+  }
   function render() {
-    const rows = S.rows;
+    if (S.prof) return;
+    const all = S.rows, catOf = u => (S.hr[u.id]?.category) || "staff_biasa";
+    const counts = {}; (all || []).forEach(u => counts[catOf(u)] = (counts[catOf(u)] || 0) + 1);
+    const q = S.q.toLowerCase();
+    const rows = all === null ? null : all.filter(u => (S.cat === "all" || catOf(u) === S.cat) && (!q || [u.full_name, u.email, S.hr[u.id]?.staff_code, S.hr[u.id]?.position, S.hr[u.id]?.ic_no].join(" ").toLowerCase().includes(q)));
+    const catBar = all && all.length ? `<div class="cats"><span class="cat ${S.cat === "all" ? "on" : ""}" data-cat="all">Semua<i>${all.length}</i></span>${Object.entries(CATEGORY).filter(([k]) => counts[k]).map(([k, t]) => `<span class="cat ${S.cat === k ? "on" : ""}" data-cat="${k}">${t}<i>${counts[k]}</i></span>`).join("")}</div>
+      <input class="field" id="q" placeholder="Cari nama, IC, Staff ID, jawatan…" value="${esc(S.q)}">` : "";
     app.innerHTML = `<div class="row"><div class="grow"><div class="kick">TETAPAN</div><h3>Staf &amp; Akses</h3></div>
         ${S.mode ? "" : `<button class="btn pri" data-a="new">+ Tambah staf</button>`}</div>
       <p class="mute">Setiap staf log masuk dengan emel dan kata laluan sendiri. Pautan kerja: <b>abedinauto.my/app.html?page=pemeriksaan</b></p>
@@ -77,18 +98,21 @@ export function mountStaff(host, ctx) {
       ${S.mode ? formView() : ""}
       ${S.share ? `<div class="share" id="share">${esc(S.share)}</div><div class="row"><button class="btn sm" data-a="copy">Salin untuk WhatsApp</button><button class="btn sm" data-a="hide">Tutup</button></div>` : ""}
       <p class="msg ${S.msgCls}" id="msg">${esc(S.msg)}</p>
+      ${S.mode ? "" : catBar}
       <div class="list">${rows === null ? `<div class="empty">Memuatkan…</div>` : rows.map(item).join("") || `<div class="empty">Tiada akaun.</div>`}</div>`;
     bind();
   }
 
   function item(u) {
-    const self = u.id === me.id;
-    return `<div class="item"><div class="who"><b>${esc(u.full_name || "(tiada nama)")}</b>${self ? ` <span class="mute">· anda</span>` : ""}
+    const self = u.id === me.id, h = S.hr[u.id] || {}, c = completeness(h), ph = h.photo_path && S.urls[h.photo_path];
+    const ini = (u.full_name || "?").split(/\s+/).filter(w => !/^(bin|binti|bt|b)$/i.test(w)).slice(0, 2).map(w => w[0]).join("").toUpperCase();
+    return `<div class="item">${ph ? `<img class="ava" src="${esc(ph)}" alt="">` : `<div class="ava">${esc(ini)}</div>`}<div class="who"><b data-prof="${esc(u.id)}" style="cursor:pointer">${esc(u.full_name || "(tiada nama)")}</b>${self ? ` <span class="mute">· anda</span>` : ""}
         <small>${esc(u.email || "-")}</small>
-        <div style="margin-top:5px"><span class="chip ${u.enabled ? "c-on" : "c-off"}">${u.enabled ? "Aktif" : "Nyahaktif"}</span><span class="chip c-role">${esc(ROLES[u.role] || u.role || "-")}</span>${u.email_confirmed === false ? `<span class="chip c-warn">Emel belum disahkan</span>` : ""}</div>
+        <div style="margin-top:5px"><span class="chip ${u.enabled ? "c-on" : "c-off"}">${u.enabled ? "Aktif" : "Nyahaktif"}</span><span class="chip c-role">${esc(ROLES[u.role] || u.role || "-")}</span>${u.email_confirmed === false ? `<span class="chip c-warn">Emel belum disahkan</span>` : ""}<span class="chip c-pur">${esc(CATEGORY[h.category || "staff_biasa"])}</span>${h.position ? `<span class="chip c-blue">${esc(h.position)}</span>` : ""}${h.employment_type && h.employment_type !== "permanent" ? `<span class="chip c-off">${esc(EMP_TYPE[h.employment_type])}</span>` : ""}${h.contract_status && h.contract_status !== "active" ? `<span class="chip c-warn">${esc(CONTRACT[h.contract_status])}</span>` : ""}</div>
         <div class="mods">${u.role === "owner" ? "<b>Semua menu</b>" : "Menu: <b>" + (MENUS.filter(([k]) => canPage(u, k)).map(([, t]) => t).join(", ") || "Dashboard sahaja") + "</b>"}</div>
-        <small>Log masuk terakhir: ${fmt(u.last_sign_in_at)}</small></div>
-      ${self ? "" : `<div class="row"><button class="btn sm" data-edit="${esc(u.id)}">Edit</button><button class="btn sm ${u.enabled ? "bad" : "pri"}" data-tog="${esc(u.id)}">${u.enabled ? "Nyahaktif" : "Aktifkan"}</button></div>`}</div>`;
+        <small>Log masuk terakhir: ${fmt(u.last_sign_in_at)}${h.staff_code ? " · ID " + esc(h.staff_code) : ""}</small>
+        <div class="pbar" title="Kelengkapan profil ${c.pct}%"><i style="width:${c.pct}%"></i></div><small>Profil HR ${c.pct}% lengkap</small></div>
+      <div class="row"><button class="btn sm pri" data-prof="${esc(u.id)}">Profil</button>${self ? "" : `<button class="btn sm" data-edit="${esc(u.id)}">Edit</button><button class="btn sm ${u.enabled ? "bad" : "pri"}" data-tog="${esc(u.id)}">${u.enabled ? "Nyahaktif" : "Aktifkan"}</button>`}</div></div>`;
   }
 
   function formView() {
@@ -130,6 +154,9 @@ export function mountStaff(host, ctx) {
       if (a === "hide") { S.share = ""; render(); }
       if (a === "copy") navigator.clipboard?.writeText(S.share).then(() => say("Disalin ✓", "ok"), () => say("Pilih teks di atas dan salin.", ""));
     });
+    app.querySelectorAll("[data-prof]").forEach(b => b.onclick = () => openProfile(b.dataset.prof));
+    app.querySelectorAll("[data-cat]").forEach(b => b.onclick = () => { S.cat = b.dataset.cat; render(); });
+    const qi = $("#q"); if (qi) qi.oninput = () => { S.q = qi.value; const pos = qi.selectionStart; render(); const n = $("#q"); n.focus(); n.setSelectionRange(pos, pos); };
     app.querySelectorAll("[data-edit]").forEach(b => b.onclick = () => { S.edit = S.rows.find(r => r.id === b.dataset.edit); S.mode = "edit"; S.share = ""; render(); });
     app.querySelectorAll("[data-tog]").forEach(b => b.onclick = async () => {
       const u = S.rows.find(r => r.id === b.dataset.tog), was = !!u.enabled; b.disabled = true;
