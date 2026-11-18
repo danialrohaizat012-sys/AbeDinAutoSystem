@@ -2106,3 +2106,39 @@ html.ada-light:not(.ada-public-route) .cloud-car .ada-profit>div+div{border-top-
 .cloud-car .ada-profit .is-sell{background:rgba(79,143,247,.13)}.cloud-car .ada-profit .is-sell b{color:#8cb8ff}
 html.ada-light:not(.ada-public-route) .cloud-car .ada-profit .is-cost b{color:#c0352d}
 html.ada-light:not(.ada-public-route) .cloud-car .ada-profit .is-sell b{color:#1f5fc9}
+
+.cloud-car .ada-profit .is-repair{background:rgba(240,160,32,.12)}.cloud-car .ada-profit .is-repair b{color:#ffc061}
+.cloud-car .ada-profit span small{font-size:9.5px;font-weight:600;letter-spacing:.02em;text-transform:none;opacity:.8}
+html.ada-light:not(.ada-public-route) .cloud-car .ada-profit .is-repair b{color:#a35f00}
+
+/* Profil kereta: Jejak Kewangan */
+.ada-fin-trail .ada-fin-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.ada-fin-sum{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:10px 0 14px}
+.ada-fin-sum>div{border-radius:12px;padding:10px 12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;gap:2px}
+.ada-fin-sum span{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#9e988a}
+.ada-fin-sum b{font-size:16px;font-weight:800}
+.ada-fin-sum .is-wide{grid-column:1/-1}.ada-fin-sum .is-wide b{font-size:20px}
+.ada-fin-sum b small{font-size:12px;opacity:.85}
+.ada-fin-sum .is-cost b{color:#ff8a83}.ada-fin-sum .is-repair b{color:#ffc061}.ada-fin-sum .is-sell b{color:#8cb8ff}.ada-fin-sum .is-pay b{color:#cdb2ff}
+.ada-fin-sum .is-up{background:rgba(52,179,107,.12);border-color:rgba(52,179,107,.35)}.ada-fin-sum .is-up b{color:#5fd892}
+.ada-fin-sum .is-down{background:rgba(229,83,75,.12);border-color:rgba(229,83,75,.35)}.ada-fin-sum .is-down b{color:#ff8a83}
+.ada-fin-tl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.ada-fin-tl>li{display:flex;gap:12px;position:relative;padding-bottom:14px}
+.ada-fin-tl>li:not(:last-child)::before{content:"";position:absolute;left:15px;top:32px;bottom:0;width:2px;background:rgba(255,255,255,.1)}
+.ada-fin-tl>li>i{flex:none;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:15px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1)}
+.ada-fin-tl>li.e-cost>i{border-color:#e5534b66}.ada-fin-tl>li.e-repair>i{border-color:#f0a02066}.ada-fin-tl>li.e-sell>i{border-color:#4f8ff766}.ada-fin-tl>li.e-pay>i{border-color:#34b36b66}
+.ada-fin-tl>li>div{flex:1;min-width:0}
+.ada-fin-row{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}
+.ada-fin-row b small{font-weight:600;opacity:.7}
+.ada-fin-amt{font-weight:800;white-space:nowrap}
+.e-cost .ada-fin-amt{color:#ff8a83}.e-repair .ada-fin-amt{color:#ffc061}.e-sell .ada-fin-amt{color:#8cb8ff}.e-pay .ada-fin-amt{color:#5fd892}
+.ada-fin-body{font-size:13px;margin-top:5px;color:inherit;opacity:.92}
+.ada-fin-parts{list-style:none;margin:4px 0 0;padding:0;display:flex;flex-direction:column;gap:3px}
+.ada-fin-parts li{display:flex;justify-content:space-between;gap:10px;padding:5px 9px;border-radius:8px;background:rgba(255,255,255,.04);font-size:13px}
+.ada-fin-parts li.is-done span{color:#5fd892}
+.ada-fin-parts small{opacity:.7}
+html.ada-light:not(.ada-public-route) .ada-fin-sum>div{background:#faf7f0;border-color:#e4dccb}
+html.ada-light:not(.ada-public-route) .ada-fin-sum .is-cost b{color:#c0352d}html.ada-light:not(.ada-public-route) .ada-fin-sum .is-repair b{color:#a35f00}
+html.ada-light:not(.ada-public-route) .ada-fin-sum .is-sell b{color:#1f5fc9}html.ada-light:not(.ada-public-route) .ada-fin-sum .is-pay b{color:#6a3fc2}html.ada-light:not(.ada-public-route) .ada-fin-sum .is-up b{color:#17803f}
+html.ada-light:not(.ada-public-route) .ada-fin-tl>li>i,html.ada-light:not(.ada-public-route) .ada-fin-parts li{background:#f5f1e8}
+html.ada-light:not(.ada-public-route) .ada-fin-tl>li:not(:last-child)::before{background:#e4dccb}
