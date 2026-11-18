@@ -26,8 +26,9 @@ button,input,select{font:inherit;color:inherit}
 .sm.go{background:var(--pri);color:var(--pri-fg);border-color:var(--pri)}.sm.bad{color:var(--bad);border-color:#e5534b66;background:transparent}
 label{display:block;font-size:12.5px;color:var(--mute);margin-bottom:4px}
 .field{width:100%;border:1px solid var(--line);background:var(--soft);border-radius:11px;padding:10px 12px;min-width:0}
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-@media (max-width:520px){.g3{grid-template-columns:1fr 1fr}}
+.g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.g2>*,.g3>*{min-width:0}
+input[type=time].field,input[type=date].field,input[type=month].field,input[type=datetime-local].field{-webkit-appearance:none;appearance:none;min-height:42px;text-align:left}
+@media (max-width:520px){.g3{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--soft);white-space:nowrap}
 .chip.ok{background:#1d3a28;color:#8be0aa}.chip.bad{background:#3e1b19;color:#ff9a93}.chip.warn{background:#3d2d0c;color:#ffcc66}.chip.blue{background:#16253d;color:#a9c8ff}.chip.pri{background:var(--pri);color:var(--pri-fg)}
 .clock{font-size:44px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1}
@@ -101,7 +102,9 @@ td.who{white-space:normal;min-width:120px;font-weight:600}td.act{white-space:now
 .ap{display:grid;grid-template-columns:1fr;gap:14px}
 @media (min-width:980px){.ap{grid-template-columns:1fr 1fr}.ap>.full{grid-column:1/-1}.pl.cols2{display:grid;grid-template-columns:1fr 1fr;gap:8px}}
 .otin{width:76px;padding:6px 8px}
-.narrow{max-width:760px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.pd{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:10px 12px;align-self:start}
+.col{display:flex;flex-direction:column;gap:14px;min-width:0}
+.ap>*{min-width:0}
 `;
 
 const DAYS = ["Ahad","Isnin","Selasa","Rabu","Khamis","Jumaat","Sabtu"];
@@ -352,7 +355,7 @@ function render() {
   if (S.err) h += `<div class="notice err">${esc(S.err)}</div>`;
   if (!S.loaded) h += `<div class="card"><p class="mute">Memuatkan…</p></div>`;
   else { const v = ({ papan:viewPapan, today:viewToday, gaji:viewGaji, tetapan:viewTetapan, rekod:viewRekod, lulus:viewLulus, kalendar:viewKalendar }[S.tab] || viewPunch)();
-    h += ["punch","rekod","tetapan"].includes(S.tab) || !S.owner ? `<div class="narrow">${v}</div>` : v; }
+    h += v; }
   app.innerHTML = h;
   signPhotos(S.punches);
   tickClock();
@@ -378,7 +381,7 @@ function viewPunch() {
     : working ? `<button class="btn out" data-act="punch" data-kind="out">📸 Punch Balik</button>${st.allow_rest_punch ? `<button class="btn alt" data-act="rest" data-kind="rest_start">☕ Mula rehat</button>` : ""}`
     : `<button class="btn" data-act="punch" data-kind="in">📸 Punch Masuk</button>`;
   const week = [...Array(7)].map((_, i) => { const k = addDays(today, i), s = schedFor(S.me, k); return `<div class="wk ${s.type}"><b>${i ? DAYS[dow(k)].slice(0, 3) : "Hari ini"}</b><span>${s.type === "work" ? `${hhmmOf(s.start)}–${hhmmOf(s.end)}` : s.type === "ph" ? "Cuti umum" : "Rehat"}</span></div>`; }).join("");
-  return `<div class="card" style="align-items:center;text-align:center">
+  return `<div class="ap"><div class="col"><div class="card" style="align-items:center;text-align:center">
       <div class="mute">${dayLabel(today)} · ${esc(schedText(sc))}</div>
       <div class="clock" id="clock">--:--</div>
       <div class="status r" style="justify-content:center">${status}${late}</div>
@@ -386,8 +389,8 @@ function viewPunch() {
       <div class="mute">Punch masuk/balik perlu selfie dan GPS. Punch rehat hanya GPS. Masa ikut jam server.</div>
     </div>
     ${noLoc ? `<div class="notice">${S.owner ? "Belum ada lokasi tag. Tambah di tab Tetapan supaya punch disemak ikut kawasan." : "Owner belum menetapkan lokasi kerja."}</div>` : ""}
-    <div class="card"><h3>Jadual 7 hari</h3><div class="wkrow">${week}</div></div>
-    <div class="card"><h3>Punch saya hari ini</h3>${mine.length ? `<div class="pl">${[...mine].reverse().map(p => punchRow(p, false)).join("")}</div>` : `<p class="mute">Tiada punch lagi hari ini.</p>`}</div>`;
+    <div class="card"><h3>Jadual 7 hari</h3><div class="wkrow">${week}</div></div></div>
+    <div class="col"><div class="card"><h3>Punch saya hari ini</h3>${mine.length ? `<div class="pl">${[...mine].reverse().map(p => punchRow(p, false)).join("")}</div>` : `<p class="mute">Tiada punch lagi hari ini.</p>`}</div></div></div>`;
 }
 function dayChips(d) {
   return [d.sched.type === "ph" ? `<span class="chip pur">${esc(d.sched.ph.name)}</span>` : "",
@@ -437,11 +440,11 @@ function monthInput() { return `<input type="month" class="field" id="month" val
 function viewRekod() {
   const { days, c } = staffMonth(S.me);
   const reqs = (S.requests || []).slice(0, 20), RS = { pending:["Menunggu","warn"], approved:["Lulus","ok"], rejected:["Ditolak","bad"] };
-  return `<div class="card"><div class="r"><h3>Rekod bulan</h3>${monthInput()}</div>${statsRow(c)}</div>
+  return `<div class="ap"><div class="card"><div class="r"><h3>Rekod bulan</h3>${monthInput()}</div>${statsRow(c)}</div>
     <div class="card"><h3>Anggaran gaji</h3>${payBox(c)}<small class="mute">Anggaran sahaja. Jumlah muktamad disahkan oleh Owner.</small></div>
-    <div class="card"><div class="r"><h3>Harian</h3><button class="sm" data-act="req" data-day="${nowKey()}">+ Tuntut punch tertinggal</button></div>${dayTable(days, S.me, { claim:true })}</div>
-    <div class="card"><h3>Tuntutan punch saya</h3>${reqs.length ? `<div class="pl">${reqs.map(r => `<div class="loc"><div class="grow"><b>${KIND_LABEL[r.kind]} · ${dayLabel(dayKey(r.punched_at))} ${hm(r.punched_at)}</b><div class="mute">${esc(r.reason)}${r.review_note ? ` · Nota Owner: ${esc(r.review_note)}` : ""}</div></div>
-      <span class="chip ${RS[r.status][1]}">${RS[r.status][0]}</span>${r.status === "pending" ? `<button class="sm bad" data-act="reqdel" data-id="${esc(r.id)}">Batal</button>` : ""}</div>`).join("")}</div>` : `<p class="mute">Lupa punch? Tekan "Tuntut punch" pada hari berkenaan. Owner akan semak dan luluskan.</p>`}</div>`;
+    <div class="card full"><div class="r"><h3>Harian</h3><button class="sm" data-act="req" data-day="${nowKey()}">+ Tuntut punch tertinggal</button></div>${dayTable(days, S.me, { claim:true })}</div>
+    <div class="card full"><h3>Tuntutan punch saya</h3>${reqs.length ? `<div class="pl">${reqs.map(r => `<div class="loc"><div class="grow"><b>${KIND_LABEL[r.kind]} · ${dayLabel(dayKey(r.punched_at))} ${hm(r.punched_at)}</b><div class="mute">${esc(r.reason)}${r.review_note ? ` · Nota Owner: ${esc(r.review_note)}` : ""}</div></div>
+      <span class="chip ${RS[r.status][1]}">${RS[r.status][0]}</span>${r.status === "pending" ? `<button class="sm bad" data-act="reqdel" data-id="${esc(r.id)}">Batal</button>` : ""}</div>`).join("")}</div>` : `<p class="mute">Lupa punch? Tekan "Tuntut punch" pada hari berkenaan. Owner akan semak dan luluskan.</p>`}</div></div>`;
 }
 function activeStaff() { return S.staff.filter(s => s.enabled !== false && (s.role !== "owner" || S.punches.some(p => p.staff_id === s.id) || S.pay[s.id])); }
 
@@ -610,7 +613,7 @@ function viewTetapan() {
   const roster = staff.map(s => `<tr><th class="nm">${esc(s.full_name)}</th>${wk.map(k => { const r = S.roster[s.id + "|" + k], sc = schedFor(s.id, k), v = r ? (r.shift_id || "rest") : "";
     return `<td class="${sc.type}"><select data-roster="${esc(s.id)}|${k}" class="rs"><option value="" ${v === "" ? "selected" : ""}>Lalai${r ? "" : ` (${sc.type === "work" ? hhmmOf(sc.start) : sc.type === "ph" ? "CU" : "rehat"})`}</option><option value="rest" ${v === "rest" ? "selected" : ""}>Rehat</option>${act.map(x => `<option value="${esc(x.id)}" ${v === x.id ? "selected" : ""}>${esc(x.name)}</option>`).join("")}</select></td>`; }).join("")}</tr>`).join("");
   const yr = nowKey().slice(0, 4), hols = Object.values(S.holidays || {}).filter(h => h.day >= yr + "-01-01").sort((x, y) => x.day.localeCompare(y.day));
-  return `<form class="card" id="f-set"><h3>Waktu kerja umum</h3><p class="mute">Dipakai untuk staf yang tiada syif sendiri.</p>
+  return `<div class="ap"><form class="card" id="f-set"><h3>Waktu kerja umum</h3><p class="mute">Dipakai untuk staf yang tiada syif sendiri.</p>
       <div class="g3"><div><label>Masuk</label><input class="field" type="time" name="work_start" value="${esc(String(st.work_start).slice(0,5))}"></div><div><label>Balik</label><input class="field" type="time" name="work_end" value="${esc(String(st.work_end).slice(0,5))}"></div><div><label>Rehat tanpa gaji (min)</label><input class="field" type="number" min="0" max="240" name="break_min" value="${+st.break_min || 0}"></div></div>
       <div><label>Hari bekerja</label><div class="days">${days}</div></div>
       <div class="g2"><div><label>Tempoh bertenang lewat (minit)</label><input class="field" type="number" min="0" max="240" name="grace_min" value="${st.grace_min}"></div>
@@ -629,7 +632,7 @@ function viewTetapan() {
         <div class="g2"><div><label>Nama syif</label><input class="field" name="name" required placeholder="cth: Syif Pagi"></div><div><label>Warna</label><input class="field" type="color" name="color" value="#e8b10b" style="height:42px;padding:4px"></div></div>
         <div class="g3"><div><label>Masuk</label><input class="field" type="time" name="start_time" value="08:30" required></div><div><label>Balik</label><input class="field" type="time" name="end_time" value="17:30" required></div><div><label>Rehat (min)</label><input class="field" type="number" min="0" max="240" name="break_min" value="60"></div></div>
         <button class="btn" type="submit">+ Tambah syif</button></form></div>
-    <div class="card"><div class="r"><h3>Jadual mingguan</h3><span class="r" style="gap:6px"><button class="sm" data-act="wk" data-n="-7">‹</button><span class="mute">${dayLabel(wk[0])} – ${dayLabel(wk[6])}</span><button class="sm" data-act="wk" data-n="7">›</button></span></div>
+    <div class="card full"><div class="r"><h3>Jadual mingguan</h3><span class="r" style="gap:6px"><button class="sm" data-act="wk" data-n="-7">‹</button><span class="mute">${dayLabel(wk[0])} – ${dayLabel(wk[6])}</span><button class="sm" data-act="wk" data-n="7">›</button></span></div>
       <p class="mute">Ubah syif atau beri hari rehat untuk tarikh tertentu. "Lalai" ikut syif & hari kerja staf. Disimpan terus.</p>
       ${staff.length ? `<div class="tw"><table class="ros"><thead><tr><th class="nm">Staf</th>${wk.map(k => `<th class="${S.holidays[k] ? "ph" : ""}">${DAYS[dow(k)].slice(0, 3)}<br><span class="mute">${+k.slice(8)}/${+k.slice(5, 7)}</span></th>`).join("")}</tr></thead><tbody>${roster}</tbody></table></div>` : `<p class="mute">Belum ada staf.</p>`}</div>
     <div class="card"><h3>Cuti umum & cuti syarikat</h3><p class="mute">Cuti umum dibayar. Staf yang bekerja pada hari ini dapat OT kadar cuti umum. Tarikh bertanda * tertakluk pengumuman rasmi.</p>
@@ -645,15 +648,15 @@ function viewTetapan() {
         <button class="sm" type="button" data-act="here">📍 Guna lokasi saya sekarang</button>
         <div id="locprev"></div>
         <button class="btn" type="submit">+ Tambah lokasi</button></form></div>
-    <div class="card"><h3>Staf: syif, hari kerja & gaji</h3><p class="mute">Kadar OT dalam RM sejam (OT hari biasa).</p>
-      ${staff.map(s => payForm(s)).join("") || `<p class="mute">Belum ada staf.</p>`}</div>`;
+    <div class="card full"><h3>Staf: syif, hari kerja & gaji</h3><p class="mute">Kadar OT dalam RM sejam (OT hari biasa).</p>
+      <div class="pl cols2">${staff.map(s => payForm(s)).join("") || `<p class="mute">Belum ada staf.</p>`}</div></div></div>`;
 }
 function payForm(s) {
   const p = S.pay[s.id] || { pay_type:"daily", rate:0, ot_rate:0, late_mode:"none", late_rate:0, monthly_workdays:26, allowance:0 };
   const a = (S.astaff || {})[s.id] || {}, own = a.work_days && a.work_days.length, wd = own ? a.work_days : (S.settings.work_days || []);
   const sh = a.shift_id && shiftById(a.shift_id);
   const opt = (v, l, cur) => `<option value="${v}" ${cur === v ? "selected" : ""}>${l}</option>`;
-  return `<details ${S.payOpen["f" + s.id] ? "open" : ""} data-pd="${esc(s.id)}"><summary>${esc(s.full_name || "Staf")} — ${sh ? esc(sh.name) : "Waktu biasa"} · ${S.pay[s.id] ? `${PAY_LABEL[p.pay_type]} ${rm(p.rate)}` : "gaji belum ditetapkan"}</summary>
+  return `<details class="pd" ${S.payOpen["f" + s.id] ? "open" : ""} data-pd="${esc(s.id)}"><summary>${esc(s.full_name || "Staf")} — ${sh ? esc(sh.name) : "Waktu biasa"} · ${S.pay[s.id] ? `${PAY_LABEL[p.pay_type]} ${rm(p.rate)}` : "gaji belum ditetapkan"}</summary>
     <form class="f-pay" data-staff="${esc(s.id)}" style="display:flex;flex-direction:column;gap:10px;margin-top:10px">
       <div class="g2"><div><label>Syif lalai</label><select class="field" name="shift_id"><option value="">Waktu kerja umum</option>${(S.shifts || []).filter(x => x.active || x.id === a.shift_id).map(x => opt(x.id, `${esc(x.name)} (${String(x.start_time).slice(0, 5)}–${String(x.end_time).slice(0, 5)})`, a.shift_id)).join("")}</select></div>
       <div><label class="sw" style="margin-top:22px"><input type="checkbox" name="own_days" ${own ? "checked" : ""}> Hari kerja sendiri</label></div></div>

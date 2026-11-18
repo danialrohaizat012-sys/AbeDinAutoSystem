@@ -2,7 +2,7 @@
 // Cipta akaun log masuk baharu melalui Supabase Auth (klien sementara, sesi Owner tidak terjejas),
 // kemudian aktifkan profil melalui RPC staff_save. Senarai melalui RPC staff_list (lihat V66_STAFF_MIGRATION.sql).
 // UI dalam Shadow DOM supaya tidak bercampur dengan CSS sistem sedia ada.
-import { mountProfile, PROFILE_CSS, CATEGORY, EMP_TYPE, CONTRACT, completeness, LEAVE, CLAIM } from "./staff-profile.js?v=5";
+import { mountProfile, PROFILE_CSS, CATEGORY, EMP_TYPE, CONTRACT, completeness, LEAVE, CLAIM } from "./staff-profile.js?v=6";
 export const CSS = `
 :host{display:block;--card:#151412;--fg:#f4efe2;--mute:#a69f8c;--line:#2e2a20;--soft:#1e1c17;--pri:#e8b10b;--pri-fg:#141000;
   --ok:#3fae6b;--bad:#e0473f;--f:Inter,-apple-system,"Segoe UI",system-ui,sans-serif;color-scheme:dark}
