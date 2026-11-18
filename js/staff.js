@@ -2,12 +2,13 @@
 // Cipta akaun log masuk baharu melalui Supabase Auth (klien sementara, sesi Owner tidak terjejas),
 // kemudian aktifkan profil melalui RPC staff_save. Senarai melalui RPC staff_list (lihat V66_STAFF_MIGRATION.sql).
 // UI dalam Shadow DOM supaya tidak bercampur dengan CSS sistem sedia ada.
-import { mountProfile, PROFILE_CSS, CATEGORY, EMP_TYPE, CONTRACT, completeness, LEAVE, CLAIM } from "./staff-profile.js?v=6";
+import { mountProfile, PROFILE_CSS, CATEGORY, EMP_TYPE, CONTRACT, completeness, LEAVE, CLAIM } from "./staff-profile.js?v=7";
 export const CSS = `
 :host{display:block;--card:#151412;--fg:#f4efe2;--mute:#a69f8c;--line:#2e2a20;--soft:#1e1c17;--pri:#e8b10b;--pri-fg:#141000;
   --ok:#3fae6b;--bad:#e0473f;--f:Inter,-apple-system,"Segoe UI",system-ui,sans-serif;color-scheme:dark}
 *{box-sizing:border-box}
 .shell{color:var(--fg);font:15px/1.45 var(--f);background:#0a0a09;border:1px solid var(--line);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:12px;margin-top:14px}
+@media (max-width:640px){.shell{font-size:13.5px;border:0;border-radius:0;padding:4px 0 70px;background:transparent;gap:10px;margin-top:6px}h2{font-size:16px}h3{font-size:15px}.kick{font-size:10px}.chip{font-size:11px}.btn{font-size:13.5px;padding:8px 13px;border-radius:10px}}
 h3{margin:0;font-size:18px;font-weight:800}
 .kick{font-size:11px;letter-spacing:.14em;color:var(--pri);font-weight:700}
 p{margin:0}.mute{color:var(--mute);font-size:13.5px}

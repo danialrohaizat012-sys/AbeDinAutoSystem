@@ -19,6 +19,7 @@ export const PROFILE_CSS = `
 .kv div{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
 .kv div span:first-child{color:var(--mute)}.kv div span:last-child{text-align:right;font-weight:600;word-break:break-word}
 .tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
+@media (max-width:640px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px}.tile{padding:9px 10px!important}.tile b{font-size:17px!important}.tile small{font-size:11px!important}.hd{padding:12px!important;gap:12px!important;align-items:center!important}.av{width:54px!important;height:54px!important;flex-basis:54px!important;font-size:18px!important}.hd h2{font-size:16px!important}}
 .tile{border:1px solid var(--line);border-radius:12px;padding:11px;background:var(--soft)}
 .tile b{display:block;font-size:20px;margin-top:2px}.tile small{color:var(--mute);font-size:12px}
 .t-g{background:#10261a;border-color:#1f4a31}.t-y{background:#2a2410;border-color:#4a3f14}.t-b{background:#101f2e;border-color:#1d3a57}.t-p{background:#1f1529;border-color:#3d2a52}

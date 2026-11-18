@@ -2199,3 +2199,13 @@ html.ada-light:not(.ada-public-route) .ada-pk-mark.pk-belum{background:#f3efe6;b
 html.ada-light:not(.ada-public-route) .ada-pk-mark.pk-tempah{background:#e6f0ff;border-color:#b9d2ff;color:#1f5fc9}
 html.ada-light:not(.ada-public-route) .ada-pk-mark.pk-lulus{background:#e3f6ea;border-color:#b5e2c4;color:#17803f}
 html.ada-light:not(.ada-public-route) .ada-pk-mark.pk-gagal{background:#fde8e6;border-color:#f5c0bb;color:#c0352d}
+
+/* V81: paparan telefon lebih kemas (admin) */
+@media(max-width:640px){
+html[data-ada-page]:not([data-ada-page="dashboard"]) #ada-cloud-gate .cloud-hero,html[data-ada-page]:not([data-ada-page="dashboard"]) .cloud-hero{display:none!important}
+html[data-ada-page] #ada-cloud-view{padding-left:10px!important;padding-right:10px!important}
+html[data-ada-page] #ada-cloud-view>div[id$="-host"]{margin:0!important}
+.cloud-bottom{justify-content:flex-start!important;overflow-x:auto!important;scrollbar-width:none!important;gap:2px!important;padding-left:6px!important;padding-right:6px!important}
+.cloud-bottom::-webkit-scrollbar{display:none}
+.cloud-bottom button{flex:0 0 auto!important;min-width:58px!important;white-space:nowrap!important;font-size:10px!important;line-height:1.25!important;padding:7px 6px!important;word-break:keep-all!important}
+}

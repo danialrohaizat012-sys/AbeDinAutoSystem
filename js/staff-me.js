@@ -1,8 +1,8 @@
 // Abe Din Auto – "Profil Saya": layan diri untuk setiap staf yang log masuk.
 // Ringkasan, mohon cuti, slip gaji, tuntutan (claim) dengan resit, mohon advance, kemas kini maklumat sendiri.
 // Data & kebenaran: V73_STAFF_HR.sql + V74_STAFF_SELF_SERVICE.sql. Slip gaji dikira oleh computeSlip() (kehadiran.js).
-import { CSS } from "./staff.js?v=11";
-import { PROFILE_CSS, CATEGORY, EMP_TYPE, LEAVE, CLAIM, leaveEntitle } from "./staff-profile.js?v=6";
+import { CSS } from "./staff.js?v=12";
+import { PROFILE_CSS, CATEGORY, EMP_TYPE, LEAVE, CLAIM, leaveEntitle } from "./staff-profile.js?v=7";
 import { slipHtml, printSlip, rm, monthName } from "./slip.js?v=1";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -21,7 +21,8 @@ const ME_CSS = `.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}.t
 .tabs button.on{background:var(--pri);color:var(--pri-fg);border-color:var(--pri)}.badge{background:#e0473f;color:#fff;border-radius:99px;font-size:11px;padding:1px 6px;margin-left:4px}
 .field{font-size:16px}textarea.field{resize:vertical}.list2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .it{border:1px solid var(--line);border-radius:12px;padding:11px;background:var(--soft)}.it .row{gap:6px}
-.go{cursor:pointer}.go:hover{border-color:#5a4a14}`;
+.go{cursor:pointer}.go:hover{border-color:#5a4a14}
+@media (max-width:640px){.tabs{gap:5px}.tabs button{font-size:12.5px;padding:6px 11px}.it{padding:9px}.field{padding:9px 11px}label{font-size:11.5px}}`;
 
 async function shrink(file) {
   if (!/^image\//.test(file.type) || file.size < 600000) return file;

@@ -32,6 +32,19 @@ input[type=time].field,input[type=date].field,input[type=month].field,input[type
 .chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--soft);white-space:nowrap}
 .chip.ok{background:#1d3a28;color:#8be0aa}.chip.bad{background:#3e1b19;color:#ff9a93}.chip.warn{background:#3d2d0c;color:#ffcc66}.chip.blue{background:#16253d;color:#a9c8ff}.chip.pri{background:var(--pri);color:var(--pri-fg)}
 .clock{font-size:44px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1}
+@media (max-width:640px){
+.shell{font-size:13.5px;padding:6px 0 76px}.wrap{gap:10px}
+h1{font-size:19px}h2{font-size:16px}h3{font-size:14.5px}
+.tabs{padding:3px}.tabs button{font-size:12.5px;padding:7px 10px}
+.card{padding:12px;border-radius:14px;gap:9px}
+.clock{font-size:34px}.status{font-size:13px}
+.btn{font-size:14.5px;padding:11px;border-radius:12px}
+.sm{font-size:12.5px;padding:6px 10px}
+.tiles{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px}.tile{padding:8px 10px}.tile b{font-size:19px}.tile small{font-size:11px}
+.chip{font-size:11px;padding:2px 8px}.mute{font-size:12.5px}
+.field{padding:9px 11px}label{font-size:11.5px}
+table{font-size:12.5px}th,td{padding:6px 5px}
+}
 .status{font-size:15px}
 .pl{display:flex;flex-direction:column;gap:8px}
 .p{display:flex;gap:12px;align-items:center;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:8px;cursor:pointer;text-align:left;width:100%}
