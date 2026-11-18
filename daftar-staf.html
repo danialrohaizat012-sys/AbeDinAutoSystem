@@ -158,6 +158,13 @@ f.onsubmit = async e => {
       emergency_name: v.emergency_name, emergency_relation: v.emergency_relation, emergency_phone: v.emergency_phone,
       bank_name: v.bank_name, bank_account: v.bank_account, epf_no: v.epf_no, socso_no: v.socso_no,
       position_applied: v.position_applied, education: v.education };
+    if (!session) {
+      // Tiada pengesahan emel: daftar dulu (akaun disahkan automatik), kemudian log masuk untuk muat naik dokumen.
+      const r0 = await sb.rpc("staff_register", { p_token: token, p_email: v.email, p_data: data });
+      if (r0.error) throw r0.error;
+      const si = await sb.auth.signInWithPassword({ email: v.email, password: v.pw });
+      if (!si.error) { session = si.data.session; user = si.data.user; }
+    }
     let skipped = false;
     if (session && user) {
       btn.textContent = "Memuat naik dokumen…";
@@ -175,7 +182,7 @@ f.onsubmit = async e => {
     if (error) throw error;
     try { await sb.auth.signOut(); } catch (_) {}
     f.hidden = true; $("#done").hidden = false;
-    if (!session) $("#done-tx").textContent = "Semak emel anda untuk mengesahkan akaun. Owner akan meluluskan pendaftaran anda; selepas itu log masuk dengan emel dan kata laluan tadi." + (skipped ? " Gambar dan IC boleh diserahkan terus kepada Owner." : "");
+    if (!session) $("#done-tx").textContent = "Owner akan meluluskan pendaftaran anda; selepas itu terus log masuk dengan emel dan kata laluan tadi. Tiada pengesahan emel diperlukan." + (skipped ? " Gambar dan IC boleh diserahkan terus kepada Owner." : "");
     window.scrollTo(0, 0);
   } catch (err) {
     say(err?.message || String(err)); btn.disabled = false; btn.textContent = "Hantar pendaftaran";
