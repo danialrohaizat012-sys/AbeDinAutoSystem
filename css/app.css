@@ -2142,3 +2142,16 @@ html.ada-light:not(.ada-public-route) .ada-fin-sum .is-cost b{color:#c0352d}html
 html.ada-light:not(.ada-public-route) .ada-fin-sum .is-sell b{color:#1f5fc9}html.ada-light:not(.ada-public-route) .ada-fin-sum .is-pay b{color:#6a3fc2}html.ada-light:not(.ada-public-route) .ada-fin-sum .is-up b{color:#17803f}
 html.ada-light:not(.ada-public-route) .ada-fin-tl>li>i,html.ada-light:not(.ada-public-route) .ada-fin-parts li{background:#f5f1e8}
 html.ada-light:not(.ada-public-route) .ada-fin-tl>li:not(:last-child)::before{background:#e4dccb}
+
+/* Kos tambahan: tukar nama, Puspakom, transport */
+.cloud-car .ada-profit .is-extra{background:rgba(160,120,255,.1)}.cloud-car .ada-profit .is-extra b{color:#c7b0ff}
+.ada-fin-sum .is-extra b{color:#c7b0ff}
+.ada-fin-sum .is-total{grid-column:1/-1;background:rgba(229,83,75,.08)!important;border-color:rgba(229,83,75,.3)!important}.ada-fin-sum .is-total b{color:#ff8a83}
+.ada-xcost{margin:4px 0 14px;padding:12px;border-radius:12px;border:1px dashed rgba(255,255,255,.14);display:flex;flex-direction:column;gap:10px}
+.ada-xcost h4{margin:0;font-size:14px}
+.ada-xcost-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+@media(max-width:560px){.ada-xcost-grid{grid-template-columns:1fr}}
+.ada-xcost label{font-size:12px;display:flex;flex-direction:column;gap:4px}
+.ada-xcost-act{display:flex;gap:10px;align-items:center}
+html.ada-light:not(.ada-public-route) .ada-fin-sum .is-extra b,html.ada-light:not(.ada-public-route) .cloud-car .ada-profit .is-extra b{color:#6a3fc2}
+html.ada-light:not(.ada-public-route) .ada-xcost{border-color:#d9cfbb}
