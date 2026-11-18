@@ -2178,3 +2178,24 @@ html #ada-public-catalogue.abx-home .abx-hero-stripe{width:56px!important;right:
 html #ada-public-catalogue.abx-home .abx-hero .abx-trust{display:flex!important;grid-template-columns:none!important}
 html #ada-public-catalogue.abx-home .abx-hero h1{font-size:clamp(24px,7vw,30px)!important;white-space:nowrap!important}
 }
+
+/* Tanda Puspakom (Inventori & profil kereta) */
+.cloud-car .ada-pk-mark{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0 0;padding:7px 10px;border-radius:10px;font-size:12.5px;border:1px solid transparent}
+.ada-pk-mark .ada-pk-k{font-size:10px;font-weight:900;letter-spacing:.1em;opacity:.75}
+.ada-pk-mark b{font-weight:800}.ada-pk-mark small{opacity:.85;font-weight:600}
+.ada-pk-mark.pk-belum{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.1);color:#cfc8b6}
+.ada-pk-mark.pk-tempah{background:#13233f;border-color:#2b4a7e;color:#9cc2ff}
+.ada-pk-mark.pk-lulus{background:#10301e;border-color:#1f5a37;color:#8ce3ad}
+.ada-pk-mark.pk-gagal{background:#3a1513;border-color:#6b2420;color:#ffaaa4}
+.ada-inv-sorts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.ada-vp-pk-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.ada-pk-badge{font-size:12px;font-weight:800;padding:4px 10px;border-radius:999px}
+.ada-pk-badge.pk-belum{background:#26241f;color:#cfc8b6}.ada-pk-badge.pk-tempah{background:#13233f;color:#9cc2ff}.ada-pk-badge.pk-lulus{background:#10301e;color:#8ce3ad}.ada-pk-badge.pk-gagal{background:#3a1513;color:#ffaaa4}
+.ada-vp-pk.pk-tempah{border-left:4px solid #4f8ff7}.ada-vp-pk.pk-lulus{border-left:4px solid #34b36b}.ada-vp-pk.pk-gagal{border-left:4px solid #e5534b}.ada-vp-pk.pk-belum{border-left:4px solid #6b6b6b}
+.ada-vp-pk>button{margin-top:10px;width:100%}
+.ada-pk-doc{display:inline-block;font-size:12px;font-weight:700;padding:2px 7px;border-radius:7px;border:1px dashed #6b675c;color:#9e988a;margin:1px 0}
+.ada-pk-doc.ok{border:1px solid #1f5a37;background:#10301e;color:#8ce3ad}
+html.ada-light:not(.ada-public-route) .ada-pk-mark.pk-belum{background:#f3efe6;border-color:#e0d8c6;color:#5d574a}
+html.ada-light:not(.ada-public-route) .ada-pk-mark.pk-tempah{background:#e6f0ff;border-color:#b9d2ff;color:#1f5fc9}
+html.ada-light:not(.ada-public-route) .ada-pk-mark.pk-lulus{background:#e3f6ea;border-color:#b5e2c4;color:#17803f}
+html.ada-light:not(.ada-public-route) .ada-pk-mark.pk-gagal{background:#fde8e6;border-color:#f5c0bb;color:#c0352d}

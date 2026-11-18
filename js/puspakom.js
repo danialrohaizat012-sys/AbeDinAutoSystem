@@ -138,6 +138,7 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px}
 `;
 const TYPES = [{v:"B5",l:"B5 (MV15)",c:"p-B5"},{v:"B7",l:"B7",c:"p-B7"},{v:"B5+B7",l:"B5 + B7",c:"p-B5B7"}];
 const STATUSES = [{v:"belum",l:"Belum tempah"},{v:"tempah",l:"Booking"},{v:"lulus",l:"✓ Lulus"},{v:"gagal",l:"Gagal"}];
+const myStatuses = () => STATUSES;
 const GROUPS = [{v:"tempah",t:"📅 Booking"},{v:"lulus",t:"✓ Lulus"},{v:"gagal",t:"✕ Gagal"},{v:"belum",t:"⏳ Belum tempah"}];
 const DOCS = [{k:"geran",l:"Geran"},{k:"ic",l:"IC pemilik"},{k:"sk",l:"Surat kuasa"}];
 const NEGERI = ["Johor","Kedah","Kelantan","Melaka","Negeri Sembilan","Pahang","Perak","Perlis","Pulau Pinang","Sabah","Sarawak","Selangor","Terengganu","WP Kuala Lumpur","WP Labuan","WP Putrajaya"];
@@ -164,7 +165,8 @@ export function mountPuspakom(host, ctx) {
   root.innerHTML = `<style>${CSS}</style><div class="shell" id="app"></div><div class="ov" id="ov"></div><div class="toast" id="toast"></div>`;
   S = { root, client: ctx.client, profile: ctx.profile || {}, vehicles: Array.isArray(ctx.vehicles) ? ctx.vehicles : [],
     rows: [], loaded: false, err: "", filter: "semua", loc: "semua", q: "", expanded: {}, busy: false };
-  S.canEdit = S.profile.role === "owner";
+  S.isOwner = S.profile.role === "owner";
+  S.canEdit = S.isOwner || S.profile.role === "sales_advisor";
   root.getElementById("app").addEventListener("click", onClick);
   root.getElementById("app").addEventListener("input", e => { if (e.target.id === "q") { S.q = e.target.value; renderList(); } });
   render();
@@ -254,7 +256,7 @@ function render() {
   if (S.err) { app.innerHTML = `<div class="head"><div><div class="kick">Puspakom</div><h2>Pemeriksaan Puspakom</h2></div></div><div class="empty">${esc(S.err)}</div>`; return; }
   const all = cars();
   app.innerHTML = `<div class="head"><div><div class="kick">Puspakom</div><h2>Pemeriksaan Puspakom</h2>
-      <div class="mute">${all.filter(c => c.inv).length} kereta dalam inventori · ${S.canEdit ? "Owner boleh kemas kini" : "Paparan sahaja — hanya Owner boleh kemas kini"}</div></div>
+      <div class="mute">${all.filter(c => c.inv).length} kereta dalam inventori · ${S.isOwner ? "Owner boleh kemas kini" : S.canEdit ? "Sales Advisor boleh buat booking & kemas kini keputusan" : "Paparan sahaja — hanya Owner / Sales Advisor boleh kemas kini"}</div></div>
       <button class="btn" data-a="reload" type="button">↻ Muat semula</button></div>
     <div class="panel" id="today"></div><div class="stats" id="stats"></div><div class="locs" id="locs"></div>
     <input class="search" id="q" placeholder="Cari plat, model, ADA, lokasi atau runner…" autocomplete="off" value="${esc(S.q)}">
@@ -312,8 +314,8 @@ function card(c) {
     <div class="todo${n.alert ? " alert" : ""}"><span class="ti">${n.alert ? "!" : "→"}</span><span>${esc(n.txt)}</span></div>
     ${c.note ? `<div class="note">${esc(c.note)}</div>` : ""}
     ${c.status === "tempah" || c.status === "belum" ? `<div class="docs"><span class="dl ${docOk === DOCS.length ? "all" : ""}">Dokumen ${docOk}/${DOCS.length}</span>${DOCS.map(x => { const ok = !!c.docs[x.k]; return `<button class="doc${ok ? " ok" : ""}" data-doc="${x.k}" data-plate="${esc(c.plate)}" type="button">${ok ? "✓" : "○"} ${x.l}</button>`; }).join("")}</div>` : ""}
-    <div class="foot"><div class="acts">${STATUSES.map(s => `<button class="chip${s.v === c.status ? " cur" : ""}" data-st="${s.v}" data-plate="${esc(c.plate)}" type="button">${s.l}</button>`).join("")}</div>
-      <button class="edit" data-edit="${esc(c.plate)}" type="button">✎ Edit</button></div>
+    ${`<div class="foot"><div class="acts">${myStatuses().map(s => `<button class="chip${s.v === c.status ? " cur" : ""}" data-st="${s.v}" data-plate="${esc(c.plate)}" type="button">${s.l}</button>`).join("")}</div>
+      <button class="edit" data-edit="${esc(c.plate)}" type="button">${S.isOwner ? "✎ Edit" : c.status === "belum" ? "＋ Booking" : "✎ Edit booking"}</button></div>`}
   </div>`;
 }
 function renderList() {
@@ -373,7 +375,7 @@ function onClick(e) {
     return;
   }
   if (!S.canEdit) return;
-  const ed = e.target.closest("[data-edit]"); if (ed) { openForm(carByPlate(ed.dataset.edit)); return; }
+  const ed = e.target.closest("[data-edit]"); if (ed) { const c0 = carByPlate(ed.dataset.edit); openForm(c0, !S.isOwner && c0 && c0.status === "belum" ? "tempah" : undefined); return; }
   const d = e.target.closest("[data-doc]"); if (d) {
     const c = carByPlate(d.dataset.plate); if (!c) return;
     const docs = { ...c.docs, [d.dataset.doc]: !c.docs[d.dataset.doc] }; save(c, { dokumen: docs }); return;
@@ -415,7 +417,7 @@ function openForm(c, forceStatus) {
   const drawDocs = () => { $("f-docs").innerHTML = DOCS.map(x => `<button type="button" data-k="${x.k}" class="${docs[x.k] ? "sel" : ""}">${docs[x.k] ? "✓ " : "○ "}${x.l}</button>`).join(""); };
   $("f-docs").onclick = ev => { const b = ev.target.closest("button"); if (!b) return; docs[b.dataset.k] = !docs[b.dataset.k]; drawDocs(); };
   seg("f-type", TYPES, type, v => type = v);
-  seg("f-status", STATUSES, status, v => { status = v; toggleWhen(); });
+  seg("f-status", myStatuses(), status, v => { status = v; toggleWhen(); });
   drawDocs(); toggleWhen();
   const close = () => ov.classList.remove("show");
   ov.onclick = ev => { if (ev.target === ov || ev.target.closest("[data-x=cancel]")) close(); };
