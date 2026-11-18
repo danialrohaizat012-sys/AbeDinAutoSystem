@@ -2080,3 +2080,29 @@ html #ada-public-catalogue.abx-home .abx-wa-float svg{width:24px!important;heigh
 @media(max-width:650px){html #ada-public-catalogue.abx-home .abx-wa-float{padding:0!important;width:58px!important;height:58px!important;border-radius:50%!important;justify-content:center!important;right:16px!important;bottom:calc(18px + env(safe-area-inset-bottom))!important}
 html #ada-public-catalogue.abx-home .abx-wa-float span{display:none!important}
 html #ada-public-catalogue.abx-home .abx-wa-float svg{width:30px!important;height:30px!important}}
+
+/* Inventori: modal / harga jual / untung (Owner) */
+.cloud-car .ada-profit{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin:10px 0 2px;border:1px solid rgba(255,255,255,.09);border-radius:12px;overflow:hidden;background:rgba(255,255,255,.03)}
+.cloud-car .ada-profit>div{padding:8px 10px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.cloud-car .ada-profit>div+div{border-left:1px solid rgba(255,255,255,.08)}
+.cloud-car .ada-profit span{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#9e988a}
+.cloud-car .ada-profit b{font-size:14px;font-weight:800;color:#f4efe2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cloud-car .ada-profit b small{font-size:11px;font-weight:800;opacity:.85}
+.cloud-car .ada-profit em{font-style:normal;font-weight:600;color:#7d776a;font-size:12.5px}
+.cloud-car .ada-profit .is-up{background:rgba(52,179,107,.12)}.cloud-car .ada-profit .is-up b{color:#5fd892}
+.cloud-car .ada-profit .is-down{background:rgba(229,83,75,.12)}.cloud-car .ada-profit .is-down b{color:#ff8a83}
+html.ada-light:not(.ada-public-route) .cloud-car .ada-profit{border-color:#e4dccb;background:#faf7f0}
+html.ada-light:not(.ada-public-route) .cloud-car .ada-profit>div+div{border-left-color:#e4dccb}
+html.ada-light:not(.ada-public-route) .cloud-car .ada-profit b{color:#1d1a14}
+html.ada-light:not(.ada-public-route) .cloud-car .ada-profit .is-up b{color:#17803f}html.ada-light:not(.ada-public-route) .cloud-car .ada-profit .is-down b{color:#c0352d}
+.cloud-car .ada-profit{grid-template-columns:1fr!important}
+.cloud-car .ada-profit>div{flex-direction:row!important;justify-content:space-between!important;align-items:baseline!important;padding:7px 12px!important}
+.cloud-car .ada-profit>div+div{border-left:0!important;border-top:1px solid rgba(255,255,255,.08)}
+html.ada-light:not(.ada-public-route) .cloud-car .ada-profit>div+div{border-top-color:#e4dccb}
+.cloud-car .ada-profit b{font-size:14.5px;overflow:visible;text-overflow:clip}
+.cloud-car .ada-profit .is-up b,.cloud-car .ada-profit .is-down b{font-size:15.5px}
+
+.cloud-car .ada-profit .is-cost{background:rgba(229,83,75,.12)}.cloud-car .ada-profit .is-cost b{color:#ff8a83}
+.cloud-car .ada-profit .is-sell{background:rgba(79,143,247,.13)}.cloud-car .ada-profit .is-sell b{color:#8cb8ff}
+html.ada-light:not(.ada-public-route) .cloud-car .ada-profit .is-cost b{color:#c0352d}
+html.ada-light:not(.ada-public-route) .cloud-car .ada-profit .is-sell b{color:#1f5fc9}
