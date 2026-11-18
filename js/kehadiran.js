@@ -8,7 +8,7 @@ const CSS = `
   --f:Inter,-apple-system,"Segoe UI",system-ui,sans-serif;color-scheme:dark}
 *{box-sizing:border-box}
 .shell{background:var(--bg);color:var(--fg);font:15px/1.45 var(--f);padding:14px max(14px,env(safe-area-inset-left,0px)) 56px}
-.wrap{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
 h1{margin:0;font-size:24px;font-weight:800;letter-spacing:-.015em}h2{margin:0;font-size:18px;font-weight:700}h3{margin:0;font-size:16px;font-weight:700}
 button,input,select{font:inherit;color:inherit}
 .mute{color:var(--mute);font-size:13.5px}
@@ -97,6 +97,11 @@ table.ros td{padding:4px 3px}table.ros td.rest select{opacity:.65}table.ros td.p
 .er{display:grid;grid-template-columns:1.2fr 1fr 40px auto;gap:8px;align-items:center}
 .er .th{width:40px;height:40px;border-radius:8px;object-fit:cover;background:#222;display:grid;place-items:center;color:var(--mute)}
 .sw-dot{width:14px;height:14px;border-radius:4px;flex:none}
+td.who{white-space:normal;min-width:120px;font-weight:600}td.act{white-space:nowrap;text-align:right}td.act .sm{margin-left:4px}
+.ap{display:grid;grid-template-columns:1fr;gap:14px}
+@media (min-width:980px){.ap{grid-template-columns:1fr 1fr}.ap>.full{grid-column:1/-1}.pl.cols2{display:grid;grid-template-columns:1fr 1fr;gap:8px}}
+.otin{width:76px;padding:6px 8px}
+.narrow{max-width:760px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:14px}
 `;
 
 const DAYS = ["Ahad","Isnin","Selasa","Rabu","Khamis","Jumaat","Sabtu"];
@@ -346,7 +351,8 @@ function render() {
   let h = `<div class="r"><h1>Kehadiran</h1><button class="sm" data-act="reload" title="Muat semula">↻</button></div>${tabs()}`;
   if (S.err) h += `<div class="notice err">${esc(S.err)}</div>`;
   if (!S.loaded) h += `<div class="card"><p class="mute">Memuatkan…</p></div>`;
-  else h += ({ papan:viewPapan, today:viewToday, gaji:viewGaji, tetapan:viewTetapan, rekod:viewRekod, lulus:viewLulus, kalendar:viewKalendar }[S.tab] || viewPunch)();
+  else { const v = ({ papan:viewPapan, today:viewToday, gaji:viewGaji, tetapan:viewTetapan, rekod:viewRekod, lulus:viewLulus, kalendar:viewKalendar }[S.tab] || viewPunch)();
+    h += ["punch","rekod","tetapan"].includes(S.tab) || !S.owner ? `<div class="narrow">${v}</div>` : v; }
   app.innerHTML = h;
   signPhotos(S.punches);
   tickClock();
@@ -469,7 +475,7 @@ function viewPapan() {
       <div class="tiles"><div class="tile t-g"><small>Sedang bekerja</small><b>${cnt("kerja")}</b></div><div class="tile t-p"><small>Rehat</small><b>${cnt("rehat")}</b></div><div class="tile t-b"><small>Sudah balik</small><b>${cnt("balik")}</b></div>
         <div class="tile t-r"><small>Belum punch</small><b>${cnt("tiada")}</b></div><div class="tile t-y"><small>Lewat hari ini</small><b>${late}</b></div><div class="tile"><small>Cuti / rehat</small><b>${cnt("cuti") + cnt("umum") + cnt("off")}</b></div></div>
       ${pend ? `<button class="notice" data-tab="lulus" style="border:0;text-align:left;cursor:pointer">${pend} tuntutan punch menunggu kelulusan → Kelulusan</button>` : ""}</div>
-    <div class="card"><h3>Staf</h3><div class="pl">${rows || `<p class="mute">Belum ada staf.</p>`}</div></div>`;
+    <div class="card"><h3>Staf</h3><div class="pl cols2">${rows || `<p class="mute">Belum ada staf.</p>`}</div></div>`;
 }
 
 /* --- Harian (Owner) --- */
@@ -484,7 +490,7 @@ function viewToday() {
   const present = list.filter(s => S.punches.some(p => p.staff_id === s.id && dayKey(p.punched_at) === k)).length;
   return `<div class="card"><div class="r"><div><h3>${dayLabel(k)}</h3><span class="mute">${present}/${list.length} staf hadir${S.holidays[k] ? ` · ${esc(S.holidays[k].name)}` : ""}</span></div>
       <span class="r" style="gap:6px"><button class="sm" data-act="dayshift" data-n="-1">‹</button><input type="date" class="field" id="day" value="${esc(k)}" style="max-width:170px"><button class="sm" data-act="dayshift" data-n="1">›</button></span></div></div>
-    ${cards || `<div class="card"><p class="mute">Belum ada staf. Tambah staf di Tetapan → Staf & Akses.</p></div>`}`;
+    <div class="ap">${cards || `<div class="card full"><p class="mute">Belum ada staf. Tambah staf di Tetapan → Staf & Akses.</p></div>`}</div>`;
 }
 
 /* --- Kelulusan & isu (Owner) --- */
@@ -508,18 +514,18 @@ function viewLulus() {
     days.forEach(d => { if (d.ot > 0 && d.otStatus === "pending" && !d.open) ots.push({ s, d }); if (d.late > 0) lates.push({ s, d }); });
     issuesFor(s.id).forEach(i => issues.push({ s, ...i })); });
   const dayBtn = (s, d) => `<button class="sm" data-act="day" data-staff="${esc(s.id)}" data-day="${d.key}">✎</button>`;
-  return `<div class="card"><div class="r"><h3>Kelulusan & isu</h3>${monthInput()}</div><p class="mute">${st.ot_require_approval ? "OT hanya dibayar selepas diluluskan." : "OT dibayar automatik. Hidupkan \"OT perlu kelulusan\" di Tetapan jika mahu semak dahulu."}</p></div>
-    <div class="card"><h3>Tuntutan punch tertinggal ${reqP.length ? `<span class="badge">${reqP.length}</span>` : ""}</h3>
+  return `<div class="ap"><div class="card full"><div class="r"><h3>Kelulusan & isu</h3>${monthInput()}</div><p class="mute">${st.ot_require_approval ? "OT hanya dibayar selepas diluluskan." : "OT dibayar automatik. Hidupkan \"OT perlu kelulusan\" di Tetapan jika mahu semak dahulu."}</p></div>
+    <div class="card full"><h3>Tuntutan punch tertinggal ${reqP.length ? `<span class="badge">${reqP.length}</span>` : ""}</h3>
       ${reqP.length ? `<div class="pl">${reqP.map(r => `<div class="loc"><div class="grow"><b>${esc(nameOf(r.staff_id))}</b> · ${KIND_LABEL[r.kind]} <b>${dayLabel(dayKey(r.punched_at))} ${hm(r.punched_at)}</b><div class="mute">${esc(r.reason)}</div></div>
         <button class="sm go" data-act="reqok" data-id="${esc(r.id)}">Lulus</button><button class="sm bad" data-act="reqno" data-id="${esc(r.id)}">Tolak</button></div>`).join("")}</div>` : `<p class="mute">Tiada tuntutan menunggu.</p>`}
       ${reqD.length ? `<details><summary>Keputusan terkini (${reqD.length})</summary><div class="pl" style="margin-top:8px">${reqD.map(r => `<div class="loc"><div class="grow">${esc(nameOf(r.staff_id))} · ${KIND_LABEL[r.kind]} ${dayLabel(dayKey(r.punched_at))} ${hm(r.punched_at)}</div><span class="chip ${RS[r.status][1]}">${RS[r.status][0]}</span></div>`).join("")}</div></details>` : ""}</div>
-    <div class="card"><div class="r"><h3>OT ${st.ot_require_approval ? "menunggu kelulusan" : "untuk disemak"} ${ots.length ? `<span class="badge">${ots.length}</span>` : ""}</h3>${ots.length ? `<button class="sm go" data-act="otall">Lulus semua</button>` : ""}</div>
-      ${ots.length ? `<div class="tw"><table><thead><tr><th>Staf</th><th>Hari</th><th>Masa</th><th class="n">OT</th><th>Minit lulus</th><th></th></tr></thead><tbody>${ots.map(({ s, d }) => `<tr><td>${esc(s.full_name)}</td><td>${dayLabel(d.key)}${d.otKind !== "normal" ? ` <span class="chip pur">${d.otKind === "ph" ? "Cuti umum" : "Hari rehat"}</span>` : ""}</td><td>${d.firstIn ? hm(d.firstIn.punched_at) : "–"} – ${d.lastOut ? hm(d.lastOut.punched_at) : "–"}</td><td class="n">${fmtMin(d.ot)}</td>
-        <td><input class="field" type="number" min="0" max="1440" value="${d.ot}" data-otmin="${esc(s.id)}|${d.key}" style="width:84px;padding:6px 8px"></td><td style="white-space:nowrap"><button class="sm go" data-act="otok" data-staff="${esc(s.id)}" data-day="${d.key}">Lulus</button> <button class="sm bad" data-act="otno" data-staff="${esc(s.id)}" data-day="${d.key}">Tolak</button></td></tr>`).join("")}</tbody></table></div>` : `<p class="mute">Tiada OT menunggu bulan ini.</p>`}</div>
+    <div class="card full"><div class="r"><h3>OT ${st.ot_require_approval ? "menunggu kelulusan" : "untuk disemak"} ${ots.length ? `<span class="badge">${ots.length}</span>` : ""}</h3>${ots.length ? `<button class="sm go" data-act="otall">Lulus semua</button>` : ""}</div>
+      ${ots.length ? `<div class="tw"><table><thead><tr><th>Staf</th><th>Hari</th><th>Masa</th><th class="n">OT</th><th>Minit lulus</th><th></th></tr></thead><tbody>${ots.map(({ s, d }) => `<tr><td class="who">${esc(s.full_name)}</td><td>${dayLabel(d.key)}${d.otKind !== "normal" ? ` <span class="chip pur">${d.otKind === "ph" ? "Cuti umum" : "Hari rehat"}</span>` : ""}</td><td>${d.firstIn ? hm(d.firstIn.punched_at) : "–"} – ${d.lastOut ? hm(d.lastOut.punched_at) : "–"}</td><td class="n">${fmtMin(d.ot)}</td>
+        <td><input class="field otin" type="number" min="0" max="1440" value="${d.ot}" data-otmin="${esc(s.id)}|${d.key}"></td><td class="act"><button class="sm go" data-act="otok" data-staff="${esc(s.id)}" data-day="${d.key}">Lulus</button> <button class="sm bad" data-act="otno" data-staff="${esc(s.id)}" data-day="${d.key}">Tolak</button></td></tr>`).join("")}</tbody></table></div>` : `<p class="mute">Tiada OT menunggu bulan ini.</p>`}</div>
     <div class="card"><h3>Lewat ${lates.length ? `<span class="badge">${lates.length}</span>` : ""}</h3>
-      ${lates.length ? `<div class="tw"><table><thead><tr><th>Staf</th><th>Hari</th><th>Masuk</th><th class="n">Lewat</th><th></th></tr></thead><tbody>${lates.map(({ s, d }) => `<tr><td>${esc(s.full_name)}</td><td>${dayLabel(d.key)}</td><td>${hm(d.firstIn.punched_at)} <span class="mute">(syif ${hhmmOf(d.sched.start)})</span></td><td class="n">${fmtMin(d.late)}</td><td style="white-space:nowrap"><button class="sm" data-act="excuse" data-staff="${esc(s.id)}" data-day="${d.key}">Maafkan</button> ${dayBtn(s, d)}</td></tr>`).join("")}</tbody></table></div>` : `<p class="mute">Tiada lewat bulan ini 🎉</p>`}</div>
+      ${lates.length ? `<div class="tw"><table><thead><tr><th>Staf</th><th>Hari</th><th>Masuk</th><th class="n">Lewat</th><th></th></tr></thead><tbody>${lates.map(({ s, d }) => `<tr><td class="who">${esc(s.full_name)}</td><td>${dayLabel(d.key)}</td><td>${hm(d.firstIn.punched_at)} <span class="mute">(syif ${hhmmOf(d.sched.start)})</span></td><td class="n">${fmtMin(d.late)}</td><td class="act"><button class="sm" data-act="excuse" data-staff="${esc(s.id)}" data-day="${d.key}">Maafkan</button> ${dayBtn(s, d)}</td></tr>`).join("")}</tbody></table></div>` : `<p class="mute">Tiada lewat bulan ini 🎉</p>`}</div>
     <div class="card"><h3>Isu rekod ${issues.length ? `<span class="badge">${issues.length}</span>` : ""}</h3>
-      ${issues.length ? `<div class="tw"><table><thead><tr><th>Staf</th><th>Hari</th><th>Isu</th><th></th></tr></thead><tbody>${issues.map(i => `<tr><td>${esc(i.s.full_name)}</td><td>${dayLabel(i.d.key)}</td><td><span class="chip ${i.t === "absent" || i.t === "out" ? "bad" : "warn"}">${esc(i.txt)}</span></td><td>${dayBtn(i.s, i.d)}</td></tr>`).join("")}</tbody></table></div>` : `<p class="mute">Tiada isu bulan ini.</p>`}</div>`;
+      ${issues.length ? `<div class="tw"><table><thead><tr><th>Staf</th><th>Hari</th><th>Isu</th><th></th></tr></thead><tbody>${issues.map(i => `<tr><td class="who">${esc(i.s.full_name)}</td><td>${dayLabel(i.d.key)}</td><td><span class="chip ${i.t === "absent" || i.t === "out" ? "bad" : "warn"}">${esc(i.txt)}</span></td><td class="act">${dayBtn(i.s, i.d)}</td></tr>`).join("")}</tbody></table></div>` : `<p class="mute">Tiada isu bulan ini.</p>`}</div></div>`;
 }
 
 /* --- Kalendar (Owner) --- */
@@ -563,7 +569,7 @@ function viewGaji() {
       <div class="r" style="justify-content:flex-start"><button class="sm" data-act="togglepay" data-staff="${esc(s.id)}">${open ? "Tutup butiran harian" : "Lihat butiran harian"}</button><button class="sm" data-act="report" data-staff="${esc(s.id)}">⎙ Laporan PDF</button></div>${open ? dayTable(days, s.id) : ""}</div>`;
   }).join("");
   return `<div class="card"><div class="r"><h3>Gaji bulan</h3>${monthInput()}</div><div class="r"><span class="mute">Jumlah gaji bersih semua staf</span><span class="big">${rm(total)}</span></div>
-    <div class="r" style="justify-content:flex-start"><button class="sm" data-act="csv">⬇ CSV gaji</button><button class="sm go" data-act="report">⎙ Laporan kehadiran PDF (semua staf)</button></div></div>${cards || `<div class="card"><p class="mute">Belum ada staf.</p></div>`}`;
+    <div class="r" style="justify-content:flex-start"><button class="sm" data-act="csv">⬇ CSV gaji</button><button class="sm go" data-act="report">⎙ Laporan kehadiran PDF (semua staf)</button></div></div><div class="ap">${cards || `<div class="card full"><p class="mute">Belum ada staf.</p></div>`}</div>`;
 }
 function printReport(ids) {
   const st = S.settings, [a] = monthRange(S.month);
