@@ -2209,3 +2209,32 @@ html[data-ada-page] #ada-cloud-view>div[id$="-host"]{margin:0!important}
 .cloud-bottom::-webkit-scrollbar{display:none}
 .cloud-bottom button{flex:0 0 auto!important;min-width:58px!important;white-space:nowrap!important;font-size:10px!important;line-height:1.25!important;padding:7px 6px!important;word-break:keep-all!important}
 }
+/* V81: Notifikasi */
+.ada-notif-btn{position:relative;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;padding:0!important;background:#1a1f20!important;border:1px solid #303839!important;color:#f4efe2!important;cursor:pointer}
+.ada-notif-btn svg{width:20px;height:20px}
+.ada-notif-btn.has-new svg{color:#f5c400;animation:adaBell 1.6s ease 1}
+@keyframes adaBell{0%,100%{transform:rotate(0)}15%{transform:rotate(14deg)}30%{transform:rotate(-12deg)}45%{transform:rotate(8deg)}60%{transform:rotate(-5deg)}}
+.ada-notif-dot{position:absolute;top:-3px;right:-3px;min-width:19px;height:19px;padding:0 5px;border-radius:999px;background:#e5534b;color:#fff;font-size:11px;font-weight:800;display:grid;place-items:center;border:2px solid #0c1112}
+#ada-notif-panel{position:fixed;top:72px;right:12px;z-index:2147483000;width:min(380px,calc(100vw - 24px));max-height:min(70vh,560px);display:flex;flex-direction:column;background:#141817;border:1px solid #33393a;border-radius:16px;box-shadow:0 20px 50px #000a;color:#f4efe2;overflow:hidden;font-family:Inter,system-ui,sans-serif}
+.ada-np-head{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid #2a3031;font-size:15px}
+.ada-np-head button{background:none!important;border:0!important;color:#f5c400!important;font-size:12.5px!important;font-weight:700;padding:4px!important;cursor:pointer}
+.ada-np-list{overflow-y:auto;display:flex;flex-direction:column}
+.ada-np-item{display:flex!important;gap:10px;text-align:left;width:100%;padding:11px 14px!important;background:transparent!important;border:0!important;border-bottom:1px solid #23292a!important;border-radius:0!important;color:inherit!important;cursor:pointer;font-weight:400!important}
+.ada-np-item.is-new{background:#1d2418!important}
+.ada-np-item.is-new .ada-np-txt b::after{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:#f5c400;margin-left:6px;vertical-align:middle}
+.ada-np-ico{font-size:18px;line-height:1.2}
+.ada-np-txt{display:flex;flex-direction:column;gap:2px;min-width:0}
+.ada-np-txt b{font-size:13.5px}.ada-np-txt small{font-size:12.5px;color:#b9b3a4}.ada-np-txt em{font-style:normal;font-size:11px;color:#8a8577}
+.ada-np-empty{padding:22px;text-align:center;color:#8a8577;font-size:13px;margin:0}
+.ada-notif-toast{position:fixed;left:50%;top:14px;transform:translate(-50%,-140%);z-index:2147483001;display:flex;gap:10px;align-items:flex-start;max-width:min(420px,calc(100vw - 24px));padding:12px 14px;border-radius:14px;background:#f4efe2;color:#141000;box-shadow:0 14px 40px #0008;cursor:pointer;transition:transform .35s ease;font-family:Inter,system-ui,sans-serif}
+.ada-notif-toast.show{transform:translate(-50%,0)}
+.ada-notif-toast span{font-size:20px}.ada-notif-toast b{display:block;font-size:14px}.ada-notif-toast small{font-size:12.5px;color:#4d4838}
+html.ada-light .ada-notif-btn{background:#fff!important;border-color:#ddd5c4!important;color:#1d1a14!important}
+html.ada-light #ada-notif-panel{background:#fff;border-color:#e4dccb;color:#1d1a14}
+html.ada-light .ada-np-head,html.ada-light .ada-np-item{border-color:#eee6d6!important}
+html.ada-light .ada-np-item.is-new{background:#fff8dc!important}
+html.ada-light .ada-np-txt small{color:#5d574a}
+@media(max-width:640px){.ada-notif-btn{width:40px;height:40px}#ada-notif-panel{top:64px;right:8px;left:8px;width:auto}
+html .ada-head-tools .cloud-pill{display:none!important}}
+#ada-notif-panel .ada-np-head button{background:none!important;border:0!important;box-shadow:none!important;min-height:0!important;width:auto!important;margin:0!important}
+#ada-notif-panel .ada-np-item{margin:0!important;min-height:0!important;box-shadow:none!important}

@@ -29,6 +29,22 @@ td{padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
 .tw{overflow-x:auto}
 .mini{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
 .mini .full{grid-column:1/-1}
+.mini>div{min-width:0}
+input.field[type=date],input.field[type=month],input.field[type=time]{-webkit-appearance:none;appearance:none;display:block;width:100%;max-width:100%;min-width:0;min-height:42px;line-height:1.25;text-align:left}
+input.field::-webkit-date-and-time-value{text-align:left;margin:0}
+input.field[type=file]{font-size:13px;padding:8px 10px}
+@media (max-width:640px){
+.mini{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px 8px;margin-top:8px;padding-top:8px}
+.sec{padding:12px!important;border-radius:14px!important}
+.sec h4{font-size:14.5px!important}
+.note{font-size:11.5px!important;line-height:1.4}
+label{font-size:10px!important;margin-bottom:3px!important;letter-spacing:.06em}
+.field{padding:8px 10px!important;min-height:40px;border-radius:9px!important}
+input.field[type=date],input.field[type=month]{min-height:40px}
+.btn{font-size:13px!important;padding:9px 13px!important}
+.chip{font-size:10.5px!important}
+.list2 .it{font-size:13px}
+}
 .cols{display:grid;grid-template-columns:minmax(240px,1fr) 2fr;gap:12px}@media(max-width:720px){.cols{grid-template-columns:1fr}}
 .box{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--soft)}
 .note{font-size:12.5px;color:var(--mute)}

@@ -1,8 +1,8 @@
 // Abe Din Auto – "Profil Saya": layan diri untuk setiap staf yang log masuk.
 // Ringkasan, mohon cuti, slip gaji, tuntutan (claim) dengan resit, mohon advance, kemas kini maklumat sendiri.
 // Data & kebenaran: V73_STAFF_HR.sql + V74_STAFF_SELF_SERVICE.sql. Slip gaji dikira oleh computeSlip() (kehadiran.js).
-import { CSS } from "./staff.js?v=12";
-import { PROFILE_CSS, CATEGORY, EMP_TYPE, LEAVE, CLAIM, leaveEntitle } from "./staff-profile.js?v=7";
+import { CSS } from "./staff.js?v=13";
+import { PROFILE_CSS, CATEGORY, EMP_TYPE, LEAVE, CLAIM, leaveEntitle } from "./staff-profile.js?v=8";
 import { slipHtml, printSlip, rm, monthName } from "./slip.js?v=1";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
