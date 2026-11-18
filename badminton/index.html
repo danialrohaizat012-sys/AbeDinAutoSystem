@@ -301,7 +301,7 @@ const ERR = {SESI_TAMAT:'Sesi tamat. Sila log masuk semula.', TELEFON_TIDAK_SAH:
  HANYA_PENGANJUR_UTAMA:'Hanya penganjur utama boleh padam kejohanan.', KEJOHANAN_TIDAK_DIJUMPAI:'Kejohanan tidak dijumpai.', KEJOHANAN_DALAMAN:'Kejohanan dalaman: hanya penganjur boleh tambah pasangan.',
  PENDAFTARAN_DITUTUP:'Pendaftaran sudah ditutup.', KATEGORI_TIDAK_SAH:'Kategori tidak sah.', KATEGORI_PENUH:'Kategori ini sudah penuh.', BUKAN_PEMILIK:'Ini bukan pendaftaran anda.',
  UNDIAN_SUDAH_DIJANA:'Undian sudah dijana. Hubungi penganjur untuk perubahan.', TIADA_KEBENARAN:'Tiada kebenaran.', DATA_TERLALU_BESAR:'Poster terlalu besar. Guna gambar lebih kecil.',
- NAMA_PEMAIN_DIPERLUKAN:'Isi nama pemain.', ID_TIDAK_SAH:'Data tidak sah.'};
+ NAMA_PEMAIN_DIPERLUKAN:'Isi nama pemain.', BUKAN_ADMIN:'Halaman ini untuk admin sahaja.', PEMAIN_TIDAK_DIJUMPAI:'Pemain tidak dijumpai.', TIDAK_BOLEH_BUANG_DIRI:'Anda tidak boleh buang status admin sendiri.', ID_TIDAK_SAH:'Data tidak sah.'};
 const errMsg = e => { const m = (e && (e.message || e.msg)) || String(e); const k = Object.keys(ERR).find(k => m.includes(k)); return k ? ERR[k] : 'Ralat: ' + m; };
 async function rpc(fn, args){ const {data, error} = await SB.rpc(fn, args); if (error) throw error; return data; }
 function handleErr(e){
@@ -350,7 +350,7 @@ const tList = () => Object.entries(S.tournaments).map(([id, t]) => ({...t, id}))
 const entriesOf = (tid, cat) => Object.entries(S.entries).map(([id, e]) => ({...e, id})).filter(e => e.tid === tid && (!cat || e.cat === cat)).sort((a, b) => (a.at || 0) - (b.at || 0));
 const eName = id => { const e = S.entries[id]; if (id === null) return 'BYE'; if (!e) return '(dipadam)'; return e.p2 ? `${e.p1}/${e.p2}` : e.p1; };
 const eClub = id => (S.entries[id] || {}).club || '';
-const isOrg = t => !!t && !!S.uid && (t.org === S.uid || (me() && (t.subs || []).includes(normPhone(me().phone))));
+const isOrg = t => !!t && !!S.uid && (t.org === S.uid || !!(me() && me().admin) || (me() && (t.subs || []).includes(normPhone(me().phone))));
 const myEntries = () => Object.entries(S.entries).map(([id, e]) => ({...e, id})).filter(e => e.uid === S.uid);
 const slotsOf = t => (t.cats || []).reduce((a, c) => a + (+c.slots || 0), 0);
 const firstDate = t => (t.cats || []).map(c => c.sd).filter(Boolean).sort()[0] || '';
@@ -506,7 +506,7 @@ const bestLevel = r => ['A','B','C','U17','U15','U12'].find(l => r.med[l]) || ''
 function header(){
  const m = me();
  return `<header class="top card"><div class="brand">${logo(46)}<div><b>SmashKu</b><small>Kejohanan Lebih Mudah. Badminton Lebih Seronok.</small></div></div>
- <div class="hbtns"><button class="btn" data-act="guide">${ic('book')}<span>Panduan</span></button>${m ? `<button class="btn soft" data-act="switchRole">${ic('swap')}<span>${m.role === 'organizer' ? 'Penganjur' : 'Atlet'}</span></button>` : ''}</div></header>`;
+ <div class="hbtns">${m && m.admin ? `<a class="btn ${S.view === 'admin' ? 'pri' : ''}" href="#admin">${ic('shield')}<span>Admin</span></a>` : ''}<button class="btn" data-act="guide">${ic('book')}<span>Panduan</span></button>${m ? `<button class="btn soft" data-act="switchRole">${ic('swap')}<span>${m.role === 'organizer' ? 'Penganjur' : 'Atlet'}</span></button>` : ''}</div></header>`;
 }
 function banner(){
  return S.slow ? `<div class="notice">Tidak dapat menyambung ke pelayan. Paparan mungkin tidak terkini. <a href="#" data-act="reload">Cuba lagi</a></div>` : '';
@@ -525,6 +525,7 @@ function view(){
  else if (v === 'athletes') body = vAthletes();
  else if (v === 'me') body = vMe();
  else if (v === 'create') body = vCreate();
+ else if (v === 'admin') body = vAdmin();
  else if (v.startsWith('t-')) body = vT(v.slice(2));
  else body = vHome();
  return `<div class="wrap">${header()}${banner()}${body}<div class="foot"><span>© ${new Date().getFullYear()} SmashKu</span><span>${Object.keys(S.profiles).length} pengguna berdaftar · ${Object.keys(S.tournaments).length} kejohanan</span></div></div>${nav()}`;
@@ -550,7 +551,7 @@ function vOnboard(){
  <p class="muted" style="text-align:center;margin-top:-6px">${esc(st.phone)}</p>
  <div class="fld"><label>PIN 6 digit</label><input class="inp" id="ob_pin" type="password" inputmode="numeric" maxlength="6" autocomplete="current-password" style="letter-spacing:.4em;text-align:center;font-size:20px"></div>
  <div class="g2"><button class="btn" data-act="obStep" data-v="phone">${ic('back')} Kembali</button><button class="btn pri" data-act="obLogin">Log masuk ${ic('arr')}</button></div>
- <p class="muted" style="font-size:12.5px;text-align:center;margin-top:18px">Lupa PIN? Hubungi penganjur / admin untuk set semula.</p>`);
+ <p class="muted" style="font-size:12.5px;text-align:center;margin-top:18px">Lupa PIN? Hubungi admin SmashKu untuk set PIN baru.</p>`);
  return box(`${head('Akaun baru', 'Lengkapkan profil anda')}
  <p class="muted" style="text-align:center;margin-top:-6px">${esc(st.phone)}</p>
  ${profileFields({phone:st.phone}, true)}
@@ -848,7 +849,7 @@ function vMe(){
  const regs = myEntries();
  const d = (i, l, v) => `<div><span class="dic">${ic(i)}</span><span><small>${l}</small><b>${esc(v || '-')}</b></span></div>`;
  return `<div class="card prof"><span class="bigav">${esc(initials(m.name))}</span><div style="flex:1"><div class="eyebrow">Profil ${m.role === 'organizer' ? 'penganjur' : 'atlet'}</div><h2>${esc(m.name)}</h2><p class="muted" style="margin:4px 0 10px">Dikenali sebagai ${esc(m.nick)}</p>${m.club ? `<span class="chip">${ic('users', 14)} ${esc(m.club)}</span>` : ''}</div>
- <div class="acts"><button class="btn pri" data-act="editProfile">${ic('edit')} Edit profil</button><button class="btn" data-act="switchRole">${ic('swap')} Tukar ke ${m.role === 'organizer' ? 'Atlet' : 'Penganjur'}</button><button class="btn danger" data-act="logout">${ic('back')} Log keluar</button></div></div>
+ <div class="acts"><button class="btn pri" data-act="editProfile">${ic('edit')} Edit profil</button><button class="btn" data-act="switchRole">${ic('swap')} Tukar ke ${m.role === 'organizer' ? 'Atlet' : 'Penganjur'}</button>${m.admin ? `<a class="btn soft" href="#admin">${ic('shield')} Halaman Admin</a>` : ''}<button class="btn danger" data-act="logout">${ic('back')} Log keluar</button></div></div>
  <div class="p2col"><div>
   <div class="card pad" style="margin-bottom:16px"><div class="eyebrow">Akaun</div><h3 style="margin:4px 0 6px">Butiran peribadi</h3>
    <div class="dl">${d('user', 'Nama penuh', m.name)}${d('id', 'Nama panggilan', m.nick)}${d('phone', 'No. telefon', m.phone)}${d('users', 'Jantina', m.gender === 'W' ? 'Perempuan' : 'Lelaki')}${d('shield', 'Kelab', m.club)}${d('globe', 'Peranan', m.role === 'organizer' ? 'Penganjur' : 'Atlet')}</div></div>
@@ -860,6 +861,26 @@ function vMe(){
   <div class="sumc"><span class="m" style="background:#fef9c3">🥇</span><div><b>${cnt[0]}</b><span class="muted">Emas</span></div></div>
   <div class="sumc"><span class="m" style="background:#f1f5f9">🥈</span><div><b>${cnt[1]}</b><span class="muted">Perak</span></div></div>
   <div class="sumc"><span class="m" style="background:#ffedd5">🥉</span><div><b>${cnt[2]}</b><span class="muted">Gangsa</span></div></div></div></div></div>`;
+}
+
+/* ----- admin ----- */
+function vAdmin(){
+ const m = me();
+ if (!m.admin) return `<div class="card empty"><div class="eico">${ic('shield', 24)}</div><b>Untuk admin sahaja</b>Anda tiada akses ke halaman ini.</div>`;
+ const A2 = S.adm || (S.adm = {q:'', list:null, loading:false});
+ if (A2.list === null && !A2.loading) setTimeout(adminLoad, 0);
+ const list = A2.list || [];
+ const rows = list.map(p => `<tr><td><div class="who"><span class="av">${esc(initials(p.name))}</span><div><b>${esc(p.name)}</b><small>${esc(p.nick)} · ${p.role === 'organizer' ? 'Penganjur' : 'Atlet'}${p.club ? ' · ' + esc(p.club) : ''}</small></div></div></td>
+  <td style="white-space:nowrap">+${esc(p.phone)}<br>${p.locked ? '<span class="chip red" style="margin-top:4px">Dikunci</span>' : ''}${p.admin ? '<span class="chip green" style="margin-top:4px">Admin</span>' : ''}</td>
+  <td><div class="acts" style="justify-content:flex-end"><button class="btn pri sm" data-act="admPin" data-id="${p.id}">${ic('shield', 15)} Set PIN</button>${p.id !== m.id ? `<button class="btn sm" data-act="admToggle" data-id="${p.id}" data-on="${p.admin ? 0 : 1}">${p.admin ? 'Buang admin' : 'Jadikan admin'}</button>` : ''}</div></td></tr>`).join('');
+ return `<div class="card pad" style="margin-bottom:16px"><div class="eyebrow">Admin</div><h2 style="font-size:30px;margin:6px 0">Urus pengguna</h2><p class="muted" style="margin:0">Set PIN baru untuk pengguna yang lupa PIN. PIN lama terus tidak sah dan pengguna itu dilog keluar dari semua peranti.</p></div>
+ <div class="card pad" style="margin-bottom:16px"><div class="srow" style="margin:0"><div class="search">${ic('search')}<input id="adm_q" value="${esc(A2.q)}" placeholder="Cari nama, nama panggilan atau no. telefon"></div><button class="btn pri" data-act="admSearch">Cari</button></div></div>
+ <div class="card" style="overflow:hidden">${A2.loading && !A2.list ? `<div class="load" style="padding:50px"><div class="spin"></div></div>` : list.length ? `<table class="rtab"><thead><tr><th>PENGGUNA</th><th>TELEFON</th><th></th></tr></thead><tbody>${rows}</tbody></table>` : `<div class="empty"><b>Tiada pengguna dijumpai</b>Cuba carian lain.</div>`}</div>`;
+}
+async function adminLoad(){
+ const A2 = S.adm; A2.loading = true; render();
+ try { A2.list = await rpc('bm_admin_players', {p_token:TOKEN, p_q:A2.q}) || []; } catch(e){ A2.list = []; toast(errMsg(e)); }
+ A2.loading = false; render();
 }
 
 /* ================= modal & toast ================= */
@@ -939,6 +960,32 @@ const A = {
  switchRole(){ const m = me(); const role = m.role === 'organizer' ? 'athlete' : 'organizer'; save('profiles', S.uid, {role}).then(() => toast('Peranan: ' + (role === 'organizer' ? 'Penganjur' : 'Atlet'))); },
  logout(){ askConfirm('Log keluar daripada akaun ini?', async () => { try { await rpc('bm_logout', {p_token:TOKEN}); } catch(e){} setToken(null); S.uid = null; S.meData = null; S.ob = {step:'role'}; location.hash = 'home'; render(); }, 'Log keluar'); },
  reload(d, el, ev){ ev.preventDefault(); loadAll(); },
+ admSearch(){ S.adm.q = $('#adm_q').value.trim(); adminLoad(); },
+ admPin(d){
+  const p = (S.adm.list || []).find(x => x.id === d.id); if (!p) return;
+  S.mctx = {type:'admpin', p};
+  openModal(`<div class="eyebrow">Set semula PIN</div><h3>${esc(p.name)}</h3><p class="muted" style="margin-top:2px">${esc(p.nick)} · +${esc(p.phone)}</p>
+  <div class="fld"><label>PIN baru (6 digit)</label><div class="srow" style="margin:0"><input class="inp" id="adm_pin" inputmode="numeric" maxlength="6" style="letter-spacing:.3em;font-size:20px;text-align:center" value="${String(Math.floor(100000 + Math.random() * 900000))}"><button class="btn" data-act="admRand">Jana rawak</button></div></div>
+  <p class="muted" style="font-size:13px">Selepas disimpan, beritahu PIN ini kepada pengguna. Mereka boleh tukar sendiri di Info Saya → Edit profil.</p>
+  <div class="mfoot"><button class="btn" data-act="mclose">Batal</button><button class="btn pri" data-act="admPinSave">${ic('check')} Simpan PIN</button></div>`);
+ },
+ admRand(){ $('#adm_pin').value = String(Math.floor(100000 + Math.random() * 900000)); },
+ async admPinSave(){
+  const x = S.mctx; const pin = $('#adm_pin').value.trim(); if (!/^\d{6}$/.test(pin)) return toast('PIN mesti 6 digit.');
+  try {
+   await rpc('bm_admin_set_pin', {p_token:TOKEN, p_player:x.p.id, p_pin:pin});
+   const msg = `Salam ${x.p.nick}, PIN SmashKu anda telah diset semula. PIN baru: ${pin}\nLog masuk di ${location.origin}${location.pathname} dan tukar PIN di Info Saya.`;
+   openModal(`<div style="text-align:center"><div class="eico" style="width:56px;height:56px;border-radius:16px;background:var(--green2);color:var(--green);display:grid;place-items:center;margin:0 auto 12px">${ic('check', 26)}</div><h3>PIN berjaya diset</h3><p class="muted">${esc(x.p.name)} · +${esc(x.p.phone)}</p><div style="font-size:34px;font-weight:800;letter-spacing:.3em;margin:12px 0">${esc(pin)}</div></div>
+   <div class="mfoot" style="justify-content:center"><a class="btn grn" href="https://wa.me/${esc(x.p.phone)}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">${ic('phone')} Hantar melalui WhatsApp</a><button class="btn" data-act="mclose">Tutup</button></div>`);
+   adminLoad();
+  } catch(e){ toast(errMsg(e)); }
+ },
+ async admToggle(d){
+  const on = d.on === '1'; const p = (S.adm.list || []).find(x => x.id === d.id);
+  askConfirm(on ? `Jadikan ${p ? p.name : 'pengguna ini'} admin? Admin boleh set PIN dan urus semua kejohanan.` : `Buang status admin ${p ? p.name : ''}?`, async () => {
+   try { await rpc('bm_admin_set_admin', {p_token:TOKEN, p_player:d.id, p_on:on}); toast('Dikemas kini.'); adminLoad(); } catch(e){ toast(errMsg(e)); }
+  }, on ? 'Jadikan admin' : 'Buang');
+ },
  guide, mclose: closeModal, mbg(d, el, ev){ if (ev.target === el) closeModal(); },
  confirmYes(){ const f = S.confirmFn; closeModal(); f && f(); },
  tab(d){ S.tab = d.v; render(); },
@@ -1068,7 +1115,7 @@ document.addEventListener('click', ev => {
  ev.stopPropagation();
  fn(el.dataset, el, ev);
 });
-document.addEventListener('keydown', ev => { if (ev.key !== 'Enter') return; const id = ev.target.id; if (id === 'ob_phone') A.obPhone(); else if (id === 'ob_pin' && S.ob && S.ob.step === 'pin') A.obLogin(); });
+document.addEventListener('keydown', ev => { if (ev.key !== 'Enter') return; const id = ev.target.id; if (id === 'ob_phone') A.obPhone(); else if (id === 'ob_pin' && S.ob && S.ob.step === 'pin') A.obLogin(); else if (id === 'adm_q') A.admSearch(); });
 document.addEventListener('input', ev => {
  const el = ev.target;
  if (el.dataset.inp) { S[el.dataset.inp] = el.value; render(); return; }
@@ -1103,7 +1150,7 @@ function render(){
 }
 function route(){
  const h = (location.hash || '').slice(1) || 'home';
- if (h !== S.view) { if (h === 'create' && S.view !== 'create' && !(S.create && S.create._edit)) S.create = null; S.view = h; window.scrollTo(0, 0); }
+ if (h !== S.view) { if (h === 'admin') S.adm = null; if (h === 'create' && S.view !== 'create' && !(S.create && S.create._edit)) S.create = null; S.view = h; window.scrollTo(0, 0); }
  render();
 }
 window.addEventListener('hashchange', route);
