@@ -16,6 +16,6 @@ jobs:
         with:
           deno-version: v2.x
       - name: Role mapping tests
-        run: deno test supabase/functions/sewa-bridge/role_test.ts
+        run: deno test supabase/functions/sewa-bridge/role_test.ts supabase/functions/sewa-bridge/security_test.ts
       - name: Type check bridge
         run: deno check supabase/functions/sewa-bridge/index.ts
