@@ -36,6 +36,42 @@ input:focus,select:focus{border-color:var(--gold)}
 .app-entry{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
 .app-entry small{color:var(--mute);display:block;overflow-wrap:anywhere}
 .app-detail{white-space:pre-wrap;overflow-wrap:anywhere;background:#080b0c;padding:12px;border-radius:10px;font-size:13px;line-height:1.7}
+
+/* Responsive staff workspace: use the available width without horizontal overflow. */
+:host,.shell,.wrap{width:100%;min-width:0;max-width:none}
+.shell{container-type:inline-size}
+.wrap{gap:clamp(12px,1.5vw,20px)}
+.card{min-width:0;overflow-wrap:anywhere;padding:clamp(14px,1.7vw,24px)}
+.steps{grid-template-columns:repeat(3,minmax(0,1fr))}
+.steps div{min-width:0}
+.row{min-width:0}
+.row .btn{flex:1 1 180px;min-width:0;min-height:44px}
+.link{min-width:0;overflow-wrap:anywhere}
+.field input{max-width:100%;min-width:0;font-size:16px}
+.app-entry{min-width:0}
+.app-entry>div{min-width:0;flex:1}
+.app-entry button{flex:0 0 auto;min-height:42px}
+#applications{min-width:0}
+.app-detail{max-width:100%;min-width:0}
+@container (min-width:960px){
+  .steps{gap:16px}
+  .steps div{padding:18px}
+  .app-entry{padding:15px 4px}
+}
+@container (max-width:680px){
+  .steps{grid-template-columns:1fr}
+  .steps div{display:grid;grid-template-columns:28px minmax(0,1fr);gap:0 12px;align-items:start}
+  .steps div::before{grid-row:span 2;margin:0}
+  .app-entry{align-items:flex-start;flex-direction:column}
+  .app-entry button{width:100%}
+}
+@container (max-width:420px){
+  h2{font-size:20px}
+  .card{padding:14px;border-radius:14px}
+  .row{flex-direction:column;align-items:stretch}
+  .row .btn{flex:0 0 auto;width:100%}
+  .btn{min-height:46px}
+}
 `;
 
 const S = { phone: '' };
@@ -51,7 +87,7 @@ function formLink() {
   return u.href;
 }
 function inviteText() {
-  return `Salam, ini Abe Din Auto 🚗\n\nSila isi borang permohonan di link ini:\n${formLink()}\n\nSelepas tekan "Hantar", maklumat anda akan terus masuk ke WhatsApp kami. Terima kasih!`;
+  return `Salam, ini Abe Din Auto 🚗\n\nSila isi borang permohonan di link ini:\n${formLink()}\n\nSelepas tekan "Hantar & Simpan Permohonan", maklumat direkod dalam sistem. Anda boleh kongsi salinan melalui WhatsApp.`;
 }
 function render() {
   if (!app) return;
