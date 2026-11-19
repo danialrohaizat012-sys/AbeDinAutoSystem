@@ -532,7 +532,7 @@ function viewKereta(){
 function carCard({v,s}){
   const r=s.r, cn=r?counts(r):null; let act;
   if(!r) act=`<button class="btn" data-start="${esc(v.id)}">Mula periksa</button>`;
-  else if(s.k==="draf"||s.k==="ulang") act=`<button class="btn" data-edit="${esc(r.id)}">${s.k==="ulang"?"Betulkan":"Sambung"}</button>`;
+  else if(s.k==="draf"||s.k==="ulang"||s.k==="hantar") act=`<button class="btn" data-edit="${esc(r.id)}">${s.k==="ulang"?"Betulkan":s.k==="hantar"?"Edit":"Sambung"}</button>`;
   else act=`<button class="btn alt" data-rec="${esc(r.id)}">Lihat laporan</button>${s.k==="lulus"?`<button class="btn alt narrow" data-start="${esc(v.id)}" title="Pemeriksaan baru">+</button>`:""}`;
   return `<div class="car"><div class="ctop"><span class="stat">${esc(v.status||"-")}</span><span class="ib ${s.k}">${esc(s.t)}</span></div>
     <div class="cb"><h4>${esc(carName(v)||"-")}</h4><div class="yp">${esc(v.model_year||"-")} · <span class="plate">${esc(v.plate||"-")}</span>${v.mileage_km?` · ${Number(v.mileage_km).toLocaleString("en-MY")} km`:""}</div>
@@ -634,8 +634,10 @@ function bindJejak(){
 function viewDetail(){
   const r=S.rows.find(x=>x.id===S.id);
   if(!r) return `<div class="empty">Rekod tidak dijumpai.</div>`;
-  const c=counts(r), s=STATUS[r.status]||STATUS.draf, mine=r.createdBy&&r.createdBy===S.myId;
-  const canEdit = isOwner() || (r.status!=="lulus" && (mine || !r.createdBy || r.status!=="hantar"));
+  const c=counts(r), s=STATUS[r.status]||STATUS.draf;
+  // Semua staf yang diberi akses Pemeriksaan boleh edit rekod bersama, termasuk yang dihantar oleh staf lain.
+  // Rekod disahkan Owner kekal terkunci untuk staf biasa (selaras dengan checklist_guard pada database).
+  const canEdit = isOwner() || r.status!=="lulus";
   return `<button class="back" data-go="senarai">← Rekod</button>
   <div class="card">
     <div class="dhead"><span class="gchip big ${gradeCls(r.grade)}">${esc(r.grade||"–")}</span>
