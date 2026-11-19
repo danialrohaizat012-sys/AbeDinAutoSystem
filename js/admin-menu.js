@@ -45,11 +45,26 @@ export function mountAdminMenu(){
   for(const section of grouped){
    section.hidden=![...section.querySelectorAll('button[data-cloud-page]')].some(b=>!b.hidden);
   }
-  // Mobile shortcuts reflect existing role permissions.
-  panel.querySelectorAll('.cloud-bottom button[data-cloud-page]').forEach(b=>{
-   const source=byPage.get(b.dataset.cloudPage);
-   b.hidden=!source||source.hidden;
-  });
+  // Staff gets a usable set of shortcuts selected from pages that role can actually access.
+  const isStaff=panel.dataset.userRole&&panel.dataset.userRole!=='owner';
+  const candidate=isStaff
+   ?['dashboard','inventory','pemeriksaan','puspakom','sales','applications','sewa','kehadiran','reports','profil']
+   :['dashboard','inventory','sales','reports'];
+  const allowed=candidate.filter(page=>byPage.get(page)&&!byPage.get(page).hidden).slice(0,4);
+  const bottom=panel.querySelector('.cloud-bottom'),moreBtn=bottom?.querySelector('#ada-admin-more');
+  if(bottom&&moreBtn){
+   for(const b of [...bottom.querySelectorAll('button[data-cloud-page]')])b.remove();
+   for(const page of allowed){
+    const button=document.createElement('button');button.type='button';button.dataset.cloudPage=page;
+    const icon=document.createElement('span');icon.setAttribute('aria-hidden','true');icon.textContent=ICONS[page]||'•';
+    const label=document.createElement('small');
+    label.textContent=page==='dashboard'&&isStaff?'Katalog Umum':(LABELS[page]||page).replace(' Kenderaan','').replace(' Kereta','').replace(' Jualan','');
+    button.append(icon,label);
+    button.classList.toggle('active',byPage.get(page).classList.contains('active'));
+    button.addEventListener('click',()=>{byPage.get(page)?.click()});
+    bottom.insertBefore(button,moreBtn);
+   }
+  }
   if(!overlay.hidden)populate();
  }
  function populate(){
@@ -91,5 +106,8 @@ export function mountAdminMenu(){
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!overlay.hidden){e.preventDefault();close()}});
  panel.querySelectorAll('[data-cloud-page]').forEach(b=>b.addEventListener('click',()=>{if(!overlay.hidden)close()}));
  window.adaAdminMenuRefresh=refresh;
+ // Active shortcut must follow page transitions, even after dynamic shortcut creation.
+ const navObserver=new MutationObserver(()=>{for(const b of panel.querySelectorAll('.cloud-bottom button[data-cloud-page]'))b.classList.toggle('active',byPage.get(b.dataset.cloudPage)?.classList.contains('active')||false)});
+ navObserver.observe(aside,{subtree:true,attributes:true,attributeFilter:['class']});
  refresh();
 }
