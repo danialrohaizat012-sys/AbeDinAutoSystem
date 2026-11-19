@@ -166,7 +166,12 @@ const todayStr = () => ymd(new Date());
 const addDays = (s, n) => { const p = s.split("-"); return ymd(new Date(+p[0], +p[1] - 1, +p[2] + n)); };
 const daysBetween = (a, b) => { const pa = a.split("-"), pb = b.split("-"); return Math.round((Date.UTC(+pb[0], +pb[1] - 1, +pb[2]) - Date.UTC(+pa[0], +pa[1] - 1, +pa[2])) / 86400000); };
 // V83: operational 120-day countdown starts at the recorded Puspakom booking/inspection date, only after Lulus.
-const expiryInfo = (c, today = todayStr()) => {
+const expiryTodayMY = () => {
+  const parts = new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Kuala_Lumpur",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date());
+  const get = type => parts.find(p=>p.type===type)?.value;
+  return get("year")+"-"+get("month")+"-"+get("day");
+};
+const expiryInfo = (c, today = expiryTodayMY()) => {
   if (c.status !== "lulus" || !c.date || !/^\d{4}-\d{2}-\d{2}$/.test(c.date)) return null;
   const [y,m,d] = c.date.split("-").map(Number);
   if (new Date(Date.UTC(y,m-1,d)).toISOString().slice(0,10) !== c.date) return null;
