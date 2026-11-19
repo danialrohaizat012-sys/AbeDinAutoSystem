@@ -1,0 +1,186 @@
+/* V83 Mobile density pass: internal Owner and Staff application only.
+   Public catalogue, login and embedded storefront intentionally excluded. */
+@media (max-width:700px){
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-panel main,
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view{
+    min-width:0;
+  }
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-panel main{
+    padding:10px 10px 96px!important;
+  }
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view{
+    font-size:13px;
+    line-height:1.45;
+  }
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .cloud-hero{
+    min-height:124px!important;
+    padding:15px 14px!important;
+    border-radius:13px!important;
+  }
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .cloud-hero h1{
+    font-size:21px!important;
+    line-height:1.2!important;
+  }
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .cloud-hero p{
+    font-size:12px!important;
+    line-height:1.4!important;
+  }
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .cloud-stats,
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .ada-kpi-grid{
+    gap:8px!important;
+  }
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .cloud-stat{
+    min-height:82px!important;
+    padding:10px 11px!important;
+    border-radius:12px!important;
+    gap:4px!important;
+  }
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .cloud-stat strong{
+    font-size:19px!important;
+    line-height:1.2!important;
+  }
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .cloud-stat small,
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .cloud-stat span{
+    font-size:11px!important;
+    line-height:1.3!important;
+  }
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .ada-dash-head{
+    gap:7px!important;
+    margin:4px 0 11px!important;
+  }
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .ada-dash-head h2{
+    font-size:21px!important;
+    line-height:1.25!important;
+  }
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .ada-dash-head p{
+    font-size:12px!important;
+    margin:4px 0 0!important;
+  }
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .ada-kpi{
+    min-height:88px!important;
+    padding:11px!important;
+    border-radius:12px!important;
+  }
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .ada-kpi-value{
+    font-size:20px!important;
+    margin-top:6px!important;
+  }
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .ada-kpi-label{
+    font-size:10.5px!important;
+  }
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .ada-dash-card,
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .panel,
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .ada-vp-panel{
+    padding:11px!important;
+    border-radius:13px!important;
+  }
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .cloud-cards{
+    gap:9px!important;
+    grid-template-columns:minmax(0,1fr)!important;
+  }
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .cloud-car{
+    border-radius:13px!important;
+    padding:0!important;
+  }
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .cloud-car .photo{
+    aspect-ratio:1.85!important;
+  }
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .cloud-car .info{
+    padding:11px 12px 12px!important;
+  }
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .ada-car-title h3{
+    font-size:14px!important;
+    line-height:1.3!important;
+  }
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .ada-price{
+    font-size:16px!important;
+  }
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .ada-car-meta,
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .ada-vp-specs{
+    font-size:12px!important;
+  }
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .ada-vp-hero{
+    min-height:285px!important;
+    border-radius:14px!important;
+  }
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .ada-vp-copy{
+    min-height:0!important;
+    padding:15px!important;
+  }
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .ada-vp-copy h2{
+    font-size:24px!important;
+    line-height:1.2!important;
+  }
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .ada-v360-heading{
+    margin:5px 0 10px!important;
+  }
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .ada-v360-heading h2{
+    font-size:21px!important;
+  }
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .ada-v360-kpis{
+    gap:7px!important;
+    margin:9px 0 6px!important;
+  }
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .ada-v360-kpi{
+    padding:10px!important;
+    border-radius:11px!important;
+  }
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .ada-v360-kpi strong{
+    font-size:16px!important;
+    margin-top:5px!important;
+  }
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .ada-v360-tabs{
+    margin:11px 0!important;
+    padding:5px!important;
+    gap:5px!important;
+  }
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .ada-v360-tab{
+    font-size:12px!important;
+    min-height:44px!important;
+    padding:8px 7px!important;
+  }
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .ada-report-filters,
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .ada-report-panel{
+    gap:9px!important;
+  }
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .ada-report-panel{
+    padding:12px!important;
+    border-radius:13px!important;
+  }
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .ada-report-panel h3{
+    font-size:16px!important;
+  }
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .cloud-toolbar{
+    gap:7px!important;
+  }
+  /* Keep form fields at 16px on iOS to avoid automatic zoom when focused. */
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view input,
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view select,
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view textarea,
+  html.ada-staff-route #ada-cloud-gate .ada-form input,
+  html.ada-staff-route #ada-cloud-gate .ada-form select,
+  html.ada-staff-route #ada-cloud-gate .ada-form textarea{
+    font-size:16px!important;
+    max-width:100%;
+    box-sizing:border-box;
+  }
+  /* Buttons remain comfortably tappable even as visual cards get smaller. */
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view button,
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view a[role="button"],
+  html.ada-staff-route #ada-cloud-gate .ada-form button{
+    min-height:44px;
+    touch-action:manipulation;
+  }
+}
+@media(max-width:390px){
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-panel main{
+    padding-left:8px!important;
+    padding-right:8px!important;
+  }
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .cloud-stat strong{
+    font-size:17px!important;
+  }
+  html.ada-staff-route #ada-cloud-gate #ada-cloud-view .ada-v360-kpi strong{
+    font-size:15px!important;
+  }
+}
