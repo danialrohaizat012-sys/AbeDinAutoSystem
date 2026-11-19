@@ -398,6 +398,7 @@ function newView(){
   '<div><label for="f-to">Ke</label><input class="field" id="f-to" list="places" value="Kota Bharu"></div></div>'+
   (S.admin?'<div><label for="f-upah">Upah runner (RM)</label><input class="field" id="f-upah" type="number" inputmode="decimal" min="0" placeholder="600"></div>':'')+
   '<datalist id="places">'+PLACES.map(function(p){return '<option value="'+p+'">'}).join('')+'</datalist>'+
+  '<div><label for="f-assigned">Staf bertanggungjawab (PIC)</label><select class="field" id="f-assigned"><option value="">Belum ditetapkan</option>'+S.staff.map(function(u){return '<option value="'+esc(u.id)+'">'+esc(u.full_name||'Staf')+'</option>'}).join('')+'</select></div>'+
   (S.owner?'<label class="tick"><input type="checkbox" id="f-own"> Dibayar oleh pemilik, tidak ditolak dari baki</label>':'')+
   '<button class="btn" data-act="create">Simpan trip</button></div>';
 }
@@ -702,7 +703,7 @@ reg.addEventListener('click',function(e){
       if(!car||!plate||!from){S.err='Isi model kereta, no. plat dan lokasi ambil.';render();break}
       var ref=S.db.collection('trips').doc();
       var up=$('f-upah')?(+$('f-upah').value||0):0;
-      var rec={car:car,plate:plate,from:from,to:$('f-to').value.trim()||'Kota Bharu',date:$('f-date').value||today(),upah:up,kind:($('f-kind')?$('f-kind').value:'ambil'),st:0,exp:[],ck:[],times:{},created:Date.now()};
+      var rec={car:car,plate:plate,assigned_to:$('f-assigned').value||null,from:from,to:$('f-to').value.trim()||'Kota Bharu',date:$('f-date').value||today(),upah:up,kind:($('f-kind')?$('f-kind').value:'ambil'),st:0,exp:[],ck:[],times:{},created:Date.now()};
       S.err='';write(function(){return ref.set(rec)});
       if(S.owner&&$('f-own')&&$('f-own').checked){var nid=ref.id;write(function(){return S.db.doc('ownerpaid/'+nid).set({at:nowIso})})}
       go('trip','detail',ref.id);break}
