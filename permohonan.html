@@ -61,6 +61,50 @@ input:focus,select:focus,textarea:focus{border-color:var(--brand);box-shadow:0 0
 .toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:.2s}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .note{font-size:13px;color:var(--muted);text-align:center;margin-top:18px}
+
+/* Adaptive application form for mobile, tablet, desktop and safe areas. */
+html{width:100%;max-width:100%;overflow-x:clip}
+body{min-width:0;width:100%;overflow-x:clip}
+.wrap{width:min(100%,1100px);max-width:1100px;margin-inline:auto;padding:clamp(12px,2.4vw,32px) clamp(12px,3vw,32px) calc(126px + env(safe-area-inset-bottom,0px))}
+header{padding:clamp(12px,2vw,24px) 2px 12px}
+h1{font-size:clamp(24px,3.5vw,38px);overflow-wrap:anywhere}
+.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(12px,1.5vw,20px)}
+.grid>*{min-width:0}
+section.card{min-width:0;padding:clamp(15px,2vw,28px);margin-block:clamp(12px,1.5vw,20px)}
+.card h2{line-height:1.4}
+input,select,textarea{max-width:100%;min-width:0;min-height:46px;font-size:16px}
+textarea{min-height:94px}
+.check{align-items:flex-start;line-height:1.5}
+.check input{flex:0 0 20px;width:20px;height:20px;min-height:20px;margin-top:2px}
+.chip{min-height:42px;max-width:100%;white-space:normal}
+.actions{z-index:10;padding:12px max(12px,env(safe-area-inset-left,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-right,0px))}
+.actions .in{width:100%;max-width:1036px;min-width:0}
+.actions .btn{min-width:0;min-height:48px}
+#review .card pre{max-width:100%;overflow-wrap:anywhere}
+#review .stack>*{max-width:100%;min-width:0}
+.done{min-width:0;overflow-wrap:anywhere}
+.toast{width:max-content;max-width:calc(100vw - 24px);text-align:center}
+@media(max-width:700px){
+ .wrap{padding-inline:clamp(12px,4vw,20px)}
+ .grid{grid-template-columns:minmax(0,1fr)}
+ .full{grid-column:auto}
+ .progress{top:0}
+ .card h2{font-size:16px}
+ .chips{gap:7px}
+ .chip{padding:8px 11px;font-size:13px}
+}
+@media(max-width:420px){
+ .wrap{padding-bottom:calc(138px + env(safe-area-inset-bottom,0px))}
+ header .tag{font-size:10px}
+ section.card{border-radius:12px;padding:15px 13px}
+ .actions .btn{font-size:14px;padding:12px 10px}
+ .actions .btn.ghost{flex:0 0 auto}
+ #review .stack{gap:12px}
+}
+@media(min-width:900px){
+ .wrap{padding-bottom:145px}
+ .grid{column-gap:24px}
+}
 </style>
 </head>
 <body>
