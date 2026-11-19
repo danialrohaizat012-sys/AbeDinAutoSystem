@@ -51,3 +51,24 @@ test('report status filter is wired to view state', () => {
   assert.match(reportCode,/id="ada-r-status"/);
   assert.match(reportCode,/reportStatus=v/);
 });
+
+test('financial pagination loads all 1,205 rows across pages', async () => {
+  const source=html.match(/async function queryAllFinancial\(table,cols\)\{[^\n]+\}/)?.[0];
+  assert.ok(source,'paginated query source exists');
+  const rows=Array.from({length:1205},(_,i)=>({id:i}));
+  const client={from:()=>({select:()=>({order:()=>({range:async (start,end)=>({data:rows.slice(start,end+1),error:null})})})})};
+  const queryAll=vm.runInNewContext(source+';queryAllFinancial',{client,Error});
+  const result=await queryAll('sales','id');
+  assert.equal(result.length,1205);
+  assert.equal(result[1204].id,1204);
+});
+test('financial pagination fails closed on database errors', async () => {
+  const source=html.match(/async function queryAllFinancial\(table,cols\)\{[^\n]+\}/)?.[0];
+  const client={from:()=>({select:()=>({order:()=>({range:async()=>({data:null,error:{message:'mock network failure'}})})})})};
+  const queryAll=vm.runInNewContext(source+';queryAllFinancial',{client,Error});
+  await assert.rejects(queryAll('payments','id'),/payments: mock network failure/);
+});
+test('financial report uses paginated reads for sales and payments', () => {
+  assert.match(html,/sales=await queryAllFinancial\('sales'/);
+  assert.match(html,/payments=await queryAllFinancial\('payments'/);
+});
