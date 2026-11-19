@@ -1,0 +1,20 @@
+name: V83 Sales Report Regression
+on:
+  pull_request:
+    paths:
+      - 'app.html'
+      - 'tests/v83-sales-report.test.cjs'
+      - '.github/workflows/v83-sales-report-tests.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  report-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Node version
+        run: node --version
+      - name: Run V83 sales report tests
+        run: node --test tests/v83-sales-report.test.cjs
