@@ -1,0 +1,22 @@
+name: V83 Staff Dashboard Regression
+on:
+  pull_request:
+    paths:
+      - 'app.html'
+      - 'js/admin-menu.js'
+      - 'css/staff-dashboard.css'
+      - 'tests/v83-staff-dashboard.test.cjs'
+      - '.github/workflows/v83-staff-dashboard-tests.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  staff-dashboard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check JavaScript syntax
+        run: node --check --input-type=module < js/admin-menu.js
+      - name: Run staff dashboard regression tests
+        run: node --test tests/v83-staff-dashboard.test.cjs
