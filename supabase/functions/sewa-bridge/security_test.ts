@@ -1,0 +1,13 @@
+import { assertEquals } from 'jsr:@std/assert@1.0.11';
+import { allowedMainProfile, allowedOrigin, validBridgeToken } from './security.ts';
+Deno.test('owner enabled', () => assertEquals(allowedMainProfile({role:'owner',enabled:true}),true));
+Deno.test('staff enabled', () => assertEquals(allowedMainProfile({role:'operations',enabled:true}),true));
+Deno.test('disabled owner rejected', () => assertEquals(allowedMainProfile({role:'owner',enabled:false}),false));
+Deno.test('unknown role rejected', () => assertEquals(allowedMainProfile({role:'admin',enabled:true}),false));
+Deno.test('missing profile rejected', () => assertEquals(allowedMainProfile(null),false));
+Deno.test('allowed browser origin', () => assertEquals(allowedOrigin('https://example.com',['https://example.com']),true));
+Deno.test('other browser origin rejected', () => assertEquals(allowedOrigin('https://evil.test',['https://example.com']),false));
+Deno.test('nonbrowser origin allowed with JWT required', () => assertEquals(allowedOrigin(null,['https://example.com']),true));
+Deno.test('token rejects whitespace', () => assertEquals(validBridgeToken('a'.repeat(25)+' '),false));
+Deno.test('token rejects oversized', () => assertEquals(validBridgeToken('a'.repeat(4001)),false));
+Deno.test('token accepts plausible shape', () => assertEquals(validBridgeToken('a'.repeat(25)),true));
