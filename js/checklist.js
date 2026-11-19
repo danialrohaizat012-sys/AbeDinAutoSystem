@@ -505,13 +505,13 @@ function recRow(r){
 // V83: dashboard-level vehicle search uses existing inspection state and permissions.
 const inspectionSearchStatus = state => ["draf","hantar","ulang"].includes(state);
 function inspectionSearchRows(vehicles,query="",status="perlu"){
-  const q=String(query||"").trim().toLowerCase().replace(/\\s+/g,"");
+  const q=String(query||"").trim().toLowerCase().replace(/\s+/g,"");
   return vehicles.filter(v=>String(v.status||"").toLowerCase()!=="sold")
     .map(v=>({v,s:carState(v)}))
     .filter(({v,s})=>(status==="semua"||status==="perlu"&&(s.k==="belum"||inspectionSearchStatus(s.k))||
       status==="belum"&&s.k==="belum"||status==="proses"&&inspectionSearchStatus(s.k)||
       status==="lulus"&&s.k==="lulus")&&(!q||[v.plate,v.vehicle_id,v.make,v.model,v.model_year,carName(v)]
-        .some(x=>String(x||"").toLowerCase().replace(/\\s+/g,"").includes(q))));
+        .some(x=>String(x||"").toLowerCase().replace(/\s+/g,"").includes(q))));
 }
 function dashboardSearchHtml(){
   const st=S.dashboardSearch.status;
