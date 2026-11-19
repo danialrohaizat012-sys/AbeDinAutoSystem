@@ -226,7 +226,7 @@ var EXP=['Tol','Minyak','Makan','Penginapan','Tiket balik','Lain-lain'];
 var ST=['Belum ambil','Dalam perjalanan','Sampai kedai'];
 var app=null,H={},reg={addEventListener:function(t,f){H[t]=f}};
 var S={trips:[],paid:{},tab:'trip',view:'list',open:null,month:'',year:String(new Date().getFullYear()),
-  admin:false,owner:false,canEditTrip:false,client:null,requests:[],requestBusy:false,audits:[],receipts:[],staff:[],receiptBusy:false,db:null,loaded:false,slow:false,err:'',pending:false,confirmDel:null,
+  admin:false,owner:false,canEditTrip:false,client:null,requests:[],requestBusy:false,audits:[],receipts:[],staff:[],myId:null,receiptBusy:false,db:null,loaded:false,slow:false,err:'',pending:false,confirmDel:null,
   photoList:[],photosOn:false,pw:null,pwId:null,zoom:null,busy:false,topups:[],confirmTop:null,ownp:{},rname:'',editName:false,page:0};
 var PH=['Depan','Belakang','Kiri','Kanan','Dalam kereta','Odometer','Geran','Kerosakan','Lain-lain'];
 var q=Promise.resolve();
@@ -592,6 +592,10 @@ function render(){
   var h='<div class="head"><h1>Runner</h1><span class="mute">'+(S.admin?'Paparan bos':'Paparan runner')+'</span></div>'+
     '<div class="r"><span class="mute">Runner: <b style="color:var(--fg)">'+(S.rname?esc(S.rname):'belum ditetapkan')+'</b></span>'+(S.owner?'<button class="lnk" data-act="rname">'+(S.rname?'Ubah nama':'Letak nama')+'</button>':'')+'</div>';
   if(!S.db){app.innerHTML=h+'<div class="note">Menyambung ke pelayan…</div>';return}
+  var waiting=S.requests.filter(function(r){return r.status==='pending'}).length;
+  var recent=S.requests.filter(function(r){return r.requested_by===S.myId&&r.status!=='pending'&&Date.now()-Date.parse(r.reviewed_at||'1970-01-01')<7*86400000});
+  if(S.owner&&waiting)h+='<div class="note">'+waiting+' permohonan upah menunggu keputusan. <button class="lnk" data-tab="permohonan">Semak sekarang</button></div>';
+  if(!S.owner&&recent.length)h+='<div class="note">'+recent.length+' keputusan permohonan upah dalam 7 hari terakhir. Semak pada trip masing-masing.</div>';
   h+='<div class="tabs" role="group" aria-label="Pilih bahagian"><button data-tab="trip" aria-pressed="'+(S.tab==='trip')+'">Trip</button><button data-tab="lap" aria-pressed="'+(S.tab==='lap')+'">Laporan</button><button data-tab="bal" aria-pressed="'+(S.tab==='bal')+'">Baki</button>'+(S.owner?'<button data-tab="permohonan" aria-pressed="'+(S.tab==='permohonan')+'">Permohonan ('+S.requests.filter(r=>r.status==='pending').length+')</button>':'')+'</div>';
   if(S.err)h+='<div class="note err r"><span>'+esc(S.err)+'</span><button class="x" style="color:#fff" data-act="dismiss" aria-label="Tutup">×</button></div>';
   if(S.editName&&S.owner)h+='<div class="card form"><div><label for="r-name">Nama runner</label><input class="field" id="r-name" value="'+esc(S.rname)+'" placeholder="Contoh: Azman"></div>'+
@@ -886,6 +890,7 @@ function subscribe(db){
 /* host = elemen kosong dalam #ada-cloud-view. ctx = {client, profile} */
 return function mountRunner(host,ctx){
   var role=ctx&&ctx.profile&&ctx.profile.role;
+  S.myId=ctx.profile&&ctx.profile.id||null;
   S.client=ctx.client;ctx.client.rpc('runner_staff_choices').then(function(res){if(!res.error){S.staff=res.data||[];sched()}});
   S.owner=role==='owner';S.admin=role==='owner';S.canEditTrip=role==='owner'||role==='operations';
   var root=host.shadowRoot||host.attachShadow({mode:'open'});
