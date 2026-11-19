@@ -60,6 +60,19 @@ h2{margin:0;font-size:20px;font-weight:800}
 .warnline{font-size:12.5px;font-weight:700;color:var(--red-ink);margin-top:6px}
 .todo{margin-top:9px;padding:9px 11px;border-radius:11px;background:var(--y-soft);font-size:13.5px;font-weight:600;display:flex;gap:8px}
 .todo.alert{background:var(--red);color:var(--red-ink)}
+.expiry{margin-top:11px;border:1px solid #356446;border-radius:12px;padding:12px;background:#10291b;display:grid;gap:9px}
+.expiry-head,.expiry-dates{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.expiry-head strong{color:#b9f7cd;font-size:17px;font-weight:800}
+.expiry-head span,.expiry-dates{color:#c7d1ca;font-size:11px}
+.expiry-dates b{color:#fff}
+.expiry-bar{height:9px;border-radius:100px;background:#253a2e;overflow:hidden}
+.expiry-bar i{display:block;height:100%;background:#4ac27a;border-radius:100px}
+.expiry-warning{background:#332b13;border-color:#92712d;color:#ffe5a2}
+.expiry-warning .expiry-head strong{color:#ffe5a2}.expiry-warning .expiry-bar i{background:#efc366}
+.expiry-urgent,.expiry-expired{background:#381c1b;border-color:#ac5149}
+.expiry-urgent .expiry-head strong,.expiry-expired .expiry-head strong{color:#ffb1a9}
+.expiry-urgent .expiry-bar i,.expiry-expired .expiry-bar i{background:#e76d62}
+
 .note{font-size:13px;color:var(--mute);margin-top:7px;white-space:pre-wrap}
 .docs,.acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
 .doc{border:1px dashed var(--line);background:transparent;color:var(--mute);border-radius:8px;padding:5px 9px;font-size:12px;font-weight:700;cursor:pointer}
@@ -151,7 +164,32 @@ const pad = n => String(n).padStart(2, "0");
 const ymd = d => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
 const todayStr = () => ymd(new Date());
 const addDays = (s, n) => { const p = s.split("-"); return ymd(new Date(+p[0], +p[1] - 1, +p[2] + n)); };
-const daysBetween = (a, b) => { const pa = a.split("-"), pb = b.split("-"); return Math.round((new Date(+pb[0], +pb[1] - 1, +pb[2]) - new Date(+pa[0], +pa[1] - 1, +pa[2])) / 86400000); };
+const daysBetween = (a, b) => { const pa = a.split("-"), pb = b.split("-"); return Math.round((Date.UTC(+pb[0], +pb[1] - 1, +pb[2]) - Date.UTC(+pa[0], +pa[1] - 1, +pa[2])) / 86400000); };
+// V83: operational 120-day countdown starts at the recorded Puspakom booking/inspection date, only after Lulus.
+const expiryTodayMY = () => {
+  const parts = new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Kuala_Lumpur",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date());
+  const get = type => parts.find(p=>p.type===type)?.value;
+  return get("year")+"-"+get("month")+"-"+get("day");
+};
+const expiryInfo = (c, today = expiryTodayMY()) => {
+  if (c.status !== "lulus" || !c.date || !/^\d{4}-\d{2}-\d{2}$/.test(c.date)) return null;
+  const [y,m,d] = c.date.split("-").map(Number);
+  if (new Date(Date.UTC(y,m-1,d)).toISOString().slice(0,10) !== c.date) return null;
+  const expiry = addDays(c.date, VALID_DAYS), left = daysBetween(today, expiry);
+  return { expiry, left, elapsed: Math.max(0, Math.min(VALID_DAYS, VALID_DAYS - left)),
+    tone: left < 0 ? "expired" : left <= 14 ? "urgent" : left <= 30 ? "warning" : "valid" };
+};
+const expiryPanel = c => {
+  if (c.status !== "lulus") return "";
+  const x = expiryInfo(c);
+  if (!x) return '<div class="expiry expiry-warning">Tarikh booking/pemeriksaan diperlukan untuk kira tamat tempoh 120 hari.</div>';
+  const label = x.left < 0 ? "Tamat tempoh" : x.left === 0 ? "Tamat hari ini" : x.left + " hari lagi";
+  const pct = Math.round(x.elapsed / VALID_DAYS * 100);
+  return '<div class="expiry expiry-' + x.tone + '" aria-label="Tempoh sah 120 hari"><div class="expiry-head"><strong>' + label +
+    '</strong><span>' + pct + '% tempoh berlalu</span></div><div class="expiry-bar"><i style="width:' + pct +
+    '%"></i></div><div class="expiry-dates"><span>Booking: <b>' + esc(fmtDate(c.date)) + '</b></span><span>Tamat: <b>' +
+    esc(fmtDate(x.expiry)) + '</b></span></div></div>';
+};
 const fmtDate = s => { if (!s) return ""; const p = s.split("-"); return (+p[2]) + " " + MONTHS[+p[1] - 1] + " " + p[0]; };
 const fmtTime = t => { if (!t) return ""; const [hs, ms = "00"] = t.split(":"); const h = +hs; const part = h < 12 ? "pagi" : h < 14 ? "tengah hari" : h < 19 ? "petang" : "malam"; return (h % 12 || 12) + (ms !== "00" ? ":" + ms : "") + " " + part; };
 const nowMin = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); };
@@ -226,11 +264,12 @@ function where(c) { return c.state ? "Puspakom " + c.state : ""; }
 function nextStep(c) {
   const t = todayStr();
   if (c.status === "lulus") {
-    if (!c.date) return { txt: "Lulus — isi tarikh pemeriksaan untuk kira tempoh sah laporan", alert: false };
-    const exp = addDays(c.date, VALID_DAYS), left = daysBetween(t, exp);
+    const expiry = expiryInfo(c);
+    if (!expiry) return { txt: "Lulus — isi tarikh booking/pemeriksaan yang sah untuk kira 120 hari", alert: true };
+    const {expiry: exp, left} = expiry;
     const who = c.type === "B5" ? "urus tukar milik di JPJ" : "hantar laporan B7 ke bank & urus tukar milik di JPJ";
     if (left < 0) return { txt: "Laporan dah luput (" + fmtDate(exp) + ") — perlu buat pemeriksaan semula", alert: true };
-    return { txt: "Selesai — " + who + ". Laporan sah hingga " + fmtDate(exp) + " (" + left + " hari lagi)", alert: left <= 7 };
+    return { txt: "Selesai — " + who + ". Tamat dalam " + left + " hari (" + fmtDate(exp) + ")", alert: left <= 14 };
   }
   if (c.status === "gagal") return { txt: "Baiki kerosakan, kemudian tempah pemeriksaan ulang", alert: true };
   if (c.status === "tempah") {
@@ -311,6 +350,7 @@ function card(c) {
     <div class="model">${esc(c.model || "—")}${c.year ? `<span class="yr">${esc(c.year)}</span>` : ""}</div>
     ${!c.inv || inv ? `<div class="invrow">${!c.inv ? `<span class="inv inv-warn">⚠ Tiada dalam inventori</span>` : ""}${inv}</div>` : ""}
     ${appt}
+    ${expiryPanel(c)}
     <div class="todo${n.alert ? " alert" : ""}"><span class="ti">${n.alert ? "!" : "→"}</span><span>${esc(n.txt)}</span></div>
     ${c.note ? `<div class="note">${esc(c.note)}</div>` : ""}
     ${c.status === "tempah" || c.status === "belum" ? `<div class="docs"><span class="dl ${docOk === DOCS.length ? "all" : ""}">Dokumen ${docOk}/${DOCS.length}</span>${DOCS.map(x => { const ok = !!c.docs[x.k]; return `<button class="doc${ok ? " ok" : ""}" data-doc="${x.k}" data-plate="${esc(c.plate)}" type="button">${ok ? "✓" : "○"} ${x.l}</button>`; }).join("")}</div>` : ""}
@@ -384,7 +424,8 @@ function onClick(e) {
     const c = carByPlate(s.dataset.plate); const st = s.dataset.st; if (!c || c.status === st) return;
     if (st === "tempah" && !c.date) { openForm(c, "tempah"); return; }
     const patch = { status: st };
-    if (st === "lulus" && !c.date) patch.tarikh = todayStr();
+    // Do not silently invent a booking date when approving an undated record.
+    if (st === "lulus" && !c.date) { openForm(c, "lulus"); return; }
     save(c, patch).then(ok => ok && toast(c.plate + " → " + find(STATUSES, st).l));
   }
 }
@@ -424,7 +465,7 @@ function openForm(c, forceStatus) {
   $("form").onsubmit = async ev => {
     ev.preventDefault();
     const date = status === "belum" ? "" : $("f-date").value, time = status === "belum" ? "" : $("f-time").value;
-    if (status === "tempah" && !date) { $("ferr").textContent = "Isi tarikh temujanji untuk status Booking."; return; }
+    if ((status === "tempah" || status === "lulus") && !date) { $("ferr").textContent = "Isi tarikh booking/pemeriksaan sebelum menyimpan status " + (status === "lulus" ? "Lulus" : "Booking") + "."; return; }
     const ok = await save(c, { jenis: type, status, tarikh: date || null, masa: time || null, negeri: $("f-state").value || null,
       runner: $("f-runner").value.trim() || null, dokumen: docs, catatan: $("f-note").value.trim() || null });
     if (ok) { close(); toast("Disimpan: " + c.plate); }
