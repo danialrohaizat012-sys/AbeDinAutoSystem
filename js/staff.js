@@ -45,7 +45,7 @@ label{display:block;font-size:11.5px;color:var(--mute);margin-bottom:4px;text-tr
 .cat.on{background:var(--pri);color:var(--pri-fg);border-color:var(--pri)}.cat i{font-style:normal;opacity:.7;margin-left:4px}
 .ava{width:44px;height:44px;border-radius:50%;object-fit:cover;background:#3a2f0a;color:#ffd257;display:flex;align-items:center;justify-content:center;font-weight:800;flex:0 0 44px}
 .pbar{height:4px;border-radius:9px;background:#2c2a25;margin-top:6px;max-width:220px;overflow:hidden}.pbar i{display:block;height:100%;background:var(--pri)}
-.c-blue{background:#12263a;color:#8cc4ff}.c-pur{background:#2a1a3a;color:#d6a8ff}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:10px 0}.stat{border:1px solid var(--line);background:var(--soft);border-radius:12px;padding:10px 12px;cursor:pointer}.stat b{display:block;font-size:20px}.stat small{color:var(--mute);font-size:11px}.stat.warn b{color:#ffd257}@media(max-width:640px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}.filters{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.filter{border:1px solid var(--line);background:var(--soft);border-radius:999px;padding:6px 11px;font-size:12px;font-weight:700;cursor:pointer}.filter.on{background:var(--pri);border-color:var(--pri);color:var(--pri-fg)}.c-blue{background:#12263a;color:#8cc4ff}.c-pur{background:#2a1a3a;color:#d6a8ff}
 `;
 const FULL_CSS = CSS + PROFILE_CSS + `.inbox{border-color:#5a4a14}.inbox .it{display:flex;gap:8px;align-items:center;flex-wrap:wrap;border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--soft)}
 .inbox .it .grow{min-width:200px}.badge{background:#e0473f;color:#fff;border-radius:99px;font-size:12px;padding:1px 7px;margin-left:6px}`;
@@ -66,7 +66,7 @@ export function mountStaff(host, ctx) {
   const root = host.shadowRoot || host.attachShadow({ mode: "open" });
   root.innerHTML = `<style>${FULL_CSS}</style><section class="shell" id="app"></section>`;
   const app = root.getElementById("app");
-  const S = { rows: null, err: "", mode: null, edit: null, msg: "", msgCls: "", share: "", hr: {}, cat: "all", q: "", prof: null, urls: {}, inbox: { leaves: [], claims: [], adv: [] } };
+  const S = { rows: null, err: "", mode: null, edit: null, msg: "", msgCls: "", share: "", hr: {}, cat: "all", status: "all", q: "", prof: null, urls: {}, inbox: { leaves: [], claims: [], adv: [] } };
   const $ = s => root.querySelector(s);
 
   async function load() {
@@ -77,7 +77,7 @@ export function mountStaff(host, ctx) {
         ? "Fungsi staf belum dipasang. Jalankan V66_STAFF_MIGRATION.sql dalam Supabase SQL Editor."
         : "Gagal memuatkan staf: " + error.message;
     } else { S.rows = data || []; S.err = ""; }
-    const hr = await client.from("staff_hr").select("staff_id,staff_code,ic_no,phone,address,dob,gender,emergency_name,emergency_phone,join_date,position,department,category,employment_type,contract_status,bank_name,bank_account,epf_no,socso_no,photo_path,ic_photo_path");
+    const hr = await client.from("staff_hr").select("staff_id,staff_code,ic_no,phone,address,dob,gender,emergency_name,emergency_phone,join_date,position,department,category,employment_type,contract_status,contract_end,bank_name,bank_account,epf_no,socso_no,photo_path,ic_photo_path");
     S.hr = {}; (hr.data || []).forEach(h => S.hr[h.staff_id] = h);
     const [il, ic, ia] = await Promise.all([client.from("staff_leaves").select("*").eq("status", "pending").order("date_from"),
       client.from("staff_claims").select("*").eq("status", "pending").order("claim_date"), client.from("staff_advances").select("*").eq("status", "requested").order("created_at")]);
@@ -97,7 +97,15 @@ export function mountStaff(host, ctx) {
     const all = S.rows, catOf = u => (S.hr[u.id]?.category) || "staff_biasa";
     const counts = {}; (all || []).forEach(u => counts[catOf(u)] = (counts[catOf(u)] || 0) + 1);
     const q = S.q.toLowerCase();
-    const rows = all === null ? null : all.filter(u => (S.cat === "all" || catOf(u) === S.cat) && (!q || [u.full_name, u.email, S.hr[u.id]?.staff_code, S.hr[u.id]?.position, S.hr[u.id]?.ic_no].join(" ").toLowerCase().includes(q)));
+    const today = new Date(); today.setHours(0,0,0,0); const soon = new Date(today); soon.setDate(soon.getDate()+60);
+    const isExpiring = u => { const d=S.hr[u.id]?.contract_end; if(!d || !["active","notice"].includes(S.hr[u.id]?.contract_status)) return false; const x=new Date(String(d).slice(0,10)+"T00:00:00"); return x>=today && x<=soon; };
+    const incomplete = u => completeness(S.hr[u.id]||{}).pct < 80;
+    const activeCount=(all||[]).filter(u=>u.enabled).length, inactiveCount=(all||[]).filter(u=>!u.enabled).length, incompleteCount=(all||[]).filter(incomplete).length, expiringCount=(all||[]).filter(isExpiring).length;
+    const rows = all === null ? null : all.filter(u => {
+      const h=S.hr[u.id]||{};
+      const statusOk=S.status==="all" || (S.status==="active"&&u.enabled) || (S.status==="inactive"&&!u.enabled) || (S.status==="incomplete"&&incomplete(u)) || (S.status==="expiring"&&isExpiring(u));
+      return statusOk && (S.cat === "all" || catOf(u) === S.cat) && (!q || [u.full_name,u.email,h.staff_code,h.position,h.ic_no].join(" ").toLowerCase().includes(q));
+    });
     const catBar = all && all.length ? `<div class="cats"><span class="cat ${S.cat === "all" ? "on" : ""}" data-cat="all">Semua<i>${all.length}</i></span>${Object.entries(CATEGORY).filter(([k]) => counts[k]).map(([k, t]) => `<span class="cat ${S.cat === k ? "on" : ""}" data-cat="${k}">${t}<i>${counts[k]}</i></span>`).join("")}</div>
       <input class="field" id="q" placeholder="Cari nama, IC, Staff ID, jawatan…" value="${esc(S.q)}">` : "";
     app.innerHTML = `<div class="row"><div class="grow"><div class="kick">TETAPAN</div><h3>Staf &amp; Akses</h3></div>
@@ -109,7 +117,8 @@ export function mountStaff(host, ctx) {
       <p class="msg ${S.msgCls}" id="msg">${esc(S.msg)}</p>
       ${S.mode ? "" : inboxView()}
       ${S.mode ? "" : catBar}
-      <div class="list">${rows === null ? `<div class="empty">Memuatkan…</div>` : rows.map(item).join("") || `<div class="empty">Tiada akaun.</div>`}</div>`;
+      ${S.mode ? "" : `<div class="stats"><div class="stat" data-status="active"><b>${activeCount}</b><small>Staf aktif</small></div><div class="stat" data-status="inactive"><b>${inactiveCount}</b><small>Nyahaktif</small></div><div class="stat" data-status="incomplete"><b>${incompleteCount}</b><small>Profil &lt; 80%</small></div><div class="stat warn" data-status="expiring"><b>${expiringCount}</b><small>Kontrak ≤ 60 hari</small></div></div><div class="filters">${[["all","Semua"],["active","Aktif"],["inactive","Nyahaktif"],["incomplete","Profil belum lengkap"],["expiring","Kontrak hampir tamat"]].map(([k,t])=>`<button class="filter ${S.status===k?"on":""}" data-status="${k}">${t}</button>`).join("")}</div>`}
+      <div class="list">${rows === null ? `<div class="empty">Memuatkan…</div>` : rows.map(item).join("") || `<div class="empty">Tiada staf untuk penapis ini.</div>`}</div>`;
     bind();
   }
 
@@ -141,7 +150,7 @@ export function mountStaff(host, ctx) {
     const ini = (u.full_name || "?").split(/\s+/).filter(w => !/^(bin|binti|bt|b)$/i.test(w)).slice(0, 2).map(w => w[0]).join("").toUpperCase();
     return `<div class="item">${ph ? `<img class="ava" src="${esc(ph)}" alt="">` : `<div class="ava">${esc(ini)}</div>`}<div class="who"><b data-prof="${esc(u.id)}" style="cursor:pointer">${esc(u.full_name || "(tiada nama)")}</b>${self ? ` <span class="mute">· anda</span>` : ""}
         <small>${esc(u.email || "-")}</small>
-        <div style="margin-top:5px"><span class="chip ${u.enabled ? "c-on" : "c-off"}">${u.enabled ? "Aktif" : "Nyahaktif"}</span><span class="chip c-role">${esc(ROLES[u.role] || u.role || "-")}</span>${u.email_confirmed === false ? `<span class="chip c-warn">Emel belum disahkan</span>` : ""}<span class="chip c-pur">${esc(CATEGORY[h.category || "staff_biasa"])}</span>${h.position ? `<span class="chip c-blue">${esc(h.position)}</span>` : ""}${h.employment_type && h.employment_type !== "permanent" ? `<span class="chip c-off">${esc(EMP_TYPE[h.employment_type])}</span>` : ""}${h.contract_status && h.contract_status !== "active" ? `<span class="chip c-warn">${esc(CONTRACT[h.contract_status])}</span>` : ""}</div>
+        <div style="margin-top:5px"><span class="chip ${u.enabled ? "c-on" : "c-off"}">${u.enabled ? "Aktif" : "Nyahaktif"}</span><span class="chip c-role">${esc(ROLES[u.role] || u.role || "-")}</span>${u.email_confirmed === false ? `<span class="chip c-warn">Emel belum disahkan</span>` : ""}<span class="chip c-pur">${esc(CATEGORY[h.category || "staff_biasa"])}</span>${h.position ? `<span class="chip c-blue">${esc(h.position)}</span>` : ""}${h.employment_type && h.employment_type !== "permanent" ? `<span class="chip c-off">${esc(EMP_TYPE[h.employment_type])}</span>` : ""}${h.contract_end ? `<span class="chip c-blue">Tamat ${dmyx(h.contract_end)}</span>` : ""}${h.contract_status && h.contract_status !== "active" ? `<span class="chip c-warn">${esc(CONTRACT[h.contract_status])}</span>` : ""}</div>
         <div class="mods">${u.role === "owner" ? "<b>Semua menu</b>" : "Menu: <b>" + (MENUS.filter(([k]) => canPage(u, k)).map(([, t]) => t).join(", ") || "Dashboard sahaja") + "</b>"}</div>
         <small>Log masuk terakhir: ${fmt(u.last_sign_in_at)}${h.staff_code ? " · ID " + esc(h.staff_code) : ""}</small>
         <div class="pbar" title="Kelengkapan profil ${c.pct}%"><i style="width:${c.pct}%"></i></div><small>Profil HR ${c.pct}% lengkap</small></div>
@@ -191,6 +200,7 @@ export function mountStaff(host, ctx) {
     app.querySelectorAll("[data-no]").forEach(b => b.onclick = () => decide(b, false));
     app.querySelectorAll("[data-prof]").forEach(b => b.onclick = () => openProfile(b.dataset.prof));
     app.querySelectorAll("[data-cat]").forEach(b => b.onclick = () => { S.cat = b.dataset.cat; render(); });
+    app.querySelectorAll("[data-status]").forEach(b => b.onclick = () => { S.status = b.dataset.status; render(); });
     const qi = $("#q"); if (qi) qi.oninput = () => { S.q = qi.value; const pos = qi.selectionStart; render(); const n = $("#q"); n.focus(); n.setSelectionRange(pos, pos); };
     app.querySelectorAll("[data-edit]").forEach(b => b.onclick = () => { S.edit = S.rows.find(r => r.id === b.dataset.edit); S.mode = "edit"; S.share = ""; render(); });
     app.querySelectorAll("[data-tog]").forEach(b => b.onclick = async () => {
