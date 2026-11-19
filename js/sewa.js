@@ -84,6 +84,65 @@ textarea{resize:vertical;min-height:90px}
 .pk input{padding:9px 10px}
 .terma h4{margin:12px 0 4px;color:var(--gold);font-size:13px}.terma p{margin:0 0 6px}.terma p b{color:var(--gold)}
 .terma{font-size:13px;color:#cfd3da;max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#0b0f10}
+
+/* Responsive Sewa workspace: use the full dashboard width. */
+:host,.shell,.wrap{display:block;width:100%;max-width:none;min-width:0}
+.shell{container-type:inline-size}
+.wrap{display:flex;flex-direction:column;gap:clamp(12px,1.5vw,20px)}
+.card,.head,.list,.item,.link,.row{min-width:0;max-width:100%}
+.card{padding:clamp(14px,1.8vw,24px)}
+.head>*{min-width:0}
+.row>*{max-width:100%}
+.row input{flex:1 1 220px!important;min-width:0!important}
+.row select{min-width:0!important;max-width:100%}
+.btn{max-width:100%;overflow-wrap:anywhere;text-align:center}
+.tabs{width:100%;min-width:0}
+.item{grid-template-columns:minmax(0,1fr) auto;overflow-wrap:anywhere}
+.item .sub{min-width:0;overflow-wrap:anywhere}
+.kv{grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr))}
+.docs{grid-template-columns:repeat(auto-fill,minmax(min(100%,150px),1fr))}
+.ed{grid-template-columns:repeat(2,minmax(0,1fr))}
+.ed>*{min-width:0}
+.pk{min-width:0;table-layout:fixed}
+.pk th,.pk td{overflow-wrap:anywhere}
+.pk td:first-child{width:25%}
+.pk td:last-child{width:52px}
+.pk input{min-width:0;font-size:16px}
+input,select,textarea{max-width:100%;min-width:0;font-size:16px}
+.savebar{bottom:calc(10px + env(safe-area-inset-bottom,0px));min-width:0}
+@container (min-width:950px){
+ .list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+ .item{height:100%}
+ .card{border-radius:20px}
+ .stbar{gap:10px}
+}
+@container (max-width:720px){
+ .card{padding:15px;border-radius:15px}
+ .ed{grid-template-columns:minmax(0,1fr)}
+ .ed .full,.ed h4{grid-column:auto}
+ .head{flex-direction:column;align-items:stretch}
+ .head .row{width:100%}
+ .stbar{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .savebar{bottom:calc(74px + env(safe-area-inset-bottom,0px))}
+}
+@container (max-width:450px){
+ h2{font-size:20px}
+ .row{flex-direction:column;align-items:stretch}
+ .row>.btn,.row>input,.row>select{width:100%;flex:0 0 auto}
+ .tabs{gap:5px}
+ .tab{padding:9px 11px}
+ .item{padding:13px;gap:7px}
+ .item b{font-size:14px}
+ .kv{grid-template-columns:1fr}
+ .seg2{flex-direction:column}
+ .savebar{flex-direction:column;align-items:stretch}
+ .savebar .btn{width:100%}
+ .pk th{font-size:11px}
+ .pk td{padding-right:3px}
+ .pk td:first-child{width:26%}
+ .pk td:last-child{width:40px}
+ .pk input{padding:8px 5px}
+}
 `;
 
 const STATUS = { baru: 'Baru', disahkan: 'Disahkan', selesai: 'Selesai', batal: 'Batal' };
