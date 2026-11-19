@@ -264,8 +264,9 @@ function where(c) { return c.state ? "Puspakom " + c.state : ""; }
 function nextStep(c) {
   const t = todayStr();
   if (c.status === "lulus") {
-    if (!c.date) return { txt: "Lulus — isi tarikh booking/pemeriksaan untuk kira 120 hari", alert: true };
-    const exp = addDays(c.date, VALID_DAYS), left = daysBetween(t, exp);
+    const expiry = expiryInfo(c);
+    if (!expiry) return { txt: "Lulus — isi tarikh booking/pemeriksaan yang sah untuk kira 120 hari", alert: true };
+    const {expiry: exp, left} = expiry;
     const who = c.type === "B5" ? "urus tukar milik di JPJ" : "hantar laporan B7 ke bank & urus tukar milik di JPJ";
     if (left < 0) return { txt: "Laporan dah luput (" + fmtDate(exp) + ") — perlu buat pemeriksaan semula", alert: true };
     return { txt: "Selesai — " + who + ". Tamat dalam " + left + " hari (" + fmtDate(exp) + ")", alert: left <= 14 };
