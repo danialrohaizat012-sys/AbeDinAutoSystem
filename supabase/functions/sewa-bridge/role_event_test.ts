@@ -1,0 +1,14 @@
+import { assertEquals } from 'jsr:@std/assert@1.0.11';
+import { validRoleEvent, shouldApplyRoleEvent, effectiveSewaRole } from './role_event.ts';
+const id = '123e4567-e89b-42d3-a456-426614174000';
+const event = {mainUserId:id,revision:3,role:'owner',enabled:true};
+Deno.test('valid role event',()=>assertEquals(validRoleEvent(event),true));
+Deno.test('invalid identity rejected',()=>assertEquals(validRoleEvent({...event,mainUserId:'x'}),false));
+Deno.test('fractional revision rejected',()=>assertEquals(validRoleEvent({...event,revision:1.5}),false));
+Deno.test('invalid role rejected',()=>assertEquals(validRoleEvent({...event,role:'root'}),false));
+Deno.test('disabled event accepted',()=>assertEquals(validRoleEvent({...event,enabled:false}),true));
+Deno.test('newer revision accepted',()=>assertEquals(shouldApplyRoleEvent(event,2),true));
+Deno.test('duplicate revision rejected',()=>assertEquals(shouldApplyRoleEvent(event,3),false));
+Deno.test('stale elevation rejected',()=>assertEquals(shouldApplyRoleEvent(event,4),false));
+Deno.test('disabled user no privileges',()=>assertEquals(effectiveSewaRole({...event,enabled:false}),null));
+Deno.test('demoted owner maps to staff',()=>assertEquals(effectiveSewaRole({...event,role:'sales_advisor'}),'staf'));
