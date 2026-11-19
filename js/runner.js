@@ -216,6 +216,25 @@ button:disabled{opacity:.6;cursor:wait}
 .shell{background:transparent;padding:0}
 .wrap{max-width:900px;margin:0 auto}
 .brand{display:none}
+/* Admin dashboard: fill the available workspace instead of the old 900px column. */
+.shell.runner-admin{width:100%;min-width:0}
+.shell.runner-admin .wrap{width:100%;max-width:none;margin:0;min-width:0}
+.shell.runner-admin .card,.shell.runner-admin .trip,.shell.runner-admin .tabs{max-width:100%}
+@media(min-width:900px){
+  .shell.runner-admin .wrap{gap:16px}
+  .shell.runner-admin .head h1{font-size:24px}
+  .shell.runner-admin .card{padding:20px 24px}
+  .shell.runner-admin .sum .r:first-child{align-items:center}
+  .shell.runner-admin .cols3{gap:16px}
+  .shell.runner-admin .trip{padding:17px 22px}
+}
+@media(max-width:699px){
+  .shell.runner-admin .wrap{gap:10px}
+  .shell.runner-admin .cols3{gap:8px}
+  .shell.runner-admin .card{padding:12px}
+  .shell.runner-admin .tabs{border-radius:16px}
+  .shell.runner-admin .tabs button{min-width:0;flex:1 1 40%}
+}
 `;
 
 export const mountRunner=(function(){
@@ -895,7 +914,7 @@ return function mountRunner(host,ctx){
   S.client=ctx.client;ctx.client.rpc('runner_staff_choices').then(function(res){if(!res.error){S.staff=res.data||[];sched()}});
   S.owner=role==='owner';S.admin=role==='owner';S.canEditTrip=role==='owner'||role==='operations';
   var root=host.shadowRoot||host.attachShadow({mode:'open'});
-  root.innerHTML='<style>'+CSS+'</style><div class="shell"><div class="wrap" id="app"></div></div>';
+  root.innerHTML='<style>'+CSS+'</style><div class="shell'+(S.admin?' runner-admin':'')+'"><div class="wrap" id="app"></div></div>';
   app=root.getElementById('app');
   ['click','change','focusout'].forEach(function(t){if(H[t])app.addEventListener(t,H[t])});
   if(!started||started.client!==ctx.client){
