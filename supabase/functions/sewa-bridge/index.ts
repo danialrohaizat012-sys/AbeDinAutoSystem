@@ -1,6 +1,7 @@
 // V82 review candidate. Do not deploy without staging validation.
 import { createClient } from 'npm:@supabase/supabase-js@2.49.8';
 import { mappedSewaRole } from './role.ts';
+import { allowedMainProfile, allowedOrigin, validBridgeToken } from './security.ts';
 
 const MAIN_URL = Deno.env.get('MAIN_SUPABASE_URL') || 'https://buzpdyvvoiqgbeventwm.supabase.co';
 const MAIN_KEY = Deno.env.get('MAIN_SUPABASE_PUBLISHABLE_KEY');
@@ -16,7 +17,7 @@ const fail = (origin: string | null, status: number, error: string) =>
 
 Deno.serve(async (req) => {
   const origin = req.headers.get('origin');
-  if (origin && !ORIGINS.includes(origin)) return fail(null, 403, 'Origin tidak dibenarkan');
+  if (!allowedOrigin(origin, ORIGINS)) return fail(null, 403, 'Origin tidak dibenarkan');
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: {
     ...headers(origin), 'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'content-type, authorization, apikey',
@@ -27,7 +28,7 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json().catch(() => null);
     const token = body?.token;
-    if (typeof token !== 'string' || token.length < 20 || token.length > 4000)
+    if (!validBridgeToken(token))
       return fail(origin, 400, 'Token tidak sah');
     const main = createClient(MAIN_URL, MAIN_KEY, {
       auth: { persistSession: false, autoRefreshToken: false },
@@ -39,8 +40,7 @@ Deno.serve(async (req) => {
       return fail(origin, 401, 'Sesi dashboard tidak sah');
     const { data: profile, error: profileError } = await main.from('profiles')
       .select('role,enabled,full_name').eq('id', user.id).maybeSingle();
-    if (profileError || !profile || profile.enabled !== true ||
-        !['owner', 'sales_advisor', 'operations'].includes(profile.role))
+    if (profileError || !allowedMainProfile(profile))
       return fail(origin, 403, 'Akaun dashboard tidak dibenarkan');
 
     const admin = createClient(SEWA_URL, SEWA_SERVICE_KEY, {
