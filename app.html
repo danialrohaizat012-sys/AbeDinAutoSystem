@@ -813,13 +813,18 @@ const PK_L={belum:'Belum tempah',tempah:'Booking',lulus:'Lulus',gagal:'Gagal'};
 function pkWhen(r){if(!r?.tarikh)return '';const d=new Date(r.tarikh+'T00:00:00');let t=d.toLocaleDateString('ms-MY',{day:'numeric',month:'short'});if(r.masa){const [h,m]=String(r.masa).split(':').map(Number);t+=`, ${h%12||12}${m?':'+String(m).padStart(2,'0'):''} ${h<12?'pagi':h<14?'tgh':'ptg'}`}return t}
 function pkMark(v){const r=pkOf(v),st=r?.status||'belum';return `<div class="ada-pk-mark pk-${st}"><span class="ada-pk-k">PUSPAKOM</span><b>${st==='lulus'?'✓ ':st==='gagal'?'✗ ':''}${PK_L[st]}${r?.jenis?` · ${safe(r.jenis)}`:''}</b>${st==='tempah'||st==='lulus'||st==='gagal'?`<small>${safe(pkWhen(r))}${st==='tempah'&&r?.negeri?' · '+safe(r.negeri):''}</small>`:''}</div>`}
 // V83: 120-day operational reminder measured from the recorded booking date after Puspakom Lulus.
-function pkExpiry(r){
+function pkTodayMY(){
+ const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Kuala_Lumpur',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
+ const val=type=>parts.find(p=>p.type===type)?.value;
+ return val('year')+'-'+val('month')+'-'+val('day');
+}
+function pkExpiry(r,todayMY=pkTodayMY()){
  if(r?.status!=='lulus'||!/^\d{4}-\d{2}-\d{2}$/.test(String(r.tarikh||'')))return null;
  const [y,m,d]=r.tarikh.split('-').map(Number),start=Date.UTC(y,m-1,d);
  if(new Date(start).toISOString().slice(0,10)!==r.tarikh)return null;
  const expiry=new Date(start+120*86400000).toISOString().slice(0,10);
- const now=new Date(),today=Date.UTC(now.getFullYear(),now.getMonth(),now.getDate());
- const left=Math.round((Date.UTC(...expiry.split('-').map((n,i)=>i===1?Number(n)-1:Number(n)))-today)/86400000);
+ const [ey,em,ed]=expiry.split('-').map(Number),[ty,tm,td]=todayMY.split('-').map(Number);
+ const left=Math.round((Date.UTC(ey,em-1,ed)-Date.UTC(ty,tm-1,td))/86400000);
  return {expiry,left};
 }
 function pkExpiryView(r){
