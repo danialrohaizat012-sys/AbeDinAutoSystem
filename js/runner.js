@@ -326,7 +326,7 @@ function balView(){
   });
   return h+'</div>';
 }
-function write(fn){var p;try{p=Promise.resolve(fn())}catch(e){p=Promise.reject(e)}p.catch(function(e){S.err='Tidak dapat simpan: '+((e&&e.message)||'cuba lagi'); render()})}
+function write(fn){var p;try{p=Promise.resolve(fn())}catch(e){p=Promise.reject(e)}p.then(function(){S.err='';render()}).catch(function(e){S.err='Tidak dapat simpan: '+((e&&e.message)||'cuba lagi');render()})}
 function patch(id,data){write(function(){return S.db.doc('trips/'+id).update(data)})}
 
 /* ---------- views ---------- */
@@ -610,7 +610,7 @@ function sched(){
   if(a&&app.contains(a)&&/INPUT|SELECT|TEXTAREA/.test(a.tagName)){S.pending=true;return}
   render();
 }
-function go(tab,view,open){S.tab=tab;S.view=view;S.open=open||null;S.confirmDel=null;S.zoom=null;watchPhotos(tab==='trip'&&view==='detail'?open:null);render();window.scrollTo(0,0)}
+function go(tab,view,open){S.tab=tab;S.view=view;S.open=open||null;S.confirmDel=null;S.zoom=null;watchPhotos(tab==='trip'&&view==='detail'?open:null);render();if(S.db)S.db.refresh().catch(function(e){S.err='Gagal memuatkan maklumat trip: '+e.message;render()});window.scrollTo(0,0)}
 
 /* ---------- actions ---------- */
 reg.addEventListener('focusout',function(){
@@ -798,7 +798,11 @@ function makeDb(client){
   }
   function pull(){
     var g=wgen;
-    return Promise.all(COLLS.map(function(c){return client.from(MAP[c].table).select('*').limit(1000).then(check)})).then(function(all){
+    return Promise.all(COLLS.map(function(c){
+      var query=client.from(MAP[c].table).select('*');
+      if(c==='audits'||c==='receipts')query=query.eq('trip_id',S.open||'__none__');
+      return query.limit(c==='audits'?100:1000).then(check)
+    })).then(function(all){
       if(pend||g!==wgen)return;
       COLLS.forEach(function(c,i){
         var m={};(all[i]||[]).forEach(function(r){var x=fromRow(MAP[c],r);m[x.id]=x.data});
@@ -825,16 +829,17 @@ function makeDb(client){
     function after(){if(!pend)pull().catch(function(){})}
     return {id:id,
       set:function(d){
-        local(function(mm,w){if(!w||w.trip===d.trip)mm[id]=d});
-        return run(function(){return client.from(m.table).upsert(toRow(m,id,d)).then(check)}).then(after);
+        return run(function(){return client.from(m.table).upsert(toRow(m,id,d)).then(check)})
+          .then(function(){local(function(mm,w){if(!w||w.trip===d.trip)mm[id]=d});after()});
       },
       update:function(d){
-        local(function(mm){if(mm[id])mm[id]=Object.assign({},mm[id],d)});
-        return run(function(){return client.from(m.table).update(toRow(m,id,d,true)).eq(m.key,id).then(check)}).then(after);
+        return run(function(){return client.from(m.table).update(toRow(m,id,d,true)).eq(m.key,id).select(m.key).then(function(res){
+          var rows=check(res);if(!rows||!rows.length)throw new Error('Rekod tidak dapat dikemas kini');return rows;
+        })}).then(function(){local(function(mm){if(mm[id])mm[id]=Object.assign({},mm[id],d)});after()});
       },
       delete:function(){
-        local(function(mm){delete mm[id]});
-        return run(function(){return client.from(m.table).delete().eq(m.key,id).then(check)}).then(after);
+        return run(function(){return client.from(m.table).delete().eq(m.key,id).then(check)})
+          .then(function(){local(function(mm){delete mm[id]});after()});
       }};
   }
   return {
