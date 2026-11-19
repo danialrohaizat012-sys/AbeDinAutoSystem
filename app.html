@@ -1000,7 +1000,7 @@ async function openPublicCatalogue(vehicleId=null){
     box.querySelector('#abx-calc').addEventListener('input',calc);box.querySelector('#abx-calc').addEventListener('submit',e=>e.preventDefault());calc();};
     const abxBindCommon=()=>{
     box.addEventListener('click',e=>{const a=e.target.closest('a[href^="#abx-"]');if(!a)return;const t=box.querySelector(a.getAttribute('href'));if(t){e.preventDefault();t.scrollIntoView({behavior:'smooth',block:'start'})}});
-    box.addEventListener('click',e=>{const a=e.target.closest('a.abx-link');if(!a)return;e.preventDefault();const id=new URL(a.href,location.href).searchParams.get('car');if(!id)return;history.pushState({publicCar:id},'','/?car='+encodeURIComponent(id));openPublicCatalogue(id);window.scrollTo({top:0,behavior:'instant'})});
+    box.addEventListener('click',e=>{const a=e.target.closest('a.abx-link');if(!a)return;if(document.documentElement.classList.contains('ada-staff-embed')){a.target='_blank';a.rel='noopener noreferrer';return}e.preventDefault();const id=new URL(a.href,location.href).searchParams.get('car');if(!id)return;history.pushState({publicCar:id},'','/?car='+encodeURIComponent(id));openPublicCatalogue(id);window.scrollTo({top:0,behavior:'instant'})});
     box.addEventListener('click',e=>{const a=e.target.closest('[data-abx-home]');if(!a)return;e.preventDefault();const where=a.dataset.abxHome;const go=()=>{if(where==='stok'){const t=document.querySelector('#ada-public-catalogue #abx-stok');if(t)t.scrollIntoView({behavior:'smooth',block:'start'})}};if(vehicleId){history.pushState(null,'','/');openPublicCatalogue().then(()=>setTimeout(go,60))}else if(where==='stok')go();else box.scrollTo({top:0,behavior:'smooth'})});
     };
   if(!vehicleId){
@@ -1085,8 +1085,6 @@ async function openPublicCatalogue(vehicleId=null){
     abxBindCalc();
 
     
-    // Detail links should open the full customer page, not navigate inside the small staff frame.
-    if(document.documentElement.classList.contains('ada-staff-embed'))box.addEventListener('click',e=>{const a=e.target.closest('a.abx-link');if(a){a.target='_blank';a.rel='noopener noreferrer'}});
     abxBindCommon();syncModels(false);renderCards();
   }else{
     const v=rows[0];
