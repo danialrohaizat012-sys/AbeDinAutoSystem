@@ -1,0 +1,21 @@
+/* V83.2: staff dashboard and role-based mobile navigation.
+   Overrides old fixed iframe and narrow quick menu without affecting Owner cards. */
+#ada-cloud-gate .ada-staff-catalogue{width:100%;min-width:0;max-width:1240px;margin-inline:auto;display:grid;gap:14px}
+#ada-cloud-gate .ada-staff-catalogue .ada-dash-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:0!important}
+#ada-cloud-gate .ada-staff-catalogue .ada-dash-head h2{font-size:clamp(21px,3vw,29px);line-height:1.2}
+#ada-cloud-gate .ada-staff-catalogue .ada-dash-actions a{min-height:46px;display:inline-flex;align-items:center;justify-content:center;white-space:normal;text-align:center}
+#ada-cloud-gate .ada-staff-catalogue-frame{min-width:0;width:100%;overflow:hidden;border:1px solid #334450;border-radius:16px;background:#f2f5f7;box-shadow:0 12px 30px #00000016}
+#ada-cloud-gate .ada-staff-catalogue-frame iframe{display:block;width:100%;height:min(78dvh,900px);min-height:580px;border:0;background:#f2f5f7}
+#ada-cloud-gate .cloud-bottom button[data-cloud-page] small{overflow:hidden;text-overflow:ellipsis;max-width:100%}
+@media(max-width:700px){
+ #ada-cloud-gate .ada-staff-catalogue{gap:12px}
+ #ada-cloud-gate .ada-staff-catalogue .ada-dash-head{align-items:stretch}
+ #ada-cloud-gate .ada-staff-catalogue .ada-dash-actions,
+ #ada-cloud-gate .ada-staff-catalogue .ada-dash-actions a{width:100%;box-sizing:border-box}
+ #ada-cloud-gate .ada-staff-catalogue-frame{border-radius:12px}
+ #ada-cloud-gate .ada-staff-catalogue-frame iframe{height:calc(100dvh - 170px);min-height:540px;max-height:none}
+ #ada-cloud-gate .cloud-bottom{overflow:visible!important;justify-content:space-between!important}
+ #ada-cloud-gate .cloud-bottom button{min-width:0!important;flex:1 1 0!important;white-space:normal!important}
+ #ada-cloud-gate .cloud-bottom button small{font-size:10px!important;line-height:1.1!important;white-space:normal!important;display:-webkit-box!important;-webkit-line-clamp:2;-webkit-box-orient:vertical;min-height:22px;align-content:center}
+ #ada-cloud-gate .cloud-bottom button span{font-size:22px}
+}
