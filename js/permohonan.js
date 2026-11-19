@@ -33,6 +33,9 @@ input:focus,select:focus{border-color:var(--gold)}
 .btn.wa{background:#1fa855;border-color:#1fa855;color:#fff}
 .warn{border:1px solid rgba(230,183,93,.45);background:rgba(230,183,93,.08);color:#f6dfae;border-radius:14px;padding:12px 14px;font-size:14px}
 .ok{color:var(--ok);font-size:14px}
+.app-entry{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.app-entry small{color:var(--mute);display:block;overflow-wrap:anywhere}
+.app-detail{white-space:pre-wrap;overflow-wrap:anywhere;background:#080b0c;padding:12px;border-radius:10px;font-size:13px;line-height:1.7}
 `;
 
 const S = { phone: '' };
@@ -56,11 +59,11 @@ function render() {
   const link = formLink();
   const toCustomer = 'https://wa.me/' + msisdn(S.phone) + '?text=' + encodeURIComponent(inviteText());
   app.innerHTML = `
-  <div><h2>Borang Permohonan</h2><p class="lead">Kongsi link borang kepada pelanggan. Maklumat yang mereka isi akan dihantar terus ke WhatsApp Abe Din, tiada data disimpan dalam sistem.</p></div>
+  <div><h2>Borang Permohonan</h2><p class="lead">Kongsi link borang kepada pelanggan. Maklumat yang dihantar akan disimpan dalam sistem untuk semakan staf.</p></div>
   <div class="steps">
     <div><b>Staf kongsi link</b>Salin link atau hantar terus ke WhatsApp pelanggan.</div>
     <div><b>Pelanggan isi borang</b>Maklumat pemohon, pekerjaan, perujuk/waris dan kereta.</div>
-    <div><b>Terus ke WhatsApp</b>Tekan Hantar, mesej lengkap masuk WhatsApp Abe Din.</div>
+    <div><b>Simpan ke sistem</b>Permohonan direkod dahulu, kemudian boleh kongsi melalui WhatsApp.</div>
   </div>
   ${num ? `<p class="ok">✓ Borang akan dihantar ke WhatsApp <b>+${esc(num)}</b> (ikut Tetapan).</p>`
         : `<div class="warn">Nombor WhatsApp Abe Din belum ditetapkan. Owner perlu isi di <b>Tetapan → WhatsApp Abe Din</b>, jika tidak pelanggan perlu pilih sendiri kepada siapa mahu hantar.</div>`}
@@ -81,7 +84,38 @@ function render() {
     </div>
     <div class="row"><a class="btn wa" id="send" href="${esc(toCustomer)}" target="_blank" rel="noopener">Hantar link melalui WhatsApp</a>
       <button class="btn" data-act="copymsg">Salin mesej</button></div>
-  </div>`;
+  </div>
+  <div class="card"><h3>Permohonan diterima</h3><button class="btn" data-act="reload">Muat semula rekod</button><div id="applications" style="margin-top:12px" role="status">Memuatkan rekod…</div></div>`;
+}
+
+
+let applications=[];
+const fieldNames={nama:'Nama',ic:'No. IC',tel:'Telefon',alamatTetap:'Alamat tetap',alamatSekarang:'Alamat sekarang',tempoh:'Tempoh menetap',tanggungan:'Tanggungan',kahwin:'Perkahwinan',bangsa:'Bangsa',agama:'Agama',rumah:'Rumah',pendidikan:'Pendidikan',email:'Emel',majikan:'Majikan',alamatMajikan:'Alamat majikan',jawatan:'Jawatan',mulaKerja:'Mula kerja',gred:'Gred',telPejabat:'Telefon pejabat',warisNama:'Nama waris',warisTel:'Telefon waris',warisHubungan:'Hubungan waris',warisAlamat:'Alamat waris',kereta:'Kereta diminati'};
+async function loadApplications(){
+ const target=app?.querySelector('#applications');
+ if(!target||!ctx.client)return;
+ target.textContent='Memuatkan rekod…';
+ const {data,error}=await ctx.client.from('buyer_applications')
+  .select('id,created_at,applicant_name,applicant_phone,car_interest,details,status')
+  .order('created_at',{ascending:false}).limit(100);
+ if(!app?.contains(target))return;
+ if(error){target.textContent='Rekod tidak dapat dimuatkan. Semak akses staf dan sambungan database.';return;}
+ applications=data||[];
+ target.innerHTML=applications.length?applications.map(a=>
+ '<div class="app-entry"><div><b>'+esc(a.applicant_name)+'</b><small>'+
+ esc(new Date(a.created_at).toLocaleString('ms-MY'))+' · '+esc(a.applicant_phone)+' · '+esc(a.car_interest)+
+ '</small></div><button class="btn" data-view="'+esc(a.id)+'">Lihat butiran</button></div>').join(''):
+ '<p class="hint">Belum ada permohonan diterima.</p>';
+}
+function showApplication(id){
+ const item=applications.find(a=>a.id===id);
+ if(!item)return;
+ const target=app.querySelector('#applications');
+ target.querySelector('.app-detail')?.remove();
+ const node=document.createElement('div');node.className='app-detail';
+ node.textContent='Tarikh: '+new Date(item.created_at).toLocaleString('ms-MY')+'\nRujukan: '+item.id+'\n\n'+
+ Object.entries(fieldNames).map(([key,label])=>label+': '+String(item.details?.[key]||'-')).join('\n');
+ [...target.querySelectorAll('button[data-view]')].find(b=>b.dataset.view===id)?.closest('.app-entry')?.after(node);
 }
 
 // Kemas kini link tanpa render semula (supaya fokus input tidak hilang).
@@ -112,9 +146,12 @@ export function mountPermohonan(el, c) {
     refreshLinks();
   });
   app.addEventListener('click', e => {
+    const view=e.target.closest('button[data-view]');if(view){showApplication(view.dataset.view);return;}
     const b = e.target.closest('button[data-act]'); if (!b) return;
     if (b.dataset.act === 'copy') copy(formLink(), b);
     if (b.dataset.act === 'copymsg') copy(inviteText(), b);
+    if (b.dataset.act === 'reload') loadApplications();
   });
   render();
+  loadApplications();
 }
