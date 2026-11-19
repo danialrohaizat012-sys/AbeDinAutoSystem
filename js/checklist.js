@@ -97,6 +97,17 @@ em{font-style:normal}.ng{color:var(--ng)}.ok{color:var(--ok)}
 .gchip.big{width:60px;height:60px;flex-basis:60px;font-size:36px;border-radius:14px}
 .gchip.gA{background:var(--gA)}.gchip.gB{background:var(--gB);color:#141000}.gchip.gC{background:var(--gC)}.gchip.gD{background:var(--gD)}
 .filters{display:flex;gap:8px;flex-wrap:wrap}.filters .field{flex:1;min-width:150px}
+.ada-ins-search{border:1px solid var(--line);border-radius:16px;padding:15px;background:var(--card);margin:4px 0 15px}
+.ada-ins-search-head{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap;margin-bottom:11px}
+.ada-ins-search-head h3{margin:0;font-size:17px}
+.ada-ins-search-head small{color:var(--mute);font-size:12px}
+.ada-ins-search-controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(170px,225px);gap:10px}
+.ada-ins-search-controls .field{min-height:48px;width:100%;margin:0;font-size:16px}
+.ada-ins-search-meta{margin:10px 0;color:var(--mute);font-size:12px}
+.ada-ins-search-results .cgrid{grid-template-columns:repeat(auto-fill,minmax(245px,1fr))}
+.ada-ins-search-results .empty{padding:16px}
+@media(max-width:620px){.ada-ins-search{padding:12px}.ada-ins-search-controls{grid-template-columns:1fr}.ada-ins-search-head{display:block}.ada-ins-search-head small{display:block;margin-top:4px}}
+
 .chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}
 .chips button{flex:0 0 auto;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600}
 .chips button.on{background:var(--pri);color:var(--pri-fg);border-color:var(--pri)}.chips b{margin-left:5px;opacity:.7}
@@ -414,7 +425,7 @@ const normPlat = p => String(p||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
 
 /* ---------- state ---------- */
 const S = { client:null, profile:null, vehicles:[], rows:[], loaded:false, err:null, view:"pantau", id:null, form:null, dirty:false, saving:false,
-  filt:{q:"",st:"",g:""}, inv:{q:"",f:""}, names:{}, myId:null };
+  filt:{q:"",st:"",g:""}, inv:{q:"",f:""}, dashboardSearch:{q:"",status:"perlu"}, names:{}, myId:null };
 let root=null, app=null;
 const isOwner = () => S.profile?.role==="owner";
 const $ = s => root.querySelector(s);
@@ -491,6 +502,48 @@ function recRow(r){
 }
 
 /* --- Ringkasan --- */
+// V83: dashboard-level vehicle search uses existing inspection state and permissions.
+const inspectionSearchStatus = state => ["draf","hantar","ulang"].includes(state);
+function inspectionSearchRows(vehicles,query="",status="perlu"){
+  const q=String(query||"").trim().toLowerCase().replace(/\s+/g,"");
+  return vehicles.filter(v=>String(v.status||"").toLowerCase()!=="sold")
+    .map(v=>({v,s:carState(v)}))
+    .filter(({v,s})=>(status==="semua"||status==="perlu"&&(s.k==="belum"||inspectionSearchStatus(s.k))||
+      status==="belum"&&s.k==="belum"||status==="proses"&&inspectionSearchStatus(s.k)||
+      status==="lulus"&&s.k==="lulus")&&(!q||[v.plate,v.vehicle_id,v.make,v.model,v.model_year,carName(v)]
+        .some(x=>String(x||"").toLowerCase().replace(/\s+/g,"").includes(q))));
+}
+function dashboardSearchHtml(){
+  const st=S.dashboardSearch.status;
+  const opts=[["perlu","Perlu tindakan"],["belum","Belum diperiksa"],["proses","Dalam proses"],["lulus","Disahkan"],["semua","Semua kereta"]];
+  return `<section class="ada-ins-search" aria-label="Cari kenderaan untuk pemeriksaan">
+    <div class="ada-ins-search-head"><h3>Cari Kereta untuk Pemeriksaan</h3><small>Cari nombor plat, model, jenama atau ID kereta</small></div>
+    <div class="ada-ins-search-controls"><input class="field" id="ada-ins-search-q" type="search" inputmode="search"
+      placeholder="Contoh: DDA1234, Myvi, ADA-001" aria-label="Cari kereta" autocomplete="off" value="${esc(S.dashboardSearch.q)}">
+      <select class="field" id="ada-ins-search-status" aria-label="Status pemeriksaan">
+        ${opts.map(([k,label])=>`<option value="${k}"${st===k?" selected":""}>${label}</option>`).join("")}
+      </select></div>
+    <p class="ada-ins-search-meta" id="ada-ins-search-meta" role="status"></p>
+    <div class="ada-ins-search-results" id="ada-ins-search-results"></div>
+  </section>`;
+}
+function bindDashboardSearch(){
+  const input=$("#ada-ins-search-q"),status=$("#ada-ins-search-status"),results=$("#ada-ins-search-results"),meta=$("#ada-ins-search-meta");
+  if(!input||!status||!results||!meta)return;
+  const draw=()=>{
+    const rows=inspectionSearchRows(S.vehicles,S.dashboardSearch.q,S.dashboardSearch.status);
+    const visible=S.dashboardSearch.q.trim()?rows:rows.slice(0,8);
+    meta.textContent=rows.length+" kereta sepadan"+(visible.length<rows.length?" · paparan "+visible.length+" pertama, taip untuk cari":"");
+    results.innerHTML=visible.length?`<div class="cgrid">${visible.map(carCard).join("")}</div>`:
+      '<div class="empty">Tiada kereta yang sepadan. Cuba carian atau status lain.</div>';
+    $("#ada-ins-search-results [data-start]").forEach(b=>b.onclick=()=>openForCar(b.dataset.start));
+    $("#ada-ins-search-results [data-edit]").forEach(b=>b.onclick=()=>openForm(b.dataset.edit));
+    $("#ada-ins-search-results [data-rec]").forEach(b=>b.onclick=()=>go("detail",b.dataset.rec));
+  };
+  input.oninput=e=>{S.dashboardSearch.q=e.target.value;draw()};
+  status.onchange=e=>{S.dashboardSearch.status=e.target.value;draw()};
+  draw();
+}
 function viewPantau(){
   const R=S.rows, by=k=>R.filter(r=>r.status===k).length, t=today();
   const belum=S.vehicles.filter(v=>String(v.status).toLowerCase()!=="sold" && !inspFor(v).length).length;
@@ -501,7 +554,7 @@ function viewPantau(){
   const flood=R.filter(r=>["Suspected","Confirmed"].includes(r.akhir?.banjir)).length;
   const kos=R.reduce((a,r)=>a+partsTotal(r),0), left=R.reduce((a,r)=>a+partsLeft(r),0);
   const today_n=R.filter(r=>(r.tarikh||"").slice(0,10)===t).length;
-  return `<div class="row end"><button class="sm" data-act="pdfsum">Laporan PDF</button><button class="sm go" data-go="kereta:belum">+ Mula pemeriksaan</button></div>
+  return dashboardSearchHtml()+`<div class="row end"><button class="sm" data-act="pdfsum">Laporan PDF</button><button class="sm go" data-go="kereta:belum">+ Mula pemeriksaan</button></div>
   <div class="kpis">
     <button class="kpi ${belum?"alert":""}" data-go="kereta:belum"><span class="l">Belum diperiksa</span><b>${belum}</b><small>daripada ${S.vehicles.filter(v=>String(v.status).toLowerCase()!=="sold").length} kereta stok</small></button>
     <button class="kpi ${by("hantar")?"alert":""}" data-go="senarai:hantar:"><span class="l">Menunggu semakan</span><b>${by("hantar")}</b><small>${isOwner()?"Tekan untuk semak":"Dihantar kepada Owner"}</small></button>
@@ -518,7 +571,7 @@ function viewPantau(){
     <div class="card"><h3>Terkini</h3>${R.slice(0,6).map(recRow).join("")||`<p class="mute">Belum ada pemeriksaan.</p>`}</div>
   </div>`;
 }
-function bindPantau(){ const b=$('[data-act="pdfsum"]'); if(b) b.onclick=summaryDialog; }
+function bindPantau(){ const b=$('[data-act="pdfsum"]'); if(b) b.onclick=summaryDialog; bindDashboardSearch(); }
 
 /* --- Kereta --- */
 function carState(v){ const l=inspFor(v)[0]; if(!l) return {k:"belum",t:"Belum diperiksa",r:null}; return {k:l.status||"draf",t:(STATUS[l.status]||STATUS.draf)[0],r:l}; }

@@ -1,0 +1,21 @@
+name: V83 Inspection Dashboard Search
+on:
+  pull_request:
+    paths:
+      - 'app.html'
+      - 'js/checklist.js'
+      - 'tests/v83-inspection-search.test.cjs'
+      - '.github/workflows/v83-inspection-search-tests.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspection-search:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate inspection module syntax
+        run: node --check --input-type=module < js/checklist.js
+      - name: Run inspection search regression checks
+        run: node --test tests/v83-inspection-search.test.cjs
