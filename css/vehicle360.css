@@ -1,0 +1,28 @@
+/* V83 Vehicle 360 - visual enhancement scoped to the existing inventory profile */
+.ada-v360-heading{margin:8px 0 16px;min-width:0}
+.ada-v360-heading span{display:block;font-size:10px;font-weight:800;letter-spacing:.15em;color:#d9ae56;margin-bottom:6px}
+.ada-v360-heading h2{margin:0;font-size:clamp(22px,3vw,30px);line-height:1.2;color:#f5f1e8}
+.ada-v360-heading p{color:#aab6b4;font-size:13px;margin:7px 0 0}
+.ada-v360-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin:17px 0 8px}
+.ada-v360-kpi{min-width:0;border:1px solid #3b4340;border-radius:15px;background:linear-gradient(145deg,#1b2222,#111718);padding:16px}
+.ada-v360-kpi small{display:block;color:#b4c1bd;font-size:11px}
+.ada-v360-kpi strong{display:block;margin-top:8px;font-size:clamp(16px,2vw,22px);color:#f7d881;overflow-wrap:anywhere}
+.ada-v360-disclaimer{margin:0 0 18px;color:#b9b4a7;font-size:11px;line-height:1.6}
+.ada-v360-tabs{display:flex;flex-wrap:wrap;gap:8px;padding:9px;margin:18px 0 15px;border-radius:14px;border:1px solid #38413f;background:#161d1d}
+.ada-v360-tab{min-height:42px!important;padding:9px 14px!important;flex:1 1 115px;background:transparent!important;border:1px solid transparent!important;border-radius:9px!important;box-shadow:none!important;color:#bdc9c5!important;font-size:13px!important;font-weight:750!important;cursor:pointer}
+.ada-v360-tab.is-active{background:#e9bf61!important;color:#1a1912!important;border-color:#f6d986!important}
+.ada-v360-tab:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.ada-vp-grid.ada-v360-single{grid-template-columns:minmax(0,1fr)!important}
+.ada-vp-grid [data-v360-pane][hidden]{display:none!important}
+.ada-v360-history{list-style:none;padding:0;margin:15px 0 0;display:grid;gap:12px}
+.ada-v360-history li{display:grid;grid-template-columns:minmax(90px,120px) minmax(0,1fr);gap:12px;align-items:start;padding:13px;border:1px solid #343f3c;border-radius:10px}
+.ada-v360-history time{color:#e7c36d;font-size:12px;font-weight:750}
+.ada-v360-history span{font-size:13px;color:#e5ebe8}
+@media(max-width:900px){.ada-v360-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){
+ .ada-v360-tabs{gap:5px;padding:6px}
+ .ada-v360-tab{flex:1 1 calc(33.33% - 8px);font-size:12px!important;padding:9px 7px!important}
+ .ada-v360-kpi{padding:12px}
+ .ada-v360-kpi strong{font-size:17px}
+ .ada-v360-history li{grid-template-columns:1fr;gap:5px}
+}
