@@ -18,6 +18,7 @@ function harness({sales, payments = [], vehicles = [], overrides = {}}) {
   };
   vm.createContext(context);
   vm.runInContext(reportCode, context);
+  vm.runInContext("reportYear='2026';reportMonth='11';reportScale='daily';reportDay=''", context);
   return {
     html: (state='sold') => vm.runInContext("reportStatus="+JSON.stringify(state)+";salesReportCloud()", context)
   };
