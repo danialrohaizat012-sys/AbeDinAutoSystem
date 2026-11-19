@@ -223,7 +223,7 @@ var EXP=['Tol','Minyak','Makan','Penginapan','Tiket balik','Lain-lain'];
 var ST=['Belum ambil','Dalam perjalanan','Sampai kedai'];
 var app=null,H={},reg={addEventListener:function(t,f){H[t]=f}};
 var S={trips:[],paid:{},tab:'trip',view:'list',open:null,month:'',year:String(new Date().getFullYear()),
-  admin:false,owner:false,db:null,loaded:false,slow:false,err:'',pending:false,confirmDel:null,
+  admin:false,owner:false,canEditTrip:false,db:null,loaded:false,slow:false,err:'',pending:false,confirmDel:null,
   photoList:[],photosOn:false,pw:null,pwId:null,zoom:null,busy:false,topups:[],confirmTop:null,ownp:{},rname:'',editName:false,page:0};
 var PH=['Depan','Belakang','Kiri','Kanan','Dalam kereta','Odometer','Geran','Kerosakan','Lain-lain'];
 var q=Promise.resolve();
@@ -417,7 +417,7 @@ function editView(t){
 
 function detailView(t){
   var paid=!!S.paid[t.id],st=t.st||0,tm=t.times||{},h='';
-  h+='<div class="r"><button class="back" data-act="back">← Semua trip</button>'+(S.owner?'<button class="sm" data-act="edit">Edit trip</button>':'')+'</div>';
+  h+='<div class="r"><button class="back" data-act="back">← Semua trip</button>'+(S.canEditTrip?'<button class="sm" data-act="edit">Edit trip</button>':'')+'</div>';
   h+='<div class="card"><div class="r"><div><h2>'+esc(t.car)+'</h2><div class="mute">'+kindName(t)+', '+esc(t.from)+' ke '+esc(t.to||'Kota Bharu')+', '+dshort(t.date)+'</div></div><span class="plate">'+esc(t.plate)+'</span></div>';
   h+='<ul class="steps">'+
     '<li class="'+(st>=1?'on':'now')+'">'+(t.kind==='hantar'?'Ambil kereta dari kedai':'Ambil kereta')+(tm.ambil?'<small>'+tshort(tm.ambil)+'</small>':'')+'</li>'+
@@ -577,10 +577,10 @@ reg.addEventListener('click',function(e){
       write(function(){return S.db.doc('settings/runner').set({name:nm})});
       render()}break;
     case 'back':go('trip','list');break;
-    case 'edit':if(t&&S.owner)go('trip','edit',t.id);break;
+    case 'edit':if(t&&S.canEditTrip)go('trip','edit',t.id);break;
     case 'view':if(t)go('trip','detail',t.id);break;
     case 'saveedit':{
-      if(!t||!S.owner)break;
+      if(!t||!S.canEditTrip)break;
       var ecar=$('e-car').value.trim(),eplate=$('e-plate').value.trim().toUpperCase(),efrom=$('e-from').value.trim();
       if(!ecar||!eplate||!efrom){S.err='Isi model kereta, no. plat dan lokasi ambil.';render();break}
       var ns=+$('e-st').value,rec2=Object.assign({},t),tm2=Object.assign({},t.times||{});
@@ -592,9 +592,9 @@ reg.addEventListener('click',function(e){
       rec2.car=ecar;rec2.plate=eplate;rec2.from=efrom;rec2.to=$('e-to').value.trim()||'Kota Bharu';
       rec2.date=$('e-date').value||t.date;rec2.st=ns;rec2.times=tm2;rec2.kind=$('e-kind').value;
       var eid=t.id;S.err='';
-      write(function(){return S.db.doc('trips/'+eid).set(rec2)});
+      write(function(){return S.db.doc('trips/'+eid).update({car:rec2.car,plate:rec2.plate,from:rec2.from,to:rec2.to,date:rec2.date,st:rec2.st,times:rec2.times,kind:rec2.kind})});
       go('trip','detail',eid);break}
-    case 'delck':if(t&&S.owner){var ck2=(t.ck||[]).slice();ck2.splice(+d.i,1);patch(t.id,{ck:ck2})}break;
+    case 'delck':if(t&&S.canEditTrip){var ck2=(t.ck||[]).slice();ck2.splice(+d.i,1);patch(t.id,{ck:ck2})}break;
     case 'new':go('trip','new');break;
     case 'clearm':S.month='';S.page=0;render();break;
     case 'pprev':S.page=Math.max(0,S.page-1);render();window.scrollTo(0,0);break;
@@ -774,7 +774,7 @@ function subscribe(db){
 /* host = elemen kosong dalam #ada-cloud-view. ctx = {client, profile} */
 return function mountRunner(host,ctx){
   var role=ctx&&ctx.profile&&ctx.profile.role;
-  S.owner=role==='owner';S.admin=role==='owner';
+  S.owner=role==='owner';S.admin=role==='owner';S.canEditTrip=role==='owner'||role==='operations';
   var root=host.shadowRoot||host.attachShadow({mode:'open'});
   root.innerHTML='<style>'+CSS+'</style><div class="shell"><div class="wrap" id="app"></div></div>';
   app=root.getElementById('app');
