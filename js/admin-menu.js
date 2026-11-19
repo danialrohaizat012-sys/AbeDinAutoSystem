@@ -51,6 +51,13 @@ export function mountAdminMenu(){
    ?['dashboard','inventory','pemeriksaan','puspakom','sales','applications','sewa','kehadiran','reports','profil']
    :['dashboard','inventory','sales','reports'];
   const allowed=candidate.filter(page=>byPage.get(page)&&!byPage.get(page).hidden).slice(0,4);
+  const dashboardLink=byPage.get('dashboard');
+  if(dashboardLink){
+   const label=isStaff?'Katalog Umum':'Dashboard';
+   const textNode=[...dashboardLink.childNodes].find(n=>n.nodeType===Node.TEXT_NODE);
+   if(textNode)textNode.textContent=label;
+   dashboardLink.setAttribute('aria-label',label);
+  }
   const bottom=panel.querySelector('.cloud-bottom'),moreBtn=bottom?.querySelector('#ada-admin-more');
   if(bottom&&moreBtn){
    for(const b of [...bottom.querySelectorAll('button[data-cloud-page]')])b.remove();
