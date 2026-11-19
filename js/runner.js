@@ -209,6 +209,9 @@ td{padding:5px 4px}
 }
 .pager{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:4px}
 .pager .sm:disabled{opacity:.35;cursor:default}
+.req-reason{height:auto;min-height:88px;resize:vertical}
+.tabs{flex-wrap:wrap}.tabs button{min-width:85px}
+button:disabled{opacity:.6;cursor:wait}
 
 .shell{background:transparent;padding:0}
 .wrap{max-width:900px;margin:0 auto}
@@ -223,10 +226,12 @@ var EXP=['Tol','Minyak','Makan','Penginapan','Tiket balik','Lain-lain'];
 var ST=['Belum ambil','Dalam perjalanan','Sampai kedai'];
 var app=null,H={},reg={addEventListener:function(t,f){H[t]=f}};
 var S={trips:[],paid:{},tab:'trip',view:'list',open:null,month:'',year:String(new Date().getFullYear()),
-  admin:false,owner:false,canEditTrip:false,db:null,loaded:false,slow:false,err:'',pending:false,confirmDel:null,
+  admin:false,owner:false,canEditTrip:false,client:null,requests:[],requestBusy:false,db:null,loaded:false,slow:false,err:'',pending:false,confirmDel:null,
   photoList:[],photosOn:false,pw:null,pwId:null,zoom:null,busy:false,topups:[],confirmTop:null,ownp:{},rname:'',editName:false,page:0};
 var PH=['Depan','Belakang','Kiri','Kanan','Dalam kereta','Odometer','Geran','Kerosakan','Lain-lain'];
 var q=Promise.resolve();
+function requestForTrip(id){return S.requests.filter(r=>r.trip_id===id).sort((a,b)=>(b.created_at||'').localeCompare(a.created_at||''))}
+function upahStatus(r){return r.status==='pending'?'Menunggu Owner':r.status==='approved'?'Diluluskan':'Ditolak'}
 
 function pad(n){return (n<10?'0':'')+n}
 function today(){var d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}
@@ -415,6 +420,38 @@ function editView(t){
   return h;
 }
 
+
+function upahRequestRow(r,showTrip){
+  var t=byId(r.trip_id),h='<div class="line" style="align-items:flex-start"><div style="min-width:0"><b>'+esc(r.direction==='tambah'?'Tambah upah':'Kurangkan upah')+' '+(r.direction==='tambah'?'+':'−')+rm(r.amount)+'</b>'+
+    (showTrip?'<div class="mute">'+esc(t?t.car+' · '+t.plate:'Trip tidak dijumpai')+'</div>':'')+
+    '<div class="mute">Upah asal '+rm(r.base_upah)+' · Cadangan '+rm((+r.base_upah||0)+(r.direction==='tambah'?1:-1)*(+r.amount||0))+'</div>'+
+    '<div class="mute" style="overflow-wrap:anywhere">'+esc(r.reason)+'</div>'+
+    '<div class="mute">'+esc(upahStatus(r))+(r.review_note?' · '+esc(r.review_note):'')+'</div></div></div>';
+  if(S.owner&&r.status==='pending')h+='<div class="inline"><button class="sm go" data-act="approveupah" data-id="'+esc(r.id)+'"'+(S.requestBusy?' disabled':'')+'>Luluskan</button>'+
+    '<button class="sm" data-act="rejectupah" data-id="'+esc(r.id)+'"'+(S.requestBusy?' disabled':'')+'>Tolak</button></div>';
+  return h;
+}
+function upahRequestsCard(t){
+  var settled=!!S.paid[t.id]||isOwn(t),rows=requestForTrip(t.id),pending=rows.some(r=>r.status==='pending');
+  var h='<div class="card form"><h2>Permohonan pelarasan upah</h2><span class="mute">Upah semasa: <b>'+rm(t.upah)+'</b>. Upah hanya berubah selepas Owner meluluskan.</span>';
+  if(!S.owner&&!settled&&!pending){
+    h+='<div class="two"><div><label for="req-direction">Jenis permohonan</label><select class="field" id="req-direction"><option value="tambah">Tambah upah</option><option value="kurang">Kurangkan upah</option></select></div>'+
+    '<div><label for="req-amount">Jumlah pelarasan (RM)</label><input class="field" id="req-amount" type="number" inputmode="decimal" min="0.01" step="0.01" placeholder="Contoh: 50"></div></div>'+
+    '<div><label for="req-reason">Sebab permohonan</label><textarea class="field req-reason" id="req-reason" rows="3" maxlength="1000" placeholder="Nyatakan alasan tambah atau kurang upah"></textarea></div>'+
+    '<button class="btn" data-act="submitupah"'+(S.requestBusy?' disabled':'')+'>Hantar permohonan</button>';
+  }else if(settled)h+='<div class="note">Trip sudah dibayar. Pelarasan upah tidak dibenarkan.</div>';
+  else if(pending&&!S.owner)h+='<div class="note">Permohonan sedang menunggu keputusan Owner.</div>';
+  if(rows.length)h+='<b>Sejarah permohonan</b>'+rows.map(r=>upahRequestRow(r,false)).join('');
+  return h+'</div>';
+}
+function requestsView(){
+  var pending=S.requests.filter(r=>r.status==='pending').sort((a,b)=>(a.created_at||'').localeCompare(b.created_at||'')),
+      done=S.requests.filter(r=>r.status!=='pending').sort((a,b)=>(b.created_at||'').localeCompare(a.created_at||''));
+  return '<div class="card"><h2>Permohonan pelarasan upah</h2><span class="mute">'+pending.length+' permohonan menunggu</span></div>'+
+    '<div class="card"><b>Menunggu keputusan</b>'+(pending.length?pending.map(r=>upahRequestRow(r,true)).join(''):'<span class="mute">Tiada permohonan menunggu.</span>')+'</div>'+
+    '<div class="card"><b>Sejarah keputusan</b>'+(done.length?done.slice(0,40).map(r=>upahRequestRow(r,true)).join(''):'<span class="mute">Belum ada keputusan.</span>')+'</div>';
+}
+
 function detailView(t){
   var paid=!!S.paid[t.id],st=t.st||0,tm=t.times||{},h='';
   h+='<div class="r"><button class="back" data-act="back">← Semua trip</button>'+(S.canEditTrip?'<button class="sm" data-act="edit">Edit trip</button>':'')+'</div>';
@@ -468,6 +505,7 @@ function detailView(t){
     }else h+='<span class="chip due" style="align-self:flex-start">Menunggu bayaran daripada bos</span>';
   }
   h+='</div>';
+  h+=upahRequestsCard(t);
   if(S.admin)h+=S.confirmDel===t.id?'<button class="btn bad" data-act="delok">Sahkan padam trip ini</button>':'<button class="lnk" style="align-self:center;color:var(--mute)" data-act="del">Padam trip</button>';
   if(S.zoom){
     var z=S.photoList.filter(function(p){return p.id===S.zoom})[0];
@@ -519,11 +557,12 @@ function render(){
   var h='<div class="head"><h1>Runner</h1><span class="mute">'+(S.admin?'Paparan bos':'Paparan runner')+'</span></div>'+
     '<div class="r"><span class="mute">Runner: <b style="color:var(--fg)">'+(S.rname?esc(S.rname):'belum ditetapkan')+'</b></span>'+(S.owner?'<button class="lnk" data-act="rname">'+(S.rname?'Ubah nama':'Letak nama')+'</button>':'')+'</div>';
   if(!S.db){app.innerHTML=h+'<div class="note">Menyambung ke pelayan…</div>';return}
-  h+='<div class="tabs" role="group" aria-label="Pilih bahagian"><button data-tab="trip" aria-pressed="'+(S.tab==='trip')+'">Trip</button><button data-tab="lap" aria-pressed="'+(S.tab==='lap')+'">Laporan</button><button data-tab="bal" aria-pressed="'+(S.tab==='bal')+'">Baki</button></div>';
+  h+='<div class="tabs" role="group" aria-label="Pilih bahagian"><button data-tab="trip" aria-pressed="'+(S.tab==='trip')+'">Trip</button><button data-tab="lap" aria-pressed="'+(S.tab==='lap')+'">Laporan</button><button data-tab="bal" aria-pressed="'+(S.tab==='bal')+'">Baki</button>'+(S.owner?'<button data-tab="permohonan" aria-pressed="'+(S.tab==='permohonan')+'">Permohonan ('+S.requests.filter(r=>r.status==='pending').length+')</button>':'')+'</div>';
   if(S.err)h+='<div class="note err r"><span>'+esc(S.err)+'</span><button class="x" style="color:#fff" data-act="dismiss" aria-label="Tutup">×</button></div>';
   if(S.editName&&S.owner)h+='<div class="card form"><div><label for="r-name">Nama runner</label><input class="field" id="r-name" value="'+esc(S.rname)+'" placeholder="Contoh: Azman"></div>'+
     '<div class="inline"><button class="btn" data-act="savename">Simpan nama</button><button class="btn alt" data-act="cancelname">Batal</button></div></div>';
-  if(S.tab==='lap')h+=reportView();
+  if(S.tab==='permohonan'&&S.owner)h+=requestsView();
+  else if(S.tab==='lap')h+=reportView();
   else if(S.tab==='bal')h+=balView();
   else if(S.view==='new')h+=newView();
   else if(S.view==='edit'){var te=byId(S.open);if(te)h+=editView(te);else{S.view='list';h+=listView()}}
@@ -533,7 +572,7 @@ function render(){
 }
 function sched(){
   var a=ae();
-  if(a&&app.contains(a)&&/INPUT|SELECT/.test(a.tagName)){S.pending=true;return}
+  if(a&&app.contains(a)&&/INPUT|SELECT|TEXTAREA/.test(a.tagName)){S.pending=true;return}
   render();
 }
 function go(tab,view,open){S.tab=tab;S.view=view;S.open=open||null;S.confirmDel=null;S.zoom=null;watchPhotos(tab==='trip'&&view==='detail'?open:null);render();window.scrollTo(0,0)}
@@ -541,7 +580,7 @@ function go(tab,view,open){S.tab=tab;S.view=view;S.open=open||null;S.confirmDel=
 /* ---------- actions ---------- */
 reg.addEventListener('focusout',function(){
   if(!S.pending)return;
-  setTimeout(function(){var a=ae();if(S.pending&&!(a&&app.contains(a)&&/INPUT|SELECT/.test(a.tagName)))render()},400);
+  setTimeout(function(){var a=ae();if(S.pending&&!(a&&app.contains(a)&&/INPUT|SELECT|TEXTAREA/.test(a.tagName)))render()},400);
 });
 reg.addEventListener('click',function(e){
   var el=e.target.closest('[data-act],[data-open],[data-tab],[data-y],[data-m]');if(!el||!S.db)return;
@@ -551,6 +590,25 @@ reg.addEventListener('click',function(e){
   if(d.y){S.year=d.y;render();return}
   if(d.m){S.month=d.m;S.page=0;go('trip','list');return}
   switch(d.act){
+    case 'submitupah':{
+      if(!t||S.owner||S.requestBusy||S.paid[t.id]||isOwn(t)||requestForTrip(t.id).some(r=>r.status==='pending'))break;
+      var direction=$('req-direction').value,amount=Number($('req-amount').value),reason=$('req-reason').value.trim();
+      if(!['tambah','kurang'].includes(direction)||!Number.isFinite(amount)||amount<=0||!Number.isInteger(Math.round(amount*100))||Math.abs(amount*100-Math.round(amount*100))>0.000001){S.err='Masukkan jumlah yang sah (maksimum 2 perpuluhan).';render();break}
+      if(direction==='kurang'&&amount>Number(t.upah||0)){S.err='Pengurangan melebihi upah semasa.';render();break}
+      if(reason.length<5){S.err='Alasan mestilah sekurang-kurangnya 5 aksara.';render();break}
+      S.requestBusy=true;
+      S.client.from('runner_upah_requests').insert({trip_id:t.id,direction:direction,amount:amount,base_upah:+t.upah||0,reason:reason}).then(function(res){
+        if(res.error)throw res.error;S.err='';return S.db.refresh();
+      }).catch(function(e){S.err='Permohonan gagal: '+(e.message||'Cuba lagi')}).then(function(){S.requestBusy=false;render()});
+      break}
+    case 'approveupah':case 'rejectupah':{
+      if(!S.owner||S.requestBusy||!d.id)break;
+      S.requestBusy=true;
+      S.client.rpc('runner_decide_upah_request',{p_request_id:d.id,p_approve:d.act==='approveupah',p_note:null}).then(function(res){
+        if(res.error)throw res.error;S.err='';return S.db.refresh();
+      }).catch(function(e){S.err='Keputusan gagal: '+(e.message||'Cuba lagi')}).then(function(){S.requestBusy=false;render()});
+      break}
+
     case 'zoom':S.zoom=d.id;render();break;
     case 'unzoom':S.zoom=null;render();break;
     case 'delphoto':if(S.admin){var pid=d.id;S.zoom=null;write(function(){return S.db.doc('photos/'+pid).delete()});render()}break;
@@ -663,6 +721,7 @@ var MAP={
   topups:{table:'runner_topups',key:'id',cols:{amt:'amt',date:'topup_date',note:'note',at:'recorded_at'}},
   ownerpaid:{table:'runner_ownerpaid',key:'trip_id',cols:{at:'marked_at'}},
   settings:{table:'runner_settings',key:'key',cols:{name:'value'}},
+  requests:{table:'runner_upah_requests',key:'id',cols:{trip_id:'trip_id',direction:'direction',amount:'amount',base_upah:'base_upah',reason:'reason',status:'status',requested_by:'requested_by',created_at:'created_at',reviewed_by:'reviewed_by',reviewed_at:'reviewed_at',review_note:'review_note'}},
   photos:{table:'runner_photos',key:'id',cols:{trip:'trip_id',label:'label',img:'img',at:'taken_at'}}
 };
 function toRow(m,id,d,partial){
@@ -675,7 +734,7 @@ function fromRow(m,r){
   return {id:r[m.key],data:d};
 }
 function makeDb(client){
-  var COLLS=['trips','payments','topups','ownerpaid','settings'];
+  var COLLS=['trips','payments','topups','ownerpaid','settings','requests'];
   var store={},last={},seen={},lis={},pw=[],pend=0,timer=null,wgen=0,nq=Promise.resolve();
   COLLS.forEach(function(c){store[c]={};lis[c]=[]});
   function check(res){if(res&&res.error){var e=new Error(res.error.message||'Ralat pangkalan data');e.code=res.error.code;throw e}return res.data}
@@ -734,7 +793,7 @@ function makeDb(client){
       }};
   }
   return {
-    start:start,stop:stop,
+    start:start,stop:stop,refresh:pull,
     doc:function(path){var p=path.split('/');return ref(p[0],p[1])},
     collection:function(c){
       return {
@@ -768,13 +827,14 @@ function subscribe(db){
   db.collection('payments').onSnapshot(function(sn){var p={};sn.docs.forEach(function(d){p[d.id]=d.data()});S.paid=p;sched()},fail);
   db.collection('topups').onSnapshot(function(sn){S.topups=sn.docs.map(function(d){return Object.assign({},d.data(),{id:d.id})});sched()},fail);
   db.collection('ownerpaid').onSnapshot(function(sn){var o={};sn.docs.forEach(function(d){o[d.id]=d.data()});S.ownp=o;sched()},fail);
+  db.collection('requests').onSnapshot(function(sn){S.requests=sn.docs.map(d=>Object.assign({},d.data(),{id:d.id}));sched()},fail);
   db.collection('settings').onSnapshot(function(sn){var n='';sn.docs.forEach(function(d){if(d.id==='runner')n=(d.data().name)||''});S.rname=n;sched()},fail);
 }
 
 /* host = elemen kosong dalam #ada-cloud-view. ctx = {client, profile} */
 return function mountRunner(host,ctx){
   var role=ctx&&ctx.profile&&ctx.profile.role;
-  S.owner=role==='owner';S.admin=role==='owner';S.canEditTrip=role==='owner'||role==='operations';
+  S.client=ctx.client;S.owner=role==='owner';S.admin=role==='owner';S.canEditTrip=role==='owner'||role==='operations';
   var root=host.shadowRoot||host.attachShadow({mode:'open'});
   root.innerHTML='<style>'+CSS+'</style><div class="shell"><div class="wrap" id="app"></div></div>';
   app=root.getElementById('app');
