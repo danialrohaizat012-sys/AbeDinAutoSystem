@@ -1,0 +1,58 @@
+/* V83 Admin navigation usability. Scoped to authenticated dashboard only. */
+#ada-cloud-gate .cloud-side button[hidden],
+#ada-cloud-gate .cloud-bottom button[hidden],
+#ada-cloud-gate .ada-admin-nav-group[hidden],
+.ada-admin-menu-overlay[hidden]{display:none!important}
+#ada-cloud-gate .cloud-side{overscroll-behavior:contain;scrollbar-width:thin}
+#ada-cloud-gate .ada-admin-nav-group{display:grid;gap:4px;margin:0 0 18px;padding:0 4px 12px;border-bottom:1px solid rgba(255,255,255,.08)}
+#ada-cloud-gate .ada-admin-nav-group:last-child{border-bottom:0}
+#ada-cloud-gate .ada-admin-nav-group h3{font:800 10px/1.4 inherit;letter-spacing:.13em;text-transform:uppercase;color:#aeb9b9;padding:8px 11px;margin:0}
+#ada-cloud-gate .cloud-side .ada-admin-nav-link{display:flex!important;align-items:center!important;gap:11px!important;min-height:49px!important;width:100%!important;margin:0!important;padding:11px 13px!important;border-radius:11px!important;font-weight:700!important;font-size:13px!important;line-height:1.35!important;white-space:normal!important;touch-action:manipulation;position:relative;cursor:pointer}
+#ada-cloud-gate .cloud-side .ada-admin-nav-link[hidden]{display:none!important}
+#ada-cloud-gate .cloud-side .ada-admin-nav-link.active{box-shadow:inset 3px 0 #f3cf78!important}
+#ada-cloud-gate .ada-admin-nav-icon{display:inline-flex;align-items:center;justify-content:center;width:25px;min-width:25px;font-size:19px!important;line-height:1!important;color:#e8c86d}
+#ada-cloud-gate .cloud-side .ada-admin-nav-link:hover,
+#ada-cloud-gate .cloud-side .ada-admin-nav-link:focus-visible{border-color:#b89b4e!important;background:#2a2921!important}
+#ada-cloud-gate .cloud-side .ada-admin-nav-link:focus-visible,
+#ada-cloud-gate .cloud-bottom button:focus-visible,
+.ada-admin-menu-overlay button:focus-visible{outline:3px solid #f7d56f!important;outline-offset:2px!important}
+#ada-cloud-gate .cloud-bottom{display:none!important}
+.ada-admin-menu-overlay{position:fixed;inset:0;z-index:2147483400;display:flex;justify-content:flex-end;isolation:isolate}
+.ada-admin-menu-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.7)}
+.ada-admin-menu-drawer{position:relative;width:min(100%,420px);height:100%;height:100dvh;overflow:auto;overscroll-behavior:contain;background:#131b1d;color:#e9eee9;border-left:1px solid #4c5150;box-shadow:-18px 0 60px #0006;padding:20px 18px max(36px,env(safe-area-inset-bottom));box-sizing:border-box}
+.ada-admin-menu-head{position:sticky;top:-20px;background:#131b1d;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:15px;padding:14px 0 16px;border-bottom:1px solid #364041;margin-bottom:15px}
+.ada-admin-menu-head small{font-size:10px;letter-spacing:.13em;font-weight:750;color:#d7b85e}
+.ada-admin-menu-head h2{font-size:23px;line-height:1.25;margin:5px 0 0}
+.ada-admin-menu-close{min-width:48px;min-height:48px;padding:8px!important;border:1px solid #4e5b5b!important;border-radius:13px!important;background:#202a2c!important;color:#fff!important;font-size:19px!important}
+.ada-admin-menu-section{margin-bottom:18px}
+.ada-admin-menu-section h3{color:#aebaaf;font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin:0 0 9px;padding:0 4px}
+.ada-admin-drawer-link{display:flex!important;align-items:center;gap:15px;width:100%;min-height:56px;margin:5px 0!important;padding:12px 15px!important;text-align:left!important;font-weight:700!important;font-size:14px!important;border-radius:12px!important;background:#1c2728!important;color:#f0f3ee!important;border:1px solid #354243!important;box-shadow:none!important;touch-action:manipulation}
+.ada-admin-drawer-link span:first-child{width:27px;flex:0 0 27px;text-align:center;color:#f1cf76;font-size:20px}
+.ada-admin-drawer-link.is-active{background:#3e3523!important;border-color:#d5b55c!important}
+body.ada-admin-menu-open{overflow:hidden!important}
+@media(max-width:700px){
+ #ada-cloud-gate .cloud-bottom{position:fixed!important;bottom:0!important;left:0!important;right:0!important;display:flex!important;align-items:stretch!important;gap:2px!important;justify-content:space-between!important;padding:7px max(7px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(7px,env(safe-area-inset-left))!important;min-height:72px;background:#161e20!important;border-top:1px solid #5e5138!important;z-index:100!important;box-shadow:0 -8px 25px #0004!important;box-sizing:border-box!important}
+ #ada-cloud-gate .cloud-bottom button{display:flex!important;flex:1 1 0!important;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:0!important;min-height:52px!important;padding:6px 2px!important;margin:0!important;border:0!important;border-radius:10px!important;color:#f0dfb3!important;background:transparent!important;box-shadow:none!important;touch-action:manipulation;line-height:1.1!important}
+ #ada-cloud-gate .cloud-bottom button[hidden]{display:none!important}
+ #ada-cloud-gate .cloud-bottom button span{display:block;font-size:23px;line-height:1;pointer-events:none}
+ #ada-cloud-gate .cloud-bottom button small{display:block;font-size:clamp(10px,2.5vw,12px);line-height:1.15;color:inherit;white-space:nowrap;pointer-events:none}
+ #ada-cloud-gate .cloud-bottom button.active{background:#514329!important;color:#fff1c2!important}
+ #ada-cloud-gate .cloud-bottom button#ada-admin-more{background:#302c21!important;color:#ffe19b!important}
+ #ada-cloud-gate .cloud-side{display:none!important}
+ #ada-cloud-gate #ada-cloud-view{padding-bottom:100px!important}
+}
+@media(min-width:701px){
+ #ada-cloud-gate .cloud-side .ada-admin-nav-link{min-height:50px!important}
+ #ada-cloud-gate .cloud-layout{grid-template-columns:235px minmax(0,1fr)!important}
+ #ada-cloud-gate .cloud-side{padding-left:9px!important;padding-right:9px!important}
+}
+@media(max-width:400px){
+ #ada-cloud-gate .cloud-bottom button small{font-size:10px}
+ .ada-admin-menu-drawer{padding-inline:13px}
+}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .ada-admin-nav-group h3{color:#586263!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-side .ada-admin-nav-link:hover{background:#eee6d6!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-bottom{background:#f7f8f8!important;border-color:#c9c9c9!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-bottom button{color:#333!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-bottom button.active{background:#eadcbf!important;color:#463514!important}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-bottom button#ada-admin-more{background:#eee4cb!important;color:#6b4d0c!important}
