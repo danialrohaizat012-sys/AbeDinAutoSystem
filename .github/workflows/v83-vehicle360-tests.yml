@@ -1,0 +1,22 @@
+name: V83 Vehicle 360 Smoke Tests
+on:
+  pull_request:
+    paths:
+      - 'app.html'
+      - 'js/vehicle360.js'
+      - 'css/vehicle360.css'
+      - 'tests/v83-vehicle360.test.cjs'
+      - '.github/workflows/v83-vehicle360-tests.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  vehicle360:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check module syntax
+        run: node --check --input-type=module < js/vehicle360.js
+      - name: Run Vehicle 360 regression tests
+        run: node --test tests/v83-vehicle360.test.cjs
