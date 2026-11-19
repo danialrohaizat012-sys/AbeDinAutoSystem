@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
       return fail(origin, 401, 'Sesi dashboard tidak sah');
     const { data: profile, error: profileError } = await main.from('profiles')
       .select('role,enabled,full_name').eq('id', user.id).maybeSingle();
-    if (profileError || !allowedMainProfile(profile))
+    if (profileError || !profile || !allowedMainProfile(profile))
       return fail(origin, 403, 'Akaun dashboard tidak dibenarkan');
 
     const admin = createClient(SEWA_URL, SEWA_SERVICE_KEY, {
