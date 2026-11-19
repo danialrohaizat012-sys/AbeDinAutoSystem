@@ -146,6 +146,56 @@ dialog::backdrop{background:rgba(15,22,40,.55)}
 .done .acts{display:flex;flex-direction:column;gap:10px;align-items:center;margin-top:12px}
 body.sent form{display:none}
 body.sent .done{display:block}
+
+/* Responsive booking form for phones, tablets and wide desktop screens. */
+html,body{width:100%;max-width:100%;overflow-x:clip}
+.wrap{width:min(100%,1100px);max-width:1100px;padding:clamp(14px,2.5vw,30px) clamp(12px,3vw,32px) calc(48px + env(safe-area-inset-bottom,0px))}
+header{padding:clamp(12px,2vw,24px) 0 6px}
+header img{width:min(72%,310px);max-width:100%}
+h1{font-size:clamp(22px,3.1vw,34px)}
+section.card{min-width:0;padding:clamp(14px,2vw,27px);margin:clamp(12px,1.5vw,20px) 0}
+.card h2{line-height:1.35;overflow-wrap:anywhere}
+.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(12px,1.6vw,20px)}
+.grid>*,.field,.seg,.seg label,.pb-grid>*{min-width:0}
+input,select,textarea{max-width:100%;min-width:0;font-size:16px}
+.seg{grid-template-columns:repeat(2,minmax(0,1fr))}
+.seg label{overflow-wrap:anywhere}
+.pb-grid{grid-template-columns:minmax(150px,220px) minmax(0,1fr)}
+.pb-row{flex-wrap:wrap;overflow-wrap:anywhere}
+.pb-acc{overflow-wrap:anywhere;letter-spacing:normal}
+.anggar .r,.anggar .tot{flex-wrap:wrap;overflow-wrap:anywhere}
+.anggar .r span:last-child{white-space:normal;text-align:right}
+.file{min-width:0;flex-wrap:wrap}
+.file .meta{flex:1 1 150px}
+.file .pick,.pick{max-width:100%;min-height:44px}
+.sig{min-width:0}
+.sig canvas{max-width:100%}
+.btn{max-width:100%;min-height:48px;white-space:normal;text-align:center}
+.submit .btn{width:min(100%,420px);min-width:0}
+dialog{max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px)}
+.dlg{max-height:calc(100dvh - 24px)}
+.dlg .body{min-height:0}
+.dlg .foot{flex-wrap:wrap}
+.dlg .foot>*{min-width:0}
+.done .ref{max-width:100%;overflow-wrap:anywhere}
+@media(max-width:700px){
+ .grid{grid-template-columns:minmax(0,1fr)}
+ .full{grid-column:auto}
+ .pb-grid{grid-template-columns:minmax(0,1fr)}
+ .pb-qr img{max-width:200px}
+ .wrap{padding-inline:clamp(12px,4vw,20px)}
+}
+@media(max-width:440px){
+ .wrap{padding-inline:12px}
+ section.card{padding:15px 13px;border-radius:13px}
+ .seg{grid-template-columns:minmax(0,1fr)}
+ .file{gap:9px}
+ .file .thumb{width:48px;height:48px}
+ .key{grid-template-columns:1fr}
+ .dlg header,.dlg .foot{padding:12px}
+ .dlg .foot .btn{width:100%}
+ .anggar .tot b{font-size:21px}
+}
 </style>
 </head>
 <body>
