@@ -168,6 +168,8 @@ const daysBetween = (a, b) => { const pa = a.split("-"), pb = b.split("-"); retu
 // V83: operational 120-day countdown starts at the recorded Puspakom booking/inspection date, only after Lulus.
 const expiryInfo = (c, today = todayStr()) => {
   if (c.status !== "lulus" || !c.date || !/^\d{4}-\d{2}-\d{2}$/.test(c.date)) return null;
+  const [y,m,d] = c.date.split("-").map(Number);
+  if (new Date(Date.UTC(y,m-1,d)).toISOString().slice(0,10) !== c.date) return null;
   const expiry = addDays(c.date, VALID_DAYS), left = daysBetween(today, expiry);
   return { expiry, left, elapsed: Math.max(0, Math.min(VALID_DAYS, VALID_DAYS - left)),
     tone: left < 0 ? "expired" : left <= 14 ? "urgent" : left <= 30 ? "warning" : "valid" };
