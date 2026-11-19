@@ -30,6 +30,27 @@ button{font:inherit;font-weight:700;cursor:pointer;border-radius:12px;border:1px
 .pri{width:100%;margin-top:18px;background:#d8ad57;border-color:#d8ad57;color:#0b0d0e;padding:13px}
 .msg{min-height:20px;margin-top:12px;font-size:13.5px;color:#f08a7e}
 .msg.ok{color:#45c98b}
+
+/* Responsive standalone rental admin login and module container. */
+html,body{width:100%;max-width:100%;overflow-x:clip}
+.top{min-width:0;padding-inline:clamp(12px,2.4vw,30px)}
+.top>div{min-width:0;overflow-wrap:anywhere}
+.top small{overflow-wrap:anywhere}
+.top button{flex:none;min-height:42px}
+.wrap{width:100%;max-width:none;padding:clamp(12px,2vw,28px);padding-bottom:calc(38px + env(safe-area-inset-bottom,0px))}
+.login{width:min(100%,420px);max-width:420px;padding:clamp(18px,3vw,28px);margin:clamp(24px,7vh,70px) auto 0}
+.login .brand img{width:auto;max-width:100%;object-fit:contain}
+input{min-width:0;max-width:100%;font-size:16px;min-height:46px}
+button{max-width:100%;overflow-wrap:anywhere}
+#mod-sewa,[data-sewa-mod]{display:block;width:100%;min-width:0}
+@media(max-width:520px){
+ .top{gap:8px}
+ .top b{font-size:12px}
+ .top small{font-size:11px}
+ .top button{padding:9px 11px}
+ .wrap{padding:12px 12px calc(28px + env(safe-area-inset-bottom,0px))}
+ .login{border-radius:16px}
+}
 </style>
 </head>
 <body>
