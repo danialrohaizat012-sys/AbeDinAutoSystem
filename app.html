@@ -371,6 +371,7 @@ async function verify(){
       const page=b.dataset.cloudPage;
       b.hidden=!canPage(p,page);
     });
+    window.adaAdminMenuRefresh?.();
     if(!canPage(p,current)) current='dashboard';
     await refresh();
     startNotifs();
