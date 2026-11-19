@@ -1,0 +1,22 @@
+name: V83 Admin Navigation Regression
+on:
+  pull_request:
+    paths:
+      - 'app.html'
+      - 'js/admin-menu.js'
+      - 'css/admin-menu.css'
+      - 'tests/v83-admin-menu.test.cjs'
+      - '.github/workflows/v83-admin-menu-tests.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  admin-menu:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check module JavaScript syntax
+        run: node --check --input-type=module < js/admin-menu.js
+      - name: Run admin navigation regression tests
+        run: node --test tests/v83-admin-menu.test.cjs
