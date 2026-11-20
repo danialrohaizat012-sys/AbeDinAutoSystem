@@ -223,6 +223,7 @@ export function mountPuspakom(host, ctx) {
   root.getElementById("app").addEventListener("input", e => { if (e.target.id === "q") { S.q = e.target.value; renderList(); } });
   render();
   load();
+  window.__adaLive?.(host, ["puspakom"], load, () => !!(S.busy || root.getElementById("ov").classList.contains("show")));
   clearInterval(mountPuspakom._t);
   mountPuspakom._t = setInterval(() => { if (S && S.root.isConnected !== false && !S.root.getElementById("ov").classList.contains("show")) render(); }, 60000);
 }

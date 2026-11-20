@@ -237,4 +237,5 @@ export function mountStaff(host, ctx) {
   }
 
   render(); load();
+  window.__adaLive?.(host, ["staff_leaves","staff_claims","staff_advances","staff_hr","staff_pay"], load, () => !!(S.mode || S.prof));
 }

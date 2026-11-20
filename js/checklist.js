@@ -1193,4 +1193,5 @@ export function mountChecklist(host,ctx){
   if(ctx.vehicleId){ S.view="kereta"; }
   if(!S.loaded||ctx.reload!==false){ S.loaded=false; render(); load().then(()=>{ if(ctx.vehicleId) openForCar(ctx.vehicleId); }); }
   else { render(); if(ctx.vehicleId) openForCar(ctx.vehicleId); }
+  window.__adaLive?.(host,["checklist_inspections"],load,()=>S.view==="form");
 }

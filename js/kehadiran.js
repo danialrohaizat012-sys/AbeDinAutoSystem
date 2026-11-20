@@ -1055,4 +1055,5 @@ export function mountKehadiran(host, ctx) {
   clockTimer = setInterval(() => { if (!host.isConnected) return clearInterval(clockTimer); tickClock();
     if (++tickN % 4 === 0 && S.tab === "papan" && S.loaded && document.visibilityState === "visible" && !root.querySelector(".ov")) loadTab(true); }, 15000);
   S.settings = null; S.loaded = false; render(); loadTab();
+  window.__adaLive?.(host, ["attendance_punches","attendance_requests","attendance_day_flags","staff_leaves"], () => loadTab(true), () => !!root.querySelector(".ov"));
 }

@@ -365,4 +365,5 @@ export function mountPermohonan(el, c) {
   });
   render();
   loadApplications();
+  window.__adaLive?.(el, ['buyer_applications'], loadApplications);
 }
