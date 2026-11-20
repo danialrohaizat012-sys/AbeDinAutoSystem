@@ -1,0 +1,21 @@
+name: V83 Puspakom Inventory Matching
+on:
+  pull_request:
+    paths:
+      - 'app.html'
+      - 'js/puspakom.js'
+      - 'tests/v83-puspakom-inventory-match.test.cjs'
+      - '.github/workflows/v83-puspakom-inventory-match.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  matching:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate module syntax
+        run: node --check --input-type=module < js/puspakom.js
+      - name: Run Puspakom inventory matching tests
+        run: node --test tests/v83-puspakom-inventory-match.test.cjs
