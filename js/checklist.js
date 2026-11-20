@@ -662,7 +662,7 @@ function viewPantau(){
   const flood=R.filter(r=>["Suspected","Confirmed"].includes(r.akhir?.banjir)).length;
   const kos=R.reduce((a,r)=>a+partsTotal(r),0), left=R.reduce((a,r)=>a+partsLeft(r),0);
   const today_n=R.filter(r=>(r.tarikh||"").slice(0,10)===t).length;
-  return dashboardSearchHtml()+`<div class="row end"><button class="sm" data-act="pdfsum">Laporan PDF</button><button class="sm go" data-go="kereta:belum">+ Mula pemeriksaan</button></div>
+  return `<div class="row end"><button class="sm" data-act="pdfsum">Laporan PDF</button><button class="sm go" data-go="kereta:belum">+ Mula pemeriksaan</button></div>
   <div class="kpis">
     <button class="kpi ${belum?"alert":""}" data-go="kereta:belum"><span class="l">Belum diperiksa</span><b>${belum}</b><small>daripada ${S.vehicles.filter(v=>String(v.status).toLowerCase()!=="sold").length} kereta stok</small></button>
     <button class="kpi ${by("hantar")?"alert":""}" data-go="senarai:hantar:"><span class="l">Menunggu semakan</span><b>${by("hantar")}</b><small>${isOwner()?"Tekan untuk semak":"Dihantar kepada Owner"}</small></button>
@@ -672,8 +672,9 @@ function viewPantau(){
     <button class="kpi" data-go="senarai::"><span class="l">Anggaran kos repair</span><b class="sm2">${RM(kos).replace(".00","")}</b><small>${left} barang belum ditukar</small></button>
     <button class="kpi ${flood?"alert":""}" data-go="senarai::banjir"><span class="l">Banjir disyaki/sah</span><b>${flood}</b><small>Wajib disclose</small></button>
   </div>
+  <div class="card"><h3>Gred keseluruhan</h3><div class="grades">${["A","B","C","D"].map(g=>`<button class="gbox g${g}" data-go="senarai::${g}"><b>${gc[g]}</b><small>${g} · ${esc(GRADES[g].split(" /")[0])}</small></button>`).join("")}</div></div>
+  ${dashboardSearchHtml()}
   <div class="grid2">
-    <div class="card"><h3>Gred keseluruhan</h3><div class="grades">${["A","B","C","D"].map(g=>`<button class="gbox g${g}" data-go="senarai::${g}"><b>${gc[g]}</b><small>${g} · ${esc(GRADES[g].split(" /")[0])}</small></button>`).join("")}</div></div>
     <div class="card"><h3>Prestasi staff</h3>${staff.length?staff.map(([n,v])=>`<div class="bar"><span class="nm">${esc(n)}</span><span class="tr"><i style="width:${v/staff[0][1]*100}%;background:var(--pri)"></i></span><span class="n">${v}</span></div>`).join(""):`<p class="mute">Belum ada data.</p>`}</div>
     <div class="card"><h3>Item NG paling kerap</h3>${top.length?top.map(([k,v])=>`<div class="bar"><span class="nm" title="${esc(k)}">${esc(k)}</span><span class="tr"><i style="width:${v/mx*100}%"></i></span><span class="n">${v}</span></div>`).join(""):`<p class="mute">Tiada item NG lagi.</p>`}</div>
     <div class="card"><h3>Terkini</h3>${R.slice(0,6).map(recRow).join("")||`<p class="mute">Belum ada pemeriksaan.</p>`}</div>

@@ -33,7 +33,8 @@ test('need-action includes uninspected and active inspection statuses, not appro
  assert.deepEqual(search(vehicles,'sol999','perlu').map(x=>x.v.id),['6']);
 });
 test('search is visible directly on summary dashboard with filter and results',()=>{
- assert.match(src,/return dashboardSearchHtml\(\)\+/);
+ const dashboard=src.slice(src.indexOf('function viewPantau()'),src.indexOf('function bindPantau()'));
+ assert.match(dashboard,/class="kpis"[\s\S]*Gred keseluruhan[\s\S]*\$\{dashboardSearchHtml\(\)\}/);
  assert.match(src,/function bindPantau\(\)[^{]*\{[^}]*bindDashboardSearch\(\)/);
  assert.match(src,/id="ada-ins-search-q"/);
  assert.match(src,/id="ada-ins-search-status"/);
@@ -45,7 +46,7 @@ test('search reuses existing car actions and does not alter sales or inspection 
  assert.match(src,/openForCar\(b\.dataset\.start\)/);
  assert.match(src,/openForm\(b\.dataset\.edit\)/);
  assert.match(src,/go\("detail",b\.dataset\.rec\)/);
- assert.match(html,/import\('\.\/js\/checklist\.js\?v=83\.11'\)/);
+ assert.match(html,/import\('\.\/js\/checklist\.js\?v=83\.\d+'\)/);
 });
 test('search layout stacks controls on very narrow phones',()=>{
  assert.match(src,/@media\(max-width:350px\)\{\s*\.ada-ins-search/);
