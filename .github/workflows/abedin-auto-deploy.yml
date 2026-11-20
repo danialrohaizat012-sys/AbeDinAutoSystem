@@ -1,0 +1,52 @@
+name: AbeDin Auto - Auto Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: abedin-production-deploy
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate before production
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check inspection JavaScript syntax
+        run: node --check --input-type=module < js/checklist.js
+      - name: Run inspection, mobile and other automated tests
+        run: node --test tests/*.test.cjs
+
+  deploy:
+    name: Trigger configured hosting deploy hook
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: production
+    steps:
+      - name: Deploy only when hosting webhook is configured
+        env:
+          DEPLOY_HOOK_URL: ${{ secrets.ABEDIN_PRODUCTION_DEPLOY_HOOK_URL }}
+        shell: bash
+        run: |
+          if [[ -z "$DEPLOY_HOOK_URL" ]]; then
+            echo "::notice::Auto-deploy is ready but not connected. Set the ABEDIN_PRODUCTION_DEPLOY_HOOK_URL secret in the production environment with your hosting provider's deployment hook URL."
+            exit 0
+          fi
+          if [[ "$DEPLOY_HOOK_URL" != https://* ]]; then
+            echo "::error::Deployment hook must use HTTPS."
+            exit 1
+          fi
+          curl --fail --silent --show-error --location --max-time 60 \\
+            --request POST --output /dev/null "$DEPLOY_HOOK_URL"
+          echo "Hosting deployment hook triggered. Verify successful publish in the hosting provider dashboard."
