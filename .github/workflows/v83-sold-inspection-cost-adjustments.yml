@@ -1,0 +1,24 @@
+name: V83 Sold Inspection Cost Adjustments
+on:
+  pull_request:
+    paths:
+      - 'app.html'
+      - 'js/checklist.js'
+      - 'tests/v83-sold-inspection-cost-adjustments.test.cjs'
+      - '.github/workflows/v83-sold-inspection-cost-adjustments.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  sold-costs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify module syntax
+        run: node --check --input-type=module < js/checklist.js
+      - name: Check Sold vehicle costs and finance integrations
+        run: node --test tests/v83-sold-inspection-cost-adjustments.test.cjs
