@@ -56,3 +56,69 @@ html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-bottom{background:#
 html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-bottom button{color:#333!important}
 html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-bottom button.active{background:#eadcbf!important;color:#463514!important}
 html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-bottom button#ada-admin-more{background:#eee4cb!important;color:#6b4d0c!important}
+
+/* V83.6: native <details> navigation: opens on iPhone even when JS fails to load. */
+#ada-cloud-gate .cloud-bottom .ada-native-more{display:none}
+#ada-cloud-gate .cloud-bottom .ada-native-menu-list button[hidden],
+#ada-cloud-gate .cloud-bottom .ada-native-menu-section[hidden]{display:none!important}
+@media(max-width:700px){
+ #ada-cloud-gate .cloud-bottom{overflow:visible!important}
+ #ada-cloud-gate .cloud-bottom .ada-native-more{
+   display:block!important;position:relative!important;flex:1 1 0!important;
+   min-width:0!important;align-self:stretch!important;z-index:1
+ }
+ #ada-cloud-gate .cloud-bottom .ada-native-more summary{
+   list-style:none;display:flex;flex-direction:column;gap:3px;
+   justify-content:center;align-items:center;min-height:52px;box-sizing:border-box;
+   padding:6px 2px;border-radius:10px;background:#302c21;color:#ffe19b;
+   cursor:pointer;touch-action:manipulation;user-select:none;-webkit-user-select:none;
+ }
+ #ada-cloud-gate .cloud-bottom .ada-native-more summary::-webkit-details-marker{display:none}
+ #ada-cloud-gate .cloud-bottom .ada-native-more summary::marker{content:""}
+ #ada-cloud-gate .cloud-bottom .ada-native-more summary span{font-size:23px;line-height:1;pointer-events:none}
+ #ada-cloud-gate .cloud-bottom .ada-native-more summary small{
+   font-size:clamp(10px,2.5vw,12px);line-height:1.15;
+   white-space:nowrap;color:inherit;pointer-events:none
+ }
+ #ada-cloud-gate .cloud-bottom .ada-native-more[open] summary{background:#66502c;color:#fff5cf}
+ #ada-cloud-gate .cloud-bottom .ada-native-more summary:focus-visible{outline:3px solid #f7d56f;outline-offset:2px}
+ #ada-cloud-gate .cloud-bottom .ada-native-menu-list{
+   position:fixed!important;
+   left:10px!important;right:10px!important;top:auto!important;
+   bottom:calc(77px + env(safe-area-inset-bottom))!important;
+   max-height:calc(100dvh - 115px - env(safe-area-inset-bottom))!important;
+   overflow-y:auto!important;overscroll-behavior:contain!important;
+   background:#141c1d!important;color:#f1f3eb!important;
+   border:1px solid #74603b!important;border-radius:16px!important;
+   box-shadow:0 -20px 70px #000b!important;padding:14px!important;
+   z-index:2147483400!important;box-sizing:border-box!important;
+   -webkit-overflow-scrolling:touch
+ }
+ #ada-cloud-gate .cloud-bottom .ada-native-menu-section{margin:0 0 13px}
+ #ada-cloud-gate .cloud-bottom .ada-native-menu-section:last-child{margin-bottom:0}
+ #ada-cloud-gate .cloud-bottom .ada-native-menu-section h3{
+   font-size:11px;color:#ddbe73;letter-spacing:.1em;text-transform:uppercase;
+   margin:5px 0 8px;padding:0 4px
+ }
+ #ada-cloud-gate .cloud-bottom .ada-native-menu-section button{
+   display:block!important;width:100%!important;text-align:left!important;
+   min-height:47px!important;margin:5px 0!important;
+   padding:10px 14px!important;font-size:13px!important;line-height:1.4!important;
+   font-weight:700!important;color:#f3eee2!important;background:#202b2d!important;
+   border:1px solid #46514e!important;border-radius:10px!important;
+   box-shadow:none!important;touch-action:manipulation;
+ }
+ #ada-cloud-gate .cloud-bottom .ada-native-menu-section button[hidden]{display:none!important}
+ #ada-cloud-gate .cloud-bottom .ada-native-menu-section button.active{
+   background:#4f4025!important;border-color:#d8b759!important
+ }
+}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-bottom .ada-native-more summary{
+ background:#eee4cb;color:#634814
+}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-bottom .ada-native-menu-list{
+ background:#f9f8f4!important;color:#252525!important
+}
+html.ada-light:not(.ada-public-route) #ada-cloud-gate .cloud-bottom .ada-native-menu-section button{
+ background:#fff!important;color:#242424!important;border-color:#d6d3c8!important
+}
