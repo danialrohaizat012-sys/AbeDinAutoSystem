@@ -109,6 +109,41 @@ em{font-style:normal}.ng{color:var(--ng)}.ok{color:var(--ok)}
   #lst .gchip{grid-row:1/span 2;width:34px;height:34px;font-size:18px}
   #lst .rec .pill{grid-column:2;justify-self:start;white-space:normal}
 }
+/* V84: Mobile-first ringkasan pemeriksaan. Scoped to this Shadow DOM. */
+@container (max-width:540px){
+  .shell{padding:6px 0 16px;border-radius:12px;font-size:13px}
+  .wrap{gap:8px;padding-inline:2px}
+  .head{align-items:center;gap:5px}
+  .head .kick{font-size:9px;letter-spacing:.08em}
+  .head h2{font-size:18px;line-height:1.2}
+  .tabs{padding:3px;border-radius:13px;gap:1px}
+  .tabs button{font-size:12px;padding:6px 2px;min-height:42px;border-radius:10px}
+  .tabs .refresh{flex-basis:32px;font-size:16px}
+  .row.end{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:7px}
+  .row.end > .sm{min-width:0;width:100%;padding:8px 6px;font-size:12px;min-height:44px;line-height:1.2}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  .kpi{min-width:0;min-height:96px;border-radius:12px;padding:10px;gap:3px;justify-content:center;overflow-wrap:anywhere}
+  .kpi .l{font-size:10px;line-height:1.2;letter-spacing:.045em}
+  .kpi b{font-size:27px;line-height:1.05}
+  .kpi b.sm2{font-size:20px;letter-spacing:-.035em;overflow-wrap:anywhere}
+  .kpi small{font-size:11px;line-height:1.25}
+  .card{border-radius:12px;padding:10px;gap:8px}
+  .card h3{font-size:15px;line-height:1.2}
+  .grades{gap:5px}
+  .gbox{min-width:0;min-height:62px;padding:7px 2px;border-radius:9px;gap:3px}
+  .gbox b{font-size:23px}
+  .gbox small{font-size:10px;line-height:1.15;overflow-wrap:anywhere}
+  .grid2{gap:8px}
+}
+@container (max-width:360px){
+  .kpi{min-height:90px;padding:8px}
+  .kpi .l{font-size:9px}
+  .kpi b{font-size:24px}
+  .kpi b.sm2{font-size:18px}
+  .kpi small{font-size:10px}
+  .tabs button{font-size:11px}
+  .gbox small{font-size:9px}
+}
 .ada-ins-search{border:1px solid var(--line);border-radius:16px;padding:15px;background:var(--card);margin:4px 0 15px}
 .ada-ins-search-head{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap;margin-bottom:11px}
 .ada-ins-search-head h3{margin:0;font-size:17px}
@@ -666,8 +701,8 @@ function viewPantau(){
   <div class="kpis">
     <button class="kpi ${belum?"alert":""}" data-go="kereta:belum"><span class="l">Belum diperiksa</span><b>${belum}</b><small>daripada ${S.vehicles.filter(v=>String(v.status).toLowerCase()!=="sold").length} kereta stok</small></button>
     <button class="kpi ${by("hantar")?"alert":""}" data-go="senarai:hantar:"><span class="l">Menunggu semakan</span><b>${by("hantar")}</b><small>${isOwner()?"Tekan untuk semak":"Dihantar kepada Owner"}</small></button>
-    <button class="kpi" data-go="senarai:draf:"><span class="l">Draf belum siap</span><b>${by("draf")}</b><small>Belum dihantar</small></button>
     <button class="kpi ${by("ulang")?"alert":""}" data-go="senarai:ulang:"><span class="l">Perlu dibetulkan</span><b>${by("ulang")}</b><small>Dipulangkan oleh Owner</small></button>
+    <button class="kpi" data-go="senarai:draf:"><span class="l">Draf belum siap</span><b>${by("draf")}</b><small>Belum dihantar</small></button>
     <button class="kpi" data-go="senarai::"><span class="l">Jumlah pemeriksaan</span><b>${R.length}</b><small>${today_n} hari ini</small></button>
     <button class="kpi" data-go="senarai::"><span class="l">Anggaran kos repair</span><b class="sm2">${RM(kos).replace(".00","")}</b><small>${left} barang belum ditukar</small></button>
     <button class="kpi ${flood?"alert":""}" data-go="senarai::banjir"><span class="l">Banjir disyaki/sah</span><b>${flood}</b><small>Wajib disclose</small></button>
