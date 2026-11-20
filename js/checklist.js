@@ -438,7 +438,7 @@ function toast(m){const t=$("#toast");if(!t)return;t.textContent=m;t.classList.a
 
 /* row (DB) <-> record (UI) */
 function fromRow(x){ const d=x.data||{}; return {...d, id:x.id, vehicle_id:x.vehicle_id, status:x.status||"draf", grade:x.grade||d.grade||"",
-  reviewNote:x.review_note||"", reviewedBy:x.reviewed_by||null, reviewedAt:x.reviewed_at||null, createdBy:x.created_by||null, createdAt:x.created_at, updatedAt:x.updated_at,
+  reviewNote:x.review_note||"", reviewedBy:x.reviewed_by||null, reviewedAt:x.reviewed_at||null, createdBy:x.created_by||null, createdAt:x.created_at, updatedAt:x.updated_at, _rawData:x.data||{},
   items:d.items||{}, akhir:d.akhir||{}, parts:d.parts||[] }; }
 function inspFor(v){ const np=normPlat(v.plate); return S.rows.filter(r=>String(r.vehicle_id)===String(v.id) || (!r.vehicle_id && np && normPlat(r.plat)===np)); }
 
@@ -506,16 +506,16 @@ function recRow(r){
 const inspectionSearchStatus = state => ["draf","hantar","ulang"].includes(state);
 function inspectionSearchRows(vehicles,query="",status="perlu"){
   const q=String(query||"").trim().toLowerCase().replace(/\s+/g,"");
-  return vehicles.filter(v=>String(v.status||"").toLowerCase()!=="sold")
+  return vehicles.filter(v=>String(v.status||"").toLowerCase()!=="sold" || status==="semua" || status==="sold" || !!q)
     .map(v=>({v,s:carState(v)}))
-    .filter(({v,s})=>(status==="semua"||status==="perlu"&&(s.k==="belum"||inspectionSearchStatus(s.k))||
+    .filter(({v,s})=>(status==="semua"||status==="sold"&&String(v.status||"").toLowerCase()==="sold"||status==="perlu"&&(String(v.status||"").toLowerCase()==="sold"&&!!q||s.k==="belum"||inspectionSearchStatus(s.k))||
       status==="belum"&&s.k==="belum"||status==="proses"&&inspectionSearchStatus(s.k)||
       status==="lulus"&&s.k==="lulus")&&(!q||[v.plate,v.vehicle_id,v.make,v.model,v.model_year,carName(v)]
         .some(x=>String(x||"").toLowerCase().replace(/\s+/g,"").includes(q))));
 }
 function dashboardSearchHtml(){
   const st=S.dashboardSearch.status;
-  const opts=[["perlu","Perlu tindakan"],["belum","Belum diperiksa"],["proses","Dalam proses"],["lulus","Disahkan"],["semua","Semua kereta"]];
+  const opts=[["perlu","Perlu tindakan"],["belum","Belum diperiksa"],["proses","Dalam proses"],["lulus","Disahkan"],["sold","Sudah dijual"],["semua","Semua kereta"]];
   return `<section class="ada-ins-search" aria-label="Cari kenderaan untuk pemeriksaan">
     <div class="ada-ins-search-head"><h3>Cari Kereta untuk Pemeriksaan</h3><small>Cari nombor plat, model, jenama atau ID kereta</small></div>
     <div class="ada-ins-search-controls"><input class="field" id="ada-ins-search-q" type="search" inputmode="search"
@@ -538,6 +538,7 @@ function bindDashboardSearch(){
       '<div class="empty">Tiada kereta yang sepadan. Cuba carian atau status lain.</div>';
     $("#ada-ins-search-results [data-start]").forEach(b=>b.onclick=()=>openForCar(b.dataset.start));
     $("#ada-ins-search-results [data-edit]").forEach(b=>b.onclick=()=>openForm(b.dataset.edit));
+    $("#ada-ins-search-results [data-cost]").forEach(b=>b.onclick=()=>editInspectionCost(b.dataset.cost));
     $("#ada-ins-search-results [data-rec]").forEach(b=>b.onclick=()=>go("detail",b.dataset.rec));
   };
   input.oninput=e=>{S.dashboardSearch.q=e.target.value;draw()};
@@ -576,17 +577,18 @@ function bindPantau(){ const b=$('[data-act="pdfsum"]'); if(b) b.onclick=summary
 /* --- Kereta --- */
 function carState(v){ const l=inspFor(v)[0]; if(!l) return {k:"belum",t:"Belum diperiksa",r:null}; return {k:l.status||"draf",t:(STATUS[l.status]||STATUS.draf)[0],r:l}; }
 function viewKereta(){
-  const list=S.vehicles.filter(v=>String(v.status).toLowerCase()!=="sold").map(v=>({v,s:carState(v)}));
+  const list=S.vehicles.map(v=>({v,s:carState(v)}));
   const cnt=k=>list.filter(x=>k==="proses"?["draf","hantar","ulang"].includes(x.s.k):x.s.k===k).length;
-  const F=[["","Semua",list.length],["belum","Belum diperiksa",cnt("belum")],["proses","Dalam proses",cnt("proses")],["lulus","Disahkan",cnt("lulus")]];
+  const F=[["","Semua",list.length],["belum","Belum diperiksa",cnt("belum")],["proses","Dalam proses",cnt("proses")],["lulus","Disahkan",cnt("lulus")],["sold","Sudah dijual",list.filter(({v})=>String(v.status||"").toLowerCase()==="sold").length]];
   return `<div class="filters"><input class="field" id="iq" placeholder="Cari model, plat atau ID…" value="${esc(S.inv.q)}"></div>
   <div class="chips">${F.map(([k,t,n])=>`<button data-if="${k}" class="${S.inv.f===k?"on":""}">${t}<b>${n}</b></button>`).join("")}</div><div id="cgrid"></div>`;
 }
 function carCard({v,s}){
-  const r=s.r, cn=r?counts(r):null; let act;
+  const r=s.r, cn=r?counts(r):null, sold=String(v.status||"").toLowerCase()==="sold"; let act;
   if(!r) act=`<button class="btn" data-start="${esc(v.id)}">Mula periksa</button>`;
   else if(s.k==="draf"||s.k==="ulang"||s.k==="hantar") act=`<button class="btn" data-edit="${esc(r.id)}">${s.k==="ulang"?"Betulkan":s.k==="hantar"?"Edit":"Sambung"}</button>`;
-  else act=`<button class="btn alt" data-rec="${esc(r.id)}">Lihat laporan</button>${s.k==="lulus"?`<button class="btn alt narrow" data-start="${esc(v.id)}" title="Pemeriksaan baru">+</button>`:""}`;
+  else act=`<button class="btn alt" data-rec="${esc(r.id)}">Lihat laporan</button>${!sold&&s.k==="lulus"?`<button class="btn alt narrow" data-start="${esc(v.id)}" title="Pemeriksaan baru">+</button>`:""}`;
+  if(r)act+=`<button class="btn go" data-cost="${esc(r.id)}">+ Edit / Tambah Kos</button>`;
   return `<div class="car"><div class="ctop"><span class="stat">${esc(v.status||"-")}</span><span class="ib ${s.k}">${esc(s.t)}</span></div>
     <div class="cb"><h4>${esc(carName(v)||"-")}</h4><div class="yp">${esc(v.model_year||"-")} · <span class="plate">${esc(v.plate||"-")}</span>${v.mileage_km?` · ${Number(v.mileage_km).toLocaleString("en-MY")} km`:""}</div>
     ${r?`<div class="ins"><span class="gchip sm ${gradeCls(r.grade)}">${esc(r.grade||"–")}</span><span>${cn.done}/${TOTAL_ITEMS} item${cn.ng?` · <em class="ng">${cn.ng} NG</em>`:""}${(r.parts||[]).length?` · kos ${RM(partsTotal(r)).replace(".00","")}`:""}<br><small class="mute">${esc(who(r))} · ${fmtD(r.tarikh)}</small></span></div>`:""}
@@ -595,11 +597,12 @@ function carCard({v,s}){
 function bindKereta(){
   const draw=()=>{
     const q=S.inv.q.toLowerCase();
-    const rs=S.vehicles.filter(v=>String(v.status).toLowerCase()!=="sold").map(v=>({v,s:carState(v)}))
-      .filter(({v,s})=>(!S.inv.f||(S.inv.f==="proses"?["draf","hantar","ulang"].includes(s.k):s.k===S.inv.f))&&(!q||[v.vehicle_id,carName(v),v.plate,v.model_year].join(" ").toLowerCase().includes(q)));
+    const rs=S.vehicles.map(v=>({v,s:carState(v)}))
+      .filter(({v,s})=>(!S.inv.f||(S.inv.f==="sold"?String(v.status||"").toLowerCase()==="sold":S.inv.f==="proses"?["draf","hantar","ulang"].includes(s.k):s.k===S.inv.f))&&(!q||[v.vehicle_id,carName(v),v.plate,v.model_year].join(" ").toLowerCase().includes(q)));
     $("#cgrid").innerHTML = rs.length? `<div class="cgrid">${rs.map(carCard).join("")}</div>` : `<div class="empty">${S.vehicles.length?"Tiada kereta yang sepadan.":"Tiada kenderaan dalam inventori."}</div>`;
     $$("#cgrid [data-start]").forEach(b=>b.onclick=()=>openForCar(b.dataset.start));
-    $$("#cgrid [data-edit]").forEach(b=>b.onclick=()=>openForm(b.dataset.edit));
+    $("#cgrid [data-edit]").forEach(b=>b.onclick=()=>openForm(b.dataset.edit));
+    $("#cgrid [data-cost]").forEach(b=>b.onclick=()=>editInspectionCost(b.dataset.cost));
     $$("#cgrid [data-rec]").forEach(b=>b.onclick=()=>go("detail",b.dataset.rec));
   };
   $("#iq").oninput=e=>{S.inv.q=e.target.value;draw();};
@@ -706,6 +709,7 @@ function viewDetail(){
     ${r.reviewNote||r.reviewedAt?`<div class="notice"><b>Semakan Owner${r.status==="lulus"?" (disahkan)":""}:</b> ${esc(r.reviewNote||"—")}<br><small class="mute">${esc(S.names[r.reviewedBy]||"")} ${fmtDT(r.reviewedAt)}</small></div>`:""}
     <div class="row">
       ${canEdit?`<button class="sm" data-edit="${esc(r.id)}">Edit</button>`:""}
+      <button class="sm go" data-cost="${esc(r.id)}">+ Edit / Tambah Kos</button>
       <button class="sm go" data-act="pdf">Muat turun PDF</button><button class="sm" data-act="copy">Salin ringkasan (WhatsApp)</button>
       <span class="grow"></span>
       ${isOwner()&&r.status!=="draf"?`<button class="sm bad" data-rv="ulang">Pulangkan</button><button class="sm okb" data-rv="lulus">Sahkan</button>`:""}
@@ -735,7 +739,8 @@ function bindDetail(){
   loadTrail(r.id);
   hydrate(Object.values(r.items||{}).flatMap(photosOf));
   $$(".evid [data-open]").forEach(t=>t.onclick=()=>lightbox(t.dataset.open,t.dataset.cap));
-  $$("[data-edit]").forEach(b=>b.onclick=()=>openForm(b.dataset.edit));
+  $("[data-edit]").forEach(b=>b.onclick=()=>openForm(b.dataset.edit));
+  $("[data-cost]").forEach(b=>b.onclick=()=>editInspectionCost(b.dataset.cost));
   $('[data-act="pdf"]').onclick=e=>withBusy(e.target,()=>pdfInspection(r));
   $('[data-act="copy"]').onclick=()=>{ const t=summaryText(r); (navigator.clipboard?.writeText(t)||Promise.reject()).then(()=>toast("Ringkasan disalin"),()=>showCopy(t)); };
   $$("[data-rv]").forEach(b=>b.onclick=()=>review(r,b.dataset.rv));
@@ -748,6 +753,63 @@ function bindDetail(){
   const del=$('[data-act="del"]'); if(del) del.onclick=async()=>{ if(del.dataset.sure!=="1"){del.dataset.sure="1";del.textContent="Tekan sekali lagi untuk padam";return;}
     const {error}=await S.client.from("checklist_inspections").delete().eq("id",r.id); if(error){toast("Gagal padam: "+error.message);return;}
     S.rows=S.rows.filter(x=>x.id!==r.id); toast("Rekod dipadam"); go("senarai"); };
+}
+// Cost-only editor: safe for approved records; the DB guard keeps review/status
+// unchanged and the audit trigger records any cost or parts changes.
+function editInspectionCost(id){
+  const r=S.rows.find(x=>x.id===id);if(!r)return toast("Pemeriksaan tidak dijumpai.");
+  const parts=JSON.parse(JSON.stringify(r.parts||[]));
+  const m=modal(`<h3>Tambah / Edit Kos Pemeriksaan · ${esc(r.plat)}</h3>
+    <p class="mute">Kos tambahan selepas jualan boleh dimasukkan di sini. Status pemeriksaan, gred dan status jualan tidak berubah. Jejak perubahan disimpan.</p>
+    <div id="cost-items"></div>
+    <div class="row"><button class="sm" id="add-cost">+ Tambah barang / upah</button><span class="grow"></span><b id="cost-total"></b></div>
+    <p class="mute" id="cost-error" role="alert"></p>
+    <div class="row end"><button class="sm" id="cost-cancel">Batal</button><button class="sm go" id="cost-save">Simpan Kos</button></div>`);
+  const el=m.querySelector.bind(m);
+  const draw=()=>{
+    el("#cost-items").innerHTML=parts.map((p,i)=>`<div class="part" data-cost-i="${i}">
+      <div class="pr1"><div class="fld"><label>Barang / kerja</label><input class="field" data-key="nama" value="${esc(p.nama||"")}" placeholder="Contoh: Tukar tayar"></div>
+      <div class="fld bhg"><label>Bahagian</label><select class="field" data-key="bhg">${BHG.map(([k,t])=>`<option value="${esc(k)}" ${p.bhg===k?"selected":""}>${esc(t)}</option>`).join("")}</select></div>
+      <button class="del" title="Buang kos ini" data-remove-cost="${i}">✕</button></div>
+      <div class="pr2"><div class="fld"><label>Kuantiti</label><input class="field" type="number" min="1" step="1" data-key="qty" value="${esc(p.qty??1)}"></div>
+      <div class="fld"><label>Harga seunit (RM)</label><input class="field" type="number" min="0" step="0.01" data-key="harga" value="${esc(p.harga??0)}"></div>
+      <div class="fld"><label>Upah (RM)</label><input class="field" type="number" min="0" step="0.01" data-key="upah" value="${esc(p.upah??0)}"></div>
+      <label class="mute"><input type="checkbox" data-key="siap" ${p.siap?"checked":""}> Siap</label></div></div>`).join("")||'<p class="mute">Belum ada kos. Tekan Tambah untuk masukkan kerja atau barang.</p>';
+    m.querySelectorAll("[data-cost-i]").forEach(row=>{
+      const index=Number(row.dataset.costI);
+      row.querySelectorAll("[data-key]").forEach(input=>input.oninput=input.onchange=()=>{
+        parts[index][input.dataset.key]=input.dataset.key==="siap"?input.checked:input.value;
+        el("#cost-total").textContent=RM(partsTotal({parts}));
+      });
+    });
+    m.querySelectorAll("[data-remove-cost]").forEach(b=>b.onclick=()=>{parts.splice(Number(b.dataset.removeCost),1);draw()});
+    el("#cost-total").textContent=RM(partsTotal({parts}));
+  };
+  el("#add-cost").onclick=()=>{parts.push({id:newId(),nama:"",bhg:"lain",qty:1,harga:0,upah:0,siap:false});draw();m.querySelector('[data-cost-i]:last-of-type [data-key="nama"]')?.focus()};
+  el("#cost-cancel").onclick=()=>m.remove();
+  el("#cost-save").onclick=async()=>{
+    const normalized=parts.map(p=>({id:p.id||newId(),nama:String(p.nama||"").trim(),bhg:p.bhg||"lain",qty:Number(p.qty),harga:Number(p.harga),upah:Number(p.upah),siap:!!p.siap}));
+    if(normalized.some(p=>!p.nama||!Number.isInteger(p.qty)||p.qty<1||![p.harga,p.upah].every(x=>Number.isFinite(x)&&x>=0))){
+      el("#cost-error").textContent="Isi nama barang, kuantiti sah, harga dan upah tidak negatif.";return;
+    }
+    const save=el("#cost-save");save.disabled=true;save.textContent="Menyimpan…";
+    // Preserve exact original JSON fields so staff may edit parts of an approved
+    // inspection without changing its already-approved non-parts contents.
+    let query=S.client.from("checklist_inspections").update({
+      data:{...r._rawData,parts:normalized},kos:partsTotal({parts:normalized})
+    }).eq("id",r.id);
+    if(r.updatedAt)query=query.eq("updated_at",r.updatedAt);
+    const {data,error}=await query.select("*").maybeSingle();
+    if(error||!data){
+      el("#cost-error").textContent="Kos tidak dapat disimpan: "+(error?.message||"Rekod telah berubah. Muat semula dahulu.");
+      save.disabled=false;save.textContent="Simpan Kos";return;
+    }
+    const rec=fromRow(data);S.rows=S.rows.map(x=>x.id===rec.id?rec:x);
+    m.remove();toast("Kos pemeriksaan dikemas kini. Jejak perubahan direkod.");
+    window.dispatchEvent(new CustomEvent("ada-inspection-cost-updated",{detail:{vehicleId:rec.vehicle_id,inspectionId:rec.id}}));
+    render();
+  };
+  draw();
 }
 function summaryText(r){
   const c=counts(r); let t=`*ABE DIN AUTO – Laporan Pemeriksaan*\n${r.plat||"-"} | ${r.jenis||"-"} ${r.tahun||""}\nMileage: ${r.mileage||"-"}\nTarikh: ${fmtD(r.tarikh)} | Pemeriksa: ${who(r)}\n\n*Gred: ${r.grade||"-"}* ${r.grade?"("+GRADES[r.grade]+")":""}\n`;
