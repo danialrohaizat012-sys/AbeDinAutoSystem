@@ -36,8 +36,8 @@ const CSS=`
   --pri:#e8b10b;--pri-fg:#141000;--ok:#3fae6b;--ok-bg:#12321f;--ng:#e0473f;--ng-bg:#3a1513;--na:#77736a;
   --gA:#1f8a4c;--gB:#f0b400;--gC:#ef7d00;--gD:#d12b2b;--f:Inter,-apple-system,"Segoe UI",system-ui,sans-serif;color-scheme:dark}
 *{box-sizing:border-box}
-.shell{background:var(--bg);color:var(--fg);font:15px/1.45 var(--f);padding:14px 0 40px;border-radius:18px}
-.wrap{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:12px;padding:0 4px}
+.shell{container-type:inline-size;background:var(--bg);color:var(--fg);font:15px/1.45 var(--f);padding:12px 0 24px;border-radius:18px}
+.wrap{min-width:0;display:flex;flex-direction:column;gap:10px;padding-inline:4px}
 h2{margin:0;font-size:22px;letter-spacing:-.01em;font-weight:800}
 h3{margin:0 0 6px;font-size:16px;font-weight:700}
 p{margin:0}
@@ -96,7 +96,19 @@ em{font-style:normal}.ng{color:var(--ng)}.ok{color:var(--ok)}
 .gchip.sm{width:28px;height:28px;flex-basis:28px;font-size:16px;border-radius:7px}
 .gchip.big{width:60px;height:60px;flex-basis:60px;font-size:36px;border-radius:14px}
 .gchip.gA{background:var(--gA)}.gchip.gB{background:var(--gB);color:#141000}.gchip.gC{background:var(--gC)}.gchip.gD{background:var(--gD)}
-.filters{display:flex;gap:8px;flex-wrap:wrap}.filters .field{flex:1;min-width:150px}
+.filters{display:grid;grid-template-columns:minmax(0,2fr) repeat(2,minmax(0,1fr));gap:8px}
+#lst>.mute{margin-bottom:6px}
+#lst .rec{padding:7px 10px;min-height:50px}
+.rec .rb{overflow-wrap:anywhere}
+@container (max-width:540px){
+  .tabs button{min-width:0;min-height:44px;padding:6px 2px;font-size:13px}
+  .tabs .refresh{flex-basis:36px}
+  .filters{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .filters input{grid-column:1/-1}
+  #lst .rec{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 9px}
+  #lst .gchip{grid-row:1/span 2;width:34px;height:34px;font-size:18px}
+  #lst .rec .pill{grid-column:2;justify-self:start;white-space:normal}
+}
 .ada-ins-search{border:1px solid var(--line);border-radius:16px;padding:15px;background:var(--card);margin:4px 0 15px}
 .ada-ins-search-head{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap;margin-bottom:11px}
 .ada-ins-search-head h3{margin:0;font-size:17px}
@@ -612,9 +624,9 @@ function bindKereta(){
 
 /* --- Rekod --- */
 function viewSenarai(){
-  return `<div class="filters"><input class="field" id="fq" placeholder="Cari plat, model, staff…" value="${esc(S.filt.q)}">
-    <select class="field" id="fs"><option value="">Semua status</option>${Object.entries(STATUS).map(([k,v])=>`<option value="${k}" ${S.filt.st===k?"selected":""}>${v[0]}</option>`).join("")}</select>
-    <select class="field" id="fg"><option value="">Semua gred</option>${["A","B","C","D"].map(g=>`<option ${S.filt.g===g?"selected":""}>${g}</option>`).join("")}<option value="banjir" ${S.filt.g==="banjir"?"selected":""}>Banjir disyaki/sah</option></select></div><div id="lst"></div>`;
+  return `<div class="filters"><input class="field" id="fq" aria-label="Cari rekod pemeriksaan" placeholder="Cari plat, model, staff…" value="${esc(S.filt.q)}">
+    <select class="field" id="fs" aria-label="Tapis mengikut status"><option value="">Semua status</option>${Object.entries(STATUS).map(([k,v])=>`<option value="${k}" ${S.filt.st===k?"selected":""}>${v[0]}</option>`).join("")}</select>
+    <select class="field" id="fg" aria-label="Tapis mengikut gred"><option value="">Semua gred</option>${["A","B","C","D"].map(g=>`<option ${S.filt.g===g?"selected":""}>${g}</option>`).join("")}<option value="banjir" ${S.filt.g==="banjir"?"selected":""}>Banjir disyaki/sah</option></select></div><div id="lst"></div>`;
 }
 function bindSenarai(){
   const draw=()=>{

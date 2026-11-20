@@ -45,7 +45,7 @@ test('search reuses existing car actions and does not alter sales or inspection 
  assert.match(src,/openForCar\(b\.dataset\.start\)/);
  assert.match(src,/openForm\(b\.dataset\.edit\)/);
  assert.match(src,/go\("detail",b\.dataset\.rec\)/);
- assert.match(html,/import\('\.\/js\/checklist\.js\?v=83\.9'\)/);
+ assert.match(html,/import\('\.\/js\/checklist\.js\?v=83\.10'\)/);
 });
 test('mobile search layout adapts to one column',()=>{
  assert.match(src,/@media\(max-width:620px\)\{\.ada-ins-search/);
