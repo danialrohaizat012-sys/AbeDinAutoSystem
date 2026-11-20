@@ -1,0 +1,21 @@
+name: V83 Receipt PDF Quick Share
+on:
+  pull_request:
+    paths:
+      - 'app.html'
+      - 'tests/v83-receipt-direct-pdf-share.test.cjs'
+      - '.github/workflows/v83-receipt-direct-pdf-share.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  pdf-share:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check direct PDF sharing
+        run: node --test tests/v83-receipt-direct-pdf-share.test.cjs
