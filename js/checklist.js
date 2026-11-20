@@ -536,10 +536,10 @@ function bindDashboardSearch(){
     meta.textContent=rows.length+" kereta sepadan"+(visible.length<rows.length?" · paparan "+visible.length+" pertama, taip untuk cari":"");
     results.innerHTML=visible.length?`<div class="cgrid">${visible.map(carCard).join("")}</div>`:
       '<div class="empty">Tiada kereta yang sepadan. Cuba carian atau status lain.</div>';
-    $("#ada-ins-search-results [data-start]").forEach(b=>b.onclick=()=>openForCar(b.dataset.start));
-    $("#ada-ins-search-results [data-edit]").forEach(b=>b.onclick=()=>openForm(b.dataset.edit));
-    $("#ada-ins-search-results [data-cost]").forEach(b=>b.onclick=()=>editInspectionCost(b.dataset.cost));
-    $("#ada-ins-search-results [data-rec]").forEach(b=>b.onclick=()=>go("detail",b.dataset.rec));
+    $$("#ada-ins-search-results [data-start]").forEach(b=>b.onclick=()=>openForCar(b.dataset.start));
+    $$("#ada-ins-search-results [data-edit]").forEach(b=>b.onclick=()=>openForm(b.dataset.edit));
+    $$("#ada-ins-search-results [data-cost]").forEach(b=>b.onclick=()=>editInspectionCost(b.dataset.cost));
+    $$("#ada-ins-search-results [data-rec]").forEach(b=>b.onclick=()=>go("detail",b.dataset.rec));
   };
   input.oninput=e=>{S.dashboardSearch.q=e.target.value;draw()};
   status.onchange=e=>{S.dashboardSearch.status=e.target.value;draw()};
@@ -601,8 +601,8 @@ function bindKereta(){
       .filter(({v,s})=>(!S.inv.f||(S.inv.f==="sold"?String(v.status||"").toLowerCase()==="sold":S.inv.f==="proses"?["draf","hantar","ulang"].includes(s.k):s.k===S.inv.f))&&(!q||[v.vehicle_id,carName(v),v.plate,v.model_year].join(" ").toLowerCase().includes(q)));
     $("#cgrid").innerHTML = rs.length? `<div class="cgrid">${rs.map(carCard).join("")}</div>` : `<div class="empty">${S.vehicles.length?"Tiada kereta yang sepadan.":"Tiada kenderaan dalam inventori."}</div>`;
     $$("#cgrid [data-start]").forEach(b=>b.onclick=()=>openForCar(b.dataset.start));
-    $("#cgrid [data-edit]").forEach(b=>b.onclick=()=>openForm(b.dataset.edit));
-    $("#cgrid [data-cost]").forEach(b=>b.onclick=()=>editInspectionCost(b.dataset.cost));
+    $$("#cgrid [data-edit]").forEach(b=>b.onclick=()=>openForm(b.dataset.edit));
+    $$("#cgrid [data-cost]").forEach(b=>b.onclick=()=>editInspectionCost(b.dataset.cost));
     $$("#cgrid [data-rec]").forEach(b=>b.onclick=()=>go("detail",b.dataset.rec));
   };
   $("#iq").oninput=e=>{S.inv.q=e.target.value;draw();};
