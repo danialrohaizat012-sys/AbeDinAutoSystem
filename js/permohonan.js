@@ -235,9 +235,12 @@ async function loadApplications(){
  renderApplications();
 }
 async function updateApplication(a,patch,message){
- const {data,error}=await ctx.client.from('buyer_applications').update(patch).eq('id',a.id).is('deleted_at',null).select('id').maybeSingle();
+ const query=ctx.client.from('buyer_applications').update(patch,{count:'exact'}).eq('id',a.id).is('deleted_at',null);
+ // Archived rows leave the SELECT scope immediately; do not ask PostgREST
+ // to SELECT them back after a soft delete.
+ const {error,count}=await query;
  if(error)throw error;
- if(!data)throw new Error('Rekod tidak berubah. Semak kebenaran akses.');
+ if(count===0)throw new Error('Rekod tidak berubah. Semak kebenaran akses.');
  notify(message);
  await loadApplications();
 }
@@ -311,8 +314,11 @@ async function submitApplicationEdit(form){
  for(const key of Object.keys(updated)){
   if(fd.has('detail_'+key))updated[key]=String(fd.get('detail_'+key)||'').trim();
  }
- const patch={applicant_name:name,applicant_phone:phone,applicant_email:String(fd.get('applicant_email')||'').trim(),
-  car_interest:String(fd.get('car_interest')||'').trim(),details:updated};
+ const email=String(fd.get('applicant_email')||'').trim(),car=String(fd.get('car_interest')||'').trim();
+ // Keep the detailed form fields in sync with the indexed summary fields.
+ updated.nama=name;updated.tel=phone;updated.email=email;updated.kereta=car;
+ const patch={applicant_name:name,applicant_phone:phone,applicant_email:email,
+  car_interest:car,details:updated};
  busy=true;const btn=form.querySelector('button[type=submit]');if(btn)btn.disabled=true;
  try{await updateApplication(a,patch,'Permohonan pelanggan berjaya dikemas kini.');editingId=null;renderApplications()}
  catch(e){notify(e.message||String(e),true)}
