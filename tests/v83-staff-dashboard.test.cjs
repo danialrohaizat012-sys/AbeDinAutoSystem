@@ -12,7 +12,7 @@ test('staff role reaches menu before permitted navigation refresh',()=>{
 });
 test('staff quick navigation chooses only permitted pages',()=>{
  assert.match(js,/candidate\.filter\(page=>byPage\.get\(page\)&&!byPage\.get\(page\)\.hidden\)\.slice\(0,4\)/);
- assert.match(js,/button\.addEventListener\('click',\(\)=>navigate\(page\)\)/);
+ assert.match(js,/button\.addEventListener\('click',\(\)=>\{if\(navigate\(page\)\)close\(\)\}\)/);
  assert.match(js,/isStaff\?'Katalog Umum':'Dashboard'/);
 });
 test('catalogue has responsive contained iframe and accessible customer link',()=>{
