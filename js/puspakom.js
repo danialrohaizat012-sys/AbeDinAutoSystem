@@ -228,18 +228,31 @@ async function load() {
 
 // Gabung inventori (vehicles) dengan rekod puspakom ikut plat
 function cars() {
-  const byPlate = {};
-  S.rows.forEach(r => { byPlate[normPlate(r.plate)] = r; });
-  const out = [], seen = {};
-  // Semua kereta dipaparkan, termasuk Reserved dan yang dah dijual dalam katalog (masih perlu Puspakom untuk tukar milik).
-  // Kereta yang dah Sold sepenuhnya disembunyikan, kecuali ada booking / gagal yang masih aktif.
-  S.vehicles.forEach(v => {
-    const k = normPlate(v.plate); if (!k || seen[k]) return;
-    const r = byPlate[k];
-    if (String(v.status || "").toLowerCase() === "sold" && !(r && (r.status === "tempah" || r.status === "gagal"))) return;
-    seen[k] = 1; out.push(toCar(k, r, v));
+  const byPlate = new Map(), byVehicleId = new Map();
+  S.rows.forEach(r => {
+    const plate = normPlate(r.plate);
+    if (plate) byPlate.set(plate, r);
+    if (r.vehicle_id) byVehicleId.set(String(r.vehicle_id), r);
   });
-  S.rows.forEach(r => { const k = normPlate(r.plate); if (seen[k]) return; seen[k] = 1; out.push(toCar(k, r, null)); });
+  const out = [], seen = new Set();
+  // Rekod Sold yang ada sejarah Puspakom mesti kekal dipadankan,
+  // termasuk selepas Lulus (CDW3079). Hanya Sold tanpa rekod Puspakom
+  // disembunyikan untuk mengelakkan senarai dipenuhi stok lama.
+  S.vehicles.forEach(v => {
+    const plate = normPlate(v.plate);
+    if (!plate || seen.has(plate)) return;
+    const r = byVehicleId.get(String(v.id)) || byPlate.get(plate);
+    if (String(v.status || "").toLowerCase() === "sold" && !r) return;
+    seen.add(plate);
+    if (r?.plate) seen.add(normPlate(r.plate));
+    out.push(toCar(plate, r, v));
+  });
+  S.rows.forEach(r => {
+    const plate = normPlate(r.plate);
+    if (!plate || seen.has(plate)) return;
+    seen.add(plate);
+    out.push(toCar(plate, r, null));
+  });
   return out;
 }
 function toCar(plate, r, v) {
