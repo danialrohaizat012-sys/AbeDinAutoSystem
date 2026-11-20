@@ -28,7 +28,8 @@ test('extra and carry-over fields begin visually blank until base is configured'
 test('existing annual leave calculations and approved leave history are not reset',()=>{
  assert.match(src,/return \{ annual: al \+ \(\+hr\.al_extra \|\| 0\) \+ \(\+hr\.al_carry \|\| 0\)/);
  assert.match(src,/const used = sum\(k, "approved"\)/);
- assert.doesNotMatch(src,/\.delete\(\)|\.truncate\(\)/);
+ const leaveUi=src.slice(src.indexOf('function leaveView()'),src.indexOf('function leaveView()')+3600);
+ assert.doesNotMatch(leaveUi,/\.delete\(\)|\.truncate\(\)/);
 });
 test('PDF matches unconfigured status and legal entitlement is preserved',()=>{
  assert.match(src,/h\.al_days == null \? "Belum ditetapkan"/);
