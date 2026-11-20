@@ -2268,3 +2268,10 @@ html .ada-head-tools .cloud-pill{display:none!important}}
  #ada-cloud-gate .ada-sale-record-row{margin:5px 0 7px}
  #ada-cloud-gate .ada-sale-record-badge{font-size:10.5px;padding:4px 7px;border-radius:7px}
 }
+.ada-np-push{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 14px;background:#1b1f1b;border-bottom:1px solid #2a3031;font-size:12.5px;line-height:1.4;color:#d9d3c3}
+.ada-np-push.on{background:#10301e;color:#8ce3ad}
+#ada-notif-panel .ada-np-push button{flex:none;width:auto!important;min-height:0!important;margin:0!important;padding:7px 12px!important;border-radius:9px!important;font-size:12.5px!important;font-weight:800;border:1px solid #3a4041!important;background:transparent!important;color:#f4efe2!important;box-shadow:none!important}
+#ada-notif-panel .ada-np-push button.on{background:#f5c400!important;border-color:#f5c400!important;color:#141000!important}
+html.ada-light .ada-np-push{background:#faf6ea;color:#4d4838;border-color:#eee6d6}
+html.ada-light .ada-np-push.on{background:#e3f6ea;color:#17803f}
+html.ada-light #ada-notif-panel .ada-np-push button{color:#1d1a14!important;border-color:#d9cfbb!important}
