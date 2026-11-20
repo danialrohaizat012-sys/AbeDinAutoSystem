@@ -58,5 +58,5 @@ function simulate(section){
 test('Ringkasan search binds all four click handlers without TypeError',()=>simulate(dashboard));
 test('Kereta list binds all four click handlers without TypeError',()=>simulate(inventory));
 test('module cache is refreshed for iPhone Safari',()=>{
- assert.match(app,/import\('\.\/js\/checklist\.js\?v=83\.10'\)/);
+ assert.match(app,/import\('\.\/js\/checklist\.js\?v=83\.11'\)/);
 });

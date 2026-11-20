@@ -118,7 +118,27 @@ em{font-style:normal}.ng{color:var(--ng)}.ok{color:var(--ok)}
 .ada-ins-search-meta{margin:10px 0;color:var(--mute);font-size:12px}
 .ada-ins-search-results .cgrid{grid-template-columns:repeat(auto-fill,minmax(245px,1fr))}
 .ada-ins-search-results .empty{padding:16px}
-@media(max-width:620px){.ada-ins-search{padding:12px}.ada-ins-search-controls{grid-template-columns:1fr}.ada-ins-search-head{display:block}.ada-ins-search-head small{display:block;margin-top:4px}}
+@media(max-width:620px){
+  .head h2{font-size:20px}
+  .ada-ins-search{padding:9px;margin:0 0 8px;border-radius:13px}
+  .ada-ins-search-head{display:block;margin-bottom:7px}
+  .ada-ins-search-head h3{font-size:15px}
+  .ada-ins-search-head small{display:block;margin-top:2px}
+  .ada-ins-search-controls{grid-template-columns:minmax(0,1fr) minmax(0,140px);gap:6px}
+  .ada-ins-search-controls .field{min-height:44px;padding:7px 8px}
+  .ada-ins-search-meta{margin:6px 0}
+  .ada-ins-search-results .cgrid{grid-template-columns:minmax(0,1fr);gap:8px}
+  .cgrid .car{border-radius:12px;overflow-wrap:anywhere}
+  .cgrid .ctop{padding:6px 9px;gap:4px;flex-wrap:wrap}
+  .cgrid .cb{padding:8px 9px;gap:4px}
+  .cgrid .cb h4{font-size:15px;line-height:1.25}
+  .cgrid .idr{padding-top:4px}
+  .cgrid .cf{padding:0 9px 8px;gap:5px;flex-wrap:wrap}
+  .cgrid .cf .btn{min-height:44px;padding:6px 8px;font-size:13px}
+}
+@media(max-width:350px){
+  .ada-ins-search-controls{grid-template-columns:1fr}
+}
 
 .chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}
 .chips button{flex:0 0 auto;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600}
@@ -529,9 +549,9 @@ function dashboardSearchHtml(){
   const st=S.dashboardSearch.status;
   const opts=[["perlu","Perlu tindakan"],["belum","Belum diperiksa"],["proses","Dalam proses"],["lulus","Disahkan"],["sold","Sudah dijual"],["semua","Semua kereta"]];
   return `<section class="ada-ins-search" aria-label="Cari kenderaan untuk pemeriksaan">
-    <div class="ada-ins-search-head"><h3>Cari Kereta untuk Pemeriksaan</h3><small>Cari nombor plat, model, jenama atau ID kereta</small></div>
+    <div class="ada-ins-search-head"><h3>Cari kereta</h3><small>Nombor plat, model, jenama atau ID</small></div>
     <div class="ada-ins-search-controls"><input class="field" id="ada-ins-search-q" type="search" inputmode="search"
-      placeholder="Contoh: DDA1234, Myvi, ADA-001" aria-label="Cari kereta" autocomplete="off" value="${esc(S.dashboardSearch.q)}">
+      placeholder="cth. BNK3909" aria-label="Cari kereta" autocomplete="off" value="${esc(S.dashboardSearch.q)}">
       <select class="field" id="ada-ins-search-status" aria-label="Status pemeriksaan">
         ${opts.map(([k,label])=>`<option value="${k}"${st===k?" selected":""}>${label}</option>`).join("")}
       </select></div>

@@ -50,5 +50,5 @@ test('review routes update to the same database record and does not modify cost 
  assert.doesNotMatch(reviewSource,/update\(\{[^}]*kos:/);
 });
 test('client fetches newer checklist module in mobile Safari',()=>{
- assert.match(app,/import\('\.\/js\/checklist\.js\?v=83\.10'\)/);
+ assert.match(app,/import\('\.\/js\/checklist\.js\?v=83\.11'\)/);
 });
