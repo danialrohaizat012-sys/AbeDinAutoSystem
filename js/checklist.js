@@ -739,8 +739,8 @@ function bindDetail(){
   loadTrail(r.id);
   hydrate(Object.values(r.items||{}).flatMap(photosOf));
   $$(".evid [data-open]").forEach(t=>t.onclick=()=>lightbox(t.dataset.open,t.dataset.cap));
-  $("[data-edit]").forEach(b=>b.onclick=()=>openForm(b.dataset.edit));
-  $("[data-cost]").forEach(b=>b.onclick=()=>editInspectionCost(b.dataset.cost));
+  $$("[data-edit]").forEach(b=>b.onclick=()=>openForm(b.dataset.edit));
+  $$("[data-cost]").forEach(b=>b.onclick=()=>editInspectionCost(b.dataset.cost));
   $('[data-act="pdf"]').onclick=e=>withBusy(e.target,()=>pdfInspection(r));
   $('[data-act="copy"]').onclick=()=>{ const t=summaryText(r); (navigator.clipboard?.writeText(t)||Promise.reject()).then(()=>toast("Ringkasan disalin"),()=>showCopy(t)); };
   $$("[data-rv]").forEach(b=>b.onclick=()=>review(r,b.dataset.rv));

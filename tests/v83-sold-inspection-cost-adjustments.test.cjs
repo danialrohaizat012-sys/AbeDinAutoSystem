@@ -43,5 +43,5 @@ test('finance re-reads the verified checklist cost and refreshes owner screen',(
  assert.match(app,/\.eq\('id',rid\)\.eq\('vehicle_id',vid\)\.maybeSingle\(\)/);
  assert.match(app,/if\(chosen\)inspCosts\[vid\]=\{kos:Number\(chosen\.kos\|\|0\),status:chosen\.status\}/);
  assert.match(app,/if\(current==='inventory'\|\|current==='vehicleProfile'\)/);
- assert.match(app,/import\('\.\/js\/checklist\.js\?v=83\.8'\)/);
+ assert.match(app,/import\('\.\/js\/checklist\.js\?v=83\.9'\)/);
 });
