@@ -1,0 +1,21 @@
+name: V83 Puspakom Sold Completion
+on:
+  pull_request:
+    paths:
+      - 'app.html'
+      - 'js/puspakom.js'
+      - 'tests/v83-puspakom-sold-completion.test.cjs'
+      - '.github/workflows/v83-puspakom-sold-completion.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  sold-completion:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Puspakom JavaScript syntax
+        run: node --check --input-type=module < js/puspakom.js
+      - name: Test completed sale and expiry reminders
+        run: node --test tests/v83-puspakom-sold-completion.test.cjs
