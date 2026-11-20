@@ -1,0 +1,21 @@
+name: V83 Puspakom Sold Audit
+on:
+  pull_request:
+    paths:
+      - 'app.html'
+      - 'js/puspakom.js'
+      - 'tests/v83-puspakom-sold-audit.test.cjs'
+      - '.github/workflows/v83-puspakom-sold-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  sold-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check JavaScript syntax
+        run: node --check --input-type=module < js/puspakom.js
+      - name: Run sold Puspakom audit regression
+        run: node --test tests/v83-puspakom-sold-audit.test.cjs

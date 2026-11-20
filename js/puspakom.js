@@ -1,6 +1,6 @@
 // Abe Din Auto – modul Puspakom (V72). Status pemeriksaan B5 / B7 untuk setiap kereta dalam inventori.
 // Dimuat oleh app.html melalui import("./js/puspakom.js"). Jadual: puspakom (lihat V72_PUSPAKOM.sql).
-// Semua kereta inventori (kecuali Sold) dipaparkan secara automatik; yang belum ada rekod = "Belum tempah".
+// Semua kereta inventori termasuk Sold dipaparkan; Sold tanpa rekod Puspakom ditanda untuk audit.
 // Owner, Sales Advisor dan staf Operations aktif boleh edit semua rekod; padam hanya Owner. UI dalam Shadow DOM.
 const CSS = `
 :host{display:block;--bg:#0a0a09;--card:#151412;--fg:#f4efe2;--mute:#a69f8c;--line:#2e2a20;--soft:#1e1c17;
@@ -30,6 +30,18 @@ h2{margin:0;font-size:20px;font-weight:800}
 .none{color:#aaa;font-size:13.5px}
 .soon{font-size:12.5px;color:#aaa;margin-top:8px}
 .panel .btn{width:100%;margin-top:10px}
+.sold-audit{padding:13px;margin:0 0 14px;border:1px solid #6d5730;border-radius:15px;background:linear-gradient(140deg,#1c1b17,#171610);color:var(--fg)}
+.audit-head strong{font-size:15px;color:#ffe095;display:block}
+.audit-head small{display:block;color:#bdb5a1;font-size:11px;line-height:1.5;margin-top:4px}
+.audit-counts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:12px 0}
+.audit-counts>div{padding:9px 8px;background:#25241f;border:1px solid #48402b;border-radius:10px;min-width:0}
+.audit-counts b{display:block;font-size:22px;line-height:1.15;color:#f5e4c2}
+.audit-counts small{display:block;font-size:10.5px;line-height:1.3;color:#d1c9b4;margin-top:4px}
+.audit-counts .audit-ok b{color:#89d6a3}
+.audit-counts .audit-attention b{color:#ffad9f}
+.audit-actions{display:flex;flex-wrap:wrap;gap:7px}
+.audit-actions button{flex:1 1 170px;min-height:44px!important;font-size:12px}
+@media(max-width:420px){.audit-counts b{font-size:19px}.audit-counts small{font-size:10px}.sold-audit{padding:11px}}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
 @media(min-width:760px){.stats{grid-template-columns:repeat(6,1fr)}}
 .stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:11px;cursor:pointer}
@@ -235,14 +247,12 @@ function cars() {
     if (r.vehicle_id) byVehicleId.set(String(r.vehicle_id), r);
   });
   const out = [], seen = new Set();
-  // Rekod Sold yang ada sejarah Puspakom mesti kekal dipadankan,
-  // termasuk selepas Lulus (CDW3079). Hanya Sold tanpa rekod Puspakom
-  // disembunyikan untuk mengelakkan senarai dipenuhi stok lama.
+  // Semua kereta Sold mesti muncul untuk audit, walaupun belum ada rekod Puspakom.
+  // Padankan menggunakan vehicle_id dahulu; plat sebagai fallback.
   S.vehicles.forEach(v => {
     const plate = normPlate(v.plate);
     if (!plate || seen.has(plate)) return;
     const r = byVehicleId.get(String(v.id)) || byPlate.get(plate);
-    if (String(v.status || "").toLowerCase() === "sold" && !r) return;
     seen.add(plate);
     if (r?.plate) seen.add(normPlate(r.plate));
     out.push(toCar(plate, r, v));
@@ -257,7 +267,7 @@ function cars() {
 }
 function toCar(plate, r, v) {
   r = r || {};
-  return { plate, rec: r, v, inv: !!v, vid: v?.vehicle_id || "", vuuid: v?.id || r.vehicle_id || null,
+  return { plate, rec: r, hasRecord: !!(r && Object.keys(r).length), v, inv: !!v, vid: v?.vehicle_id || "", vuuid: v?.id || r.vehicle_id || null,
     model: v ? ((v.make || "") + " " + (v.model || "")).replace(/\s+/g, " ").trim().toUpperCase() : "", year: v?.model_year || "",
     vstatus: invStatus(v),
     type: r.jenis || "B5", status: r.status || "belum", date: r.tarikh || "", time: r.masa ? String(r.masa).slice(0, 5) : "",
@@ -301,6 +311,27 @@ function nextStep(c) {
 }
 const isAlert = c => nextStep(c).alert;
 
+// V83: operations reconciliation, not a claim that an official inspection never took place.
+function soldPuspakomAudit(all) {
+  const sold=all.filter(c=>c.inv&&c.vstatus==="sold");
+  const approved=sold.filter(c=>c.hasRecord&&c.status==="lulus");
+  const missing=sold.filter(c=>!c.hasRecord);
+  const pending=sold.filter(c=>!(c.hasRecord&&c.status==="lulus"));
+  return {sold,approved,missing,pending};
+}
+function renderSoldAudit(all) {
+  const box=S.root.getElementById("sold-audit"); if(!box)return;
+  const audit=soldPuspakomAudit(all);
+  box.innerHTML=`<div class="audit-head"><div><strong>Semakan Puspakom Kereta Terjual</strong>
+    <small>Setiap kereta Sold perlu direkod dan disahkan dalam Puspakom. Label ini berdasarkan data sistem sahaja.</small></div></div>
+    <div class="audit-counts">
+      <div><b>${audit.sold.length}</b><small>Jumlah Sold</small></div>
+      <div class="audit-ok"><b>${audit.approved.length}</b><small>Rekod Lulus</small></div>
+      <div class="${audit.pending.length?"audit-attention":""}"><b>${audit.pending.length}</b><small>Belum Lulus / Tiada rekod</small></div>
+    </div>
+    <div class="audit-actions"><button class="btn ${S.filter==="sold_pending"?"pri":""}" data-f="sold_pending" type="button">Perlu pengesahan (${audit.pending.length})</button>
+    <button class="btn ${S.filter==="sold_all"?"pri":""}" data-f="sold_all" type="button">Semua kereta terjual</button></div>`;
+}
 function render() {
   const app = S.root.getElementById("app");
   app.className = "shell" + (S.canEdit ? "" : " ro");
@@ -310,10 +341,10 @@ function render() {
   app.innerHTML = `<div class="head"><div><div class="kick">Puspakom</div><h2>Pemeriksaan Puspakom</h2>
       <div class="mute">${all.filter(c => c.inv).length} kereta dalam inventori · ${S.isOwner ? "Owner boleh kemas kini" : S.canEdit ? "Staf yang dibenarkan boleh buat booking & kemas kini semua rekod" : "Paparan sahaja — hanya Owner / Operations / Sales Advisor boleh kemas kini"}</div></div>
       <button class="btn" data-a="reload" type="button">↻ Muat semula</button></div>
-    <div class="panel" id="today"></div><div class="stats" id="stats"></div><div class="locs" id="locs"></div>
+    <section class="sold-audit" id="sold-audit" aria-label="Audit Puspakom kereta terjual"></section><div class="panel" id="today"></div><div class="stats" id="stats"></div><div class="locs" id="locs"></div>
     <input class="search" id="q" placeholder="Cari plat, model, ADA, lokasi atau runner…" autocomplete="off" value="${esc(S.q)}">
     <div id="list"></div>`;
-  renderToday(all); renderStats(all); renderLocs(all); renderList();
+  renderSoldAudit(all); renderToday(all); renderStats(all); renderLocs(all); renderList();
 }
 
 function renderToday(all) {
@@ -361,7 +392,7 @@ function card(c) {
     <div class="top"><div class="id"><span class="plate">${esc(c.plate)}</span>${c.vid ? `<span class="vid">${esc(c.vid)}</span>` : ""}</div>
       <div class="badges"><span class="pill ${t.c}">${t.l}</span><span class="pill p-${c.status}">${find(STATUSES, c.status).l}</span></div></div>
     <div class="model">${esc(c.model || "—")}${c.year ? `<span class="yr">${esc(c.year)}</span>` : ""}</div>
-    ${!c.inv || inv ? `<div class="invrow">${!c.inv ? `<span class="inv inv-warn">⚠ Tiada dalam inventori</span>` : ""}${inv}</div>` : ""}
+    ${!c.inv || inv || !c.hasRecord ? `<div class="invrow">${!c.inv ? `<span class="inv inv-warn">⚠ Tiada dalam inventori</span>` : ""}${c.inv&&!c.hasRecord ? `<span class="inv inv-warn">⚠ Tiada rekod Puspakom — perlu semakan</span>` : ""}${inv}</div>` : ""}
     ${appt}
     ${expiryPanel(c)}
     <div class="todo${n.alert ? " alert" : ""}"><span class="ti">${n.alert ? "!" : "→"}</span><span>${esc(n.txt)}</span></div>
@@ -375,10 +406,12 @@ function renderList() {
   const el = S.root.getElementById("list"); if (!el) return;
   const q = S.q.trim().toLowerCase();
   const rows = cars().filter(c => {
-    if (S.filter === "tindakan" && !isAlert(c)) return false;
-    if (S.filter !== "semua" && S.filter !== "tindakan" && c.status !== S.filter) return false;
+    if (S.filter === "tindakan" && !isAlert(c) && !(c.vstatus==="sold"&&!c.hasRecord)) return false;
+    if (S.filter === "sold_all" && !(c.inv&&c.vstatus==="sold")) return false;
+    if (S.filter === "sold_pending" && !(c.inv&&c.vstatus==="sold"&&!(c.hasRecord&&c.status==="lulus"))) return false;
+    if (!["semua","tindakan","sold_all","sold_pending"].includes(S.filter) && c.status !== S.filter) return false;
     if (S.loc !== "semua" && (c.state || "—") !== S.loc) return false;
-    if (q && [c.plate, c.model, c.vid, c.state, c.runner, c.note, c.vstatus, INV_LABEL[c.vstatus] || ""].join(" ").toLowerCase().indexOf(q) < 0) return false;
+    if (q && [c.plate, c.model, c.vid, c.state, c.runner, c.note, c.vstatus, INV_LABEL[c.vstatus] || "",!c.hasRecord?"tiada rekod puspakom":""].join(" ").toLowerCase().indexOf(q) < 0) return false;
     return true;
   }).sort((a, b) => {
     const aa = isAlert(a) ? 0 : 1, bb = isAlert(b) ? 0 : 1; if (aa !== bb) return aa - bb;
