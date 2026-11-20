@@ -37,7 +37,8 @@ export function mountAdminMenu(){
  const overlay=document.createElement('div');
  overlay.className='ada-admin-menu-overlay';
  overlay.hidden=true;
- overlay.innerHTML='<div class="ada-admin-menu-backdrop" data-close-menu></div><div class="ada-admin-menu-drawer" role="dialog" aria-modal="true" aria-label="Semua Menu"><div class="ada-admin-menu-head"><div><small>ABE DIN AUTO</small><h2>Semua Menu</h2></div><button type="button" class="ada-admin-menu-close" data-close-menu aria-label="Tutup menu">✕</button></div><div class="ada-admin-menu-list"></div></div>';
+ overlay.innerHTML='<div class="ada-admin-menu-backdrop" data-close-menu></div><div class="ada-admin-menu-drawer" role="dialog" aria-modal="true" aria-label="Semua Menu" tabindex="-1"><div class="ada-admin-menu-head"><div><small>ABE DIN AUTO</small><h2>Semua Menu</h2></div><button type="button" class="ada-admin-menu-close" data-close-menu aria-label="Tutup menu">✕</button></div><div class="ada-admin-menu-list"></div></div>';
+ overlay.style.display='none';
  document.body.append(overlay);
  const list=overlay.querySelector('.ada-admin-menu-list');
  let lastFocus=null;
@@ -68,7 +69,7 @@ export function mountAdminMenu(){
     label.textContent=page==='dashboard'&&isStaff?'Katalog Umum':(LABELS[page]||page).replace(' Kenderaan','').replace(' Kereta','').replace(' Jualan','');
     button.append(icon,label);
     button.classList.toggle('active',byPage.get(page).classList.contains('active'));
-    button.addEventListener('click',()=>{byPage.get(page)?.click()});
+    button.addEventListener('click',()=>navigate(page));
     bottom.insertBefore(button,moreBtn);
    }
   }
@@ -87,16 +88,25 @@ export function mountAdminMenu(){
     const glyph=document.createElement('span');glyph.setAttribute('aria-hidden','true');glyph.textContent=ICONS[page]||'•';
     const label=document.createElement('span');label.textContent=LABELS[page]||page;
     b.append(glyph,label);
-    b.addEventListener('click',()=>{close();source.click()});
+    b.addEventListener('click',()=>{if(navigate(page))close()});
     section.append(b);
    }
    list.append(section);
   }
  }
+ function navigate(page){
+  const source=byPage.get(page);
+  if(!source||source.hidden)return false;
+  if(typeof window.adaCloudNavigate==='function')return window.adaCloudNavigate(page)===true;
+  source.click();
+  return true;
+ }
  function open(){
   refresh();populate();
+  if(!list.querySelector('button'))return;
   lastFocus=document.activeElement;
   overlay.hidden=false;
+  overlay.style.display='flex';
   more.setAttribute('aria-expanded','true');
   document.body.classList.add('ada-admin-menu-open');
   overlay.querySelector('.ada-admin-menu-close').focus();
@@ -104,11 +114,13 @@ export function mountAdminMenu(){
  function close(){
   if(overlay.hidden)return;
   overlay.hidden=true;
+  overlay.style.display='none';
   document.body.classList.remove('ada-admin-menu-open');
   more.setAttribute('aria-expanded','false');
   if(lastFocus?.isConnected)lastFocus.focus();
  }
- more.addEventListener('click',()=>overlay.hidden?open():close());
+ more.type='button';
+ more.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();overlay.hidden?open():close()});
  overlay.addEventListener('click',e=>{if(e.target.closest('[data-close-menu]'))close()});
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!overlay.hidden){e.preventDefault();close()}});
  panel.querySelectorAll('[data-cloud-page]').forEach(b=>b.addEventListener('click',()=>{if(!overlay.hidden)close()}));
