@@ -2250,3 +2250,21 @@ html .ada-head-tools .cloud-pill{display:none!important}}
  .ada-form .ada-sale-pay-toggle{font-size:13.5px;line-height:1.35}
  .ada-form [data-new-sale-pay]{padding:9px 10px}
 }
+
+
+/* V83: Keep inventory "Sold" status separate from verified sales records. */
+#ada-cloud-gate .ada-sale-record-row{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:7px 0 8px;min-width:0}
+#ada-cloud-gate .ada-sale-record-row:empty{display:none}
+#ada-cloud-gate .ada-sale-record-badge{display:inline-flex;align-items:center;gap:5px;max-width:100%;padding:5px 9px;border:1px solid #5d665e;border-radius:8px;background:#1d3028;color:#acf2c7;font-size:11px;font-weight:800;line-height:1.35;white-space:normal;overflow-wrap:anywhere}
+#ada-cloud-gate .ada-sale-record-badge.is-missing{background:#41271f;border-color:#a45a47;color:#ffb5a1}
+#ada-cloud-gate .ada-sale-record-badge.is-recorded{background:#392f1c;border-color:#8d773e;color:#f8d78b}
+#ada-cloud-gate .ada-sale-record-badge.is-completed{background:#163d2d;border-color:#388d59;color:#a9edc3}
+#ada-cloud-gate .ada-sale-record-value{font-weight:850;overflow-wrap:anywhere}
+#ada-cloud-gate .ada-sale-record-value.is-missing{color:#ffad9c}
+#ada-cloud-gate .ada-sale-record-value.is-recorded{color:#f6d786}
+#ada-cloud-gate .ada-sale-record-value.is-completed{color:#8de0a9}
+#ada-cloud-gate .ada-sale-record-value.is-restricted{color:#a6a6a6}
+@media(max-width:700px){
+ #ada-cloud-gate .ada-sale-record-row{margin:5px 0 7px}
+ #ada-cloud-gate .ada-sale-record-badge{font-size:10.5px;padding:4px 7px;border-radius:7px}
+}
