@@ -1,0 +1,23 @@
+name: V83 New Sale Edit Parity
+on:
+  pull_request:
+    paths:
+      - 'app.html'
+      - 'css/app.css'
+      - 'V83_NEW_SALE_DETAILS.sql'
+      - 'tests/v83-new-sale-edit-parity.test.cjs'
+      - '.github/workflows/v83-new-sale-edit-parity.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  sales-entry-parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check new sale details parity
+        run: node --test tests/v83-new-sale-edit-parity.test.cjs

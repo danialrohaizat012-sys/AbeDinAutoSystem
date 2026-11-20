@@ -2238,3 +2238,15 @@ html.ada-light .ada-np-txt small{color:#5d574a}
 html .ada-head-tools .cloud-pill{display:none!important}}
 #ada-notif-panel .ada-np-head button{background:none!important;border:0!important;box-shadow:none!important;min-height:0!important;width:auto!important;margin:0!important}
 #ada-notif-panel .ada-np-item{margin:0!important;min-height:0!important;box-shadow:none!important}
+
+
+/* V83: Jual Kereta matches Edit Jualan fields, with an optional first payment. */
+.ada-form .ada-sale-pay-toggle{display:flex;align-items:center;gap:10px;margin:8px 0 13px;font-weight:700;cursor:pointer}
+.ada-form .ada-sale-pay-toggle input[type="checkbox"]{width:20px!important;min-width:20px!important;height:20px!important;padding:0!important;flex:0 0 20px;accent-color:#f6d54f}
+.ada-form [data-new-sale-pay][hidden]{display:none!important}
+.ada-form [data-new-sale-pay]{min-width:0}
+.ada-form [data-new-sale-pay] .ada-edit-grid>label{min-width:0}
+@media(max-width:520px){
+ .ada-form .ada-sale-pay-toggle{font-size:13.5px;line-height:1.35}
+ .ada-form [data-new-sale-pay]{padding:9px 10px}
+}
