@@ -1,0 +1,24 @@
+name: V83 Checklist Detail Approval Actions
+on:
+  pull_request:
+    paths:
+      - 'app.html'
+      - 'js/checklist.js'
+      - 'tests/v83-inspection-detail-review-actions.test.cjs'
+      - '.github/workflows/v83-inspection-detail-review-actions.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  review-actions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check
+        run: node --check --input-type=module < js/checklist.js
+      - name: Test review and detail buttons
+        run: node --test tests/v83-inspection-detail-review-actions.test.cjs
