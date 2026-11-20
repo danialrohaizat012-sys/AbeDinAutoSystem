@@ -508,7 +508,7 @@ function inspectionSearchRows(vehicles,query="",status="perlu"){
   const q=String(query||"").trim().toLowerCase().replace(/\s+/g,"");
   return vehicles.filter(v=>String(v.status||"").toLowerCase()!=="sold" || status==="semua" || status==="sold" || !!q)
     .map(v=>({v,s:carState(v)}))
-    .filter(({v,s})=>(status==="semua"||status==="sold"&&String(v.status||"").toLowerCase()==="sold"||status==="perlu"&&(String(v.status||"").toLowerCase()==="sold"&&!!q||s.k==="belum"||inspectionSearchStatus(s.k))||
+    .filter(({v,s})=>(status==="semua"||status==="sold"&&String(v.status||"").toLowerCase()==="sold"||status==="perlu"&&(String(v.status||"").toLowerCase()==="sold"?!!q:s.k==="belum"||inspectionSearchStatus(s.k))||
       status==="belum"&&s.k==="belum"||status==="proses"&&inspectionSearchStatus(s.k)||
       status==="lulus"&&s.k==="lulus")&&(!q||[v.plate,v.vehicle_id,v.make,v.model,v.model_year,carName(v)]
         .some(x=>String(x||"").toLowerCase().replace(/\s+/g,"").includes(q))));
