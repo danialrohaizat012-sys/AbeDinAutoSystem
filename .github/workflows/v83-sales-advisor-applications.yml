@@ -1,0 +1,25 @@
+name: V83 Sales Advisor Applications
+on:
+  pull_request:
+    paths:
+      - 'app.html'
+      - 'js/permohonan.js'
+      - 'V83_SALES_ADVISOR_APPLICATIONS.sql'
+      - 'tests/v83-sales-advisor-applications.test.cjs'
+      - '.github/workflows/v83-sales-advisor-applications.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  applications:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check Permohonan JavaScript syntax
+        run: node --check --input-type=module < js/permohonan.js
+      - name: Verify Sales Advisor workflow and policies
+        run: node --test tests/v83-sales-advisor-applications.test.cjs
