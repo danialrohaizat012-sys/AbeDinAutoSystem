@@ -1,0 +1,27 @@
+name: V83 Native Mobile Menu Browser Test
+on:
+  pull_request:
+    paths:
+      - 'app.html'
+      - 'css/admin-menu.css'
+      - 'js/admin-menu.js'
+      - 'tests/v83-mobile-menu-browser.test.cjs'
+      - '.github/workflows/v83-native-mobile-menu-browser.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  chromium-mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Tap Semua Menu on simulated phone
+        run: node --test tests/v83-mobile-menu-browser.test.cjs
