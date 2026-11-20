@@ -28,7 +28,9 @@ test('need-action includes uninspected and active inspection statuses, not appro
  assert.deepEqual(search(vehicles,'','belum').map(x=>x.v.id),['1']);
  assert.deepEqual(search(vehicles,'','proses').map(x=>x.v.id),['2','3','4']);
  assert.deepEqual(search(vehicles,'','lulus').map(x=>x.v.id),['5']);
- assert.equal(search(vehicles,'','semua').length,5);
+ assert.equal(search(vehicles,'','semua').length,6);
+ assert.deepEqual(search(vehicles,'','sold').map(x=>x.v.id),['6']);
+ assert.deepEqual(search(vehicles,'sol999','perlu').map(x=>x.v.id),['6']);
 });
 test('search is visible directly on summary dashboard with filter and results',()=>{
  assert.match(src,/return dashboardSearchHtml\(\)\+/);
@@ -43,7 +45,7 @@ test('search reuses existing car actions and does not alter sales or inspection 
  assert.match(src,/openForCar\(b\.dataset\.start\)/);
  assert.match(src,/openForm\(b\.dataset\.edit\)/);
  assert.match(src,/go\("detail",b\.dataset\.rec\)/);
- assert.match(html,/import\('\.\/js\/checklist\.js\?v=83\.3'\)/);
+ assert.match(html,/import\('\.\/js\/checklist\.js\?v=83\.7'\)/);
 });
 test('mobile search layout adapts to one column',()=>{
  assert.match(src,/@media\(max-width:620px\)\{\.ada-ins-search/);
