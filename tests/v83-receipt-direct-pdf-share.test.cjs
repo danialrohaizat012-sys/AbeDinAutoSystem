@@ -10,18 +10,16 @@ const src=app.slice(start,end);
 test('receipt share function remains syntactically valid',()=>{
  assert.doesNotThrow(()=>new Function(src));
 });
-test('adds one PDF-only sharing button alongside original share and download',()=>{
+test('shows a green customer-chat button plus PDF sharing and download',()=>{
  assert.match(src,/data-wa-pdf-direct/);
- assert.match(src,/data-wa-share/);
- assert.match(src,/data-wa-open/);
+ assert.match(src,/data-wa-open class="ada-wa-btn"/);
  assert.match(src,/data-wa-dl/);
- assert.match(src,/Kongsi PDF terus \(tanpa mesej\)/);
+ assert.match(src,/Kongsi PDF \(pilih penerima\)/);
 });
 test('PDF-only share includes actual receipt file and not the message body',()=>{
  assert.match(src,/const payload=\{files:\[file\],title:'Resit '\+no\}/);
- assert.match(src,/if\(withMessage\)payload\.text=msgText\(\)/);
- assert.match(src,/querySelector\('\[data-wa-pdf-direct\]'\)\.addEventListener\('click',\(\)=>shareReceipt\(false\)\)/);
- assert.match(src,/querySelector\('\[data-wa-share\]'\)\?\.addEventListener\('click',\(\)=>shareReceipt\(true\)\)/);
+ assert.doesNotMatch(src,/payload\.text/);
+ assert.match(src,/querySelector\('\[data-wa-pdf-direct\]'\)\.addEventListener\('click',shareReceipt\)/);
 });
 test('PDF sharing does not falsely claim WhatsApp delivery',()=>{
  assert.doesNotMatch(src,/msg\('Resit dikongsi\.'\)/);
@@ -36,4 +34,29 @@ test('document preserves customer phone and PDF identity',()=>{
  assert.match(src,/waPhone\(c\.phone\)/);
  assert.match(src,/new File\(\[blob\],fname,\{type:'application\/pdf'\}\)/);
  assert.match(src,/e\?\.name==='AbortError'/);
+});
+test('customer action opens the saved number with the edited message on any browser',()=>{
+ const receiptSource=app.slice(app.indexOf('function waPhone('),end);
+ const message='Bayaran RM10 & resit #1';
+ for(const canShare of [true,false]){
+  const controls=new Map();
+  const visited=[];
+  const modal={
+   querySelector(selector){
+    if(selector==='[name=watext]')return {value:message};
+    if(!controls.has(selector))controls.set(selector,{addEventListener(){}});
+    return controls.get(selector);
+   }
+  };
+  const render=new Function('navigator','window','File','safe','cloudModal',
+    receiptSource+'\nreturn receiptWhatsApp;')(
+    {canShare:()=>canShare},{location:{assign:url=>visited.push(url)}},
+    class {},String,()=>modal);
+  for(const phone of ['012-345 6789','+60 12-345 6789','']){
+   render({c:{phone},v:{}});
+   controls.get('[data-wa-open]').onclick();
+  }
+  const expected='https://wa.me/60123456789?text='+encodeURIComponent(message);
+  assert.deepEqual(visited,[expected,expected]);
+ }
 });
