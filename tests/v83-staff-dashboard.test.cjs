@@ -12,7 +12,7 @@ test('staff role reaches menu before permitted navigation refresh',()=>{
 });
 test('staff quick navigation chooses only permitted pages',()=>{
  assert.match(js,/candidate\.filter\(page=>byPage\.get\(page\)&&!byPage\.get\(page\)\.hidden\)\.slice\(0,4\)/);
- assert.match(js,/byPage\.get\(page\)\?\.click\(\)/);
+ assert.match(js,/button\.addEventListener\('click',\(\)=>navigate\(page\)\)/);
  assert.match(js,/isStaff\?'Katalog Umum':'Dashboard'/);
 });
 test('catalogue has responsive contained iframe and accessible customer link',()=>{
@@ -28,7 +28,7 @@ test('mobile staff shortcuts maintain large buttons without horizontal menu scro
  assert.match(css,/-webkit-line-clamp:2/);
 });
 test('admin remains on existing menu and staff CSS is cache-busted',()=>{
- assert.match(app,/admin-menu\.js\?v=83\.2/);
+ assert.match(app,/admin-menu\.js\?v=83\.5/);
  assert.match(app,/staff-dashboard\.css\?v=83\.2/);
  assert.match(js,/\:['dashboard','inventory','sales','reports']/);
 });
