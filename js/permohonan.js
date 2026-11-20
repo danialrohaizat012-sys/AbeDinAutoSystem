@@ -37,6 +37,28 @@ input:focus,select:focus{border-color:var(--gold)}
 .app-entry small{color:var(--mute);display:block;overflow-wrap:anywhere}
 .app-detail{white-space:pre-wrap;overflow-wrap:anywhere;background:#080b0c;padding:12px;border-radius:10px;font-size:13px;line-height:1.7}
 
+
+/* V83 Sales Advisor: compact actions and editable applications */
+.app-record{border-top:1px solid var(--line);padding:10px 0;min-width:0}
+.app-summary{display:flex;gap:8px;align-items:center;flex-wrap:wrap;min-width:0}
+.app-summary b{font-size:14px}
+.app-summary small{flex:1 1 100%;font-size:12px}
+.app-read{font-size:10px;padding:3px 8px;border-radius:99px;font-weight:800}
+.app-read.unread{background:#53411c;color:#ffe1a1}
+.app-read.read{background:#183a2d;color:#a7efc6}
+.app-actions{display:flex;flex-wrap:wrap;gap:6px;margin:9px 0}
+.app-actions .btn{flex:0 1 auto;min-height:44px;font-size:12px;padding:9px 11px}
+.app-actions .app-delete{border-color:#884140;color:#ffb8b5}
+.app-filter{margin-bottom:8px}
+.app-filter .on{border-color:var(--gold);color:var(--gold)}
+.app-edit{background:#121a1a;border:1px solid var(--line);padding:12px;border-radius:12px;margin:10px 0}
+.app-edit h4{margin:0 0 4px;color:var(--gold)}
+.app-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0}
+.app-edit-field{font-size:12px;min-width:0}
+.app-edit-field span{display:block;margin-bottom:5px}
+.app-edit-field input{min-width:0;max-width:100%;font-size:16px}
+@container(max-width:680px){.app-fields{grid-template-columns:1fr}.app-actions .btn{flex:1 1 calc(50% - 6px)}}
+
 /* Responsive staff workspace: use the available width without horizontal overflow. */
 :host,.shell,.wrap{width:100%;min-width:0;max-width:none}
 .shell{container-type:inline-size}
@@ -121,37 +143,186 @@ function render() {
     <div class="row"><a class="btn wa" id="send" href="${esc(toCustomer)}" target="_blank" rel="noopener">Hantar link melalui WhatsApp</a>
       <button class="btn" data-act="copymsg">Salin mesej</button></div>
   </div>
-  <div class="card"><h3>Permohonan diterima</h3><button class="btn" data-act="reload">Muat semula rekod</button><div id="applications" style="margin-top:12px" role="status">Memuatkan rekod…</div></div>`;
+  <div class="card"><h3>Permohonan diterima</h3><p class="hint" id="applications-count">Memuatkan rekod…</p><div class="row app-filter"><button type="button" class="btn on" data-app-filter="all">Semua</button><button type="button" class="btn" data-app-filter="unread">Belum Baca</button><button type="button" class="btn" data-app-filter="read">Sudah Baca</button><button type="button" class="btn" data-act="reload">Muat semula</button></div><p id="app-feedback" role="status" aria-live="polite" class="hint"></p><div id="applications" style="margin-top:12px" role="status">Memuatkan rekod…</div></div>`;
 }
 
 
-let applications=[];
+
+let applications = [];
+let editingId = null;
+let expandedId = null;
+let clipboardSnapshot = null;
+let viewFilter = 'all';
+let busy = false;
 const fieldNames={nama:'Nama',ic:'No. IC',tel:'Telefon',alamatTetap:'Alamat tetap',alamatSekarang:'Alamat sekarang',tempoh:'Tempoh menetap',tanggungan:'Tanggungan',kahwin:'Perkahwinan',bangsa:'Bangsa',agama:'Agama',rumah:'Rumah',pendidikan:'Pendidikan',email:'Emel',majikan:'Majikan',alamatMajikan:'Alamat majikan',jawatan:'Jawatan',mulaKerja:'Mula kerja',gred:'Gred',telPejabat:'Telefon pejabat',warisNama:'Nama waris',warisTel:'Telefon waris',warisHubungan:'Hubungan waris',warisAlamat:'Alamat waris',kereta:'Kereta diminati'};
+const validRecordId = id => /^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(String(id||''));
+const getRecord = id => applications.find(x=>x.id===id);
+const detailsOf = a => a.details && typeof a.details==='object' && !Array.isArray(a.details) ? a.details : {};
+const recordText = a => [
+  'ABE DIN AUTO | PERMOHONAN PELANGGAN',
+  'Nama: '+(a.applicant_name||'-'),
+  'Telefon: '+(a.applicant_phone||'-'),
+  'Emel: '+(a.applicant_email||'-'),
+  'Kereta: '+(a.car_interest||'-'),
+  'Status: '+(a.read_at?'Sudah Baca':'Belum Baca'),
+  'Tarikh: '+new Date(a.created_at).toLocaleString('ms-MY'),
+  'Rujukan: '+a.id,
+  ...Object.entries(fieldNames).map(([key,label])=>label+': '+(detailsOf(a)[key]??'-')),
+  ...Object.entries(detailsOf(a)).filter(([key])=>!(key in fieldNames)).map(([key,value])=>key+': '+String(value))
+].join('\n');
+const snapshot = a => ({
+  applicant_name:a.applicant_name||'',applicant_phone:a.applicant_phone||'',
+  applicant_email:a.applicant_email||'',car_interest:a.car_interest||'',
+  details:detailsOf(a)
+});
+function notify(message, error=false){
+ const node=app?.querySelector('#app-feedback');
+ if(!node)return;
+ node.className=error?'warn':'ok';
+ node.textContent=message;
+}
+function editForm(a){
+ const d=detailsOf(a);
+ const detailKeys=[...new Set([...Object.keys(fieldNames),...Object.keys(d)])].filter(k=>/^[a-zA-Z][a-zA-Z0-9_]*$/.test(k));
+ const field=(name,label,value,type='text')=>'<label class="app-edit-field"><span>'+esc(label)+'</span><input name="'+esc(name)+'" type="'+type+'" value="'+esc(value??'')+'" '+(name==='applicant_name'?'required':'')+'></label>';
+ return '<form class="app-edit" data-edit-form="'+esc(a.id)+'"><h4>Edit Permohonan</h4><p class="hint">Perubahan hanya disimpan selepas tekan Simpan. Paste tidak mengubah rekod secara automatik.</p>'+
+  '<div class="app-fields">'+
+  field('applicant_name','Nama pelanggan',a.applicant_name)+
+  field('applicant_phone','Telefon pelanggan',a.applicant_phone,'tel')+
+  field('applicant_email','Emel',a.applicant_email,'email')+
+  field('car_interest','Kereta diminati',a.car_interest)+
+  detailKeys.map(key=>field('detail_'+key,fieldNames[key]||key,d[key])).join('')+
+  '</div><div class="app-actions"><button class="btn" type="button" data-op="paste" data-id="'+esc(a.id)+'">Paste dari clipboard</button><button class="btn pri" type="submit">Simpan</button><button class="btn" type="button" data-op="cancel" data-id="'+esc(a.id)+'">Batal</button></div></form>';
+}
+function renderApplications(){
+ const target=app?.querySelector('#applications');if(!target)return;
+ const rows=applications.filter(a=>viewFilter==='all'||(viewFilter==='unread'?!a.read_at:!!a.read_at));
+ const unread=applications.filter(a=>!a.read_at).length;
+ const count=app.querySelector('#applications-count');if(count)count.textContent=applications.length+' rekod · '+unread+' belum baca';
+ const chips=app.querySelectorAll('[data-app-filter]');
+ chips.forEach(b=>b.classList.toggle('on',b.dataset.appFilter===viewFilter));
+ target.innerHTML=rows.length?rows.map(a=>{
+  const isUnread=!a.read_at;
+  const prefix='<div class="app-entry"><div class="app-summary"><b>'+esc(a.applicant_name)+'</b><span class="app-read '+(isUnread?'unread':'read')+'">'+(isUnread?'Belum Baca':'Sudah Baca')+'</span><small>'+
+    esc(new Date(a.created_at).toLocaleString('ms-MY'))+' · '+esc(a.applicant_phone)+' · '+esc(a.car_interest)+'</small></div></div>';
+  const phone=msisdn(a.applicant_phone);
+  const text='Salam '+(a.applicant_name||'')+', saya dari Abe Din Auto berkenaan permohonan kereta '+(a.car_interest||'')+'.';
+  const wa=phone?'https://wa.me/'+phone+'?text='+encodeURIComponent(text):'';
+  const actions='<div class="app-actions">'+
+   '<button type="button" class="btn" data-op="view" data-id="'+esc(a.id)+'">Lihat</button>'+
+   '<button type="button" class="btn" data-op="edit" data-id="'+esc(a.id)+'">Edit</button>'+
+   '<button type="button" class="btn" data-op="copy" data-id="'+esc(a.id)+'">Copy</button>'+
+   '<button type="button" class="btn" data-op="paste" data-id="'+esc(a.id)+'">Paste</button>'+
+   (wa?'<a class="btn wa" href="'+esc(wa)+'" target="_blank" rel="noopener noreferrer">WhatsApp</a>':'<button class="btn" disabled title="Tiada nombor telefon">WhatsApp</button>')+
+   '<button type="button" class="btn '+(isUnread?'pri':'')+'" data-op="read" data-id="'+esc(a.id)+'">'+(isUnread?'Tanda Sudah Baca':'Tanda Belum Baca')+'</button>'+
+   '<button type="button" class="btn app-delete" data-op="delete" data-id="'+esc(a.id)+'">Delete</button></div>';
+  const detail=expandedId===a.id?'<pre class="app-detail">'+esc(recordText(a))+'</pre>':'';
+  return '<div class="app-record">'+prefix+actions+detail+(editingId===a.id?editForm(a):'')+'</div>';
+ }).join(''):'<p class="hint">'+(applications.length?'Tiada permohonan bagi status ini.':'Belum ada permohonan diterima.')+'</p>';
+}
 async function loadApplications(){
  const target=app?.querySelector('#applications');
  if(!target||!ctx.client)return;
  target.textContent='Memuatkan rekod…';
  const {data,error}=await ctx.client.from('buyer_applications')
-  .select('id,created_at,applicant_name,applicant_phone,car_interest,details,status')
-  .order('created_at',{ascending:false}).limit(100);
+   .select('id,created_at,applicant_name,applicant_phone,applicant_email,car_interest,details,status,read_at,read_by')
+   .is('deleted_at',null).order('created_at',{ascending:false}).limit(300);
  if(!app?.contains(target))return;
- if(error){target.textContent='Rekod tidak dapat dimuatkan. Semak akses staf dan sambungan database.';return;}
+ if(error){target.textContent='Rekod tidak dapat dimuatkan: '+(error.message||'Semak akses staf.');return;}
  applications=data||[];
- target.innerHTML=applications.length?applications.map(a=>
- '<div class="app-entry"><div><b>'+esc(a.applicant_name)+'</b><small>'+
- esc(new Date(a.created_at).toLocaleString('ms-MY'))+' · '+esc(a.applicant_phone)+' · '+esc(a.car_interest)+
- '</small></div><button class="btn" data-view="'+esc(a.id)+'">Lihat butiran</button></div>').join(''):
- '<p class="hint">Belum ada permohonan diterima.</p>';
+ if(editingId&&!getRecord(editingId))editingId=null;
+ if(expandedId&&!getRecord(expandedId))expandedId=null;
+ renderApplications();
 }
-function showApplication(id){
- const item=applications.find(a=>a.id===id);
- if(!item)return;
- const target=app.querySelector('#applications');
- target.querySelector('.app-detail')?.remove();
- const node=document.createElement('div');node.className='app-detail';
- node.textContent='Tarikh: '+new Date(item.created_at).toLocaleString('ms-MY')+'\nRujukan: '+item.id+'\n\n'+
- Object.entries(fieldNames).map(([key,label])=>label+': '+String(item.details?.[key]||'-')).join('\n');
- [...target.querySelectorAll('button[data-view]')].find(b=>b.dataset.view===id)?.closest('.app-entry')?.after(node);
+async function updateApplication(a,patch,message){
+ const query=ctx.client.from('buyer_applications').update(patch,{count:'exact'}).eq('id',a.id).is('deleted_at',null);
+ // Archived rows leave the SELECT scope immediately; do not ask PostgREST
+ // to SELECT them back after a soft delete.
+ const {error,count}=await query;
+ if(error)throw error;
+ if(count===0)throw new Error('Rekod tidak berubah. Semak kebenaran akses.');
+ notify(message);
+ await loadApplications();
+}
+async function handleApplicationAction(button){
+ const op=button.dataset.op,id=button.dataset.id;
+ const a=getRecord(id);if(!a||!validRecordId(id)||busy)return;
+ if(op==='view'){expandedId=expandedId===id?null:id;renderApplications();return;}
+ if(op==='edit'){editingId=editingId===id?null:id;renderApplications();return;}
+ if(op==='cancel'){editingId=null;renderApplications();return;}
+ if(op==='copy'){
+  clipboardSnapshot=snapshot(a);
+  await copy(recordText(a),button);
+  notify('Maklumat permohonan disalin. Paste boleh digunakan untuk mengisi borang Edit.');return;
+ }
+ if(op==='paste'){
+  editingId=id;renderApplications();
+  let saved=clipboardSnapshot;
+  // Clipboard permission may be unavailable on iPhone. In that case reuse the last
+  // record explicitly copied inside this module, rather than altering saved data.
+  if(!saved&&navigator.clipboard?.readText){
+   try{
+    const input=await navigator.clipboard.readText();
+    const parsed=JSON.parse(input);
+    if(parsed&&typeof parsed==='object'&&!Array.isArray(parsed))saved=parsed;
+   }catch(_){}
+  }
+  if(!saved){notify('Tiada data Copy yang boleh ditampal. Tekan Copy pada rekod dahulu.',true);return;}
+  const form=app.querySelector('[data-edit-form="'+id+'"]');
+  if(!form)return;
+  for(const [key,value] of Object.entries(saved)){
+   if(key==='details'&&value&&typeof value==='object'&&!Array.isArray(value)){
+    for(const [k,v] of Object.entries(value)){
+     const field=form.elements.namedItem('detail_'+k);
+     if(field)field.value=String(v??'');
+    }
+   }else{
+    const field=form.elements.namedItem(key);
+    if(field)field.value=String(value??'');
+   }
+  }
+  notify('Data ditampal ke borang Edit. Semak dahulu, kemudian tekan Simpan.');
+  return;
+ }
+ if(op==='delete'){
+  if(!confirm('Padam permohonan '+a.applicant_name+' daripada senarai? Rekod akan diarkibkan untuk audit.'))return;
+  if(!confirm('Sahkan sekali lagi: rekod akan hilang daripada senarai aktif. Teruskan?'))return;
+ }
+ if(op!=='read'&&op!=='delete')return;
+ busy=true;button.disabled=true;
+ try{
+  if(op==='read'){
+   const readAt=a.read_at?null:new Date().toISOString();
+   await updateApplication(a,{read_at:readAt,read_by:readAt?(ctx.profile?.id||null):null},readAt?'Ditanda Sudah Baca.':'Ditanda Belum Baca.');
+  }else{
+   const stamp=new Date().toISOString();
+   await updateApplication(a,{deleted_at:stamp,deleted_by:ctx.profile?.id||null},'Permohonan diarkibkan daripada senarai.');
+  }
+ }catch(e){notify(e.message||String(e),true)}
+ finally{busy=false;button.disabled=false}
+}
+async function submitApplicationEdit(form){
+ const id=form.dataset.editForm,a=getRecord(id);if(!a||busy)return;
+ const fd=new FormData(form);
+ const name=String(fd.get('applicant_name')||'').trim();
+ const phone=String(fd.get('applicant_phone')||'').trim();
+ if(!name||!phone){notify('Nama dan nombor telefon pelanggan diperlukan.',true);return;}
+ const updated={...detailsOf(a)};
+ for(const [key] of Object.entries(fieldNames)){
+  if(fd.has('detail_'+key))updated[key]=String(fd.get('detail_'+key)||'').trim();
+ }
+ for(const key of Object.keys(updated)){
+  if(fd.has('detail_'+key))updated[key]=String(fd.get('detail_'+key)||'').trim();
+ }
+ const email=String(fd.get('applicant_email')||'').trim(),car=String(fd.get('car_interest')||'').trim();
+ // Keep the detailed form fields in sync with the indexed summary fields.
+ updated.nama=name;updated.tel=phone;updated.email=email;updated.kereta=car;
+ const patch={applicant_name:name,applicant_phone:phone,applicant_email:email,
+  car_interest:car,details:updated};
+ busy=true;const btn=form.querySelector('button[type=submit]');if(btn)btn.disabled=true;
+ try{await updateApplication(a,patch,'Permohonan pelanggan berjaya dikemas kini.');editingId=null;renderApplications()}
+ catch(e){notify(e.message||String(e),true)}
+ finally{busy=false;if(btn)btn.disabled=false}
 }
 
 // Kemas kini link tanpa render semula (supaya fokus input tidak hilang).
@@ -181,12 +352,16 @@ export function mountPermohonan(el, c) {
     else return;
     refreshLinks();
   });
+  app.addEventListener('submit',e=>{const f=e.target.closest('form[data-edit-form]');if(!f)return;e.preventDefault();submitApplicationEdit(f)});
   app.addEventListener('click', e => {
-    const view=e.target.closest('button[data-view]');if(view){showApplication(view.dataset.view);return;}
-    const b = e.target.closest('button[data-act]'); if (!b) return;
-    if (b.dataset.act === 'copy') copy(formLink(), b);
-    if (b.dataset.act === 'copymsg') copy(inviteText(), b);
-    if (b.dataset.act === 'reload') loadApplications();
+    const filter=e.target.closest('button[data-app-filter]');
+    if(filter){viewFilter=filter.dataset.appFilter;renderApplications();return;}
+    const action=e.target.closest('button[data-op]');
+    if(action){handleApplicationAction(action);return;}
+    const b=e.target.closest('button[data-act]');if(!b)return;
+    if(b.dataset.act==='copy')copy(formLink(),b);
+    if(b.dataset.act==='copymsg')copy(inviteText(),b);
+    if(b.dataset.act==='reload')loadApplications();
   });
   render();
   loadApplications();
