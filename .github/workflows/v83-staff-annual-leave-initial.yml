@@ -1,0 +1,25 @@
+name: V83 Staff Annual Leave Initial Fields
+on:
+  pull_request:
+    paths:
+      - 'app.html'
+      - 'js/staff.js'
+      - 'js/staff-profile.js'
+      - 'tests/v83-staff-annual-leave-initial.test.cjs'
+      - '.github/workflows/v83-staff-annual-leave-initial.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  initial-leave:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check HR module syntax
+        run: node --check --input-type=module < js/staff-profile.js
+      - name: Run annual leave display regression
+        run: node --test tests/v83-staff-annual-leave-initial.test.cjs
