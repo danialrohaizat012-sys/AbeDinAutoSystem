@@ -65,8 +65,8 @@ begin
   if p_payment_kind is not null then
     v_kind := p_payment_kind::public.payment_kind;
     v_method := nullif(trim(coalesce(p_payment_method,'')),'');
-    if v_method = 'Loan' and nullif(trim(coalesce(p_loan_bank,'')),'') is not null then
-      v_method := 'Loan - ' || trim(p_loan_bank);
+    if v_method = 'Loan Bank' and nullif(trim(coalesce(p_loan_bank,'')),'') is not null then
+      v_method := 'Loan Bank · ' || replace(replace(trim(p_loan_bank),'[',''),']','');
     end if;
     v_notes := concat_ws(' ',case when v_method is not null then '[Kaedah: '||v_method||']' end,nullif(trim(coalesce(p_payment_note,'')),''));
     v_payment := public.record_sale_payment(v_sale,v_kind,p_payment_amount,trim(p_payment_reference),nullif(v_notes,''));
