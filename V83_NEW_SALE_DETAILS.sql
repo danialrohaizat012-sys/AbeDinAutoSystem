@@ -11,7 +11,10 @@ create or replace function public.create_vehicle_sale_with_details(
   p_loan_bank text default null,
   p_payment_reference text default null,
   p_payment_note text default null,
-  p_paid_date date default null
+  p_paid_date date default null,
+  p_customer_name text default null,
+  p_customer_phone text default null,
+  p_customer_email text default null
 )
 returns uuid
 language plpgsql
@@ -50,6 +53,9 @@ begin
   end if;
 
   v_sale := public.create_vehicle_sale(p_vehicle_id,p_customer_id,p_agreed_price);
+  if p_customer_name is not null then
+    perform public.update_customer_details(p_customer_id::text,p_customer_name,coalesce(p_customer_phone,''),coalesce(p_customer_email,''));
+  end if;
   if p_sale_date is not null then
     update public.sales
     set created_at = (p_sale_date::timestamp + (now() at time zone 'Asia/Kuala_Lumpur')::time) at time zone 'Asia/Kuala_Lumpur'
@@ -74,6 +80,6 @@ begin
 end;
 $fn$;
 
-revoke all on function public.create_vehicle_sale_with_details(uuid,uuid,numeric,date,text,numeric,text,text,text,text,date) from public;
-revoke all on function public.create_vehicle_sale_with_details(uuid,uuid,numeric,date,text,numeric,text,text,text,text,date) from anon;
-grant execute on function public.create_vehicle_sale_with_details(uuid,uuid,numeric,date,text,numeric,text,text,text,text,date) to authenticated;
+revoke all on function public.create_vehicle_sale_with_details(uuid,uuid,numeric,date,text,numeric,text,text,text,text,date,text,text,text) from public;
+revoke all on function public.create_vehicle_sale_with_details(uuid,uuid,numeric,date,text,numeric,text,text,text,text,date,text,text,text) from anon;
+grant execute on function public.create_vehicle_sale_with_details(uuid,uuid,numeric,date,text,numeric,text,text,text,text,date,text,text,text) to authenticated;
