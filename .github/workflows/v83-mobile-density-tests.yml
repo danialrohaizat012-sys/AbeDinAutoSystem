@@ -1,0 +1,19 @@
+name: V83 Mobile Layout Density
+on:
+  pull_request:
+    paths:
+      - 'app.html'
+      - 'css/mobile-density.css'
+      - 'tests/v83-mobile-density.test.cjs'
+      - '.github/workflows/v83-mobile-density-tests.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mobile-density:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run mobile density safeguards
+        run: node --test tests/v83-mobile-density.test.cjs
