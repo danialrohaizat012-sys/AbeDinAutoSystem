@@ -45,5 +45,5 @@ test('normalizes spaces and cases when matching plate',()=>{
  assert.equal(found.length,1);assert.equal(found[0].inv,true);
 });
 test('Puspakom module cache is incremented for iPhone clients',()=>{
- assert.match(html,/import\('\.\/js\/puspakom\.js\?v=7'\)/);
+ assert.match(html,/import\('\.\/js\/puspakom\.js\?v=8'\)/);
 });
