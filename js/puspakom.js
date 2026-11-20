@@ -192,7 +192,9 @@ const expiryInfo = (c, today = expiryTodayMY()) => {
     tone: left < 0 ? "expired" : left <= 14 ? "urgent" : left <= 30 ? "warning" : "valid" };
 };
 const expiryPanel = c => {
-  if (c.status !== "lulus") return "";
+  // Once sale is completed, the 120-day booking countdown is no longer an outstanding task.
+  // Keep the original inspection date/history in the card; do not alter official records.
+  if (c.vstatus === "sold" || c.status !== "lulus") return "";
   const x = expiryInfo(c);
   if (!x) return '<div class="expiry expiry-warning">Tarikh booking/pemeriksaan diperlukan untuk kira tamat tempoh 120 hari.</div>';
   const label = x.left < 0 ? "Tamat tempoh" : x.left === 0 ? "Tamat hari ini" : x.left + " hari lagi";
@@ -282,10 +284,15 @@ function invStatus(v) {
   if (st === "reserved" || (c === "reserved" && st === "available")) return "reserved";
   return st;
 }
-const INV_LABEL = { reserved: "● Reserved", sold: "● Dah dijual — perlu Puspakom untuk tukar milik", preparation: "● Preparation" };
+const INV_LABEL = { reserved: "● Reserved", sold: "● Jualan selesai", preparation: "● Preparation" };
 function where(c) { return c.state ? "Puspakom " + c.state : ""; }
 function nextStep(c) {
   const t = todayStr();
+  if (c.vstatus === "sold") {
+    if (!c.hasRecord) return { txt: "Jualan selesai dalam sistem. Rekod Puspakom tiada — semak dokumen sejarah untuk pengesahan.", alert: true };
+    if (c.status !== "lulus") return { txt: "Jualan selesai dalam sistem. Rekod Puspakom masih " + find(STATUSES,c.status).l + " — semak dokumen sejarah.", alert: true };
+    return { txt: "Selesai — jualan dan urusan tukar milik dianggap lengkap mengikut status Sold. Rekod Puspakom disimpan sebagai sejarah.", alert: false };
+  }
   if (c.status === "lulus") {
     const expiry = expiryInfo(c);
     if (!expiry) return { txt: "Lulus — isi tarikh booking/pemeriksaan yang sah untuk kira 120 hari", alert: true };
@@ -380,7 +387,7 @@ function card(c) {
   const dl = c.status === "tempah" && c.date ? dayLabel(c.date) : "";
   const dd = c.date ? c.date.split("-") : null;
   const docOk = DOCS.filter(x => c.docs[x.k]).length;
-  const inv = c.vstatus === "sold" ? `<span class="inv inv-sold">Dah dijual · perlu tukar milik</span>` : c.vstatus === "reserved" ? `<span class="inv inv-res">Reserved</span>` : c.vstatus === "preparation" ? `<span class="inv">Preparation</span>` : "";
+  const inv = c.vstatus === "sold" ? `<span class="inv inv-sold">Jualan selesai · urusan tukar milik selesai</span>` : c.vstatus === "reserved" ? `<span class="inv inv-res">Reserved</span>` : c.vstatus === "preparation" ? `<span class="inv">Preparation</span>` : "";
   const appt = c.date && c.status !== "belum" ? `<div class="appt">
       <div class="cal"><b>${+dd[2]}</b><span>${MONTHS[+dd[1] - 1]}</span></div>
       <div class="appt-i">
