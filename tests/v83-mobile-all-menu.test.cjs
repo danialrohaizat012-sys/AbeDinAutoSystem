@@ -5,34 +5,36 @@ const path=require('node:path');
 const html=fs.readFileSync(path.resolve(__dirname,'../app.html'),'utf8');
 const src=fs.readFileSync(path.resolve(__dirname,'../js/admin-menu.js'),'utf8');
 const css=fs.readFileSync(path.resolve(__dirname,'../css/admin-menu.css'),'utf8');
-test('admin mobile menu code compiles',()=>{
+test('menu enhancer compiles and native menu is present without JS',()=>{
  assert.doesNotThrow(()=>new Function(src.replace(/^export /m,'')));
+ const nav=html.match(/<nav class="cloud-bottom"[^>]*>[\s\S]*?<\/nav>/)?.[0]||'';
+ assert.match(nav,/<details class="ada-native-more" id="ada-admin-more">/);
+ assert.match(nav,/<summary aria-label="Buka Semua Menu">/);
+ assert.equal((nav.match(/<section class="ada-native-menu-section">/g)||[]).length,4);
+ assert.equal((nav.match(/<button type="button" data-cloud-page="/g)||[]).length,18);
 });
-test('Semua Menu button is wired and accessible on mobile',()=>{
- assert.match(html,/id="ada-admin-more" aria-haspopup="dialog" aria-expanded="false"/);
- assert.match(src,/more\.addEventListener\('click',e=>\{e\.preventDefault\(\);e\.stopPropagation\(\);overlay\.hidden\?open\(\):close\(\)\}\)/);
- assert.match(src,/overlay\.hidden=false/);
- assert.match(src,/overlay\.style\.display='flex'/);
- assert.match(src,/overlay\.hidden=true/);
- assert.match(src,/overlay\.style\.display='none'/);
- assert.match(src,/aria-modal="true"/);
- assert.match(css,/\.ada-admin-menu-overlay\{position:fixed/);
+test('native menu is styled as a real mobile expandable panel',()=>{
+ assert.match(css,/\.ada-native-more\[open\] summary/);
+ assert.match(css,/\.ada-native-menu-list\{/);
+ assert.match(css,/position:fixed!important/);
+ assert.match(css,/max-height:calc\(100dvh - 115px/);
 });
-test('drawer navigates via authorized direct application route rather than hidden CSS button',()=>{
+test('staff access and direct route handler are preserved',()=>{
  assert.match(html,/window\.adaCloudNavigate=page=>\{if\(!profile\|\|!canPage\(profile,page\)\)return false/);
- assert.match(src,/if\(typeof window\.adaCloudNavigate==='function'\)return window\.adaCloudNavigate\(page\)===true/);
- assert.match(src,/b\.addEventListener\('click',\(\)=>\{if\(navigate\(page\)\)close\(\)\}\)/);
-});
-test('quick shortcuts and drawer use a single navigation handler',()=>{
- assert.match(src,/button\.addEventListener\('click',\(\)=>navigate\(page\)\)/);
- assert.match(html,/querySelectorAll\('\[data-cloud-page\]'\)\.forEach\(b=>b\.addEventListener\('click',\(\)=>window\.adaCloudNavigate\(b\.dataset\.cloudPage\)\)\)/);
-});
-test('menu still honors staff visibility and retains all groups',()=>{
- for(const group of ['Utama','Operasi','Sokongan','Akaun'])assert.match(src,new RegExp("label:'"+group+"'"));
- assert.match(src,/\.filter\(b=>b&&!b\.hidden\)/);
  assert.match(src,/if\(!source\|\|source\.hidden\)return false/);
+ assert.match(src,/window\.adaCloudNavigate\(page\)===true/);
+ assert.match(src,/btn\.hidden=!source\|\|source\.hidden/);
 });
-test('mobile cache is refreshed to 83.5 without modifying modules',()=>{
- assert.match(html,/admin-menu\.js\?v=83\.5/);
- assert.match(html,/css\/admin-menu\.css\?v=83\.5/);
+test('navigation enhancer does not delete native menu entries',()=>{
+ assert.match(src,/bottom\.querySelectorAll\(':scope > button\[data-cloud-page\]'\)/);
+ assert.match(src,/mobileList\?\.addEventListener\('click'/);
+ assert.match(src,/if\(more\.open\)more\.open=false/);
+ assert.doesNotMatch(src,/document\.body\.append\(overlay\)/);
+});
+test('fresh assets and service worker prioritize latest JS',()=>{
+ assert.match(html,/admin-menu\.js\?v=83\.6/);
+ assert.match(html,/admin-menu\.css\?v=83\.6/);
+ const sw=fs.readFileSync(path.resolve(__dirname,'../service-worker.js'),'utf8');
+ assert.match(sw,/abe-din-v83-6/);
+ assert.match(sw,/u\.pathname\.endsWith\('\.js'\)\|\|u\.pathname\.endsWith\('\.css'\)/);
 });

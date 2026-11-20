@@ -8,11 +8,11 @@ test('staff role reaches menu before permitted navigation refresh',()=>{
  const role=app.indexOf("dataset.userRole=p.role");
  const refresh=app.indexOf("window.adaAdminMenuRefresh?.()",role);
  assert.ok(role>0&&refresh>role);
- assert.match(js,/panel\.dataset\.userRole&&panel\.dataset\.userRole!=='owner'/);
+ assert.match(js,/!!panel\.dataset\.userRole&&panel\.dataset\.userRole!=='owner'/);
 });
 test('staff quick navigation chooses only permitted pages',()=>{
  assert.match(js,/candidate\.filter\(page=>byPage\.get\(page\)&&!byPage\.get\(page\)\.hidden\)\.slice\(0,4\)/);
- assert.match(js,/button\.addEventListener\('click',\(\)=>navigate\(page\)\)/);
+ assert.match(js,/button\.addEventListener\('click',\(\)=>\{if\(navigate\(page\)\)close\(\)\}\)/);
  assert.match(js,/isStaff\?'Katalog Umum':'Dashboard'/);
 });
 test('catalogue has responsive contained iframe and accessible customer link',()=>{
@@ -28,7 +28,7 @@ test('mobile staff shortcuts maintain large buttons without horizontal menu scro
  assert.match(css,/-webkit-line-clamp:2/);
 });
 test('admin remains on existing menu and staff CSS is cache-busted',()=>{
- assert.match(app,/admin-menu\.js\?v=83\.5/);
+ assert.match(app,/admin-menu\.js\?v=83\.6/);
  assert.match(app,/staff-dashboard\.css\?v=83\.2/);
  assert.match(js,/\:['dashboard','inventory','sales','reports']/);
 });
