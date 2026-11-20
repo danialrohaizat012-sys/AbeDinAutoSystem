@@ -37,13 +37,13 @@ test('native Semua Menu opens on 375px iPhone without enhancer JavaScript',async
   await page.close();
  }finally{await browser.close()}
 });
-test('enhanced menu retains all 14 pages, closes after navigation, handles staff',async()=>{
+test('enhanced menu retains all 15 pages, closes after navigation, handles staff',async()=>{
  const browser=await chromium.launch({headless:true});
  try{
   const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
   await setup(page,true);
   await page.locator('#ada-admin-more summary').tap();
-  assert.equal(await page.locator('.ada-native-menu-list button[data-cloud-page]').count(),14);
+  assert.equal(await page.locator('.ada-native-menu-list button[data-cloud-page]').count(),15);
   await page.locator('.ada-native-menu-list button[data-cloud-page="runner"]').tap();
   assert.deepEqual(await page.evaluate(()=>window.visited),['runner']);
   assert.equal(await page.locator('#ada-admin-more').evaluate(e=>e.open),false);

@@ -11,7 +11,7 @@ test('menu enhancer compiles and native menu is present without JS',()=>{
  assert.match(nav,/<details class="ada-native-more" id="ada-admin-more">/);
  assert.match(nav,/<summary aria-label="Buka Semua Menu">/);
  assert.equal((nav.match(/<section class="ada-native-menu-section">/g)||[]).length,4);
- assert.equal((nav.match(/<button type="button" data-cloud-page="/g)||[]).length,18);
+ assert.equal((nav.match(/<button type="button" data-cloud-page="/g)||[]).length,19);
 });
 test('native menu is styled as a real mobile expandable panel',()=>{
  assert.match(css,/\.ada-native-more\[open\] summary/);

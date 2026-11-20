@@ -2,12 +2,12 @@
 // This module enhances desktop grouping and staff shortcuts, preserving the native fallback.
 const GROUPS=[
  {label:'Utama',pages:['dashboard','inventory','sales','customers','reports']},
- {label:'Operasi',pages:['pemeriksaan','puspakom','runner','suppliers']},
+ {label:'Operasi',pages:['pemeriksaan','puspakom','runner','belanja','suppliers']},
  {label:'Sokongan',pages:['applications','sewa','kehadiran']},
  {label:'Akaun',pages:['profil','settings']}
 ];
-const LABELS={dashboard:'Dashboard',inventory:'Inventori Kenderaan',sales:'Jualan Kereta',customers:'Pelanggan',reports:'Laporan Jualan',pemeriksaan:'Pemeriksaan',puspakom:'Puspakom',runner:'Runner',suppliers:'Pembekal',applications:'Permohonan',sewa:'Sewa Kereta',kehadiran:'Kehadiran',profil:'Profil Saya',settings:'Tetapan'};
-const ICONS={dashboard:'⌂',inventory:'▤',sales:'▣',customers:'♙',reports:'▥',pemeriksaan:'◎',puspakom:'✓',runner:'⛟',suppliers:'▣',applications:'✎',sewa:'⚿',kehadiran:'⏱',profil:'☺',settings:'⚙'};
+const LABELS={dashboard:'Dashboard',inventory:'Inventori Kenderaan',sales:'Jualan Kereta',customers:'Pelanggan',reports:'Laporan Jualan',pemeriksaan:'Pemeriksaan',puspakom:'Puspakom',runner:'Runner',belanja:'Perbelanjaan',suppliers:'Pembekal',applications:'Permohonan',sewa:'Sewa Kereta',kehadiran:'Kehadiran',profil:'Profil Saya',settings:'Tetapan'};
+const ICONS={dashboard:'⌂',inventory:'▤',sales:'▣',customers:'♙',reports:'▥',pemeriksaan:'◎',puspakom:'✓',runner:'⛟',belanja:'🧾',suppliers:'▣',applications:'✎',sewa:'⚿',kehadiran:'⏱',profil:'☺',settings:'⚙'};
 export function mountAdminMenu(){
  const panel=document.getElementById('ada-cloud-panel');
  const aside=panel?.querySelector('.cloud-side'),more=document.getElementById('ada-admin-more');
@@ -69,7 +69,7 @@ export function mountAdminMenu(){
   }
   for(const section of staticSections)section.hidden=![...section.querySelectorAll('button[data-cloud-page]')].some(b=>!b.hidden);
   const candidate=isStaff
-   ?['dashboard','inventory','pemeriksaan','puspakom','sales','applications','sewa','kehadiran','reports','profil']
+   ?['dashboard','inventory','belanja','pemeriksaan','puspakom','sales','applications','sewa','kehadiran','reports','profil']
    :['dashboard','inventory','sales','reports'];
   const allowed=candidate.filter(page=>byPage.get(page)&&!byPage.get(page).hidden).slice(0,4);
   if(bottom){
