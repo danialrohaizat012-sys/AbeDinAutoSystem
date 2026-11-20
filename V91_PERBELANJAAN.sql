@@ -129,3 +129,20 @@ returns jsonb language sql stable security definer set search_path = public, app
 $$;
 revoke all on function public.ai_config_status() from public, anon;
 grant execute on function public.ai_config_status() to authenticated;
+
+-- ===== V92: 3 jenis perbelanjaan (Inventori / Pembelian / Overhead tetap bulanan) =====
+alter table public.expenses drop constraint if exists expenses_category_check;
+alter table public.expenses add constraint expenses_category_check check (category in (
+  'baiki','alat_ganti','tayar_bateri','cat_body','cuci_polish','jpj_puspakom','insurans','transport_kereta',
+  'sewa_premis','utiliti','telefon_internet','langganan',
+  'alat_tulis','makan_entertain','iklan','marketing_lain','minyak','tol_parking','armada_sewa','bank_caj','lain'));
+alter table public.expenses add column if not exists jenis text;
+update public.expenses set jenis = case
+  when category in ('baiki','alat_ganti','tayar_bateri','cat_body','cuci_polish','jpj_puspakom','insurans','transport_kereta') then 'inventori'
+  when category in ('sewa_premis','utiliti','telefon_internet','langganan','bank_caj') then 'overhead'
+  else 'pembelian' end where jenis is null;
+alter table public.expenses alter column jenis set default 'pembelian';
+alter table public.expenses alter column jenis set not null;
+alter table public.expenses drop constraint if exists expenses_jenis_check;
+alter table public.expenses add constraint expenses_jenis_check check (jenis in ('inventori','pembelian','overhead'));
+create index if not exists expenses_jenis_idx on public.expenses (jenis, receipt_date desc);

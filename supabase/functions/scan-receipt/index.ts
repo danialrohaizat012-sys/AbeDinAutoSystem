@@ -12,8 +12,11 @@ const CORS = {
 };
 const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { ...CORS, "Content-Type": "application/json" } });
 
-const CATS = ["baiki","alat_ganti","tayar_bateri","cat_body","cuci_polish","jpj_puspakom","insurans","sewa_premis","utiliti",
-  "telefon_internet","alat_tulis","makan_entertain","iklan","marketing_lain","minyak","tol_parking","armada_sewa","bank_caj","lain"];
+const INV = ["baiki","alat_ganti","tayar_bateri","cat_body","cuci_polish","jpj_puspakom","insurans","transport_kereta"];
+const OVH = ["sewa_premis","utiliti","telefon_internet","langganan","bank_caj"];
+const PEM = ["minyak","tol_parking","alat_tulis","makan_entertain","iklan","marketing_lain","armada_sewa","lain"];
+const CATS = [...INV, ...OVH, ...PEM];
+const jenisOf = (c: string) => INV.includes(c) ? "inventori" : OVH.includes(c) ? "overhead" : "pembelian";
 
 const TOOL = {
   name: "rekod_resit",
@@ -29,19 +32,21 @@ const TOOL = {
       tax_amount: { type: "number", description: "Jumlah SST/cukai (RM), 0 jika tiada" },
       payment_method: { type: "string", enum: ["tunai","transfer","kad","ewallet","cek","lain"] },
       category: { type: "string", enum: CATS, description: "Kategori perbelanjaan paling sesuai untuk kedai kereta terpakai" },
+      jenis: { type: "string", enum: ["inventori","pembelian","overhead"], description: "inventori = kos melekat pada kereta stok (baiki, spare part, cat, JPJ, transport kereta); overhead = bil tetap bulanan (sewa kedai, TNB, air, internet, langganan); pembelian = belanja operasi lain" },
       unit: { type: "string", enum: ["jualan","sewa","umum"], description: "jualan = kos kereta untuk dijual; sewa = kereta sewa; umum = operasi kedai" },
       plate: { type: "string", description: "No. plat kenderaan jika tertulis pada resit (contoh DCX1234), kosong jika tiada" },
       items: { type: "array", items: { type: "object", properties: { name: { type: "string" }, qty: { type: "number" }, price: { type: "number" } }, required: ["name"] } },
       summary: { type: "string", description: "Ringkasan 1 baris dalam Bahasa Melayu tentang apa yang dibeli" },
       confidence: { type: "number", description: "0 hingga 1, keyakinan bacaan" },
     },
-    required: ["is_receipt", "vendor", "amount", "category", "unit", "confidence"],
+    required: ["is_receipt", "vendor", "amount", "category", "jenis", "unit", "confidence"],
   },
 };
 
 const PROMPT = `Anda pembantu akaun untuk ABE DIN AUTO, kedai jual beli kereta terpakai di Kota Bharu, Kelantan (juga ada perniagaan kereta sewa "Abedin Car Rental").
 Baca gambar resit ini dengan teliti dan panggil alat rekod_resit.
-Panduan kategori:
+Kategori ikut 3 jenis:
+INVENTORI (kos melekat pada kereta stok):
 - baiki: bengkel, upah mekanik, servis kereta stok
 - alat_ganti: spare part, minyak hitam, filter, aksesori
 - tayar_bateri: kedai tayar, bateri, alignment
@@ -49,13 +54,20 @@ Panduan kategori:
 - cuci_polish: car wash, polish, detailing
 - jpj_puspakom: JPJ, Puspakom, roadtax, tukar nama
 - insurans: insurans / takaful kenderaan
-- sewa_premis, utiliti (TNB, air), telefon_internet, alat_tulis
-- makan_entertain: makan, minum, belanja pelanggan
-- iklan: Facebook/TikTok/Google ads, Mudah, Carlist; marketing_lain: banner, cetakan, hadiah
+- transport_kereta: tunda, lori angkut kereta
+OVERHEAD TETAP BULANAN:
+- sewa_premis: sewa kedai / tapak
+- utiliti: TNB, air (SAKN / Air Kelantan)
+- telefon_internet: Unifi, Maxis, Celcom, Digi, U Mobile, TM
+- langganan: pakej bulanan Mudah/Carlist, perisian, sistem
+- bank_caj: caj bank bulanan, fi transaksi
+PEMBELIAN / OPERASI:
 - minyak: stesen minyak (Petronas, Shell, BHP, Petron, Caltex)
 - tol_parking: tol, Touch n Go reload, parking
+- alat_tulis: alat tulis, barang pejabat
+- makan_entertain: makan, minum, belanja pelanggan
+- iklan: Facebook/TikTok/Google ads (boost); marketing_lain: banner, cetakan, hadiah
 - armada_sewa: kos untuk kereta sewa
-- bank_caj: caj bank, fi transaksi
 - lain: selain di atas
 Tarikh di Malaysia biasanya DD/MM/YYYY — tukar kepada YYYY-MM-DD. Jumlah = TOTAL / JUMLAH yang dibayar. Jangan reka maklumat yang tiada.`;
 
@@ -101,6 +113,7 @@ Deno.serve(async (req) => {
     if (!t) return json({ error: "AI tidak dapat membaca resit." }, 502);
     const d = t.input || {};
     if (!CATS.includes(d.category)) d.category = "lain";
+    d.jenis = jenisOf(d.category); // jenis sentiasa ikut kategori supaya konsisten
     if (d.receipt_date && !/^\d{4}-\d{2}-\d{2}$/.test(d.receipt_date)) d.receipt_date = "";
     return json({ ok: true, data: d, model });
   } catch (e) {
