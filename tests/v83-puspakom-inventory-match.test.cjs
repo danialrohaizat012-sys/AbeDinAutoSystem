@@ -26,8 +26,11 @@ test('Sold vehicles with other Puspakom states stay linked',()=>{
   assert.equal(found.length,1);assert.equal(found[0].inv,true);
  }
 });
-test('Sold without a Puspakom booking is still omitted from Puspakom list',()=>{
- assert.deepEqual(cars([cdw],[]),[]);
+test('Sold without a Puspakom booking is shown for audit',()=>{
+ const found=cars([cdw],[]);
+ assert.equal(found.length,1);
+ assert.equal(found[0].inv,true);
+ assert.equal(found[0].bookingStatus,'belum');
 });
 test('booking fallback remains visible when no Inventory vehicle exists',()=>{
  const found=cars([],[approved]);
