@@ -575,7 +575,7 @@ function viewPantau(){
 function bindPantau(){ const b=$('[data-act="pdfsum"]'); if(b) b.onclick=summaryDialog; bindDashboardSearch(); }
 
 /* --- Kereta --- */
-function carState(v){ const l=inspFor(v)[0]; if(!l) return {k:"belum",t:"Belum diperiksa",r:null}; return {k:l.status||"draf",t:(STATUS[l.status]||STATUS.draf)[0],r:l}; }
+function carState(v){ const all=inspFor(v),sold=String(v.status||"").toLowerCase()==="sold"; const l=sold?(all.find(r=>r.status==="lulus")||all[0]):all[0]; if(!l) return {k:"belum",t:"Belum diperiksa",r:null}; return {k:l.status||"draf",t:(STATUS[l.status]||STATUS.draf)[0],r:l}; }
 function viewKereta(){
   const list=S.vehicles.map(v=>({v,s:carState(v)}));
   const cnt=k=>list.filter(x=>k==="proses"?["draf","hantar","ulang"].includes(x.s.k):x.s.k===k).length;
