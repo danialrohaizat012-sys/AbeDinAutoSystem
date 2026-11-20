@@ -55,5 +55,5 @@ test('all cards remain editable using existing booking form without synthetic ap
  assert.match(source,/const ed = e\.target\.closest\("\[data-edit\]"\)/);
  assert.match(source,/openForm\(c0/);
  assert.match(source,/status: r\.status \|\| "belum"/);
- assert.match(html,/import\('\.\/js\/puspakom\.js\?v=8'\)/);
+ assert.match(html,/import\('\.\/js\/puspakom\.js\?v=9'\)/);
 });
