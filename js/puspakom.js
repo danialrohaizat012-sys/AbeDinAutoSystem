@@ -1,6 +1,6 @@
 // Abe Din Auto – modul Puspakom (V72). Status pemeriksaan B5 / B7 untuk setiap kereta dalam inventori.
 // Dimuat oleh app.html melalui import("./js/puspakom.js"). Jadual: puspakom (lihat V72_PUSPAKOM.sql).
-// Semua kereta inventori (kecuali Sold) dipaparkan secara automatik; yang belum ada rekod = "Belum tempah".
+// Semua kereta inventori termasuk Sold dipaparkan; Sold tanpa rekod Puspakom ditanda untuk audit.
 // Owner, Sales Advisor dan staf Operations aktif boleh edit semua rekod; padam hanya Owner. UI dalam Shadow DOM.
 const CSS = `
 :host{display:block;--bg:#0a0a09;--card:#151412;--fg:#f4efe2;--mute:#a69f8c;--line:#2e2a20;--soft:#1e1c17;
@@ -30,6 +30,18 @@ h2{margin:0;font-size:20px;font-weight:800}
 .none{color:#aaa;font-size:13.5px}
 .soon{font-size:12.5px;color:#aaa;margin-top:8px}
 .panel .btn{width:100%;margin-top:10px}
+.sold-audit{padding:13px;margin:0 0 14px;border:1px solid #6d5730;border-radius:15px;background:linear-gradient(140deg,#1c1b17,#171610);color:var(--fg)}
+.audit-head strong{font-size:15px;color:#ffe095;display:block}
+.audit-head small{display:block;color:#bdb5a1;font-size:11px;line-height:1.5;margin-top:4px}
+.audit-counts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:12px 0}
+.audit-counts>div{padding:9px 8px;background:#25241f;border:1px solid #48402b;border-radius:10px;min-width:0}
+.audit-counts b{display:block;font-size:22px;line-height:1.15;color:#f5e4c2}
+.audit-counts small{display:block;font-size:10.5px;line-height:1.3;color:#d1c9b4;margin-top:4px}
+.audit-counts .audit-ok b{color:#89d6a3}
+.audit-counts .audit-attention b{color:#ffad9f}
+.audit-actions{display:flex;flex-wrap:wrap;gap:7px}
+.audit-actions button{flex:1 1 170px;min-height:44px!important;font-size:12px}
+@media(max-width:420px){.audit-counts b{font-size:19px}.audit-counts small{font-size:10px}.sold-audit{padding:11px}}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
 @media(min-width:760px){.stats{grid-template-columns:repeat(6,1fr)}}
 .stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:11px;cursor:pointer}
