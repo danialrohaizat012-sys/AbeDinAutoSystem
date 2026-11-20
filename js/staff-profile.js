@@ -91,7 +91,7 @@ const F = {
   payroll: [["pay_type", "Jenis gaji", "sel", PAY, "pay"], ["rate", "Kadar gaji (RM)", "money", null, "pay"], ["allowance", "Elaun tetap sebulan (RM)", "money", null, "pay"],
     ["bank_name", "Nama bank", "list", BANKS], ["bank_account", "No. akaun bank", "text"], ["epf_no", "No. KWSP", "text"], ["socso_no", "No. PERKESO", "text"], ["sip_no", "No. SIP / EIS", "text"], ["tax_no", "No. cukai (LHDN)", "text"],
     ["statutory_mode", "Potongan statutori", "sel", STAT], ["socso_type", "Jenis caruman PERKESO", "sel", SOCSO], ["deduct_epf", "Potong KWSP", "bool"], ["deduct_socso", "Potong PERKESO", "bool"], ["deduct_sip", "Potong SIP / EIS", "bool"]],
-  leave: [["al_days", "Cuti tahunan asas (kosong = ikut Akta)", "dec"], ["al_extra", "Cuti tahunan tambahan", "dec"], ["al_carry", "Bawa ke hadapan (CF)", "dec"], ["mc_days", "Cuti sakit (kosong = ikut Akta)", "dec"],
+  leave: [["al_days", "Cuti tahunan asas (isi selepas pendaftaran)", "dec"], ["al_extra", "Cuti tahunan tambahan", "dec"], ["al_carry", "Bawa ke hadapan (CF)", "dec"], ["mc_days", "Cuti sakit (kosong = ikut Akta)", "dec"],
     ["hosp_days", "Hospitalisasi (kosong = 60)", "dec"], ["paternity_days", "Paterniti (kosong = 7)", "dec"], ["maternity_days", "Bersalin (kosong = 98)", "dec"], ["unpaid_days", "Had cuti tanpa gaji", "dec"]],
   docs: [["education", "Pendidikan tertinggi", "list", EDU], ["pledge_signer", "Nama penandatangan ikrar", "text"], ["pledge_signer_ic", "IC penandatangan", "text"], ["notes", "Catatan dalaman", "area"]],
 };
@@ -168,6 +168,9 @@ export function mountProfile(app, ctx, staff, onBack) {
   }
   function input(f) {
     const [k, label, type, opt, src] = f; let v = val(k, src); if (v == null) v = "";
+    // The DB defaults extra/carry to 0; keep the first annual-leave setup form visually blank.
+    // Preserve any explicit configured base, including 0, and do not overwrite existing records.
+    if (["al_extra", "al_carry"].includes(k) && P.hr.al_days == null && +v === 0) v = "";
     const n = `name="${k}"`, cls = `class="field"`;
     let h;
     if (type === "sel") h = `<select ${cls} ${n}><option value="">-</option>${Object.entries(opt).map(([a, b]) => `<option value="${a}" ${v === a ? "selected" : ""}>${esc(b)}</option>`).join("")}</select>`;
@@ -212,15 +215,16 @@ export function mountProfile(app, ctx, staff, onBack) {
     const e = leaveEntitle(P.hr), yr = String(new Date().getFullYear()), g = P.hr.gender;
     const thisYr = P.leaves.filter(l => String(l.date_from).startsWith(yr));
     const sum = (k, s) => thisYr.filter(l => l.kind === k && l.status === s).reduce((a, l) => a + +l.days, 0);
-    const tile = (k, cls, ent, sub) => { const used = sum(k, "approved"), pend = sum(k, "pending"), rem = ent == null ? null : ent - used - pend;
-      return `<div class="tile ${cls}"><small>${LEAVE[k]}</small><b>${ent == null ? used : `${rem}/${ent}`}</b><small>${ent == null ? "hari diambil" : `Diambil ${used} · Menunggu ${pend}`}${sub ? "<br>" + sub : ""}</small></div>`; };
+    const annualNotSet = P.hr.al_days == null;
+    const tile = (k, cls, ent, sub, unconfigured = false) => { const used = sum(k, "approved"), pend = sum(k, "pending"), rem = ent == null ? null : ent - used - pend;
+      return `<div class="tile ${cls}"><small>${LEAVE[k]}</small><b>${unconfigured ? "—" : ent == null ? used : `${rem}/${ent}`}</b><small>${unconfigured ? "Belum ditetapkan oleh Admin" : ent == null ? "hari diambil" : `Diambil ${used} · Menunggu ${pend}`}${sub ? "<br>" + sub : ""}</small></div>`; };
     const sy = serviceYears(P.hr.join_date);
     return `<div class="sec"><div class="row"><h4 class="grow">Cuti (Tahun ${yr})</h4><button class="btn sm" data-ed="leave">✎ Kelayakan</button></div>
       ${P.edit === "leave" ? `<form class="form" data-sf="leave" style="border:none;padding:0;background:none">${F.leave.map(input).join("")}<div class="full row"><button class="btn pri" type="submit">Simpan</button><button class="btn" type="button" data-a="cancel">Batal</button></div></form>` : ""}
       ${!P.hr.join_date ? `<div class="warn">Isi tarikh mula kerja (bahagian Pekerjaan) supaya kelayakan cuti dikira ikut tempoh khidmat.</div>` : ""}
-      <div class="tiles" style="margin-top:8px">${tile("annual", "", e.annual, `Asas ${e.al_base} + Extra ${+P.hr.al_extra || 0} + CF ${+P.hr.al_carry || 0}`)}${tile("mc", "t-g", e.mc)}${tile("hosp", "t-y", e.hosp)}
+      <div class="tiles" style="margin-top:8px">${tile("annual", "", annualNotSet ? null : e.annual, annualNotSet ? "" : `Asas ${e.al_base} + Extra ${+P.hr.al_extra || 0} + CF ${+P.hr.al_carry || 0}`, annualNotSet)}${tile("mc", "t-g", e.mc)}${tile("hosp", "t-y", e.hosp)}
         ${g !== "female" ? tile("paternity", "t-b", e.paternity) : ""}${g !== "male" ? tile("maternity", "t-b", e.maternity) : ""}${tile("unpaid", "t-p", e.unpaid)}${tile("emergency", "", null)}</div>
-      <p class="note" style="margin-top:6px">Kelayakan lalai ikut Akta Kerja 1955 (khidmat ${sy < 2 ? "&lt; 2 tahun" : sy < 5 ? "2–5 tahun" : "≥ 5 tahun"}). Kitaran: 01/01/${yr} – 31/12/${yr}.</p>
+      <p class="note" style="margin-top:6px">${annualNotSet ? "Kuota cuti tahunan dalaman belum ditetapkan. Owner boleh mengisi melalui Kelayakan. Ini tidak menafikan hak minimum cuti pekerja di bawah Akta Kerja 1955." : "Kelayakan cuti tertakluk kepada Akta Kerja 1955."} Kitaran: 01/01/${yr} – 31/12/${yr}.</p>
       <form class="mini" data-add="leave"><div><label>Jenis</label><select class="field" name="kind">${Object.entries(LEAVE).map(([k, t]) => `<option value="${k}">${t}</option>`).join("")}</select></div>
         <div><label>Dari</label><input class="field" type="date" name="date_from" value="${today()}" required></div><div><label>Hingga</label><input class="field" type="date" name="date_to" value="${today()}" required></div>
         <div><label>Hari</label><input class="field" type="number" name="days" min="0.5" step="0.5" value="1" required></div><div><label>Status</label><select class="field" name="status"><option value="approved">Lulus</option><option value="pending">Menunggu</option></select></div>
@@ -413,7 +417,7 @@ export function mountProfile(app, ctx, staff, onBack) {
       <div class="top">${ph ? `<img src="${esc(ph)}">` : ""}<div><div class="m">ABE DIN AUTO · PROFIL STAF</div><h1>${esc((staff.full_name || "").toUpperCase())}</h1>
       <div class="m">IC: ${esc(h.ic_no || "-")} · Staff ID: ${esc(h.staff_code || "-")} · ${esc(h.position || "")} · ${esc(CATEGORY[h.category] || "")} · ${esc(EMP_TYPE[h.employment_type] || "")}</div></div></div>
       <div class="two"><div>${kv("personal")}</div><div>${kv("job")}${kv("contract")}${kv("payroll")}</div></div>
-      <h3>Cuti ${new Date().getFullYear()}</h3><table><tr><th>Tahunan</th><td>${e.annual} hari</td></tr><tr><th>Sakit (MC)</th><td>${e.mc} hari</td></tr><tr><th>Hospitalisasi</th><td>${e.hosp} hari</td></tr></table>
+      <h3>Cuti ${new Date().getFullYear()}</h3><table><tr><th>Tahunan (kuota dalaman)</th><td>${h.al_days == null ? "Belum ditetapkan" : e.annual + " hari"}</td></tr><tr><th>Sakit (MC)</th><td>${e.mc} hari</td></tr><tr><th>Hospitalisasi</th><td>${e.hosp} hari</td></tr></table>
       <h3>Pengalaman Kerja</h3><table><tr><th>Syarikat</th><th>Tempoh</th><th>Jawatan</th><th>Sebab</th></tr>${P.hist.map(x => `<tr><td>${esc(x.company)}</td><td>${dmy(x.start_date)} – ${dmy(x.end_date)}</td><td>${esc(x.position || "")}</td><td>${esc(x.reason || "")}</td></tr>`).join("") || `<tr><td colspan="4">Tiada rekod</td></tr>`}</table>
       <h3>Kronologi</h3><table><tr><th>Tarikh</th><th>Jenis</th><th>Dari → Kepada</th><th>Sebab</th></tr>${P.chrono.map(x => `<tr><td>${dmy(x.event_date)}</td><td>${esc(CHRONO[x.kind])}</td><td>${esc(x.from_val || "-")} → ${esc(x.to_val || "-")}</td><td>${esc(x.reason || "")}</td></tr>`).join("") || `<tr><td colspan="4">Tiada rekod</td></tr>`}</table>
       ${kv("docs")}<p style="margin-top:10px"><b>Ikrar:</b> ${PLEDGE}</p><p class="m">Dicetak ${new Date().toLocaleString("ms-MY")}</p>
