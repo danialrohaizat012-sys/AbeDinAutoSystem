@@ -1,0 +1,22 @@
+name: V83 Inventory Sale Record Verification
+on:
+  pull_request:
+    paths:
+      - 'app.html'
+      - 'css/app.css'
+      - 'tests/v83-inventory-sale-record-status.test.cjs'
+      - '.github/workflows/v83-inventory-sale-record-status.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  sale-record-status:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify sale status badges
+        run: node --test tests/v83-inventory-sale-record-status.test.cjs

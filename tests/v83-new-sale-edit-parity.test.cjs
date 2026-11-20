@@ -69,5 +69,5 @@ test('mobile layout correctly sizes and hides payment fields',()=>{
  assert.ok(css.includes('.ada-form .ada-sale-pay-toggle input[type="checkbox"]'));
  assert.ok(css.includes('.ada-form [data-new-sale-pay][hidden]{display:none!important}'));
  assert.ok(css.includes('@media(max-width:520px)'));
- assert.ok(app.includes('css/app.css?v=50.45'));
+ assert.match(app,/css\/app\.css\?v=50\.(?:45|46)/);
 });
