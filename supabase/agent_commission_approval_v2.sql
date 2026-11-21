@@ -13,6 +13,8 @@ declare
  v_total numeric(14,2);
  v_full boolean;
  v_bad_count bigint;
+ v_ref_count bigint;
+ v_unique_refs bigint;
  v_commission uuid;
 begin
  if p_actor is null or p_lead is null or p_amount is null
@@ -44,11 +46,12 @@ begin
  end if;
  select coalesce(sum(p.amount),0),
         coalesce(bool_or(p.kind::text='full_payment'),false),
+        count(*) as v_ref_count_placeholder, count(distinct lower(btrim(p.reference_no))) as v_unique_refs_placeholder,
         count(*) filter(where p.amount <= 0
           or nullif(btrim(p.reference_no),'') is null
           or p.confirmed_by is null or p.confirmed_at is null)
- into v_total,v_full,v_bad_count from public.payments p where p.sale_id=v_sale.id;
- if not v_full or v_bad_count > 0 or v_total < v_sale.agreed_price then
+ into v_total,v_full,v_ref_count,v_unique_refs,v_bad_count from public.payments p where p.sale_id=v_sale.id;
+ if not v_full or v_bad_count > 0 or v_ref_count <> v_unique_refs or v_total < v_sale.agreed_price then
    raise exception 'Confirmed sale payments are insufficient' using errcode='23514';
  end if;
  if exists (select 1 from public.agent_commissions c where c.sale_id=v_sale.id) then
