@@ -371,7 +371,7 @@ export function mountSewa(host, ctx) {
   const app = root.getElementById('app');
   const formUrl = ctx.publicFormUrl || new URL(ctx.formPath || 'sewa.html', location.href.split('#')[0].split('?')[0]).href;
   const logoSrc = SEWA_LOGO;
-  const S = { bulan: null, staf: null, wa: null, kereta: [], keretaErr: '', kid: null, rows: [], loaded: false, error: '', filter: 'semua', q: '', view: 'list', id: null, terma: null, urls: {}, msg: '' };
+  const S = { bulan: null, staf: null, wa: null, kereta: [], keretaErr: '', kid: null, rows: [], loaded: false, error: '', filter: 'semua', q: '', view: 'list', id: null, terma: null, urls: {}, msg: '', verification: {}, vLoading: false };
 
   async function load() {
     S.error = '';
@@ -381,7 +381,11 @@ export function mountSewa(host, ctx) {
       ? 'Jadual Sewa belum wujud. Jalankan V60_SEWA_MIGRATION.sql dalam Supabase SQL Editor.' : error.message;
     const k = await client.from('sewa_kereta').select('*').order('model');
     S.kereta = k.data || []; S.keretaErr = k.error ? k.error.message : '';
-    S.rows = data || []; S.loaded = true; render();
+    S.rows = data || []; S.loaded = true;
+    const check = await client.from('sewa_customer_verifications').select('agreement_id,identity_status,licence_status,rental_risk_status,notes,reviewed_at,reviewed_by');
+    S.verification = Object.fromEntries((check.data || []).map(v => [v.agreement_id, v]));
+    if (check.error) S.vLoading = 'Pengesahan belum tersedia: ' + check.error.message;
+    render();
   }
   const keretaOf = id => S.kereta.find(k => k.id === id);
   function bertindih(kid, a, b, kecuali) {
@@ -431,6 +435,7 @@ export function mountSewa(host, ctx) {
       <div class="row"><button class="btn pri" data-a="edit">✎ Edit Dokumen Sewa</button><button class="btn" data-a="print">Cetak / PDF Perjanjian</button>
         ${tel ? `<a class="btn wa" href="https://wa.me/${tel}" target="_blank" rel="noopener">WhatsApp pelanggan</a>` : ''}
         <a class="btn" href="tel:${esc(r.telefon)}">Telefon</a></div>
+      ${verificationCard(r)}
       ${bayaranCard(r)}
       ${hantarCard(r)}
       <section class="card"><h3>Status</h3><div class="stbar">${Object.keys(STATUS).map(k => `<button class="btn sm" data-st="${k}" aria-pressed="${r.status === k}">${STATUS[k]}</button>`).join('')}</div>
@@ -462,6 +467,23 @@ export function mountSewa(host, ctx) {
       <section class="card"><h3>Tandatangan & Terma dipersetujui</h3><div class="sig"><img src="${esc(r.tandatangan)}" alt="Tandatangan ${esc(r.nama)}"></div>
         <div class="terma" style="margin-top:12px">${termaHtml(r.terma_snapshot)}</div></section>
       ${owner ? `<div class="row"><button class="btn danger" data-a="delete">Padam perjanjian & dokumen</button></div>` : ''}`;
+  }
+
+  function verificationCard(r) {
+    const v = S.verification[r.id] || {};
+    const labels = {belum_disemak:'Belum disemak',perlu_semakan:'Perlu semakan',disahkan:'Disahkan manual',gagal:'Tidak disahkan',tiada_isu_direkod:'Tiada isu dalaman direkod',insiden_disahkan:'Insiden dalaman disahkan'};
+    const fields = [['identity_status','Identiti / IC',[ 'belum_disemak','perlu_semakan','disahkan','gagal']],['licence_status','Lesen memandu',['belum_disemak','perlu_semakan','disahkan','gagal']],['rental_risk_status','Sejarah risiko sewaan',['belum_disemak','tiada_isu_direkod','perlu_semakan','insiden_disahkan']]];
+    const select = ([key,title,values]) => `<div><label for="v-${key}">${title}</label><select id="v-${key}" ${owner ? '' : 'disabled'}>${values.map(x=>`<option value="${x}"${(v[key]||'belum_disemak')===x?' selected':''}>${labels[x]}</option>`).join('')}</select></div>`;
+    return `<section class="card"><h3>Pengesahan Pelanggan</h3>
+      <p class="mute" style="margin-bottom:12px">Semakan manual berdasarkan dokumen dan bukti. Ini BUKAN semakan langsung PDRM, JPJ atau eKYC rasmi. Status lesen perlu disahkan melalui saluran yang dibenarkan sebelum serahan kunci.</p>
+      ${S.vLoading ? `<p class="mute" style="color:var(--warn)">${esc(S.vLoading)}</p>` : ''}
+      <div class="ed">${fields.map(select).join('')}</div>
+      <label class="mute" style="display:block;margin:10px 0 5px">Nota bukti / tindakan (jangan masukkan rekod jenayah yang tidak disahkan)</label>
+      <textarea id="v-notes" maxlength="1500" ${owner ? '' : 'disabled'} placeholder="Contoh: nama pada IC sepadan dengan perjanjian. Lesen perlu semakan lanjut.">${esc(v.notes||'')}</textarea>
+      <p class="mute" style="margin-top:8px">Disemak: ${v.reviewed_at ? when(v.reviewed_at) : 'Belum pernah'} · Status tidak bermaksud pelanggan bebas rekod polis.</p>
+      ${owner ? '<button class="btn pri sm" data-a="save-verification">Simpan pengesahan</button>' : '<p class="mute">Hanya Owner boleh mengubah keputusan.</p>'}
+      <span id="v-msg" class="msg" style="display:block;margin-top:7px"></span>
+    </section>`;
   }
 
   function adminFilled(r) {
@@ -809,6 +831,23 @@ export function mountSewa(host, ctx) {
     if (t.dataset.open) { S.id = t.dataset.open; S.view = 'detail'; S.msg = ''; render(); scrollTo(0, 0); signDocs(S.rows.find(x => x.id === S.id)); return; }
     const r = S.rows.find(x => x.id === S.id);
     if (t.dataset.st && r) { if (t.dataset.st !== r.status) update(r.id, { status: t.dataset.st }, t.dataset.st === 'disahkan' ? 'Perjanjian disahkan. Hantar PDF kepada pelanggan di atas.' : 'Status dikemas kini.'); return; }
+    if (a === 'save-verification' && r && owner) {
+      const m = app.querySelector('#v-msg');
+      if (S.vLoading) { m.textContent = S.vLoading; return; }
+      const payload = {agreement_id:r.id, identity_status:app.querySelector('#v-identity_status').value,
+        licence_status:app.querySelector('#v-licence_status').value,
+        rental_risk_status:app.querySelector('#v-rental_risk_status').value,
+        notes:app.querySelector('#v-notes').value.trim(), reviewed_by:(await client.auth.getUser()).data.user?.id,
+        reviewed_at:new Date().toISOString()};
+      if (!payload.reviewed_by) { m.textContent='Sesi staf tidak sah. Log masuk semula.'; return; }
+      m.textContent='Menyimpan…'; t.disabled=true;
+      const {data,error}=await client.from('sewa_customer_verifications').upsert(payload,{onConflict:'agreement_id'}).select().single();
+      t.disabled=false;
+      if (error) {m.textContent='Gagal simpan: '+error.message; return;}
+      S.verification[r.id]=data; render();
+      const msg=app.querySelector('#v-msg'); if(msg)msg.textContent='Pengesahan manual disimpan.';
+      return;
+    }
     if ((a === 'pay' || a === 'pay-undo') && r) {
       const k = t.dataset.k, nama = ctx.profile?.full_name || 'Staf', now = new Date().toISOString();
       const kaedah = app.querySelector('#kd-' + k)?.value || null;
