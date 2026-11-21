@@ -7,8 +7,8 @@ function fixture() {
     status:'sold',sold_at:'2026-11-20T05:00:00Z',agreed_price_sen:1600000};
   const lead={id:'lead-1',agent_id:'agent-1',linked_sale_id:'sale-1',vehicle_id:'vehicle-1'};
   const payments=[
-    {sale_id:'sale-1',kind:'deposit',amount_sen:100000,confirmed_by:'owner-1',confirmed_at:'2026-11-20T04:00:00Z'},
-    {sale_id:'sale-1',kind:'full_payment',amount_sen:1500000,confirmed_by:'owner-1',confirmed_at:'2026-11-20T05:00:00Z'}
+    {sale_id:'sale-1',kind:'deposit',amount_sen:100000,confirmed_by:'owner-1',confirmed_at:'2026-11-20T04:00:00Z',reference_no:'BANK-D1'},
+    {sale_id:'sale-1',kind:'full_payment',amount_sen:1500000,confirmed_by:'owner-1',confirmed_at:'2026-11-20T05:00:00Z',reference_no:'BANK-F1'}
   ];
   return {sale,lead,payments,expectedAgentId:'agent-1'};
 }
@@ -53,4 +53,9 @@ test('missing payment data cannot approve commission',()=>{
 test('missing sale cannot approve commission',()=>{
   const r=run(f=>{f.sale=null;});
   assert.ok(r.reasons.includes('sale_missing'));
+});
+
+test('reused bank reference cannot be double-counted',()=>{
+  const r=run(f=>{f.payments[1].reference_no='bank-d1';});
+  assert.ok(r.reasons.includes('duplicate_payment_reference'));
 });
