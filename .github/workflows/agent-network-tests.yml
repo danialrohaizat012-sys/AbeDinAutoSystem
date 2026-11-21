@@ -82,3 +82,19 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 -f tests/postgres/10_integration.sql
           psql -X -v ON_ERROR_STOP=1 -f tests/postgres/20_commission_approval.sql
           psql -X -v ON_ERROR_STOP=1 -f tests/postgres/30_hr_payout_verifier.sql
+
+  hosting-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Verify live agent and HR portals
+        shell: bash
+        run: |
+          set -euo pipefail
+          for path in agent.html agent-payout-verify.html; do
+            url="https://abedinauto.my/$path"
+            echo "Checking $url"
+            curl --location --fail --silent --show-error --max-time 20 --retry 1 --output /tmp/agent-page.html "$url"
+            grep -q 'AbeDin Auto' /tmp/agent-page.html
+            echo "PASS: $path returns expected portal HTML"
+          done
