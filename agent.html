@@ -1,25 +1,198 @@
 <!doctype html>
-<html lang="ms"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0c2147"><title>AbeDin Auto | Portal Ejen (Pratonton)</title>
+<html lang="ms">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>AbeDin Auto | Agent Network</title>
+<meta name="theme-color" content="#13243f">
 <style>
-:root{font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;color:#16263f;background:#f3f7fc}*{box-sizing:border-box}body{margin:0}button,input,select{font:inherit}button{cursor:pointer}.top{background:#09275c;color:white;padding:20px max(20px,calc((100vw - 1100px)/2));display:flex;align-items:center;justify-content:space-between;gap:16px}.brand{font-size:20px;font-weight:850}.small{font-size:12px;opacity:.78}.pill{border-radius:99px;padding:7px 11px;background:#dff5e8;color:#176743;font-size:12px;font-weight:750}.top .pill{background:#194276;color:#fff}.wrap{max-width:1100px;margin:24px auto;padding:0 16px 50px}.tabs{display:flex;gap:8px;overflow:auto;margin-bottom:18px}.tabs button{border:1px solid #d7e1ed;background:white;color:#284364;border-radius:12px;padding:12px 15px;white-space:nowrap;font-weight:750}.tabs button.active{color:#fff;background:#1766ca;border-color:#1766ca}h1{font-size:clamp(24px,4vw,34px);margin:0 0 8px}h2{font-size:20px;margin:0 0 18px}p{color:#62748b;line-height:1.55}.panel{background:white;border:1px solid #dce5ef;border-radius:19px;padding:22px;box-shadow:0 6px 22px #183b6610}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}.field{display:grid;gap:6px;font-size:13px;font-weight:700}.field input,.field select{padding:13px;border:1px solid #cbd7e5;border-radius:10px;min-width:0;background:#fff}.button{border:0;border-radius:11px;padding:13px 17px;background:#156bd0;color:white;font-weight:780}.button.secondary{background:#e9f1fa;color:#1b4c87}.button:disabled{opacity:.5;cursor:not-allowed}.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.stat{border:1px solid #dce6f0;border-radius:14px;padding:17px;background:#f9fbff}.stat strong{font-size:24px;display:block;margin:7px 0}.stat span{color:#72829b;font-size:12px}.actions{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0}.tablewrap{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:13px;min-width:620px}th,td{text-align:left;padding:13px 10px;border-bottom:1px solid #edf1f5}th{color:#667c98;font-size:12px}.tag{background:#e9f1ff;color:#1556aa;padding:5px 9px;border-radius:99px;display:inline-block;font-size:11px;font-weight:800}.tag.green{background:#dcf5e5;color:#237447}.tag.amber{background:#fff1c7;color:#916306}.tag.red{background:#ffe2e2;color:#a53333}.split{display:grid;grid-template-columns:1fr 1fr;gap:16px}.card{border:1px solid #dce5ef;border-radius:14px;padding:16px}.muted{color:#77869a;font-size:12px}.empty{padding:25px;text-align:center;color:#74859b}.note{margin:14px 0;background:#fff5db;border:1px solid #f1db9e;border-radius:12px;padding:13px;color:#75561b;font-size:13px}section[hidden]{display:none}.list{display:grid;gap:12px}.steps{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.step{background:#eaf1fb;padding:14px;border-radius:13px;font-size:12px;font-weight:700}.footer{margin-top:25px;color:#7e8da0;font-size:12px}
-@media(max-width:720px){.grid,.split{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.top{padding:18px}.panel{padding:16px}.wrap{margin-top:16px}.actions .button{flex:1}}
-</style></head><body>
-<header class="top"><div><div class="brand">AbeDin Auto</div><div class="small">Agent Network • Pratonton Portal Ejen (Belum Aktif)</div></div><span class="pill">DEMO • TIADA PENDAFTARAN</span></header>
-<main class="wrap"><nav class="tabs" aria-label="Paparan portal"><button class="active" data-tab="register">Pendaftaran Ejen</button><button data-tab="agent">Dashboard Ejen</button><button data-tab="admin">Dashboard Admin</button><button data-tab="flow">Aliran Komisen</button></nav>
-<div class="note"><b>MODUL BELUM DILANCARKAN. JANGAN MASUKKAN MAKLUMAT PERIBADI.</b> Pratonton sahaja. Data contoh dan butang simulasi tidak mengakses database, tidak mengesahkan pendaftaran rasmi dan tidak memproses wang. Modul production memerlukan sambungan Supabase Auth, jadual, RLS dan pengesahan admin.</div>
-<section id="register"><div class="split"><div class="panel"><h1>Jadi Ejen Rasmi AbeDin Auto</h1><p>Daftar sebagai rakan jualan, kongsi katalog kereta dan pantau jualan serta komisen melalui dashboard sendiri.</p><div class="list"><div class="card">✓ ID ejen digital selepas kelulusan</div><div class="card">✓ Rekod pelanggan dan jualan mengikut ejen</div><div class="card">✓ Komisen telus dan penyata pembayaran</div></div></div><div class="panel"><h2>Borang Permohonan Ejen</h2><form id="application"><fieldset disabled style="border:0;padding:0;margin:0"><div class="grid"><label class="field">Nama penuh<input required name="name" autocomplete="name" placeholder="Nama seperti IC"></label><label class="field">No. telefon<input required name="phone" type="tel" placeholder="01xxxxxxxx"></label><label class="field">E-mel<input required name="email" type="email" autocomplete="email" placeholder="nama@email.com"></label><label class="field">Negeri<select name="state" required><option value="">Pilih negeri</option><option>Kelantan</option><option>Terengganu</option><option>Selangor</option><option>Kuala Lumpur</option><option>Johor</option><option>Kedah</option><option>Perak</option><option>Pahang</option><option>Melaka</option><option>Negeri Sembilan</option><option>Perlis</option><option>Pulau Pinang</option><option>Sabah</option><option>Sarawak</option><option>Putrajaya</option><option>Labuan</option></select></label></div><p class="muted">IC, dokumen dan butiran bank hanya akan diminta melalui aliran pengesahan selamat selepas modul production siap. Jangan masukkan maklumat sensitif dalam pratonton ini.</p><label style="display:flex;gap:10px;align-items:start;font-size:13px"><input id="terms" required type="checkbox"> Saya faham ini hanya simulasi permohonan dan belum menjadi ejen rasmi.</label><div class="actions"><button class="button" type="submit" disabled>Pendaftaran Belum Dibuka</button></div><div id="formmsg" role="status" aria-live="polite"></div></fieldset></form></div></div></section>
-<section id="agent" hidden><div class="panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div><h1>Dashboard Ejen</h1><p>Akaun demo: ADA-AG-0001 • Ahmad (contoh)</p></div><span class="pill">Ejen Aktif (demo)</span></div><div class="stats"><div class="stat"><span>Stok Kereta Aktif</span><strong>24</strong></div><div class="stat"><span>Lead Saya</span><strong>18</strong></div><div class="stat"><span>Jualan Bulan Ini</span><strong>3</strong></div><div class="stat"><span>Komisen Belum Dibayar</span><strong>RM 4,500</strong></div></div><div class="actions"><button class="button" id="share">Kongsi Katalog Demo</button><button class="button secondary" id="lead">Daftar Lead Demo</button><button class="button secondary" id="statement">Lihat Penyata Demo</button></div><div class="tablewrap"><table><thead><tr><th>Kereta</th><th>Pelanggan</th><th>Status</th><th>Komisen</th></tr></thead><tbody><tr><td>Perodua Myvi</td><td>Encik Farid</td><td><span class="tag">Booking</span></td><td>RM 500</td></tr><tr><td>Honda City</td><td>Puan Aina</td><td><span class="tag amber">Loan</span></td><td>RM 600</td></tr><tr><td>Proton X50</td><td>Encik Hafiz</td><td><span class="tag green">Selesai</span></td><td>RM 700</td></tr></tbody></table></div><p class="muted" id="agentmsg" role="status"></p></div></section>
-<section id="admin" hidden><div class="panel"><h1>Dashboard Admin Ejen</h1><p>Kelulusan, pengurusan rangkaian ejen, transaksi dan laporan.</p><div class="stats"><div class="stat"><span>Jumlah Permohonan</span><strong>12</strong></div><div class="stat"><span>Menunggu</span><strong>5</strong></div><div class="stat"><span>Ejen Aktif</span><strong>6</strong></div><div class="stat"><span>Digantung</span><strong>1</strong></div></div><h2 style="margin-top:24px">Permohonan Ejen (contoh)</h2><div class="tablewrap"><table><thead><tr><th>Nama</th><th>ID Ejen</th><th>Status</th><th>Tindakan</th></tr></thead><tbody id="approws"><tr><td>Ahmad bin Osman</td><td>ADA-AG-0001</td><td><span class="tag amber">Menunggu</span></td><td><button class="button secondary" data-preview="Ahmad bin Osman">Semak</button></td></tr><tr><td>Siti Nur Izzah</td><td>ADA-AG-0002</td><td><span class="tag green">Aktif</span></td><td><button class="button secondary" data-preview="Siti Nur Izzah">Semak</button></td></tr></tbody></table></div><div id="adminmsg" class="muted" role="status" style="margin-top:12px"></div></div></section>
-<section id="flow" hidden><div class="panel"><h1>Aliran Jualan & Komisen</h1><p>Setiap langkah akan dipautkan kepada rekod jualan sebenar selepas kelulusan integrasi production.</p><div class="steps"><div class="step">1. Pilih kereta</div>→<div class="step">2. Daftar pelanggan</div>→<div class="step">3. Booking / Loan</div>→<div class="step">4. Jualan sah</div>→<div class="step">5. Lulus komisen</div>→<div class="step">6. Bukti bayaran</div></div><h2 style="margin-top:28px">Simulasi Komisen</h2><div class="grid"><label class="field">Kaedah<select id="type"><option value="fixed">Amaun tetap</option><option value="price">Peratus harga jualan</option><option value="profit">Peratus keuntungan bersih</option></select></label><label class="field">Nilai asas (RM)<input id="base" type="number" min="0" value="500"></label><label class="field">Kadar (%) untuk kaedah peratus<input id="rate" type="number" min="0" max="100" value="10"></label><div class="stat"><span>Anggaran komisen</span><strong id="result">RM 500.00</strong></div></div><p class="muted">Komisen hanya layak selepas jualan disahkan, tiada pembatalan dan kelulusan admin. Semakan kos dan rekod pembayaran dibuat pada server, bukan pada browser.</p></div></section>
-<div class="footer">© AbeDin Auto • Modul Agent Network V1 • Prototype tanpa akses data production.</div></main>
-<script>
-const tabs=[...document.querySelectorAll('[data-tab]')];tabs.forEach(b=>b.addEventListener('click',()=>{tabs.forEach(t=>t.classList.toggle('active',t===b));document.querySelectorAll('main section').forEach(s=>s.hidden=s.id!==b.dataset.tab);}));
-document.getElementById('application').addEventListener('submit',e=>{e.preventDefault();document.getElementById('formmsg').textContent='Pratonton berjaya. Tiada permohonan dihantar atau disimpan.';});
-document.getElementById('share').onclick=()=>{document.getElementById('agentmsg').textContent='Pautan referral sebenar belum diaktifkan dalam pratonton.';};
-document.getElementById('lead').onclick=()=>{document.getElementById('agentmsg').textContent='Daftar Lead memerlukan pengesahan identiti dan sambungan Supabase.';};
-document.getElementById('statement').onclick=()=>{document.getElementById('agentmsg').textContent='Penyata sebenar akan dijana daripada rekod pembayaran yang telah disahkan.';};
-document.getElementById('approws').addEventListener('click',e=>{const b=e.target.closest('[data-preview]');if(b)document.getElementById('adminmsg').textContent='Semakan '+b.dataset.preview+' hanya untuk demonstrasi. Tiada rekod diubah.';});
-const type=document.getElementById('type'),base=document.getElementById('base'),rate=document.getElementById('rate'),result=document.getElementById('result');
-function calc(){const a=Math.max(0,Number(base.value)||0),r=Math.min(100,Math.max(0,Number(rate.value)||0));result.textContent=new Intl.NumberFormat('ms-MY',{style:'currency',currency:'MYR'}).format(type.value==='fixed'?a:a*r/100);}
-[type,base,rate].forEach(x=>x.addEventListener('input',calc));calc();
-</script></body></html>
+:root{font:15px system-ui,-apple-system,Segoe UI,sans-serif;color:#15243a;background:#eff3f9}
+*{box-sizing:border-box}body{margin:0}button,input,select,textarea{font:inherit}button{cursor:pointer}
+header{background:#142d57;color:white;padding:18px max(18px,calc((100% - 1080px)/2));display:flex;align-items:center;justify-content:space-between;gap:15px}
+header strong{font-size:22px}.sub{font-size:12px;opacity:.85}main{max-width:1080px;margin:22px auto;padding:0 15px 40px}
+nav{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:18px}
+nav button{padding:11px 15px;border:1px solid #cbd8e8;background:white;color:#16335b;border-radius:12px;font-weight:700}
+nav button[aria-current="page"]{background:#2166bd;color:#fff}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.panel{background:#fff;border:1px solid #d6e1ee;border-radius:18px;padding:22px;box-shadow:0 8px 26px #1632590c;margin-bottom:16px}
+h1{font-size:clamp(23px,4vw,32px);margin:0 0 9px}h2{font-size:19px;margin:0 0 14px}h3{font-size:15px;margin:10px 0}
+p{line-height:1.55;color:#566a83}label{display:grid;gap:6px;margin-bottom:13px;font-size:13px;font-weight:700}
+input,select,textarea{width:100%;padding:12px;border:1px solid #b9cadc;border-radius:10px;background:white}
+input[type=checkbox]{width:auto}.check{display:flex;align-items:flex-start;gap:10px;font-weight:500}
+button.primary{background:#176ac4;color:#fff;border:0;border-radius:10px;padding:12px 16px;font-weight:750}
+button.secondary{background:#e6eef7;color:#17477d;border:0;border-radius:10px;padding:12px 16px;font-weight:700}
+button:disabled{opacity:.55;cursor:not-allowed}.row{display:flex;flex-wrap:wrap;gap:9px;align-items:center}
+.notice{background:#eef5ff;color:#234f88;border:1px solid #d3e5fc;border-radius:11px;padding:12px;margin:12px 0;font-size:13px}
+.warn{background:#fff7e7;color:#74500c;border-color:#f1d9a8}
+.error{color:#a52237}.good{color:#126d42}
+section[hidden],.hidden{display:none!important}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:15px 0}
+.stat{background:#f6f9fd;border:1px solid #dce5ef;border-radius:12px;padding:14px}.stat b{display:block;font-size:23px;margin:6px 0}
+.items{display:grid;gap:9px}.item{border:1px solid #e1e8f0;border-radius:12px;padding:13px}
+.item small{color:#65778e}.item .row{justify-content:space-between}
+kbd{font:inherit;background:#e8f0fb;border-radius:7px;padding:4px 8px}
+footer{font-size:12px;color:#748399;padding:15px 0}
+@media(max-width:720px){.grid{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.panel{padding:16px}header{padding:16px}}
+</style>
+</head>
+<body>
+<header><div><strong>AbeDin Auto</strong><div class="sub">Agent Network | Portal Ejen</div></div><button class="secondary" id="logout" hidden>Log keluar</button></header>
+<main>
+<div id="alert" class="notice" role="status" aria-live="polite">Menyemak sesi pengguna...</div>
+<nav id="tabs">
+<button data-view="account" aria-current="page">Akaun</button>
+<button data-view="application">Permohonan</button>
+<button data-view="dashboard">Dashboard Ejen</button>
+<button data-view="owner" id="ownerTab" hidden>Kelulusan Owner</button>
+</nav>
+
+<section id="account">
+<div class="grid">
+<div class="panel"><h1>Masuk Portal Ejen</h1><p>Gunakan akaun e-mel yang telah disahkan. Akaun ejen tidak diberikan akses kepada modul staf AbeDin Auto.</p>
+<form id="signinForm"><label>E-mel<input name="email" type="email" autocomplete="username" required></label>
+<label>Kata laluan<input name="password" type="password" autocomplete="current-password" required></label>
+<button class="primary">Log masuk</button></form></div>
+<div class="panel"><h2>Cipta akaun ejen</h2><p>Sahkan e-mel dahulu sebelum menghantar permohonan. Pendaftaran tertakluk kepada tetapan Supabase Auth.</p>
+<form id="signupForm"><label>E-mel<input type="email" name="email" autocomplete="email" required></label>
+<label>Kata laluan (sekurang-kurangnya 10 aksara)<input name="password" type="password" autocomplete="new-password" minlength="10" required></label>
+<button class="secondary">Daftar & sahkan e-mel</button></form></div>
+</div></section>
+
+<section id="application" hidden><div class="panel"><h1>Permohonan Ejen</h1>
+<p id="applicationStatus">Log masuk dengan e-mel yang disahkan untuk memohon.</p>
+<form id="applyForm" hidden><div class="grid"><label>Nama penuh<input name="full_name" autocomplete="name" maxlength="160" required></label>
+<label>Telefon<input name="phone" type="tel" maxlength="24" required></label>
+<label>E-mel disahkan<input name="email" type="email" readonly required></label>
+<label>Negeri<select name="state" required><option value="">Pilih negeri</option>
+<option>Kelantan</option><option>Terengganu</option><option>Selangor</option><option>Kuala Lumpur</option><option>Johor</option><option>Kedah</option><option>Perak</option><option>Pahang</option><option>Melaka</option><option>Negeri Sembilan</option><option>Perlis</option><option>Pulau Pinang</option><option>Sabah</option><option>Sarawak</option><option>Putrajaya</option><option>Labuan</option></select></label></div>
+<label class="check"><input name="terms" type="checkbox" required> Saya mengesahkan maklumat permohonan adalah tepat dan bersetuju dihubungi tentang permohonan ejen.</label>
+<button class="primary">Hantar permohonan rasmi</button></form></div></section>
+
+<section id="dashboard" hidden><div class="panel"><h1>Dashboard Ejen</h1>
+<p id="agentStatus">Maklumat ejen akan dipaparkan selepas permohonan diluluskan.</p>
+<div class="stats"><div class="stat">Lead saya<b id="countLeads">0</b></div>
+<div class="stat">Komisen saya<b id="countCommission">0</b></div>
+<div class="stat">Penyata pembayaran<b id="countPayout">0</b></div></div>
+<div id="leadPanel" hidden><h2>Daftar lead pelanggan</h2>
+<div class="notice warn">Pastikan pelanggan telah bersetuju dihubungi oleh AbeDin Auto. Jangan masukkan nombor IC, lesen atau maklumat bank di sini.</div>
+<form id="leadForm"><label>Kereta yang diminati pelanggan<select name="vehicle_id" id="leadVehicle" required><option value="">Pilih kereta tersedia</option></select></label><div class="grid">
+<label>Nama pelanggan<input name="customer_name" maxlength="160" required></label>
+<label>No. telefon<input name="customer_phone" type="tel" maxlength="24" required></label>
+</div><label class="check"><input name="consent" type="checkbox" required> Pelanggan telah memberikan kebenaran untuk dihubungi mengenai kereta.</label>
+<button class="primary">Daftar lead</button></form></div>
+<h2 style="margin-top:22px">Lead Saya</h2><div id="leadItems" class="items"></div>
+<h2 style="margin-top:22px">Komisen Saya</h2><div id="commissionItems" class="items"></div>
+<h2 style="margin-top:22px">Pembayaran Saya</h2><div id="payoutItems" class="items"></div></div></section>
+
+<section id="owner" hidden><div class="panel"><h1>Kelulusan Owner</h1>
+<p>Senarai permohonan belum diluluskan. Hanya akaun owner aktif boleh menggunakan aliran ini.</p>
+<div class="row"><button class="secondary" id="refreshOwner">Muat semula</button></div>
+<div id="ownerItems" class="items" style="margin-top:15px"></div></div></section>
+<footer>Portal ejen rasmi AbeDin Auto. Komisen dan bayaran sebenar hanya boleh disahkan melalui proses dalaman yang diaudit. Tiada pembayaran automatik melalui portal ini.</footer>
+</main>
+<script type="module">
+import {createClient} from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+const project='https://buzpdyvvoiqgbeventwm.supabase.co';
+const supabase=createClient(project,'sb_publishable_zuuNipsMpalN_38SJwXpFA_MRzQ6eZ0',{
+ auth:{storageKey:'abe-agent-network-session',autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}});
+const $=id=>document.getElementById(id);
+let me=null,agent=null,owner=false;
+function message(msg,bad=false){$('alert').textContent=msg;$('alert').className='notice '+(bad?'warn error':'');}
+function view(id){for(const b of document.querySelectorAll('[data-view]'))b.setAttribute('aria-current',b.dataset.view===id?'page':'false');
+for(const s of document.querySelectorAll('main section'))s.hidden=s.id!==id;
+if(id==='owner'&&owner)loadOwner();}
+for(const b of document.querySelectorAll('[data-view]')) b.onclick=()=>view(b.dataset.view);
+function text(node,value){node.textContent=String(value??'');}
+function item(parent,title,subtitle){const d=document.createElement('div');d.className='item';
+const a=document.createElement('strong');text(a,title);const p=document.createElement('div');const sm=document.createElement('small');text(sm,subtitle);p.append(sm);d.append(a,p);parent.append(d);return d;}
+function showRows(target,rows,fn){const el=$(target);el.replaceChildren();if(!rows?.length){item(el,'Tiada rekod','');return;}
+for(const x of rows)fn(el,x);}
+const fail=e=>message(e?.message||'Operasi tidak berjaya',true);
+async function current(){const {data,error}=await supabase.auth.getUser();if(error)throw error;return data?.user||null;}
+async function sync(){
+ try{
+  me=await current();owner=false;agent=null;$('logout').hidden=!me;
+  $('ownerTab').hidden=true;$('applyForm').hidden=true;$('leadPanel').hidden=true;
+  if(!me){$('applicationStatus').textContent='Log masuk dan sahkan e-mel terlebih dahulu.';$('agentStatus').textContent='Log masuk untuk melihat akaun ejen.';message('Sila log masuk atau daftar akaun ejen.');view('account');return;}
+  if(!me.email_confirmed_at){message('Sila sahkan e-mel melalui pautan pengesahan yang diterima.');view('account');return;}
+  const {data:staff,error:staffErr}=await supabase.from('profiles').select('role,enabled').eq('id',me.id).maybeSingle();
+  if(staffErr)throw staffErr;owner=staff?.role==='owner'&&staff.enabled===true;
+  $('ownerTab').hidden=!owner;
+  const {data:app,error:appErr}=await supabase.from('agent_applications').select('id,status,applied_at').eq('user_id',me.id).maybeSingle();
+  if(appErr)throw appErr;
+  const {data:profile,error:prErr}=await supabase.from('agent_profiles').select('id,agent_code,status').eq('user_id',me.id).maybeSingle();
+  if(prErr)throw prErr;agent=profile;
+  if(app){$('applicationStatus').textContent='Status permohonan: '+app.status+'. Tarikh: '+new Date(app.applied_at).toLocaleDateString('ms-MY');}
+  else {$('applicationStatus').textContent='Belum ada permohonan. Sila lengkapkan borang di bawah.';$('applyForm').hidden=false;
+   $('applyForm').elements.email.value=me.email||'';}
+  if(profile?.status==='active'){$('agentStatus').textContent='ID ejen: '+profile.agent_code+' | Status: Aktif';$('leadPanel').hidden=false;await loadDashboard();await loadAgentCatalogue();}
+  else {$('agentStatus').textContent=app?'Permohonan: '+app.status+'. Dashboard hanya aktif selepas kelulusan.':'Belum menjadi ejen. Hantar permohonan dahulu.';
+   for(const id of ['leadItems','commissionItems','payoutItems'])$(id).replaceChildren();for(const id of ['countLeads','countCommission','countPayout'])text($(id),'0');}
+  message('Log masuk sebagai '+me.email+'.');
+  view(owner?'owner':profile?.status==='active'?'dashboard':'application');
+ }catch(e){fail(e);}
+}
+async function loadAgentCatalogue(){
+ const {data:session,error}=await supabase.auth.getSession();
+ if(error||!session?.session?.access_token)throw new Error('Sesi pengguna tamat');
+ const r=await fetch(project+'/functions/v1/agent-portal-catalog',{
+  headers:{apikey:'sb_publishable_zuuNipsMpalN_38SJwXpFA_MRzQ6eZ0',
+   authorization:'Bearer '+session.session.access_token}
+ });
+ const body=await r.json();if(!r.ok)throw new Error(body.error||'Gagal memuat stok');
+ const sel=$('leadVehicle');sel.replaceChildren();
+ const first=document.createElement('option');first.value='';first.textContent='Pilih kereta tersedia';sel.append(first);
+ for(const v of body.vehicles||[]){const op=document.createElement('option');op.value=v.id;
+ op.textContent=[v.make,v.model,v.model_year].filter(Boolean).join(' ')+' | RM '+Number(v.asking_price||0).toLocaleString('ms-MY');
+ sel.append(op);}
+}
+async function loadDashboard(){
+ const [l,c,p]=await Promise.all([
+ supabase.from('agent_leads').select('id,customer_name,status,created_at').eq('agent_id',agent.id).order('created_at',{ascending:false}).limit(50),
+ supabase.from('agent_commissions').select('id,agreed_amount,status,created_at').eq('agent_id',agent.id).order('created_at',{ascending:false}).limit(50),
+ supabase.from('agent_payouts').select('id,amount,status,paid_at').eq('agent_id',agent.id).order('created_at',{ascending:false}).limit(50)]);
+ for(const x of [l,c,p])if(x.error)throw x.error;
+ text($('countLeads'),l.data.length);text($('countCommission'),c.data.length);text($('countPayout'),p.data.length);
+ showRows('leadItems',l.data,(el,x)=>item(el,x.customer_name,x.status+' · '+new Date(x.created_at).toLocaleDateString('ms-MY')));
+ const rm=v=>new Intl.NumberFormat('ms-MY',{style:'currency',currency:'MYR'}).format(Number(v||0));
+ showRows('commissionItems',c.data,(el,x)=>item(el,rm(x.agreed_amount),x.status));
+ showRows('payoutItems',p.data,(el,x)=>item(el,rm(x.amount),x.status+(x.paid_at?' · '+new Date(x.paid_at).toLocaleDateString('ms-MY'):'')));
+}
+async function adminRequest(data){
+ const {data:session,error}=await supabase.auth.getSession();if(error||!session?.session?.access_token)throw new Error('Log masuk semula');
+ const r=await fetch(project+'/functions/v1/agent-portal-admin',{method:'POST',
+ headers:{'content-type':'application/json',apikey:'sb_publishable_zuuNipsMpalN_38SJwXpFA_MRzQ6eZ0','authorization':'Bearer '+session.session.access_token},
+ body:JSON.stringify(data)});const result=await r.json();if(!r.ok)throw new Error(result?.error||'Permintaan gagal');return result;
+}
+async function loadOwner(){if(!owner)return;
+ try{const data=await adminRequest({action:'list'});showRows('ownerItems',data.applications,(el,a)=>{
+ const d=item(el,a.full_name,a.email+' · '+a.phone+' · '+a.state);
+ const row=document.createElement('div');row.className='row';row.style.marginTop='12px';
+ for(const [label,decision] of [['Luluskan','approve'],['Tolak','reject']]){
+ const b=document.createElement('button');b.className=decision==='approve'?'primary':'secondary';text(b,label);
+ b.onclick=async()=>{const reason=decision==='reject'?prompt('Nyatakan sebab penolakan:'):null;
+ if(decision==='reject'&&!reason?.trim())return;
+ if(decision==='approve'&&!confirm('Sahkan kelulusan permohonan '+a.full_name+'?'))return;
+ b.disabled=true;try{await adminRequest({action:'review',application_id:a.id,decision,reason});message('Keputusan berjaya disimpan.');await loadOwner();}
+ catch(e){fail(e);}finally{b.disabled=false;}};row.append(b);}d.append(row);
+ });}catch(e){fail(e);}
+}
+$('refreshOwner').onclick=loadOwner;
+$('logout').onclick=async()=>{await supabase.auth.signOut();await sync();};
+$('signinForm').onsubmit=async e=>{e.preventDefault();const b=e.submitter;b.disabled=true;
+ try{const d=Object.fromEntries(new FormData(e.target));const {error}=await supabase.auth.signInWithPassword({email:d.email,password:d.password});if(error)throw error;await sync();}
+ catch(err){fail(err);}finally{b.disabled=false;}};
+$('signupForm').onsubmit=async e=>{e.preventDefault();const b=e.submitter;b.disabled=true;
+ try{const d=Object.fromEntries(new FormData(e.target));const {error}=await supabase.auth.signUp({email:d.email,password:d.password});if(error)throw error;message('Semak e-mel untuk pengesahan. Kemudian log masuk dan hantar permohonan.');}
+ catch(err){fail(err);}finally{b.disabled=false;}};
+$('applyForm').onsubmit=async e=>{e.preventDefault();if(!me?.email_confirmed_at)return message('Sahkan e-mel dahulu',true);
+ const b=e.submitter;b.disabled=true;try{const d=Object.fromEntries(new FormData(e.target));const {error}=await supabase.from('agent_applications').insert({
+ user_id:me.id,full_name:d.full_name.trim(),phone:d.phone.trim(),email:me.email,state:d.state,status:'pending'});if(error)throw error;await sync();message('Permohonan berjaya dihantar. Tunggu kelulusan owner.');}
+ catch(err){fail(err);}finally{b.disabled=false;}};
+$('leadForm').onsubmit=async e=>{e.preventDefault();if(agent?.status!=='active')return message('Ejen belum aktif',true);
+ const b=e.submitter;b.disabled=true;try{const d=Object.fromEntries(new FormData(e.target));if(d.consent!=='on')throw new Error('Persetujuan pelanggan diperlukan');
+ const {error}=await supabase.from('agent_leads').insert({agent_id:agent.id,vehicle_id:d.vehicle_id,customer_name:d.customer_name.trim(),customer_phone:d.customer_phone.trim(),consent_confirmed:true,status:'new'});if(error)throw error;e.target.reset();await loadDashboard();message('Lead berjaya disimpan.');}
+ catch(err){fail(err);}finally{b.disabled=false;}};
+await sync();
+</script>
+</body>
+</html>
