@@ -76,9 +76,11 @@ select public.assert_test(
   where agreed_amount=600 and status='paid'),
  'Linked commission is paid atomically');
 select public.assert_test(
- (select count(*)=1 from public.agent_audit_events
-  where action='mark_paid'
-    and actor_user_id='00000000-0000-4000-8000-000000000006'),
+ (select count(*)=1 from public.agent_audit_events a
+  join public.agent_payouts p on p.id=a.entity_id
+  where a.action='mark_paid'
+    and a.actor_user_id='00000000-0000-4000-8000-000000000006'
+    and p.amount=600),
  'Audit records the HR account as the confirming actor');
 
 -- Repeat must not pay a second time.
