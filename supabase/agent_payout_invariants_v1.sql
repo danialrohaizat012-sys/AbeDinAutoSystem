@@ -53,6 +53,32 @@ begin
       raise exception 'Void payout must not be modified' using errcode='23514';
     end if;
   end if;
+  -- Never allow payout identity or amount to change once recorded.
+  if tg_op='UPDATE' then
+    if new.agent_id is distinct from old.agent_id
+      or new.amount is distinct from old.amount
+      or new.created_at is distinct from old.created_at then
+      raise exception 'Payout identity and amount are immutable' using errcode='23514';
+    end if;
+    if old.status = 'draft' and new.status not in ('draft','approved','void') then
+      raise exception 'Invalid draft payout transition' using errcode='23514';
+    end if;
+    if old.status = 'approved' and new.status not in ('approved','paid','void') then
+      raise exception 'Invalid approved payout transition' using errcode='23514';
+    end if;
+    if old.status = 'approved' and (
+       new.approved_by is distinct from old.approved_by
+       or (new.status = 'approved' and (
+           new.transfer_reference is distinct from old.transfer_reference
+           or new.paid_at is distinct from old.paid_at
+       ))
+    ) then
+      raise exception 'Approval is immutable once recorded' using errcode='23514';
+    end if;
+  elsif new.status <> 'draft' or new.approved_by is not null
+    or new.paid_at is not null or new.transfer_reference is not null then
+    raise exception 'New payout must begin as a clean draft' using errcode='23514';
+  end if;
   if new.status in ('approved','paid') then
     select coalesce(sum(i.amount),0), count(*) into v_total,v_count
     from public.agent_payout_items i where i.payout_id=new.id;
