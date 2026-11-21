@@ -507,7 +507,7 @@ function viewToday() {
   const present = list.filter(s => S.punches.some(p => p.staff_id === s.id && dayKey(p.punched_at) === k)).length;
   return `<div class="card"><div class="r"><div><h3>${dayLabel(k)}</h3><span class="mute">${present}/${list.length} staf hadir${S.holidays[k] ? ` · ${esc(S.holidays[k].name)}` : ""}</span></div>
       <span class="r" style="gap:6px"><button class="sm" data-act="dayshift" data-n="-1">‹</button><input type="date" class="field" id="day" value="${esc(k)}" style="max-width:170px"><button class="sm" data-act="dayshift" data-n="1">›</button></span></div></div>
-    <div class="ap">${cards || `<div class="card full"><p class="mute">Belum ada staf. Tambah staf di Tetapan → Staf & Akses.</p></div>`}</div>`;
+    <div class="ap">${cards || `<div class="card full"><p class="mute">Belum ada staf. Tambah staf di menu Staf.</p></div>`}</div>`;
 }
 
 /* --- Kelulusan & isu (Owner) --- */

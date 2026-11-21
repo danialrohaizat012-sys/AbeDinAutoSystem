@@ -1,4 +1,4 @@
-// Abe Din Auto – Urus Staf (Tetapan → Staf). Hanya Owner.
+// Abe Din Auto – Urus Staf (menu Staf). Hanya Owner.
 // Cipta akaun log masuk baharu melalui Supabase Auth (klien sementara, sesi Owner tidak terjejas),
 // kemudian aktifkan profil melalui RPC staff_save. Senarai melalui RPC staff_list (lihat V66_STAFF_MIGRATION.sql).
 // UI dalam Shadow DOM supaya tidak bercampur dengan CSS sistem sedia ada.

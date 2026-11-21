@@ -1,4 +1,4 @@
-// Abe Din Auto – Profil HR staf penuh (dibuka dari Tetapan → Staf & Akses → Profil). Hanya Owner.
+// Abe Din Auto – Profil HR staf penuh (dibuka dari menu Staf → Profil). Hanya Owner.
 // Data: staff_hr, staff_pay, staff_work_history, staff_chronology, staff_advances, staff_leaves,
 // dokumen dalam bucket peribadi "staff-docs" (lihat V73_STAFF_HR.sql).
 
