@@ -2570,3 +2570,6 @@ button.ada-pay-del{width:auto!important;min-height:0!important;margin:0 0 0 6px!
 input.ada-locked{opacity:.8;cursor:not-allowed;background-image:none!important}
 .ada-pay-sum.info{background:rgba(245,196,0,.10);border-color:rgba(245,196,0,.4)}.ada-pay-sum.info .st{color:#f5c400}
 #ada-cloud-gate .ada-real-price{display:block;font-size:11px;color:#3ecf8e;font-weight:700}
+
+/* Banner "Selamat datang" hanya di Dashboard; modul lain terus ke kandungan */
+html[data-ada-page]:not([data-ada-page="dashboard"]) #ada-cloud-panel .cloud-hero{display:none!important}
