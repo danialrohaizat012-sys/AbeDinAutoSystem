@@ -46,6 +46,19 @@ label{display:block;font-size:11.5px;color:var(--mute);margin-bottom:4px;text-tr
 .ava{width:44px;height:44px;border-radius:50%;object-fit:cover;background:#3a2f0a;color:#ffd257;display:flex;align-items:center;justify-content:center;font-weight:800;flex:0 0 44px}
 .pbar{height:4px;border-radius:9px;background:#2c2a25;margin-top:6px;max-width:220px;overflow:hidden}.pbar i{display:block;height:100%;background:var(--pri)}
 .c-blue{background:#12263a;color:#8cc4ff}.c-pur{background:#2a1a3a;color:#d6a8ff}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}@media(max-width:700px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px}.stat small{display:block;color:var(--mute);font-size:12px;font-weight:600}.stat b{font-size:26px;line-height:1.15;font-variant-numeric:tabular-nums}
+.stat.y{border-color:#4a3f14;background:#1c180b}.stat.y b{color:#ffd257}.stat.g b{color:#8ce3ad}.stat.r b{color:#ffaaa4}
+.tool{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.tool .field{flex:1;min-width:220px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:10px}
+.sc{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px;transition:border-color .15s}
+.sc:hover{border-color:#4a3f14}.sc.off{opacity:.62}
+.sc .hd{display:flex;gap:12px;align-items:center}.sc .nm{flex:1;min-width:0}.sc .nm b{display:block;font-size:15.5px;line-height:1.25;cursor:pointer;overflow-wrap:anywhere}
+.sc .nm small{color:var(--mute);font-size:12.5px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sc .meta{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;color:var(--mute)}
+.sc .ft{display:flex;gap:6px;border-top:1px solid var(--line);padding-top:10px;margin-top:auto}.sc .ft .btn{flex:1;text-align:center}
+.sc .pbar{max-width:none;margin-top:0}
+.chips{display:flex;flex-wrap:wrap;gap:4px}.chips .chip{margin:0}
 `;
 const FULL_CSS = CSS + PROFILE_CSS + `.inbox{border-color:#5a4a14}.inbox .it{display:flex;gap:8px;align-items:center;flex-wrap:wrap;border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--soft)}
 .inbox .it .grow{min-width:200px}.badge{background:#e0473f;color:#fff;border-radius:99px;font-size:12px;padding:1px 7px;margin-left:6px}`;
@@ -98,18 +111,19 @@ export function mountStaff(host, ctx) {
     const counts = {}; (all || []).forEach(u => counts[catOf(u)] = (counts[catOf(u)] || 0) + 1);
     const q = S.q.toLowerCase();
     const rows = all === null ? null : all.filter(u => (S.cat === "all" || catOf(u) === S.cat) && (!q || [u.full_name, u.email, S.hr[u.id]?.staff_code, S.hr[u.id]?.position, S.hr[u.id]?.ic_no].join(" ").toLowerCase().includes(q)));
-    const catBar = all && all.length ? `<div class="cats"><span class="cat ${S.cat === "all" ? "on" : ""}" data-cat="all">Semua<i>${all.length}</i></span>${Object.entries(CATEGORY).filter(([k]) => counts[k]).map(([k, t]) => `<span class="cat ${S.cat === k ? "on" : ""}" data-cat="${k}">${t}<i>${counts[k]}</i></span>`).join("")}</div>
-      <input class="field" id="q" placeholder="Cari nama, IC, Staff ID, jawatan…" value="${esc(S.q)}">` : "";
-    app.innerHTML = `<div class="row"><div class="grow"><div class="kick">TETAPAN</div><h3>Staf &amp; Akses</h3></div>
-        ${S.mode ? "" : `<button class="btn pri" data-a="new">+ Tambah staf</button>`}</div>
-      <p class="mute">Setiap staf log masuk dengan emel dan kata laluan sendiri. Pautan kerja: <b>abedinauto.my/admin</b></p>
+    const catBar = all && all.length ? `<div class="tool"><input class="field" id="q" placeholder="🔍 Cari nama, IC, Staff ID, jawatan…" value="${esc(S.q)}"></div><div class="cats"><span class="cat ${S.cat === "all" ? "on" : ""}" data-cat="all">Semua<i>${all.length}</i></span>${Object.entries(CATEGORY).filter(([k]) => counts[k]).map(([k, t]) => `<span class="cat ${S.cat === k ? "on" : ""}" data-cat="${k}">${t}<i>${counts[k]}</i></span>`).join("")}</div>` : "";
+    const nIn = S.inbox.leaves.length + S.inbox.claims.length + S.inbox.adv.length, act = (all || []).filter(u => u.enabled).length;
+    const low = (all || []).filter(u => u.enabled && completeness(S.hr[u.id]).pct < 80).length;
+    app.innerHTML = `${S.mode ? "" : `<div class="stats"><div class="stat"><small>Jumlah staf</small><b>${all ? all.length : "–"}</b></div><div class="stat g"><small>Aktif</small><b>${all ? act : "–"}</b></div>
+        <div class="stat ${nIn ? "y" : ""}"><small>Menunggu kelulusan</small><b>${nIn}</b></div><div class="stat ${low ? "r" : ""}"><small>Profil belum lengkap</small><b>${all ? low : "–"}</b></div></div>`}
       ${S.err ? `<p class="msg err">${esc(S.err)}</p>` : ""}
       ${S.mode ? formView() : ""}
       ${S.share ? `<div class="share" id="share">${esc(S.share)}</div><div class="row"><button class="btn sm" data-a="copy">Salin untuk WhatsApp</button><button class="btn sm" data-a="hide">Tutup</button></div>` : ""}
       <p class="msg ${S.msgCls}" id="msg">${esc(S.msg)}</p>
       ${S.mode ? "" : inboxView()}
-      ${S.mode ? "" : catBar}
-      <div class="list">${rows === null ? `<div class="empty">Memuatkan…</div>` : (window.adaPg?window.adaPg.rows("st-acc",rows,render):rows).map(item).join("") || `<div class="empty">Tiada akaun.</div>`}</div>${rows?(window.adaPg?window.adaPg.nav("st-acc",rows.length):""):""}`;
+      ${S.mode ? "" : `<div class="row" style="margin-top:4px"><div class="grow"><div class="kick">PASUKAN</div><h3>Senarai staf</h3></div><button class="btn pri" data-a="new">+ Tambah staf</button></div>${catBar}`}
+      <div class="grid">${rows === null ? `<div class="empty">Memuatkan…</div>` : (window.adaPg?window.adaPg.rows("st-acc",rows,render):rows).map(item).join("") || `<div class="empty">Tiada staf ditemui.</div>`}</div>${rows?(window.adaPg?window.adaPg.nav("st-acc",rows.length):""):""}
+      ${S.mode ? "" : `<p class="mute">Setiap staf log masuk dengan emel dan kata laluan sendiri di <b>abedinauto.my/admin</b>.</p>`}`;
     bind();
   }
 
@@ -139,13 +153,15 @@ export function mountStaff(host, ctx) {
   function item(u) {
     const self = u.id === me.id, h = S.hr[u.id] || {}, c = completeness(h), ph = h.photo_path && S.urls[h.photo_path];
     const ini = (u.full_name || "?").split(/\s+/).filter(w => !/^(bin|binti|bt|b)$/i.test(w)).slice(0, 2).map(w => w[0]).join("").toUpperCase();
-    return `<div class="item">${ph ? `<img class="ava" src="${esc(ph)}" alt="">` : `<div class="ava">${esc(ini)}</div>`}<div class="who"><b data-prof="${esc(u.id)}" style="cursor:pointer">${esc(u.full_name || "(tiada nama)")}</b>${self ? ` <span class="mute">· anda</span>` : ""}
-        <small>${esc(u.email || "-")}</small>
-        <div style="margin-top:5px"><span class="chip ${u.enabled ? "c-on" : "c-off"}">${u.enabled ? "Aktif" : "Nyahaktif"}</span><span class="chip c-role">${esc(ROLES[u.role] || u.role || "-")}</span>${u.email_confirmed === false ? `<span class="chip c-warn">Emel belum disahkan</span>` : ""}<span class="chip c-pur">${esc(CATEGORY[h.category || "staff_biasa"])}</span>${h.position ? `<span class="chip c-blue">${esc(h.position)}</span>` : ""}${h.employment_type && h.employment_type !== "permanent" ? `<span class="chip c-off">${esc(EMP_TYPE[h.employment_type])}</span>` : ""}${h.contract_status && h.contract_status !== "active" ? `<span class="chip c-warn">${esc(CONTRACT[h.contract_status])}</span>` : ""}</div>
-        <div class="mods">${u.role === "owner" ? "<b>Semua menu</b>" : "Menu: <b>" + (MENUS.filter(([k]) => canPage(u, k)).map(([, t]) => t).join(", ") || "Dashboard sahaja") + "</b>"}</div>
-        <small>Log masuk terakhir: ${fmt(u.last_sign_in_at)}${h.staff_code ? " · ID " + esc(h.staff_code) : ""}</small>
-        <div class="pbar" title="Kelengkapan profil ${c.pct}%"><i style="width:${c.pct}%"></i></div><small>Profil HR ${c.pct}% lengkap</small></div>
-      <div class="row"><button class="btn sm pri" data-prof="${esc(u.id)}">Profil</button>${self ? "" : `<button class="btn sm" data-edit="${esc(u.id)}">Edit</button><button class="btn sm ${u.enabled ? "bad" : "pri"}" data-tog="${esc(u.id)}">${u.enabled ? "Nyahaktif" : "Aktifkan"}</button>`}</div></div>`;
+    const menus = u.role === "owner" ? null : MENUS.filter(([k]) => canPage(u, k)).map(([, t]) => t);
+    return `<div class="sc ${u.enabled ? "" : "off"}">
+      <div class="hd">${ph ? `<img class="ava" src="${esc(ph)}" alt="">` : `<div class="ava">${esc(ini)}</div>`}
+        <div class="nm"><b data-prof="${esc(u.id)}">${esc(u.full_name || "(tiada nama)")}${self ? ` <span class="mute" style="font-weight:500">· anda</span>` : ""}</b><small>${esc(h.position || u.email || "-")}${h.staff_code ? " · " + esc(h.staff_code) : ""}</small></div>
+        <span class="chip ${u.enabled ? "c-on" : "c-off"}">${u.enabled ? "Aktif" : "Nyahaktif"}</span></div>
+      <div class="chips"><span class="chip c-role">${esc(ROLES[u.role] || u.role || "-")}</span><span class="chip c-pur">${esc(CATEGORY[h.category || "staff_biasa"])}</span>${h.employment_type && h.employment_type !== "permanent" ? `<span class="chip c-off">${esc(EMP_TYPE[h.employment_type])}</span>` : ""}${h.contract_status && h.contract_status !== "active" ? `<span class="chip c-warn">${esc(CONTRACT[h.contract_status])}</span>` : ""}${u.email_confirmed === false ? `<span class="chip c-warn">Emel belum disahkan</span>` : ""}</div>
+      <div class="meta"><span title="${esc(menus ? menus.join(", ") : "Semua menu")}">Akses: <b style="color:var(--fg)">${menus ? (menus.length ? menus.length + " menu" : "Dashboard sahaja") : "Semua menu"}</b></span><span>Masuk: ${fmt(u.last_sign_in_at)}</span></div>
+      <div><div class="meta" style="margin-bottom:4px"><span>Profil HR</span><span>${c.pct}%</span></div><div class="pbar"><i style="width:${c.pct}%"></i></div></div>
+      <div class="ft"><button class="btn sm pri" data-prof="${esc(u.id)}">Profil</button>${self ? "" : `<button class="btn sm" data-edit="${esc(u.id)}">Edit akses</button><button class="btn sm ${u.enabled ? "bad" : "pri"}" data-tog="${esc(u.id)}">${u.enabled ? "Nyahaktif" : "Aktifkan"}</button>`}</div></div>`;
   }
 
   function formView() {

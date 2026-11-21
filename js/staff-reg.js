@@ -1,10 +1,21 @@
-// Abe Din Auto – Pendaftaran Staf (Tetapan, Owner sahaja).
+// Abe Din Auto – Pendaftaran Staf (menu Staf, bahagian bawah; Owner sahaja). Kotak lipat: terbuka sendiri bila ada permohonan baharu.
 // Link pendaftaran (buka/tutup, tukar kod) dan senarai permohonan untuk diluluskan. Lihat V74_DAFTAR_STAF.sql.
 const CSS = `
 :host{display:block;--card:#151412;--fg:#f4efe2;--mute:#a69f8c;--line:#2e2a20;--soft:#1e1c17;--pri:#e8b10b;--pri-fg:#141000;
   --f:Inter,-apple-system,"Segoe UI",system-ui,sans-serif;color-scheme:dark}
 *{box-sizing:border-box}
-.shell{color:var(--fg);font:15px/1.45 var(--f);background:#0a0a09;border:1px solid var(--line);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:12px;margin-top:14px}
+.shell{color:var(--fg);font:15px/1.45 var(--f);background:#0d0c0a;border:1px solid var(--line);border-radius:18px;padding:0;margin-top:16px;overflow:hidden}
+.hd{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;user-select:none}
+.hd:hover{background:#13120f}.ico{width:38px;height:38px;border-radius:12px;background:#2a230b;color:#ffd257;display:grid;place-items:center;font-size:18px;flex:none}
+.hd .t{flex:1;min-width:0}.hd .t b{display:block;font-size:15.5px}.hd .t span{font-size:12.5px;color:var(--mute)}
+.car{color:var(--mute);font-size:14px;transition:transform .15s}.open .car{transform:rotate(180deg)}
+.bd{display:none;border-top:1px solid var(--line);padding:14px 16px;flex-direction:column;gap:12px}.open .bd{display:flex}
+.lbox{display:flex;align-items:center;gap:8px;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:6px 6px 6px 12px}
+.lbox code{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:ui-monospace,Menlo,monospace;font-size:13px;color:#e9dfc0}
+.acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.acts .sep{flex:1}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--mute);padding:9px 8px}.btn.ghost:hover{color:var(--fg)}
+.seg{display:inline-flex;background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:3px}.seg .tab{border:0;background:transparent;padding:6px 14px}.seg .tab.on{background:var(--pri);color:var(--pri-fg)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px}
 h3{margin:0;font-size:18px;font-weight:800}h4{margin:0;font-size:15px}
 .kick{font-size:11px;letter-spacing:.14em;color:var(--pri);font-weight:700}
 p{margin:0}.mute{color:var(--mute);font-size:13.5px}
@@ -38,7 +49,7 @@ export function mountStaffReg(host, ctx) {
   const root = host.shadowRoot || host.attachShadow({ mode: "open" });
   root.innerHTML = `<style>${CSS}</style><div class="shell" id="app"></div>`;
   const app = root.getElementById("app");
-  const S = { link: null, rows: [], urls: {}, tab: "pending", err: "", msg: "", busy: false };
+  const S = { link: null, rows: [], urls: {}, tab: "pending", err: "", msg: "", busy: false, open: null, loaded: false };
 
   async function load() {
     try {
@@ -50,7 +61,8 @@ export function mountStaffReg(host, ctx) {
       S.link = l.data; S.rows = r.data || []; S.err = "";
       const paths = S.rows.flatMap(x => [x.photo_path, x.ic_photo_path]).filter(p => p && !S.urls[p]);
       if (paths.length) { const { data } = await client.storage.from("staff-docs").createSignedUrls(paths, 3600); (data || []).forEach(d => { if (d.signedUrl) S.urls[d.path] = d.signedUrl; }); }
-    } catch (e) { S.err = /staff_reg|does not exist|schema cache/i.test(e.message || "") ? "Pangkalan data pendaftaran belum dipasang (V74)." : (e.message || String(e)); }
+      S.loaded = true;
+    } catch (e) { S.loaded = true; S.err = /staff_reg|does not exist|schema cache/i.test(e.message || "") ? "Pangkalan data pendaftaran belum dipasang (V74)." : (e.message || String(e)); }
     render();
   }
   const url = () => S.link ? BASE + S.link.token : "";
@@ -74,21 +86,27 @@ export function mountStaffReg(host, ctx) {
   function render() {
     const pend = S.rows.filter(x => x.status === "pending");
     const list = S.tab === "pending" ? pend : S.rows.filter(x => x.status !== "pending");
-    app.innerHTML = `<div><div class="kick">STAF BAHARU</div><h3>Pendaftaran Staf ${pend.length ? `<span class="chip c-new">${pend.length} menunggu</span>` : ""}</h3></div>
+    if (S.open === null && S.loaded) S.open = pend.length > 0;   // buka sendiri bila ada permohonan baharu
+    app.classList.toggle("open", !!S.open);
+    const sub = S.link ? (S.link.enabled ? "Link pendaftaran dibuka" : "Link pendaftaran ditutup") : "Memuatkan…";
+    app.innerHTML = `<div class="hd" data-act="fold"><span class="ico">＋</span><div class="t"><b>Pendaftaran staf baharu ${pend.length ? `<span class="chip c-new">${pend.length} menunggu</span>` : ""}</b><span>${sub} · ${S.rows.length - pend.length} selesai</span></div>
+        ${S.link ? `<span class="chip ${S.link.enabled ? "c-on" : "c-off"}">${S.link.enabled ? "Dibuka" : "Ditutup"}</span>` : ""}<span class="car">▾</span></div>
+      <div class="bd">
       ${S.err ? `<p class="msg err">${esc(S.err)}</p>` : ""}
-      ${S.link ? `<p class="mute">Hantar link ini kepada staf baru. Mereka cipta akaun sendiri dan isi maklumat peribadi; maklumat masuk terus ke Profil HR selepas anda luluskan.</p>
-      <div class="row"><span class="chip ${S.link.enabled ? "c-on" : "c-off"}">${S.link.enabled ? "Link dibuka" : "Link ditutup"}</span></div>
-      ${S.link.enabled ? `<div class="link">${esc(url())}</div>
-      <div class="row"><button class="btn pri" data-act="copy">Salin link</button><a class="btn wa" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(waText())}">Kongsi WhatsApp</a><a class="btn" target="_blank" rel="noopener" href="${esc(url())}">Buka</a></div>` : ""}
-      <div class="row"><button class="btn" data-act="toggle">${S.link.enabled ? "Tutup link" : "Buka link"}</button><button class="btn" data-act="newtoken">Tukar kod link</button></div>` : ""}
+      ${S.link ? `<p class="mute">Hantar link ini kepada staf baharu. Mereka cipta akaun dan isi maklumat sendiri; maklumat masuk ke Profil HR selepas anda luluskan.</p>
+      ${S.link.enabled ? `<div class="lbox"><code>${esc(url())}</code><button class="btn pri" data-act="copy">Salin</button></div>` : ""}
+      <div class="acts">${S.link.enabled ? `<a class="btn wa" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(waText())}">Kongsi WhatsApp</a><a class="btn" target="_blank" rel="noopener" href="${esc(url())}">Buka</a>` : ""}
+        <span class="sep"></span><button class="btn ghost" data-act="toggle">${S.link.enabled ? "Tutup link" : "Buka link"}</button><button class="btn ghost" data-act="newtoken">Tukar kod</button></div>` : ""}
       <p class="msg ${S.msg.startsWith("!") ? "err" : "ok"}">${esc(S.msg.replace(/^!/, ""))}</p>
-      <div class="tabs"><button class="tab ${S.tab === "pending" ? "on" : ""}" data-tab="pending">Menunggu (${pend.length})</button><button class="tab ${S.tab === "done" ? "on" : ""}" data-tab="done">Selesai (${S.rows.length - pend.length})</button></div>
-      ${list.map(card).join("") || `<p class="mute" style="text-align:center;padding:12px">${S.tab === "pending" ? "Tiada pendaftaran baharu." : "Belum ada rekod."}</p>`}`;
+      <div><span class="seg"><button class="tab ${S.tab === "pending" ? "on" : ""}" data-tab="pending">Menunggu (${pend.length})</button><button class="tab ${S.tab === "done" ? "on" : ""}" data-tab="done">Selesai (${S.rows.length - pend.length})</button></span></div>
+      ${list.length ? `<div class="cards">${list.map(card).join("")}</div>` : `<p class="mute" style="text-align:center;padding:8px">${S.tab === "pending" ? "Tiada pendaftaran baharu." : "Belum ada rekod."}</p>`}
+      </div>`;
   }
   async function run(fn, ok) { if (S.busy) return; S.busy = true; S.msg = ""; try { await fn(); S.msg = ok || ""; } catch (e) { S.msg = "!" + (e.message || String(e)); } S.busy = false; await load(); }
 
   app.addEventListener("click", async e => {
-    const t = e.target.closest("button,[data-zoom]"); if (!t) return;
+    const t = e.target.closest("button,[data-zoom],[data-act=fold]"); if (!t) return;
+    if (t.dataset.act === "fold") { S.open = !S.open; render(); return; }
     if (t.dataset.zoom) { const d = document.createElement("div"); d.className = "lb"; d.innerHTML = `<img src="${esc(S.urls[t.dataset.zoom] || "")}" alt="">`; d.onclick = () => d.remove(); root.appendChild(d); return; }
     if (t.dataset.tab) { S.tab = t.dataset.tab; render(); return; }
     const a = t.dataset.act;
