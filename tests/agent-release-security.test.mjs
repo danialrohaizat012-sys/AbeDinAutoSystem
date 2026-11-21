@@ -41,13 +41,8 @@ test("HR edge requires verified JWT and independent authority",()=>{
  assert.doesNotMatch(verifier,/SUPABASE_SERVICE_ROLE_KEY\s*=\s*["']/);
 });
 test("HR payout UI uses actual bank timestamp, not fixed noon",()=>{
- const url=new URL("../agent-payout-verify.html",import.meta.url);
- // The live-only HR HTML is deployed in main, so source validation on the
- // release branch is performed if the file has been synchronized.
- try{
- const page=readFileSync(url,"utf8");
+ const page=read("agent-payout-verify.html");
  parseBrowser(page);
  assert.match(page,/HH:MM/);
  assert.doesNotMatch(page,/T12:00:00\+08:00/);
- }catch(e){if(e.code==="ENOENT")return;throw e;}
 });
