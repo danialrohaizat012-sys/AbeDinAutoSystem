@@ -67,6 +67,24 @@ input:focus,select:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 
 .pb-copy{margin:10px 0 4px;font:inherit;font-size:13.5px;font-weight:700;border:0;border-radius:999px;padding:9px 16px;background:var(--gold-soft);color:var(--navy);cursor:pointer}
 .pb-steps{margin:8px 0 0;padding-left:18px;font-size:13px;color:var(--muted)}.pb-steps li{margin:3px 0}
 .pb-note{background:#f7f9fd;border-top:1px solid var(--line);padding:10px 14px;font-size:13px;color:var(--ink)}
+.kal-box{margin-top:14px;border:1.5px solid var(--line);border-radius:14px;padding:12px;background:#fbfcfe}
+.kal-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.kal-top b{font-size:15px;color:var(--navy);text-transform:capitalize}
+.kal-nav{width:40px;height:40px;border-radius:10px;border:1.5px solid var(--line);background:#fff;font:inherit;font-size:20px;color:var(--navy);cursor:pointer}
+.kal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.kal-grid .dh{text-align:center;font-size:11.5px;color:var(--muted);font-weight:700;padding:2px 0}
+.kal-grid button{aspect-ratio:1/1;min-height:36px;border:0;border-radius:9px;font:inherit;font-size:14px;font-weight:700;cursor:pointer;color:#14532d;background:#dcfce7}
+.kal-grid button.sep{background:repeating-linear-gradient(135deg,#fde68a 0 5px,#dcfce7 5px 9px);color:#7c5a06}
+.kal-grid button.penuh{background:#fecaca;color:#991b1b;cursor:not-allowed;text-decoration:line-through}
+.kal-grid button.lalu{background:#f1f3f7;color:#b3b9c6;cursor:default}
+.kal-grid button.pick{background:var(--navy);color:#fff}
+.kal-grid button.dlm{box-shadow:inset 0 0 0 2px var(--navy)}
+.kal-grid button.today{outline:2px solid var(--gold);outline-offset:-2px}
+.kal-box .kal-leg{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--muted);margin-top:8px}
+.kal-box .kal-leg i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:4px;vertical-align:-2px}
+.k-ok{background:#dcfce7}.k-sep{background:repeating-linear-gradient(135deg,#fde68a 0 3px,#dcfce7 3px 5px)}.k-full{background:#fecaca}.k-pick{background:var(--navy)}
+.avail{border-radius:12px;padding:10px 12px;font-size:14px;font-weight:700}
+.avail.ok{background:#e6f6ea;color:#14804a;border:1.5px solid #9fd8b2}.avail.no{background:#fde8e8;color:#b42318;border:1.5px solid #f5b5b5}
 .agen-box{border:1.5px dashed var(--line);border-radius:12px;padding:12px 14px;background:#fafbfe}
 .agen-box:has(#is_agen:checked){border-style:solid;border-color:var(--blue);background:#eef3fd}
 #model-harga b{color:var(--gold)}
@@ -244,6 +262,12 @@ dialog{max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px)}
           <div class="hint" id="model-harga"></div><div class="msg">Sila pilih model kereta.</div></div>
         <div class="field"><label for="kumpulan">2. Kumpulan <span class="opt">(jika ada)</span></label><input id="kumpulan" name="kumpulan" list="senarai-kumpulan" placeholder="cth: Sedan / MPV / SUV" maxlength="80"></div>
       </div>
+          <div id="kal-box" class="kal-box" hidden>
+        <div class="kal-top"><button type="button" class="kal-nav" data-kal="-1" aria-label="Bulan sebelum">‹</button><b id="kal-bulan"></b><button type="button" class="kal-nav" data-kal="1" aria-label="Bulan berikut">›</button></div>
+        <div class="kal-grid" id="kal-grid"></div>
+        <div class="kal-leg"><span><i class="k-ok"></i>Available</span><span><i class="k-sep"></i>Separa hari</span><span><i class="k-full"></i>Penuh</span><span><i class="k-pick"></i>Pilihan anda</span></div>
+        <p class="hint" style="margin:6px 0 0">Tekan tarikh untuk pilih <b>tarikh ambil</b>, kemudian tekan sekali lagi untuk <b>tarikh pulang</b>.</p>
+      </div>
     </section>
 
     <section class="card">
@@ -260,6 +284,7 @@ dialog{max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px)}
         <div class="field"><label for="pulang_tarikh">2. Tarikh Akhir <span class="req">*</span></label><input id="pulang_tarikh" name="pulang_tarikh" type="date" required><div class="msg">Tarikh akhir mesti selepas tarikh mula.</div></div>
         <div class="field"><label for="pulang_masa">3. Masa Akhir <span class="req">*</span></label><input id="pulang_masa" name="pulang_masa" type="time" required><div class="msg">Sila pilih masa akhir.</div></div>
         <div class="full hint" id="tempoh"></div>
+        <div class="full avail" id="avail" hidden></div>
         <div class="full anggar" id="anggar" hidden></div>
         <div class="field full" id="f-bayar"><label>Pilihan Bayaran <span class="req">*</span></label>
           <div class="seg">
@@ -449,8 +474,81 @@ pick.addEventListener('change', () => {
   else if (m) { modelIn.hidden = true; modelIn.value = m.model; kumpIn.value = m.kumpulan === 'Lain-lain' ? '' : m.kumpulan; kumpIn.readOnly = true; }
   else { modelIn.hidden = true; modelIn.value = ''; kumpIn.value = ''; }
   paparHarga();
-  clearBad(pick); tempoh();
+  clearBad(pick); tempoh(); lukisKal();
 });
+
+// ---------- Kalendar ketersediaan ----------
+const KAL = {}; let kalBulan = new Date(today.getFullYear(), today.getMonth(), 1), AVAIL = null;
+const ymd = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const pts = s => new Date(String(s).replace(' ', 'T'));
+async function ambilKal(dari, hingga) {
+  const key = dari + '|' + hingga;
+  if (!KAL[key]) KAL[key] = client.rpc('get_sewa_kalendar', { p_dari: dari, p_hingga: hingga }).then(({ data, error }) => error ? [] : (data || []));
+  return KAL[key];
+}
+function keadaanHari(row, d) {
+  if (!row) return 'ok';
+  const a = d.getTime(), z = a + 864e5, n = row.bil_kereta || 0;
+  let penuh = 0, ada = false;
+  for (let k = 1; k <= n; k++) {
+    const sl = (row.slot || []).filter(x => x.k === k && pts(x.a).getTime() < z && pts(x.b).getTime() > a);
+    if (sl.length) ada = true;
+    // kereta penuh sepanjang hari jika gabungan slot meliputi 00:00–24:00
+    let t = a; sl.map(x => [pts(x.a).getTime(), pts(x.b).getTime()]).sort((p, q) => p[0] - q[0]).forEach(([p, q]) => { if (p <= t && q > t) t = q; });
+    if (t >= z) penuh++;
+  }
+  return n && penuh >= n ? 'penuh' : ada ? 'sep' : 'ok';
+}
+async function lukisKal() {
+  const m = MODELS[+pick.value], box = $('#kal-box');
+  if (!m) { box.hidden = true; return; }
+  box.hidden = false;
+  const y = kalBulan.getFullYear(), mo = kalBulan.getMonth(), nd = new Date(y, mo + 1, 0).getDate();
+  $('#kal-bulan').textContent = kalBulan.toLocaleDateString('ms-MY', { month: 'long', year: 'numeric' });
+  const rows = await ambilKal(ymd(new Date(y, mo, 1)), ymd(new Date(y, mo, nd)));
+  if (MODELS[+pick.value] !== m) return;
+  const row = rows.find(r => r.model === m.model);
+  const t0 = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  const at = $('#ambil_tarikh').value, pt = $('#pulang_tarikh').value;
+  let h = ['Ah', 'Is', 'Se', 'Ra', 'Kh', 'Ju', 'Sa'].map(x => `<div class="dh">${x}</div>`).join('');
+  h += '<div></div>'.repeat(new Date(y, mo, 1).getDay());
+  for (let i = 1; i <= nd; i++) {
+    const d = new Date(y, mo, i), key = ymd(d), lalu = d.getTime() < t0, st = lalu ? 'lalu' : keadaanHari(row, d);
+    const cls = [st === 'ok' ? '' : st, key === at || key === pt ? 'pick' : '', at && pt && key > at && key < pt ? 'dlm' : '', d.getTime() === t0 ? 'today' : ''].filter(Boolean).join(' ');
+    h += `<button type="button" class="${cls}" data-d="${key}" ${lalu || st === 'penuh' ? 'disabled' : ''} title="${st === 'penuh' ? 'Penuh' : st === 'sep' ? 'Ada tempahan sebahagian hari' : 'Available'}">${i}</button>`;
+  }
+  $('#kal-grid').innerHTML = h;
+  $('#kal-box').querySelector('[data-kal="-1"]').disabled = y === today.getFullYear() && mo <= today.getMonth();
+}
+$('#kal-box').addEventListener('click', e => {
+  const nav = e.target.closest('[data-kal]');
+  if (nav) { kalBulan = new Date(kalBulan.getFullYear(), kalBulan.getMonth() + +nav.dataset.kal, 1); lukisKal(); return; }
+  const b = e.target.closest('[data-d]'); if (!b || b.disabled) return;
+  const d = b.dataset.d, at = $('#ambil_tarikh'), pt = $('#pulang_tarikh');
+  if (!at.value || pt.value || d < at.value) { at.value = d; pt.value = ''; }
+  else pt.value = d;
+  [at, pt].forEach(x => { x.dispatchEvent(new Event('input', { bubbles: true })); clearBad(x); });
+  if (!$('#ambil_masa').value) $('#ambil_masa').value = '09:00';
+  if (pt.value && !$('#pulang_masa').value) $('#pulang_masa').value = $('#ambil_masa').value;
+  tempoh(); semakAda(); lukisKal();
+});
+let semakId = 0;
+async function semakAda() {
+  const m = MODELS[+pick.value], el = $('#avail');
+  const a = dt($('#ambil_tarikh').value, $('#ambil_masa').value), b = dt($('#pulang_tarikh').value, $('#pulang_masa').value);
+  AVAIL = null;
+  if (!m || !a || !b || b <= a) { el.hidden = true; return; }
+  const id = ++semakId;
+  const rows = await ambilKal($('#ambil_tarikh').value, $('#pulang_tarikh').value);
+  if (id !== semakId) return;
+  const row = rows.find(r => r.model === m.model), n = row ? row.bil_kereta : 0;
+  let bebas = 0;
+  for (let k = 1; k <= n; k++) if (!(row.slot || []).some(x => x.k === k && pts(x.a) < b && pts(x.b) > a)) bebas++;
+  AVAIL = !row || bebas > 0;
+  el.className = 'full avail ' + (AVAIL ? 'ok' : 'no');
+  el.textContent = AVAIL ? `✓ ${m.model} available pada tarikh & masa ini.` : `✗ Maaf, ${m.model} sudah ditempah pada masa ini. Sila pilih tarikh/masa lain (rujuk kalendar) atau kereta lain.`;
+  el.hidden = false;
+}
 
 // ---------- Jenis sewa ----------
 const jenis = () => form.querySelector('input[name=jenis_sewa]:checked')?.value || '';
@@ -522,7 +620,7 @@ function tempoh() {
     <div class="note">Caj penghantaran &amp; pengambilan (RM15 dalam 10KM), pemandu tambahan dan perlindungan imbuhan (jika ada) akan dimaklumkan oleh Abe Din Car Rental.</div>`;
   an.hidden = false;
 }
-['ambil_tarikh', 'ambil_masa', 'pulang_tarikh', 'pulang_masa'].forEach(id => $('#' + id).addEventListener('input', tempoh));
+['ambil_tarikh', 'ambil_masa', 'pulang_tarikh', 'pulang_masa'].forEach(id => $('#' + id).addEventListener('input', () => { tempoh(); semakAda(); if (id.endsWith('tarikh')) lukisKal(); }));
 
 // ---------- Dokumen ----------
 const DOCS = [
@@ -612,6 +710,7 @@ function validate() {
   if (!jenis()) fail(form.querySelector('input[name=jenis_sewa]'));
   if (isAgen() && !$('#nama_agen').value.trim()) fail($('#nama_agen'));
   if (!form.querySelector('input[name=pilihan_bayaran]:checked')) fail(form.querySelector('input[name=pilihan_bayaran]'));
+  if (AVAIL === false) fail($('#ambil_tarikh'));
   form.querySelectorAll('[required]').forEach(el => { if (!el.value.trim()) fail(el); });
   const em = $('#email'); if (em.value && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em.value.trim())) fail(em);
   const tel = $('#telefon'); if (tel.value && tel.value.replace(/\D/g, '').length < 9) fail(tel);
