@@ -81,3 +81,4 @@ jobs:
         run: |
           psql -X -v ON_ERROR_STOP=1 -f tests/postgres/10_integration.sql
           psql -X -v ON_ERROR_STOP=1 -f tests/postgres/20_commission_approval.sql
+          psql -X -v ON_ERROR_STOP=1 -f tests/postgres/30_hr_payout_verifier.sql
