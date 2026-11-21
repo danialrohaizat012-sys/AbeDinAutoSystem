@@ -57,10 +57,14 @@ insert into auth.users(id,email,email_confirmed_at) values
  ('00000000-0000-4000-8000-000000000002','owner-b@test.invalid',now()),
  ('00000000-0000-4000-8000-000000000003','agent-a@test.invalid',now()),
  ('00000000-0000-4000-8000-000000000004','agent-b@test.invalid',now()),
- ('00000000-0000-4000-8000-000000000005','unverified@test.invalid',null);
+ ('00000000-0000-4000-8000-000000000005','unverified@test.invalid',null),
+ ('00000000-0000-4000-8000-000000000006','hr-aiman@test.invalid',now()),
+ ('00000000-0000-4000-8000-000000000007','outsider@test.invalid',now());
 insert into public.profiles(id,role,enabled) values
  ('00000000-0000-4000-8000-000000000001','owner',true),
- ('00000000-0000-4000-8000-000000000002','owner',true);
+ ('00000000-0000-4000-8000-000000000002','owner',true),
+ ('00000000-0000-4000-8000-000000000006','sales_advisor',true),
+ ('00000000-0000-4000-8000-000000000007','operations',true);
 insert into public.vehicles(id,status) values
  ('10000000-0000-4000-8000-000000000001','sold'),
  ('10000000-0000-4000-8000-000000000002','sold');
