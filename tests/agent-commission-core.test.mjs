@@ -1,0 +1,13 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {toSen,formatRM,calculateCommission,checkPayout} from '../js/agent-commission-core.mjs';
+test('sen conversion avoids floating point money errors',()=> {assert.equal(toSen('1200.05'),120005);assert.equal(formatRM(120005),'1200.05');assert.throws(()=>toSen('1.001'));});
+test('fixed commission and percentage',()=>{const sale={status:'sold',confirmed:true,salePriceSen:1600000,netProfitSen:400000}; assert.equal(calculateCommission({method:'fixed',fixedSen:50000},sale),50000); assert.equal(calculateCommission({method:'sale_percent',basisPoints:250},sale),40000);assert.equal(calculateCommission({method:'net_profit_percent',basisPoints:1000},sale),40000);});
+test('booking cannot generate a commission',()=>assert.throws(()=>calculateCommission({method:'fixed',fixedSen:50000},{status:'reserved',confirmed:true}),/not confirmed/));
+test('unconfirmed sold cannot generate a commission',()=>assert.throws(()=>calculateCommission({method:'fixed',fixedSen:50000},{status:'sold',confirmed:false}),/not confirmed/));
+test('invalid commission percentages are rejected',()=> assert.throws(()=>calculateCommission({method:'sale_percent',basisPoints:15000},{status:'sold',confirmed:true,salePriceSen:20000}),/rate/));
+test('payout only matches approved same-agent commissions',()=> assert.equal(checkPayout({agentId:'A',payoutSen:12000,commissions:[{id:'x',agentId:'A',status:'approved',agreedSen:5000},{id:'y',agentId:'A',status:'approved',agreedSen:7000}]}),true));
+test('rejects cross-agent payout',()=>assert.throws(()=>checkPayout({agentId:'A',payoutSen:5000,commissions:[{id:'x',agentId:'B',status:'approved',agreedSen:5000}]}),/Cross-agent/));
+test('rejects unapproved payout',()=>assert.throws(()=>checkPayout({agentId:'A',payoutSen:5000,commissions:[{id:'x',agentId:'A',status:'pending',agreedSen:5000}]}),/not approved/));
+test('rejects repeated commission',()=>assert.throws(()=>checkPayout({agentId:'A',payoutSen:10000,commissions:[{id:'x',agentId:'A',status:'approved',agreedSen:5000},{id:'x',agentId:'A',status:'approved',agreedSen:5000}]}),/Duplicate/));
+test('rejects payout mismatch',()=>assert.throws(()=>checkPayout({agentId:'A',payoutSen:10000,commissions:[{id:'x',agentId:'A',status:'approved',agreedSen:5000}]}),/does not match/));
