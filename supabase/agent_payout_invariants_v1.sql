@@ -76,7 +76,7 @@ end; $$;
 
 drop trigger if exists agent_payout_status_validation_v1 on public.agent_payouts;
 create trigger agent_payout_status_validation_v1
-before update on public.agent_payouts
+before insert or update on public.agent_payouts
 for each row execute function agent_internal.validate_payout_status_v1();
 
 revoke all on function agent_internal.validate_payout_item_v1() from public,anon,authenticated;
