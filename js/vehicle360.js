@@ -79,7 +79,7 @@ export function mountVehicle360(root,{vehicle,role,sales=[],customers=[],payment
     const complete=purchase>0&&revenue>0;
     const card=(label,value)=>'<div class="ada-v360-kpi"><small>'+label+'</small><strong>'+value+'</strong></div>';
     const cards=newEl('div','ada-v360-kpis',
-      card('Modal Belian',fmtMoney(purchase))+
+      card(vehicle.acquisition_type==='consignment'?'Bayaran Kepada Tuan':'Modal Belian',fmtMoney(purchase))+
       card('Kos Tambahan Direkod',fmtMoney(repairs+extra))+
       card(completed?'Harga Dijual':'Harga Jual Sasaran',fmtMoney(revenue))+
       card(completed?'Margin Kasar Anggaran':'Potensi Margin Kasar',complete?fmtMoney(margin):'Belum lengkap'));

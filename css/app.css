@@ -2492,3 +2492,18 @@ html.ada-light #ada-cloud-gate .adx-pl-mini b{color:#b88a00}
 #ada-cloud-gate .adx-stval p{margin:2px 0 0!important;font-size:10.5px;color:var(--mut)}
 @media(max-width:700px){#ada-cloud-gate .adx-dstats{grid-template-columns:1fr 1fr}#ada-cloud-gate .adx-stval>div{grid-template-columns:1fr auto}#ada-cloud-gate .adx-stval small{display:none}}
 #ada-cloud-gate .adx .adx-fit svg.adx-svg{min-width:0}
+/* V100 consignment */
+#ada-cloud-gate .ada-sold-seal.is-wd{border-color:#94a3b8!important;color:#cbd5e1!important;background:radial-gradient(circle,#1e293bee,#0f172aee)!important}
+#ada-cloud-gate .cloud-car.is-wd-car .photo img{filter:grayscale(.85) brightness(.6)}
+#ada-cloud-gate .cloud-pill.status-withdrawn{background:#334155!important;color:#e2e8f0!important}
+.ada-cs-box{margin-top:14px;padding:13px 15px;border-radius:14px;background:rgba(167,139,250,.10);border:1px solid rgba(167,139,250,.35);display:flex;flex-direction:column;gap:6px;max-width:560px;position:relative;z-index:1}
+.ada-cs-box.is-wd{background:rgba(148,163,184,.12);border-color:rgba(148,163,184,.4)}
+.ada-cs-h{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:2px}
+.ada-cs-tag{font-size:10px;font-weight:850;letter-spacing:.08em;padding:3px 8px;border-radius:6px;background:#a78bfa;color:#160b33}
+.ada-cs-h b{font-size:13.5px}.ada-cs-h small{opacity:.75;font-size:12px}
+.ada-cs-wa{font-size:11.5px;font-weight:800;padding:3px 9px;border-radius:99px;background:#25d366;color:#04210f!important;text-decoration:none}
+.ada-cs-row{display:flex;justify-content:space-between;gap:12px;font-size:12.5px;padding:5px 0;border-top:1px solid #ffffff14}
+.ada-cs-row span{opacity:.78}.ada-cs-row b{text-align:right}.ada-cs-row b.warn{color:#ff9f43}
+.ada-cs-note{margin:4px 0 0!important;font-size:11px;opacity:.7}
+#ada-cloud-gate button.ada-cs-paid{margin-top:6px!important;background:#3ecf8e!important;color:#032013!important;border:0!important;font-weight:800!important;padding:9px 12px!important;border-radius:10px!important;width:auto!important}
+html.ada-light .ada-cs-row{border-color:#0000000f}
