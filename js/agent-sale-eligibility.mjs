@@ -21,9 +21,12 @@ export function assessSaleForCommission({ sale, payments, expectedAgentId, lead 
       (p.kind === 'deposit' || p.kind === 'full_payment') &&
       Number.isSafeInteger(p.amount_sen) && p.amount_sen >= 0 &&
       typeof p.confirmed_by === 'string' && p.confirmed_by.length > 0 &&
-      typeof p.confirmed_at === 'string' && p.confirmed_at.length > 0
+      typeof p.confirmed_at === 'string' && p.confirmed_at.length > 0 &&
+      typeof p.reference_no === 'string' && p.reference_no.trim().length > 0
     );
     if (!valid) reasons.push('payment_evidence_invalid');
+    const refs=payments.filter(Boolean).map(p=>typeof p.reference_no==='string' ? p.reference_no.trim().toLowerCase() : '');
+    if (refs.some(Boolean) && new Set(refs).size !== refs.length) reasons.push('duplicate_payment_reference');
     if (!payments.some(p => p.kind === 'full_payment')) reasons.push('full_payment_missing');
     if (!Number.isSafeInteger(sale.agreed_price_sen) || sale.agreed_price_sen <= 0) {
       reasons.push('agreed_price_invalid');
