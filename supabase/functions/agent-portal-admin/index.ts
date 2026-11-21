@@ -30,6 +30,72 @@ Deno.serve(async(req)=>{
    .order("applied_at",{ascending:true}).limit(100);
    return error?res(500,{error:"Unable to load applications"}):res(200,{applications:data});
  }
+ if(payload.action==="finance_list"){
+   const [leads,commissions,payouts]=await Promise.all([
+     admin.from("agent_leads").select("id,agent_id,customer_name,status,linked_sale_id,created_at")
+       .not("linked_sale_id","is",null).order("created_at",{ascending:false}).limit(100),
+     admin.from("agent_commissions").select("id,agent_id,lead_id,sale_id,agreed_amount,status,created_at")
+       .order("created_at",{ascending:false}).limit(100),
+     admin.from("agent_payouts").select("id,agent_id,amount,status,approved_by,transfer_reference,paid_at,created_at")
+       .order("created_at",{ascending:false}).limit(100)
+   ]);
+   if(leads.error||commissions.error||payouts.error)return res(500,{error:"Unable to load finance records"});
+   return res(200,{leads:leads.data,commissions:commissions.data,payouts:payouts.data});
+ }
+ if(payload.action==="lead_list"){
+   const {data,error}=await admin.from("agent_leads")
+     .select("id,agent_id,customer_name,customer_phone,status,linked_sale_id,vehicle_id,created_at")
+     .is("linked_sale_id",null).order("created_at",{ascending:false}).limit(100);
+   return error?res(500,{error:"Unable to load leads"}):res(200,{leads:data});
+ }
+ if(payload.action==="link_lead"){
+   if(typeof payload.lead_id!=="string"||!uuid.test(payload.lead_id)||
+      typeof payload.sale_id!=="string"||!uuid.test(payload.sale_id)||
+      typeof payload.reason!=="string"||payload.reason.trim().length<15)
+      return res(400,{error:"A matched sale and documented owner evidence are required"});
+   const {data,error}=await admin.rpc("agent_link_lead_gateway_v1",{
+     p_actor:identity.user.id,p_lead:payload.lead_id,p_sale:payload.sale_id,
+     p_evidence_reason:payload.reason.trim().slice(0,500)
+   });
+   return error?res(error.code==="23505"?409:400,{error:"Lead attribution rejected: check customer and vehicle match"}):res(200,{result:data});
+ }
+ if(payload.action==="approve_commission"){
+   const amount=payload.amount;
+   if(typeof payload.lead_id!=="string"||!uuid.test(payload.lead_id)||
+      typeof amount!=="string"||!/^(?:[1-9]\d{0,5})(?:\.\d{1,2})?$/.test(amount)||
+      Number(amount)>100000||
+      typeof payload.reason!=="string"||payload.reason.trim().length<20||
+      payload.finance_reconciled!==true)
+      return res(400,{error:"Verified sale, amount, and finance reconciliation acknowledgement required"});
+   const {data,error}=await admin.rpc("agent_approve_commission_gateway_v2",{
+     p_actor:identity.user.id,p_lead:payload.lead_id,
+     p_amount:amount,p_reason:payload.reason.trim().slice(0,2000)
+   });
+   return error?res(error.code==="23505"?409:400,{error:"Commission rejected. Verify sold status, payments and attribution"}):res(200,{result:data});
+ }
+ if(payload.action==="prepare_payout"||payload.action==="approve_payout"){
+   const target=payload.action==="prepare_payout"?payload.commission_id:payload.payout_id;
+   if(typeof target!=="string"||!uuid.test(target)||
+      typeof payload.reason!=="string"||payload.reason.trim().length<15)
+      return res(400,{error:"A valid record and review reason are required"});
+   const args=payload.action==="prepare_payout"?
+      {p_actor:identity.user.id,p_commission:target,p_reason:payload.reason.trim().slice(0,2000)}:
+      {p_actor:identity.user.id,p_payout:target,p_reason:payload.reason.trim().slice(0,2000)};
+   const rpc=payload.action==="prepare_payout"?"agent_prepare_payout_gateway_v1":"agent_approve_payout_gateway_v1";
+   const {data,error}=await admin.rpc(rpc,args);
+   return error?res(error.code==="23505"?409:400,{error:"Payout action rejected: check commission and approval status"}):res(200,{result:data});
+ }
+ if(payload.action==="confirm_payout"){
+   if(typeof payload.payout_id!=="string"||!uuid.test(payload.payout_id)||
+      typeof payload.bank_reference!=="string"||payload.bank_reference.trim().length<5||
+      payload.bank_reference.trim().length>120||payload.independent_bank_reconciliation!==true)
+      return res(400,{error:"Independent bank reconciliation and transfer reference required"});
+   const {data,error}=await admin.rpc("agent_confirm_payout_gateway_v1",{
+     p_actor:identity.user.id,p_payout:payload.payout_id,
+     p_transfer_reference:payload.bank_reference.trim(),p_bank_paid_at:new Date().toISOString()
+   });
+   return error?res(error.code==="42501"?403:400,{error:"Payment cannot be confirmed. A different owner must verify bank settlement"}):res(200,{result:data});
+ }
  if(payload.action==="review"){
    const application=payload.application_id,decision=payload.decision;
    const reason=typeof payload.reason==="string"?payload.reason.trim().slice(0,2000):null;
