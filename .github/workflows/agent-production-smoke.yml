@@ -6,6 +6,9 @@ on:
       - agent.html
       - agent-payout-verify.html
       - .github/workflows/agent-production-smoke.yml
+  pull_request:
+    paths:
+      - .github/workflows/agent-production-smoke.yml
   workflow_dispatch:
 permissions:
   contents: read
