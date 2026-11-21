@@ -32,3 +32,12 @@ create trigger payments_sold_at_sync_trg after insert or update of confirmed_at,
 
 -- Betulkan data sedia ada
 update public.sales set sold_at = sold_at where status::text = 'sold';
+
+-- ===== V98b: atas permintaan Owner — tarikh Sold SAMA dengan tarikh jualan =====
+create or replace function public.sales_sold_at_sync() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  if new.status::text = 'sold' then new.sold_at := new.created_at; else new.sold_at := null; end if;
+  return new;
+end $$;
+update public.sales set sold_at = sold_at where status::text = 'sold';
