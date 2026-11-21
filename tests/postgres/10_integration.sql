@@ -7,6 +7,12 @@ begin
   raise notice 'PASS: %',description;
 end $$;
 
+-- Synthetic HR verifier is explicitly assigned and remains sales_advisor.
+insert into public.agent_payout_verifiers(user_id,enabled,granted_by,reason)
+values('00000000-0000-4000-8000-000000000006',true,
+ '00000000-0000-4000-8000-000000000001',
+ 'Fixture authorized HR verifier for isolated PostgreSQL tests');
+
 -- Verified synthetic users submit applications without owner permissions.
 set role authenticated;
 select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000003',false);
@@ -93,7 +99,7 @@ where amount=500;
 
 set role service_role;
 select public.agent_confirm_payout_gateway_v1(
- '00000000-0000-4000-8000-000000000002',
+ '00000000-0000-4000-8000-000000000006',
  (select id from public.agent_payouts limit 1),
  'SYNTHETIC-TRANSFER-0001',now());
 reset role;
@@ -110,7 +116,7 @@ do $$
 begin
  begin
   perform public.agent_confirm_payout_gateway_v1(
-  '00000000-0000-4000-8000-000000000002',
+  '00000000-0000-4000-8000-000000000006',
   (select id from public.agent_payouts limit 1),'SYNTHETIC-TRANSFER-0001',now());
   raise exception 'FAIL: duplicate paid payout accepted';
  exception when check_violation then
