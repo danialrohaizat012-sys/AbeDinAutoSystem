@@ -87,7 +87,7 @@
 <link rel="preconnect" href="https://buzpdyvvoiqgbeventwm.supabase.co" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm" crossorigin>
-<link rel="stylesheet" href="css/app.css?v=50.54">
+<link rel="stylesheet" href="css/app.css?v=50.55">
 <link rel="stylesheet" href="css/vehicle360.css?v=83.0">
 <link rel="stylesheet" href="css/admin-menu.css?v=83.6">
 <link rel="stylesheet" href="css/staff-dashboard.css?v=83.2">
@@ -1335,6 +1335,8 @@ async function registerPublicCatalogueVisitor(){
       visitorId=globalThis.crypto?.randomUUID?.()||('xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0,v=c==='x'?r:(r&3|8);return v.toString(16)}));
       try{localStorage.setItem(STORAGE_KEY,visitorId)}catch(_){}
     }
+    const r2=await client.rpc('register_public_catalogue_visit',{p_visitor_id:visitorId});
+    if(!r2.error&&r2.data&&typeof r2.data==='object'&&Number.isFinite(Number(r2.data.total))){window.__adaVisToday=Number(r2.data.today);return Number(r2.data.total)}
     const {data,error}=await client.rpc('register_public_catalogue_visitor',{p_visitor_id:visitorId});
     if(error)throw error;
     const raw=Array.isArray(data)?(data[0]?.visitor_count??data[0]?.total_visitors??data[0]?.count):data;
@@ -1432,7 +1434,7 @@ async function openPublicCatalogue(vehicleId=null){
         <h1><span>Cari Kereta</span><em>Impian Anda</em></h1>
         <p>Kereta terpakai berkualiti dengan harga yang berbaloi.</p>
         <ul class="abx-trust"><li>${ico.shield}<span>Diperiksa <br>&amp; Disahkan</span></li><li>${ico.loan}<span>Bantuan <br>Loan</span></li><li>${ico.swap}<span>Trade-In <br>Mudah</span></li><li>${ico.help}<span>Sokongan <br>Selepas Jualan</span></li></ul>
-        <div class="abx-visitor" id="ada-cat-visitor" hidden aria-live="polite"><svg viewBox="0 0 24 24"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg><span><strong id="ada-cat-visitor-count">0</strong> pengunjung</span></div>
+        <div class="abx-visitor" id="ada-cat-visitor" hidden aria-live="polite"><svg viewBox="0 0 24 24"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg><span><strong id="ada-cat-visitor-count">0</strong> pengunjung</span><span class="abx-vis-today" id="ada-cat-visitor-todaywrap" hidden><i class="abx-vis-dot"></i><strong id="ada-cat-visitor-today">0</strong> hari ini</span></div>
       </div>
     </section>
     <div class="abx-wrap abx-search-zone">
@@ -1464,7 +1466,7 @@ async function openPublicCatalogue(vehicleId=null){
     <div class="abx-wrap abx-staff"><a class="abx-staff-login" href="/admin" data-staff-login>Staff Login</a></div>`;
 
     const grid=box.querySelector('#ada-cat-grid'),pagination=box.querySelector('#ada-cat-pagination'),search=box.querySelector('#ada-cat-search'),makeSel=box.querySelector('#ada-cat-make'),modelSel=box.querySelector('#ada-cat-model'),priceSel=box.querySelector('#ada-cat-price'),instSel=box.querySelector('#abx-inst'),yearSel=box.querySelector('#abx-year'),sortSel=box.querySelector('#ada-cat-sort'),count=box.querySelector('#ada-cat-count');
-    registerPublicCatalogueVisitor().then(n=>{if(n===null)return;const vis=box.querySelector('#ada-cat-visitor'),c=box.querySelector('#ada-cat-visitor-count');if(vis&&c){c.textContent=n.toLocaleString('en-MY');vis.hidden=false}});
+    registerPublicCatalogueVisitor().then(n=>{if(n===null)return;const vis=box.querySelector('#ada-cat-visitor'),c=box.querySelector('#ada-cat-visitor-count');if(vis&&c){c.textContent=n.toLocaleString('en-MY');vis.hidden=false;const tw=box.querySelector('#ada-cat-visitor-todaywrap'),tc=box.querySelector('#ada-cat-visitor-today');if(tw&&tc&&Number.isFinite(window.__adaVisToday)){tc.textContent=window.__adaVisToday.toLocaleString('en-MY');tw.hidden=false}}});
     const PAGE_SIZE=12;let currentPage=1;
     const statusRank=v=>{const s=publicStatus(v);return s==='sold'?2:s==='reserved'?1:0};
     const renderCards=(resetPage=false)=>{if(resetPage)currentPage=1;
