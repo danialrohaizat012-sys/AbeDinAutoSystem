@@ -85,20 +85,6 @@ Deno.serve(async(req)=>{
    const {data,error}=await admin.rpc(rpc,args);
    return error?res(error.code==="23505"?409:400,{error:"Payout action rejected: check commission and approval status"}):res(200,{result:data});
  }
- if(payload.action==="confirm_payout"){
-   if(typeof payload.payout_id!=="string"||!uuid.test(payload.payout_id)||
-      typeof payload.bank_reference!=="string"||payload.bank_reference.trim().length<5||
-      payload.bank_reference.trim().length>120||payload.independent_bank_reconciliation!==true||
-      typeof payload.bank_paid_at!=="string"||!Number.isFinite(Date.parse(payload.bank_paid_at))||
-      Date.parse(payload.bank_paid_at)>Date.now()+300000||
-      Date.parse(payload.bank_paid_at)<Date.now()-365*86400000)
-      return res(400,{error:"Independent bank reconciliation and transfer reference required"});
-   const {data,error}=await admin.rpc("agent_confirm_payout_gateway_v1",{
-     p_actor:identity.user.id,p_payout:payload.payout_id,
-     p_transfer_reference:payload.bank_reference.trim(),p_bank_paid_at:new Date(payload.bank_paid_at).toISOString()
-   });
-   return error?res(error.code==="42501"?403:400,{error:"Payment cannot be confirmed. A different owner must verify bank settlement"}):res(200,{result:data});
- }
  if(payload.action==="review"){
    const application=payload.application_id,decision=payload.decision;
    const reason=typeof payload.reason==="string"?payload.reason.trim().slice(0,2000):null;
