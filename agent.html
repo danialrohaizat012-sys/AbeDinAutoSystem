@@ -228,17 +228,11 @@ async function loadOwnerFinance(){
      const reason=prompt('Sebab kelulusan payout (min. 15 aksara):');
      return reason?.trim().length>=15?{action:'approve_payout',payout_id:p.id,reason:reason.trim()}:null;
    });
-   if(p.status==='approved') ownerActionButton(d,'Sahkan dibayar (owner kedua)',()=>{
-     const bank_reference=prompt('Rujukan pindahan bank yang TELAH berjaya diproses:');
-     if(!bank_reference?.trim())return null;
-     const bank_date=prompt('Tarikh pindahan BANK sebenar (YYYY-MM-DD):');
-     if(!bank_date||!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(bank_date))return null;
-     const bank_paid_at=new Date(bank_date+'T12:00:00+08:00');
-     if(Number.isNaN(bank_paid_at.getTime()))return null;
-     if(!confirm('Saya owner kedua, telah menyemak PENYATA BANK sebenar dan pindahan wang sudah selesai. Teruskan?'))return null;
-     return {action:'confirm_payout',payout_id:p.id,bank_reference:bank_reference.trim(),
-       bank_paid_at:bank_paid_at.toISOString(),independent_bank_reconciliation:true};
-   });
+   if(p.status==='approved'){
+     const note=document.createElement('div');note.className='notice';
+     note.textContent='Menunggu pengesahan oleh HR Aiman selepas bayaran bank dibuat.';
+     d.append(note);
+   }
  });
 }
 async function loadOwner(){if(!owner)return;
