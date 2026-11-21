@@ -74,10 +74,12 @@ async function load(){
   b.onclick=async()=>{
    const bank_reference=prompt('Rujukan pindahan BANK sebenar:')?.trim();
    if(!bank_reference||bank_reference.length<5||bank_reference.length>120)return;
-   const date=prompt('Tarikh pembayaran sebenar (YYYY-MM-DD):')?.trim();
-   if(!date||!/^\d{4}-\d{2}-\d{2}$/.test(date))return;
-   const timestamp=new Date(date+'T12:00:00+08:00');
-   if(Number.isNaN(timestamp.getTime()))return showStatus('Tarikh tidak sah',true);
+   const date=prompt('Tarikh DAN masa pembayaran bank sebenar (YYYY-MM-DD HH:MM, waktu Malaysia):')?.trim();
+   if(!date||!/^\d{4}-\d{2}-\d{2} [0-2]\d:[0-5]\d$/.test(date))return showStatus('Gunakan format YYYY-MM-DD HH:MM',true);
+   const timestamp=new Date(date.replace(' ','T')+':00+08:00');
+   const validTime=!Number.isNaN(timestamp.getTime())&&timestamp.toISOString().slice(0,10)!=='';
+   if(!validTime||timestamp.getTime()>Date.now()+300000||timestamp.getTime()<Date.now()-365*86400000)
+     return showStatus('Tarikh atau masa transaksi bank tidak sah',true);
    if(!confirm('Saya sudah menyemak PENYATA BANK sebenar. Payout '+money(p.amount)+' TELAH dibayar dan saya bukan pelulus payout ini. Rekodkan sebagai PAID?'))return;
    b.disabled=true;
    try{
