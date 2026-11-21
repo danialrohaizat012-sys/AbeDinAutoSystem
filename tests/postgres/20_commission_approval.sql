@@ -60,3 +60,33 @@ begin
  end;
 end $$;
 select public.assert_test((select count(*)=2 from public.sales),'Legacy sale count unchanged');
+
+-- Owner can prepare and approve payout, but cannot confirm their own approval.
+set role service_role;
+select public.agent_prepare_payout_gateway_v1(
+ '00000000-0000-4000-8000-000000000001',
+ (select id from public.agent_commissions where sale_id='30000000-0000-4000-8000-000000000002'),
+ 'Synthetic finance team prepayment reconciliation completed');
+select public.agent_approve_payout_gateway_v1(
+ '00000000-0000-4000-8000-000000000001',
+ (select id from public.agent_payouts where amount=600),
+ 'Synthetic payout approved pending independent bank verification');
+reset role;
+select public.assert_test(
+ (select count(*)=1 from public.agent_payouts where amount=600 and status='approved'),
+ 'Payout prepared and approved');
+do $$
+begin
+ begin
+  perform public.agent_confirm_payout_gateway_v1(
+  '00000000-0000-4000-8000-000000000001',
+  (select id from public.agent_payouts where amount=600),
+  'FAKE-BANK-REFERENCE',now());
+  raise exception 'FAIL: self-confirmed payout was accepted';
+ exception when insufficient_privilege then
+  raise notice 'PASS: same owner cannot confirm payout';
+ end;
+end $$;
+select public.assert_test(
+ (select count(*)=1 from public.agent_payouts where amount=600 and status='approved'),
+ 'Failed payment confirmation leaves payout approved, not paid');
