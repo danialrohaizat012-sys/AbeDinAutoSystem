@@ -53,7 +53,7 @@ label{display:block;font-size:11.5px;color:var(--mute);margin-bottom:4px;text-tr
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:10px}
 .sc{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px;transition:border-color .15s}
 .sc:hover{border-color:#4a3f14}.sc.off{opacity:.62}
-.sc .hd{display:flex;gap:12px;align-items:center}.sc .nm{flex:1;min-width:0}.sc .nm b{display:block;font-size:15.5px;line-height:1.25;cursor:pointer;overflow-wrap:anywhere}
+.sc .sch{display:flex;gap:12px;align-items:center}.sc .nm{flex:1;min-width:0}.sc .nm b{display:block;font-size:15.5px;line-height:1.25;cursor:pointer;overflow-wrap:anywhere}
 .sc .nm small{color:var(--mute);font-size:12.5px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sc .meta{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;color:var(--mute)}
 .sc .ft{display:flex;gap:6px;border-top:1px solid var(--line);padding-top:10px;margin-top:auto}.sc .ft .btn{flex:1;text-align:center}
@@ -155,7 +155,7 @@ export function mountStaff(host, ctx) {
     const ini = (u.full_name || "?").split(/\s+/).filter(w => !/^(bin|binti|bt|b)$/i.test(w)).slice(0, 2).map(w => w[0]).join("").toUpperCase();
     const menus = u.role === "owner" ? null : MENUS.filter(([k]) => canPage(u, k)).map(([, t]) => t);
     return `<div class="sc ${u.enabled ? "" : "off"}">
-      <div class="hd">${ph ? `<img class="ava" src="${esc(ph)}" alt="">` : `<div class="ava">${esc(ini)}</div>`}
+      <div class="sch">${ph ? `<img class="ava" src="${esc(ph)}" alt="">` : `<div class="ava">${esc(ini)}</div>`}
         <div class="nm"><b data-prof="${esc(u.id)}">${esc(u.full_name || "(tiada nama)")}${self ? ` <span class="mute" style="font-weight:500">· anda</span>` : ""}</b><small>${esc(h.position || u.email || "-")}${h.staff_code ? " · " + esc(h.staff_code) : ""}</small></div>
         <span class="chip ${u.enabled ? "c-on" : "c-off"}">${u.enabled ? "Aktif" : "Nyahaktif"}</span></div>
       <div class="chips"><span class="chip c-role">${esc(ROLES[u.role] || u.role || "-")}</span><span class="chip c-pur">${esc(CATEGORY[h.category || "staff_biasa"])}</span>${h.employment_type && h.employment_type !== "permanent" ? `<span class="chip c-off">${esc(EMP_TYPE[h.employment_type])}</span>` : ""}${h.contract_status && h.contract_status !== "active" ? `<span class="chip c-warn">${esc(CONTRACT[h.contract_status])}</span>` : ""}${u.email_confirmed === false ? `<span class="chip c-warn">Emel belum disahkan</span>` : ""}</div>
