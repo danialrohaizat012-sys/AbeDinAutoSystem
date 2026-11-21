@@ -21,7 +21,7 @@ Deno.serve(async req=>{
    admin.from("profiles").select("role,enabled").eq("id",user.id).maybeSingle(),
    admin.from("agent_payout_verifiers").select("enabled").eq("user_id",user.id).maybeSingle()
  ]);
- if(!staff?.enabled||!(staff.role==="owner"||verifier?.enabled===true))
+ if(!staff?.enabled||verifier?.enabled!==true)
    return out(403,{error:"Payout verification permission required"});
  if(!(req.headers.get("content-type")||"").startsWith("application/json"))
    return out(415,{error:"JSON required"});
