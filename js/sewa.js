@@ -512,7 +512,7 @@ export function mountSewa(host, ctx) {
         <div class="full row" style="align-items:center"><button type="button" class="btn sm" data-a="kira">↻ Kira semula ikut harga stok</button><span class="mute" id="e-kira"></span></div>
       </div></section>
       <section class="card"><h3>Aksesori</h3><div class="ed">
-        ${AKSESORI.map(([k, l], i) => `<div><label for="a-${k}">${i + 1}. ${l}</label><select id="a-${k}" data-ak="${k}"><option value="">-----pilih-----</option>${['Ada', 'Tiada', 'Rosak'].map(o => `<option${ak[k] === o ? ' selected' : ''}>${o}</option>`).join('')}</select></div>`).join('')}
+        ${AKSESORI.map(([k, l], i) => `<div><label for="a-${k}">${i + 1}. ${l}</label><select id="a-${k}" data-ak="${k}"><option value="">-----pilih-----</option>${['Ada', 'Tiada', 'Rosak'].map(o => `<option${(ak[k] || 'Ada') === o ? ' selected' : ''}>${o}</option>`).join('')}</select></div>`).join('')}
       </div></section>
       <section class="card"><h3>Remark</h3><div class="ed">
         ${inp('remark', 'Remark pelanggan', { ...C, area: true, full: true })}${inp('remark_admin', 'Remark admin (dicetak dalam perjanjian)', { area: true, full: true })}
