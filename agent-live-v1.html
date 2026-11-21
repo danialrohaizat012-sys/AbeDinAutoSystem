@@ -74,7 +74,7 @@ footer{font-size:12px;color:#748399;padding:15px 0}
 <div class="stat">Penyata pembayaran<b id="countPayout">0</b></div></div>
 <div id="leadPanel" hidden><h2>Daftar lead pelanggan</h2>
 <div class="notice warn">Pastikan pelanggan telah bersetuju dihubungi oleh AbeDin Auto. Jangan masukkan nombor IC, lesen atau maklumat bank di sini.</div>
-<form id="leadForm"><div class="grid">
+<form id="leadForm"><label>Kereta yang diminati pelanggan<select name="vehicle_id" id="leadVehicle" required><option value="">Pilih kereta tersedia</option></select></label><div class="grid">
 <label>Nama pelanggan<input name="customer_name" maxlength="160" required></label>
 <label>No. telefon<input name="customer_phone" type="tel" maxlength="24" required></label>
 </div><label class="check"><input name="consent" type="checkbox" required> Pelanggan telah memberikan kebenaran untuk dihubungi mengenai kereta.</label>
@@ -124,12 +124,26 @@ async function sync(){
   if(app){$('applicationStatus').textContent='Status permohonan: '+app.status+'. Tarikh: '+new Date(app.applied_at).toLocaleDateString('ms-MY');}
   else {$('applicationStatus').textContent='Belum ada permohonan. Sila lengkapkan borang di bawah.';$('applyForm').hidden=false;
    $('applyForm').elements.email.value=me.email||'';}
-  if(profile?.status==='active'){$('agentStatus').textContent='ID ejen: '+profile.agent_code+' | Status: Aktif';$('leadPanel').hidden=false;await loadDashboard();}
+  if(profile?.status==='active'){$('agentStatus').textContent='ID ejen: '+profile.agent_code+' | Status: Aktif';$('leadPanel').hidden=false;await loadDashboard();await loadAgentCatalogue();}
   else {$('agentStatus').textContent=app?'Permohonan: '+app.status+'. Dashboard hanya aktif selepas kelulusan.':'Belum menjadi ejen. Hantar permohonan dahulu.';
    for(const id of ['leadItems','commissionItems','payoutItems'])$(id).replaceChildren();for(const id of ['countLeads','countCommission','countPayout'])text($(id),'0');}
   message('Log masuk sebagai '+me.email+'.');
   view(owner?'owner':profile?.status==='active'?'dashboard':'application');
  }catch(e){fail(e);}
+}
+async function loadAgentCatalogue(){
+ const {data:session,error}=await supabase.auth.getSession();
+ if(error||!session?.session?.access_token)throw new Error('Sesi pengguna tamat');
+ const r=await fetch(project+'/functions/v1/agent-portal-catalog',{
+  headers:{apikey:'sb_publishable_zuuNipsMpalN_38SJwXpFA_MRzQ6eZ0',
+   authorization:'Bearer '+session.session.access_token}
+ });
+ const body=await r.json();if(!r.ok)throw new Error(body.error||'Gagal memuat stok');
+ const sel=$('leadVehicle');sel.replaceChildren();
+ const first=document.createElement('option');first.value='';first.textContent='Pilih kereta tersedia';sel.append(first);
+ for(const v of body.vehicles||[]){const op=document.createElement('option');op.value=v.id;
+ op.textContent=[v.make,v.model,v.model_year].filter(Boolean).join(' ')+' | RM '+Number(v.asking_price||0).toLocaleString('ms-MY');
+ sel.append(op);}
 }
 async function loadDashboard(){
  const [l,c,p]=await Promise.all([
@@ -176,7 +190,7 @@ $('applyForm').onsubmit=async e=>{e.preventDefault();if(!me?.email_confirmed_at)
  catch(err){fail(err);}finally{b.disabled=false;}};
 $('leadForm').onsubmit=async e=>{e.preventDefault();if(agent?.status!=='active')return message('Ejen belum aktif',true);
  const b=e.submitter;b.disabled=true;try{const d=Object.fromEntries(new FormData(e.target));if(d.consent!=='on')throw new Error('Persetujuan pelanggan diperlukan');
- const {error}=await supabase.from('agent_leads').insert({agent_id:agent.id,customer_name:d.customer_name.trim(),customer_phone:d.customer_phone.trim(),consent_confirmed:true,status:'new'});if(error)throw error;e.target.reset();await loadDashboard();message('Lead berjaya disimpan.');}
+ const {error}=await supabase.from('agent_leads').insert({agent_id:agent.id,vehicle_id:d.vehicle_id,customer_name:d.customer_name.trim(),customer_phone:d.customer_phone.trim(),consent_confirmed:true,status:'new'});if(error)throw error;e.target.reset();await loadDashboard();message('Lead berjaya disimpan.');}
  catch(err){fail(err);}finally{b.disabled=false;}};
 await sync();
 </script>
