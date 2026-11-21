@@ -53,8 +53,8 @@ begin
       or new.agreed_amount is distinct from old.agreed_amount then
      raise exception 'Commission snapshot is immutable' using errcode='23514';
    end if;
-   if old.status='paid' and new.status <> old.status then
-     raise exception 'Paid commission cannot be changed' using errcode='23514';
+   if old.status='paid' then
+     raise exception 'Paid commission is immutable; use a separate audited adjustment' using errcode='23514';
    end if;
    if exists (select 1 from public.agent_payout_items i where i.commission_id=old.id)
       and new.status <> old.status and new.status <> 'paid' then
