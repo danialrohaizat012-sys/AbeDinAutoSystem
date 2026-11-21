@@ -274,8 +274,10 @@ em{font-style:normal}.ng{color:var(--ng)}.ok{color:var(--ok)}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
 .toast{font:700 14px/1.4 var(--f);position:fixed;left:50%;bottom:110px;transform:translateX(-50%);background:var(--pri);color:var(--pri-fg);padding:10px 16px;border-radius:12px;font-weight:700;z-index:50;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw;text-align:center}
 .toast.show{opacity:1}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:grid;place-items:center;z-index:40;padding:16px}
-.modal .box{background:var(--card);border:1px solid var(--line);color:var(--fg);border-radius:16px;padding:18px;max-width:440px;width:100%;display:flex;flex-direction:column;gap:10px;font:15px/1.45 var(--f)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:grid;place-items:center;z-index:2147483000;padding:max(12px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom));overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.modal .box{background:var(--card);border:1px solid var(--line);color:var(--fg);border-radius:16px;padding:18px;max-width:440px;width:100%;display:flex;flex-direction:column;gap:10px;font:15px/1.45 var(--f);max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.modal .box.wide{max-width:640px}
+.modal .box>.row.end:last-child,.modal .box>.mfoot{position:sticky;bottom:-18px;margin:0 -18px -18px;padding:12px 18px max(14px,env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--line);z-index:3}
 
 /* V83.12: responsive inspection workspace, visual-only (no persistence changes) */
 .shell{max-width:100%;overflow-x:clip}
@@ -907,7 +909,7 @@ function editInspectionCost(id){
     <div id="cost-items"></div>
     <div class="row"><button class="sm" id="add-cost">+ Tambah barang / upah</button><span class="grow"></span><b id="cost-total"></b></div>
     <p class="mute" id="cost-error" role="alert"></p>
-    <div class="row end"><button class="sm" id="cost-cancel">Batal</button><button class="sm go" id="cost-save">Simpan Kos</button></div>`);
+    <div class="row end"><button class="sm" id="cost-cancel">Batal</button><button class="sm go" id="cost-save">Simpan Kos</button></div>`,"wide");
   const el=m.querySelector.bind(m);
   const draw=()=>{
     el("#cost-items").innerHTML=parts.map((p,i)=>`<div class="part" data-cost-i="${i}">
@@ -963,7 +965,11 @@ function summaryText(r){
   if(r.catatan) t+=`\nCatatan: ${r.catatan}\n`;
   return t;
 }
-function modal(html){ const m=document.createElement("div"); m.className="modal"; m.innerHTML=`<div class="box">${html}</div>`; root.appendChild(m); return m; }
+function modal(html,cls=""){ const m=document.createElement("div"); m.className="modal"; m.innerHTML=`<div class="box ${cls}">${html}</div>`; root.appendChild(m);
+  // V97: sembunyikan menu bawah sistem semasa popup dibuka supaya butang Simpan tidak tertutup
+  document.documentElement.classList.add("ada-sheet-open"); const rm=m.remove.bind(m);
+  m.remove=()=>{ rm(); if(!root.querySelector(".modal")) document.documentElement.classList.remove("ada-sheet-open"); };
+  return m; }
 function showCopy(txt){ const m=modal(`<h3>Salin ringkasan</h3><textarea class="field" readonly style="min-height:220px">${esc(txt)}</textarea><div class="row end"><button class="sm">Tutup</button></div>`); m.querySelector("textarea").select(); m.querySelector("button").onclick=()=>m.remove(); }
 function review(r,to){
   const m=modal(`<h3>${to==="lulus"?"Sahkan pemeriksaan":"Pulangkan kepada staff"}</h3><p class="mute">${to==="lulus"?"Komen (pilihan):":"Nyatakan apa yang perlu dibetulkan:"}</p>
@@ -1186,6 +1192,7 @@ function summaryDialog(){
 /* ---------- mount ---------- */
 export function mountChecklist(host,ctx){
   S.client=ctx.client; S.profile=ctx.profile||null; S.vehicles=Array.isArray(ctx.vehicles)?ctx.vehicles:[];
+  document.documentElement.classList.remove("ada-sheet-open");
   root=host.shadowRoot||host.attachShadow({mode:"open"});
   root.innerHTML=`<style>${CSS}</style><div class="shell"><div class="wrap" id="app"></div></div><div class="toast" id="toast"></div>`;
   app=root.getElementById("app");
