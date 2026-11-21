@@ -28,3 +28,7 @@ begin
   if v_n = 0 then raise exception 'Rekod bayaran tidak dijumpai.'; end if;
 end
 $function$;
+
+-- V105b & V105c (sudah dipasang): buang sekatan "harga kurang daripada jumlah dibayar" dalam update_sale_details
+-- dan sekatan "bayaran tidak boleh melebihi harga jualan" dalam create_vehicle_sale_with_details.
+-- Jumlah dibayar boleh lebih atau kurang daripada harga inventori; status Sold/Reserved masih ikut sama ada dibayar >= harga.
