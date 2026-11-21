@@ -510,6 +510,8 @@ function startLive(){if(!profile)return;try{if(liveCh)client.removeChannel(liveC
   liveCh=ch.subscribe(st=>{if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'||st==='CLOSED'){clearTimeout(liveRetry);liveRetry=setTimeout(()=>{if(profile)startLive()},4000)}});
   if(!window.__adaLiveVis){window.__adaLiveVis=1;let hid=0;document.addEventListener('visibilitychange',()=>{if(document.hidden){hid=Date.now();return}if(profile&&hid&&Date.now()-hid>3000){LIVE_TABLES.forEach(t=>liveQ.add(t));liveApply();try{loadNotifs()}catch(_){}}})}}
 /* V85: Dashboard owner — reka bentuk moden */
+// V98: bulan jualan ikut TARIKH JUALAN (sales.created_at) dalam waktu Malaysia, bukan tarikh rekod dimasukkan
+const myYM=t=>{if(!t)return '';const d=new Date(new Date(t).getTime()+8*3600000);return isNaN(d)?'':d.toISOString().slice(0,7)};
 function ownerDash(){
   const st=v=>effStatus(v),cnt={available:0,reserved:0,preparation:0,sold:0};vehicles.forEach(v=>{const k=st(v);cnt[k]=(cnt[k]||0)+1});
   const total=vehicles.length||0,active=total-cnt.sold,published=vehicles.filter(v=>v.is_published&&st(v)!=='sold').length,unpublished=vehicles.filter(v=>st(v)==='available'&&!v.is_published).length;
@@ -524,7 +526,7 @@ function ownerDash(){
   const pkTodo=stockVs.filter(v=>{const r=pkOf(v);return !r||r.status!=='lulus'}).length;
   // 6 bulan terakhir
   const now=new Date(),months=[];for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);months.push({k:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),l:d.toLocaleDateString('ms-MY',{month:'short'}),n:0,v:0})}
-  live.forEach(x=>{const d=String(x.sold_at||x.created_at||'').slice(0,7),m=months.find(m=>m.k===d);if(m){m.n++;m.v+=Number(x.agreed_price||0)}});
+  live.forEach(x=>{const d=myYM(x.created_at||x.sold_at),m=months.find(m=>m.k===d);if(m){m.n++;m.v+=Number(x.agreed_price||0)}});
   const mx=Math.max(1,...months.map(m=>m.v)),cur=months[5],prev=months[4],delta=prev.v?((cur.v-prev.v)/prev.v*100):null;
   const hr=now.getHours(),greet=hr<12?'Selamat pagi':hr<15?'Selamat tengah hari':hr<19?'Selamat petang':'Selamat malam';
   const nm=safe((profile?.full_name||'Abe Din').split(' ')[0]),today=now.toLocaleDateString('ms-MY',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
@@ -534,7 +536,7 @@ function ownerDash(){
   const tile=(icon,label,val,foot,cls='')=>`<div class="adx-tile ${cls}"><div class="adx-tile-top"><span class="adx-ic">${I(icon)}</span><span class="adx-lbl">${label}</span></div><b class="adx-val">${val}</b><span class="adx-foot">${foot}</span></div>`;
   const att=[[cnt.preparation,'Kereta dalam preparation','Lengkapkan maklumat & gambar','inventory','car'],[unpublished,'Available belum live','Terbitkan ke katalog pelanggan','inventory','tag'],[pkTodo,'Puspakom belum lulus','Stok yang belum lulus pemeriksaan','puspakom','check'],[owing.length,'Bayaran belum selesai',owing.length?'Baki '+money(owingAmt):'Semua jualan dibayar penuh','sales','cash'],[cnt.reserved,'Reserved menunggu jualan','Lengkapkan transaksi jualan','sales','users']].filter(a=>a[0]>0);
   const custName=id=>safe(customers.find(c=>c.id===id)?.full_name||'Pelanggan');const vehName=id=>{const v=vehicles.find(x=>x.id===id);return v?safe(`${v.make||''} ${v.model||''}`.trim()):'Kenderaan'},vehPlate=id=>safe(vehicles.find(x=>x.id===id)?.plate||'');
-  const recentSales=[...live].sort((a,b)=>String(b.sold_at||b.created_at||'').localeCompare(String(a.sold_at||a.created_at||''))).slice(0,5);
+  const recentSales=[...live].sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||''))).slice(0,5);
   return `<div class="adx">
 <header class="adx-head"><div><span class="adx-date">${today}</span><h1>${greet}, ${nm} 👋</h1><p>Ringkasan perniagaan Abe Din Auto hari ini.</p></div><div class="adx-head-act"><button id="ada-dash-add" class="adx-btn ghost">${I('plus')}Daftar Kereta</button><button id="ada-dash-sale" class="adx-btn">${I('cash')}Jual Kereta</button></div></header>
 <section class="adx-grid adx-kpis">
@@ -555,7 +557,7 @@ function ownerDash(){
  <div class="adx-card"><div class="adx-card-h"><h3>Perlu Perhatian</h3><span class="adx-mut">${att.length?att.length+' perkara':''}</span></div>
   ${att.length?`<div class="adx-att">${att.map(([n,t,d,g,ic])=>`<button class="adx-att-row" data-goto="${g}"><span class="adx-ic">${I(ic)}</span><span class="adx-att-t"><b>${t}</b><small>${d}</small></span><span class="adx-att-n">${n}</span></button>`).join('')}</div>`:`<div class="adx-empty">${I('check')}<span>Semua beres. Tiada tindakan diperlukan.</span></div>`}</div>
  <div class="adx-card"><div class="adx-card-h"><h3>Jualan Terkini</h3><button class="adx-link" data-goto="sales">Semua ${I('arrow')}</button></div>
-  ${recentSales.length?`<div class="adx-sales">${recentSales.map(x=>{const bal=Number(x.agreed_price||0)-(paidBy[x.id]||0),d=x.sold_at||x.created_at;return `<div class="adx-sale"><div class="adx-sale-l"><b>${vehName(x.vehicle_id)} <span class="adx-plate">${vehPlate(x.vehicle_id)}</span></b><small>${custName(x.customer_id)}${d?' · '+new Date(d).toLocaleDateString('ms-MY',{day:'numeric',month:'short'}):''}</small></div><div class="adx-sale-r"><b>${money(x.agreed_price)}</b><span class="adx-st ${bal>0.5?'due':'ok'}">${bal>0.5?'Baki '+money(bal):'Selesai'}</span></div></div>`}).join('')}</div>`:'<div class="adx-empty"><span>Belum ada jualan direkodkan.</span></div>'}</div>
+  ${recentSales.length?`<div class="adx-sales">${recentSales.map(x=>{const bal=Number(x.agreed_price||0)-(paidBy[x.id]||0),d=x.created_at||x.sold_at;return `<div class="adx-sale"><div class="adx-sale-l"><b>${vehName(x.vehicle_id)} <span class="adx-plate">${vehPlate(x.vehicle_id)}</span></b><small>${custName(x.customer_id)}${d?' · '+new Date(d).toLocaleDateString('ms-MY',{day:'numeric',month:'short'}):''}</small></div><div class="adx-sale-r"><b>${money(x.agreed_price)}</b><span class="adx-st ${bal>0.5?'due':'ok'}">${bal>0.5?'Baki '+money(bal):'Selesai'}</span></div></div>`}).join('')}</div>`:'<div class="adx-empty"><span>Belum ada jualan direkodkan.</span></div>'}</div>
 </section>
 <section class="adx-card adx-recent ada-stock-strip"><div class="adx-card-h ada-recent-head"><div><h3>Inventori Terkini</h3><span class="adx-mut">${dashRecentCount==='all'?`Semua ${vehicles.length} unit`:`${Math.min(Number(dashRecentCount),vehicles.length)} daripada ${vehicles.length} unit`}</span></div>${dashRecentControls()}<button class="adx-link" data-goto="inventory">Lihat Semua ${I('arrow')}</button></div>${vehicles.length?vehicleCards(sortRecentVehicles(vehicles,dashRecentSort).slice(0,dashRecentCount==='all'?undefined:Number(dashRecentCount))):'<p class="muted">Inventori cloud masih kosong.</p>'}</section>
 </div>`}
