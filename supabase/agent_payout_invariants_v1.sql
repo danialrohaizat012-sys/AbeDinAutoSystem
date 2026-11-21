@@ -88,6 +88,14 @@ begin
     if new.approved_by is null then
       raise exception 'Payout needs an approver' using errcode='23514';
     end if;
+    if not exists (
+      select 1 from public.profiles owner_check
+      where owner_check.id=new.approved_by
+        and owner_check.enabled is true
+        and owner_check.role::text='owner'
+    ) then
+      raise exception 'Only an enabled owner may approve a payout' using errcode='42501';
+    end if;
   end if;
   if new.status='paid' then
     if tg_op<>'UPDATE' or old.status<>'approved' then
