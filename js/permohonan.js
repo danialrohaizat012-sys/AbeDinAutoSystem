@@ -201,7 +201,7 @@ function renderApplications(){
  const count=app.querySelector('#applications-count');if(count)count.textContent=applications.length+' rekod · '+unread+' belum baca';
  const chips=app.querySelectorAll('[data-app-filter]');
  chips.forEach(b=>b.classList.toggle('on',b.dataset.appFilter===viewFilter));
- target.innerHTML=rows.length?rows.map(a=>{
+ target.innerHTML=rows.length?(window.adaPg?window.adaPg.rows('apps',rows,renderApplications):rows).map(a=>{
   const isUnread=!a.read_at;
   const prefix='<div class="app-entry"><div class="app-summary"><b>'+esc(a.applicant_name)+'</b><span class="app-read '+(isUnread?'unread':'read')+'">'+(isUnread?'Belum Baca':'Sudah Baca')+'</span><small>'+
     esc(new Date(a.created_at).toLocaleString('ms-MY'))+' · '+esc(a.applicant_phone)+' · '+esc(a.car_interest)+'</small></div></div>';
@@ -218,7 +218,7 @@ function renderApplications(){
    '<button type="button" class="btn app-delete" data-op="delete" data-id="'+esc(a.id)+'">Delete</button></div>';
   const detail=expandedId===a.id?'<pre class="app-detail">'+esc(recordText(a))+'</pre>':'';
   return '<div class="app-record">'+prefix+actions+detail+(editingId===a.id?editForm(a):'')+'</div>';
- }).join(''):'<p class="hint">'+(applications.length?'Tiada permohonan bagi status ini.':'Belum ada permohonan diterima.')+'</p>';
+ }).join('')+(window.adaPg?window.adaPg.nav('apps',rows.length):''):'<p class="hint">'+(applications.length?'Tiada permohonan bagi status ini.':'Belum ada permohonan diterima.')+'</p>';
 }
 async function loadApplications(){
  const target=app?.querySelector('#applications');

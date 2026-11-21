@@ -383,7 +383,7 @@ function listView(){
       '<div class="empty"><b>Belum ada trip</b><p>Tambah trip pertama bila anda upah runner ambil kereta.</p></div>';
     return h;
   }
-  var all=ts,PP=10,pages=Math.max(1,Math.ceil(ts.length/PP));
+  var all=ts,PP=20,pages=Math.max(1,Math.ceil(ts.length/PP));
   if(S.page>=pages)S.page=pages-1;if(S.page<0)S.page=0;
   ts=ts.slice(S.page*PP,S.page*PP+PP);
   var g='';

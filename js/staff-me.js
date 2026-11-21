@@ -119,9 +119,9 @@ export function mountStaffMe(host, ctx) {
         <div class="full"><label>Sebab</label><input class="field" name="reason" required placeholder="cth: urusan keluarga"></div>
         <div class="full"><label>Lampiran (slip MC / dokumen, pilihan)</label><input class="field" type="file" name="file" accept="image/*,application/pdf"></div>
         <div class="full" id="lvwarn"></div><div class="full"><button class="btn pri" type="submit">Hantar permohonan</button></div></div></form>
-      <div class="sec"><h4>Permohonan saya</h4><div class="list2">${S.leaves.map(l => `<div class="it"><div class="row"><b class="grow">${LEAVE[l.kind]} · ${+l.days} hari</b>${chip(l.status)}</div>
+      <div class="sec"><h4>Permohonan saya</h4><div class="list2">${(window.adaPg?window.adaPg.rows("me-leave",S.leaves,render):S.leaves).map(l => `<div class="it"><div class="row"><b class="grow">${LEAVE[l.kind]} · ${+l.days} hari</b>${chip(l.status)}</div>
         <div class="note">${dmy(l.date_from)}${l.date_to !== l.date_from ? " – " + dmy(l.date_to) : ""}${l.reason ? " · " + esc(l.reason) : ""}${fileLink(l.attachment_path)}${l.review_note ? `<br>Nota Owner: ${esc(l.review_note)}` : ""}</div>
-        ${l.status === "pending" ? `<div class="row" style="margin-top:6px"><button class="btn sm bad" data-cancel="staff_leaves:${l.id}">Batal permohonan</button></div>` : ""}</div>`).join("") || `<p class="note">Belum ada permohonan cuti.</p>`}</div></div>`;
+        ${l.status === "pending" ? `<div class="row" style="margin-top:6px"><button class="btn sm bad" data-cancel="staff_leaves:${l.id}">Batal permohonan</button></div>` : ""}</div>`).join("") || `<p class="note">Belum ada permohonan cuti.</p>`}</div>${(window.adaPg?window.adaPg.nav("me-leave",S.leaves.length):"")}</div>`;
   }
 
   function vGaji() {
@@ -141,9 +141,9 @@ export function mountStaffMe(host, ctx) {
         <div class="full"><label>Butiran</label><input class="field" name="description" required placeholder="cth: Minyak hantar kereta ke Puspakom"></div>
         <div class="full"><label>Resit (gambar / PDF)</label><input class="field" type="file" name="file" accept="image/*,application/pdf"></div>
         <div class="full"><button class="btn pri" type="submit">Hantar tuntutan</button></div></div></form>
-      <div class="sec"><h4>Tuntutan saya</h4><div class="list2">${S.claims.map(c => `<div class="it"><div class="row"><b class="grow">${CLAIM[c.category]} · ${rm(c.amount)}</b>${chip(c.status)}</div>
+      <div class="sec"><h4>Tuntutan saya</h4><div class="list2">${(window.adaPg?window.adaPg.rows("me-claim",S.claims,render):S.claims).map(c => `<div class="it"><div class="row"><b class="grow">${CLAIM[c.category]} · ${rm(c.amount)}</b>${chip(c.status)}</div>
         <div class="note">${dmy(c.claim_date)} · ${esc(c.description)}${fileLink(c.receipt_path)}${c.pay_month && c.status !== "rejected" ? `<br>Dibayar bersama gaji ${esc(monthName(c.pay_month))}` : ""}${c.review_note ? `<br>Nota Owner: ${esc(c.review_note)}` : ""}</div>
-        ${c.status === "pending" ? `<div class="row" style="margin-top:6px"><button class="btn sm bad" data-cancel="staff_claims:${c.id}">Batal</button></div>` : ""}</div>`).join("") || `<p class="note">Belum ada tuntutan.</p>`}</div></div>`;
+        ${c.status === "pending" ? `<div class="row" style="margin-top:6px"><button class="btn sm bad" data-cancel="staff_claims:${c.id}">Batal</button></div>` : ""}</div>`).join("") || `<p class="note">Belum ada tuntutan.</p>`}</div>${(window.adaPg?window.adaPg.nav("me-claim",S.claims.length):"")}</div>`;
   }
 
   function vAdv() {

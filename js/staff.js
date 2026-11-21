@@ -109,7 +109,7 @@ export function mountStaff(host, ctx) {
       <p class="msg ${S.msgCls}" id="msg">${esc(S.msg)}</p>
       ${S.mode ? "" : inboxView()}
       ${S.mode ? "" : catBar}
-      <div class="list">${rows === null ? `<div class="empty">Memuatkan…</div>` : rows.map(item).join("") || `<div class="empty">Tiada akaun.</div>`}</div>`;
+      <div class="list">${rows === null ? `<div class="empty">Memuatkan…</div>` : (window.adaPg?window.adaPg.rows("st-acc",rows,render):rows).map(item).join("") || `<div class="empty">Tiada akaun.</div>`}</div>${rows?(window.adaPg?window.adaPg.nav("st-acc",rows.length):""):""}`;
     bind();
   }
 
@@ -119,8 +119,8 @@ export function mountStaff(host, ctx) {
     const link = p => p && S.urls[p] ? ` · <a href="${esc(S.urls[p])}" target="_blank" style="color:var(--pri)">${/\.pdf$/i.test(p) ? "PDF" : "Lampiran"}</a>` : "";
     const btns = (t, id) => `<button class="btn sm pri" data-ok="${t}:${id}">Lulus</button><button class="btn sm" data-no="${t}:${id}">Tolak</button>`;
     return `<div class="sec inbox"><div class="row"><h4 class="grow">Menunggu kelulusan<span class="badge">${n}</span></h4></div><div class="list" style="margin-top:8px">
-      ${I.leaves.map(l => `<div class="it"><div class="grow"><b>${nm(l.staff_id)}</b> · ${LEAVE[l.kind]} ${+l.days} hari<div class="mute">${dmyx(l.date_from)}${l.date_to !== l.date_from ? " – " + dmyx(l.date_to) : ""}${l.reason ? " · " + esc(l.reason) : ""}${link(l.attachment_path)}</div></div>${btns("staff_leaves", l.id)}</div>`).join("")}
-      ${I.claims.map(c => `<div class="it"><div class="grow"><b>${nm(c.staff_id)}</b> · Tuntutan ${esc(CLAIM[c.category])} <b>${rmx(c.amount)}</b><div class="mute">${dmyx(c.claim_date)} · ${esc(c.description)}${c.receipt_path ? link(c.receipt_path) : " · tiada resit"}</div></div>${btns("staff_claims", c.id)}</div>`).join("")}
+      ${(window.adaPg?window.adaPg.rows("st-leave",I.leaves,render):I.leaves).map(l => `<div class="it"><div class="grow"><b>${nm(l.staff_id)}</b> · ${LEAVE[l.kind]} ${+l.days} hari<div class="mute">${dmyx(l.date_from)}${l.date_to !== l.date_from ? " – " + dmyx(l.date_to) : ""}${l.reason ? " · " + esc(l.reason) : ""}${link(l.attachment_path)}</div></div>${btns("staff_leaves", l.id)}</div>`).join("")}${(window.adaPg?window.adaPg.nav("st-leave",I.leaves.length):"")}
+      ${(window.adaPg?window.adaPg.rows("st-claim",I.claims,render):I.claims).map(c => `<div class="it"><div class="grow"><b>${nm(c.staff_id)}</b> · Tuntutan ${esc(CLAIM[c.category])} <b>${rmx(c.amount)}</b><div class="mute">${dmyx(c.claim_date)} · ${esc(c.description)}${c.receipt_path ? link(c.receipt_path) : " · tiada resit"}</div></div>${btns("staff_claims", c.id)}</div>`).join("")}${(window.adaPg?window.adaPg.nav("st-claim",I.claims.length):"")}
       ${I.adv.map(a => `<div class="it"><div class="grow"><b>${nm(a.staff_id)}</b> · Advance <b>${rmx(a.amount)}</b> / ${a.months} bulan<div class="mute">Mula potong ${esc(a.start_month)} · ${rmx(a.monthly)} sebulan${a.note ? " · " + esc(a.note) : ""}</div></div>${btns("staff_advances", a.id)}</div>`).join("")}
       </div><p class="mute" style="margin-top:6px">Tuntutan yang diluluskan di sini dibayar bersama gaji bulan ${esc(ymx())}. Untuk pilih bulan lain, buka Profil staf.</p></div>`;
   }

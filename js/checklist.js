@@ -676,9 +676,9 @@ function bindDashboardSearch(){
   if(!input||!status||!results||!meta)return;
   const draw=()=>{
     const rows=inspectionSearchRows(S.vehicles,S.dashboardSearch.q,S.dashboardSearch.status);
-    const visible=S.dashboardSearch.q.trim()?rows:rows.slice(0,8);
-    meta.textContent=rows.length+" kereta sepadan"+(visible.length<rows.length?" · paparan "+visible.length+" pertama, taip untuk cari":"");
-    results.innerHTML=visible.length?`<div class="cgrid">${visible.map(carCard).join("")}</div>`:
+    const visible=(window.adaPg?window.adaPg.rows("ins",rows,draw):rows.slice(0,20));
+    meta.textContent=rows.length+" kereta sepadan";
+    results.innerHTML=visible.length?`<div class="cgrid">${visible.map(carCard).join("")}</div>${(window.adaPg?window.adaPg.nav("ins",rows.length):"")}`:
       '<div class="empty">Tiada kereta yang sepadan. Cuba carian atau status lain.</div>';
     $$("#ada-ins-search-results [data-start]").forEach(b=>b.onclick=()=>openForCar(b.dataset.start));
     $$("#ada-ins-search-results [data-edit]").forEach(b=>b.onclick=()=>openForm(b.dataset.edit));

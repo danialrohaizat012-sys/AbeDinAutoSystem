@@ -429,9 +429,9 @@ function renderList() {
   if (!rows.length) { el.innerHTML = `<div class="empty">Tiada kereta dalam senarai ini.</div>`; return; }
   el.innerHTML = GROUPS.map(g => {
     const gr = rows.filter(c => c.status === g.v); if (!gr.length) return "";
-    const cut = !S.expanded[g.v] && gr.length > 12 && !q;
+    const cut = false;
     return `<section class="grp"><div class="grp-h"><span>${g.t}</span><span class="grp-n">${gr.length}</span></div>
-      <div class="list">${(cut ? gr.slice(0, 10) : gr).map(card).join("")}</div>
+      <div class="list">${(window.adaPg?window.adaPg.rows("pk-"+g.v,gr,renderList):gr).map(card).join("")}</div>${(window.adaPg?window.adaPg.nav("pk-"+g.v,gr.length):"")}
       ${cut ? `<button class="btn more" data-more="${g.v}" type="button">Tunjuk semua ${gr.length} kereta</button>` : ""}</section>`;
   }).join("");
 }
