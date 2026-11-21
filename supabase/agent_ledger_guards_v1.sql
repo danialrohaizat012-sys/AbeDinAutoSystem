@@ -67,6 +67,17 @@ begin
    ) then
      raise exception 'Invalid commission status transition' using errcode='23514';
    end if;
+   -- Marking a commission paid is allowed only after its payout has
+   -- been marked paid in the SAME transaction.
+   if old.status='approved' and new.status='paid'
+      and not exists (
+        select 1 from public.agent_payout_items i
+        join public.agent_payouts p on p.id=i.payout_id
+        where i.commission_id=old.id and p.status='paid'
+          and p.agent_id=old.agent_id
+      ) then
+     raise exception 'Bank-confirmed payout required before paid status' using errcode='23514';
+   end if;
    if new.status='approved' and (new.approved_by is null or new.approved_at is null) then
      raise exception 'Approval evidence required' using errcode='23514';
    end if;
