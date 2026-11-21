@@ -51,6 +51,8 @@ const EXTRA_CSS = `.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px
 .bar{height:8px;border-radius:9px;background:#2c2a25;overflow:hidden;margin-top:4px}.bar i{display:block;height:100%;background:var(--pri)}
 .tbl{width:100%;border-collapse:collapse;font-size:13.5px}.tbl td,.tbl th{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left}.tbl td.r,.tbl th.r{text-align:right}
 .jn{display:flex;gap:6px;flex-wrap:wrap}.jn button{flex:1;min-width:110px;border:1px solid var(--line);background:var(--soft);border-radius:12px;padding:9px 8px;font-weight:700;font-size:13px;cursor:pointer;color:var(--fg);text-align:center}.jn button.on{background:#3a2f0a;border-color:var(--pri);color:#ffd257}.jn button small{display:block;font-weight:600;color:var(--mute);font-size:12px;margin-top:2px}.jn button:disabled{opacity:.6}
+.atbl{font-size:13px;white-space:nowrap}.atbl th,.atbl td{padding:7px 8px}.atbl .stk{position:sticky;left:0;background:var(--card);z-index:1;min-width:150px}.atbl tr.grp td{background:#211d14}.atbl tr.grp .stk{background:#211d14}.atbl tr.tot td{border-top:2px solid var(--line)}
+.lnk{background:none;border:0;color:var(--fg);padding:0;font:inherit;cursor:pointer;text-align:left;text-decoration:underline dotted #9a958a;text-underline-offset:3px}
 .filters{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
 .zoom{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;display:flex;align-items:center;justify-content:center;padding:10px}.zoom img{max-width:100%;max-height:100%;object-fit:contain}
 .spin{display:inline-block;width:16px;height:16px;border:2px solid var(--mute);border-top-color:var(--pri);border-radius:50%;animation:sp 1s linear infinite;vertical-align:-3px;margin-right:6px}@keyframes sp{to{transform:rotate(360deg)}}`;
@@ -71,7 +73,7 @@ export function mountBelanja(host, ctx) {
   const root = host.shadowRoot || host.attachShadow({ mode: "open" });
   root.innerHTML = `<style>${CSS}${EXTRA_CSS}</style><section class="shell" id="app"></section>`;
   const app = root.getElementById("app");
-  const TABS = owner ? [["snap", "📷 Snap Resit"], ["list", "Senarai"], ["report", "Laporan"], ["export", "Eksport"], ["ai", "Tetapan AI"]] : [["snap", "📷 Snap Resit"], ["list", "Resit Saya"]];
+  const TABS = owner ? [["snap", "📷 Snap Resit"], ["list", "Senarai"], ["ana", "📊 Analisa"], ["report", "Laporan"], ["export", "Eksport"], ["ai", "Tetapan AI"]] : [["snap", "📷 Snap Resit"], ["list", "Resit Saya"]];
   const S = { dups: {}, tab: "snap", rows: [], names: {}, urls: {}, err: "", msg: "", cls: "", queue: [], editId: null, ai: null,
     f: { month: "recent", rmonth: ymNow(), cat: "", status: "", q: "", unit: "", jenis: "" }, prev: [], payMonth: ymNow(), busy: false };
 
@@ -196,7 +198,7 @@ export function mountBelanja(host, ctx) {
       ${S.err ? `<div class="warn">${esc(S.err)}</div>` : ""}
       <div id="bmsg" class="msg ${S.cls}">${esc(S.msg)}</div>
       ${S.editId ? editor(S.rows.find(x => x.id === S.editId)) : ""}
-      ${S.tab === "snap" ? snapView() : S.tab === "list" ? listView() : S.tab === "report" ? reportView() : S.tab === "export" ? exportView() : aiView()}`;
+      ${S.tab === "snap" ? snapView() : S.tab === "list" ? listView() : S.tab === "ana" ? anaView() : S.tab === "report" ? reportView() : S.tab === "export" ? exportView() : aiView()}`;
   }
 
   function snapView() {
@@ -318,6 +320,96 @@ export function mountBelanja(host, ctx) {
         return `<tr><td>${n ? "✅" : "⏳"} <b>${esc(catLabel(o.c))}</b><br><small class="mute">${esc(o.v || "-")}</small></td><td class="r">${n ? rm(n.a) : `<span class="mute">Belum ada resit</span><br><small class="mute">lepas: ${rm(e.a)} (${dmy(e.d)})</small>`}</td></tr>`; }).join("")}</table></div>`;
   }
 
+  // ---------- Analisa harian / mingguan / bulanan ikut kategori ----------
+  const A = { mode: "bulanan", jenis: "", draf: false, rows: [], key: "", busy: false };
+  const JCOL = { inventori: "#e9b949", pembelian: "#5aa9e6", overhead: "#a68af0" };
+  const PAL = ["#e9b949", "#5aa9e6", "#a68af0", "#4fc48a", "#f08a5d", "#e05d8a", "#3fc1c9", "#c7b35a", "#8fa3b8", "#d98ee6", "#7bc96f", "#f2c46d"];
+  const dAdd = (d, n) => { const t = new Date(d + "T00:00:00Z"); t.setUTCDate(t.getUTCDate() + n); return t.toISOString().slice(0, 10); };
+  const monday = d => { const t = new Date(d + "T00:00:00Z"), w = (t.getUTCDay() + 6) % 7; return dAdd(d, -w); };
+  const MODE = {
+    harian: { n: 30, show: 14, cur: "Hari ini", prev: "semalam", unit: "hari", key: d => d, start: () => dAdd(todayK(), -29),
+      list: () => Array.from({ length: 30 }, (_, i) => dAdd(todayK(), i - 29)), lab: k => k.slice(8) + "/" + k.slice(5, 7) },
+    mingguan: { n: 12, show: 12, cur: "Minggu ini", prev: "minggu lepas", unit: "minggu", key: monday, start: () => dAdd(monday(todayK()), -77),
+      list: () => Array.from({ length: 12 }, (_, i) => dAdd(monday(todayK()), (i - 11) * 7)), lab: k => { const e = dAdd(k, 6); return `${+k.slice(8)}/${+k.slice(5, 7)}–${+e.slice(8)}/${+e.slice(5, 7)}`; } },
+    bulanan: { n: 12, show: 12, cur: "Bulan ini", prev: "bulan lepas", unit: "bulan", key: d => d.slice(0, 7), start: () => addM(ymNow(), -11) + "-01",
+      list: () => Array.from({ length: 12 }, (_, i) => addM(ymNow(), i - 11)), lab: k => MONTHS[+k.slice(5) - 1] + " " + k.slice(2, 4) },
+  };
+  async function loadAna() {
+    const M = MODE[A.mode], k = A.mode + "|" + A.draf + "|" + todayK();
+    A.busy = true; render();
+    if (A.key !== k) {
+      let q = client.from("expenses").select("id,receipt_date,vendor,amount,tax_amount,category,jenis,status,vehicle_id,paid_by")
+        .gte("receipt_date", M.start()).lte("receipt_date", todayK()).neq("status", "ditolak").limit(10000);
+      if (!A.draf) q = q.eq("status", "disahkan");
+      const r = await q; A.rows = r.data || []; A.key = k; if (r.error) say("Gagal muat analisa: " + r.error.message, "err");
+    }
+    A.busy = false; render();
+  }
+  function anaView() {
+    const M = MODE[A.mode], keys = M.list(), rows = A.rows.filter(x => !A.jenis || x.jenis === A.jenis);
+    const by = {}; keys.forEach(k => by[k] = { t: 0, n: 0, c: {}, j: {} });
+    for (const x of rows) { const k = M.key(String(x.receipt_date)), b = by[k]; if (!b) continue; const a = +x.amount; b.t += a; b.n++; b.c[x.category] = (b.c[x.category] || 0) + a; b.j[x.jenis] = (b.j[x.jenis] || 0) + a; }
+    const total = rows.reduce((s, x) => s + +x.amount, 0), curK = keys[keys.length - 1], prevK = keys[keys.length - 2], cur = by[curK], prev = by[prevK];
+    // purata dikira dari tempoh pertama yang ada data (bukan bulan sebelum sistem digunakan)
+    const first = keys.findIndex(k => by[k].t > 0), past = first < 0 ? [] : keys.slice(first, -1).map(k => by[k].t), avg = past.length ? past.reduce((a, b) => a + b, 0) / past.length : 0;
+    const peakK = keys.reduce((a, k) => by[k].t > by[a].t ? k : a, keys[0]);
+    const chg = prev.t ? (cur.t - prev.t) / prev.t * 100 : null;
+    const topCat = Object.entries(cur.c).sort((a, b) => b[1] - a[1])[0];
+    // kategori yang wujud dalam julat, ikut susunan jenis
+    const catTot = {}; rows.forEach(x => catTot[x.category] = (catTot[x.category] || 0) + +x.amount);
+    const cats = Object.keys(CATS).filter(c => catTot[c]).sort((a, b) => Object.keys(JENIS).indexOf(catJenis(a)) - Object.keys(JENIS).indexOf(catJenis(b)) || catTot[b] - catTot[a]);
+    // Graf bertindan: ikut jenis (Semua) atau ikut kategori (jenis dipilih)
+    const series = A.jenis ? cats.map((c, i) => ({ k: c, l: catLabel(c), col: PAL[i % PAL.length], v: k => by[k].c[c] || 0 }))
+                           : Object.keys(JENIS).map(j => ({ k: j, l: JENIS[j], col: JCOL[j], v: k => by[k].j[j] || 0 }));
+    const W = 760, H = 230, pl = 46, pb = 26, pt = 10, cw = (W - pl - 6) / keys.length, mx = Math.max(1, ...keys.map(k => by[k].t));
+    const nice = (() => { const r = mx / 4, p = Math.pow(10, Math.floor(Math.log10(r))), m = [1, 2, 2.5, 5, 10].find(m => m * p >= r) * p; return m; })();
+    const top = Math.max(nice * 4, mx), y = v => pt + (H - pt - pb) * (1 - v / top);
+    const grid = [0, 1, 2, 3, 4].map(i => { const v = nice * i; return v > top ? "" : `<line x1="${pl}" x2="${W - 4}" y1="${y(v)}" y2="${y(v)}" stroke="#ffffff14"/><text x="${pl - 6}" y="${y(v) + 4}" text-anchor="end" font-size="10" fill="#9a958a">${v >= 1000 ? (v / 1000).toFixed(v % 1000 ? 1 : 0) + "k" : v}</text>`; }).join("");
+    const bars = keys.map((k, i) => { let acc = 0; const x0 = pl + i * cw + cw * .14, bw = cw * .72;
+      const seg = series.map(s => { const v = s.v(k); if (!v) return ""; const y1 = y(acc + v), y0 = y(acc); acc += v; return `<rect x="${x0}" y="${y1}" width="${bw}" height="${Math.max(0, y0 - y1)}" fill="${s.col}" rx="1.5"><title>${esc(M.lab(k))} · ${esc(s.l)}: ${rm(v)}</title></rect>`; }).join("");
+      const lbl = (keys.length <= 14 || i % 2 === (keys.length - 1) % 2) ? `<text x="${x0 + bw / 2}" y="${H - 8}" text-anchor="middle" font-size="${keys.length > 14 ? 9 : 10}" fill="${k === curK ? "#ffd257" : "#9a958a"}">${esc(A.mode === "mingguan" ? M.lab(k).split("–")[0] : M.lab(k))}</text>` : "";
+      return seg + lbl; }).join("");
+    const avgLine = avg ? `<line x1="${pl}" x2="${W - 4}" y1="${y(avg)}" y2="${y(avg)}" stroke="#ffd257" stroke-dasharray="4 4" opacity=".7"/><text x="${W - 6}" y="${y(avg) - 4}" text-anchor="end" font-size="10" fill="#ffd257">purata ${rm(avg)}</text>` : "";
+    // Jadual kategori x tempoh
+    const tk = keys.slice(-M.show).reverse(), cellMax = Math.max(1, ...cats.flatMap(c => tk.map(k => by[k].c[c] || 0)));
+    const heat = v => v ? `background:rgba(233,185,73,${(.08 + .5 * v / cellMax).toFixed(2)})` : "";
+    const table = cats.length ? `<div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="tbl atbl"><thead><tr><th class="stk">Kategori</th><th class="r">Jumlah</th>${tk.map(k => `<th class="r" style="${k === curK ? "color:#ffd257" : ""}">${esc(M.lab(k))}</th>`).join("")}</tr></thead><tbody>
+      ${Object.keys(JENIS).filter(j => cats.some(c => catJenis(c) === j)).map(j => {
+        const cs = cats.filter(c => catJenis(c) === j), jt = cs.reduce((a, c) => a + catTot[c], 0);
+        return `<tr class="grp"><td class="stk">${JENIS_ICO[j]} <b>${esc(JENIS[j])}</b></td><td class="r"><b>${rm(jt)}</b></td>${tk.map(k => `<td class="r"><b>${by[k].j[j] ? rm(by[k].j[j]) : "–"}</b></td>`).join("")}</tr>` +
+          cs.map(c => `<tr><td class="stk"><button class="lnk" data-acat="${c}" title="Lihat resit">${esc(catLabel(c))}</button></td><td class="r">${rm(catTot[c])}</td>${tk.map(k => { const v = by[k].c[c] || 0; return `<td class="r" style="${heat(v)}">${v ? rm(v) : '<span class="mute">–</span>'}</td>`; }).join("")}</tr>`).join("");
+      }).join("")}
+      <tr class="tot"><td class="stk"><b>JUMLAH</b></td><td class="r"><b>${rm(total)}</b></td>${tk.map(k => `<td class="r"><b>${by[k].t ? rm(by[k].t) : "–"}</b></td>`).join("")}</tr></tbody></table></div>` : '<p class="mute">Tiada perbelanjaan dalam tempoh ini.</p>';
+    // Kedai utama
+    const ven = {}; rows.forEach(x => { const v = (x.vendor || "(tiada nama)").trim(); (ven[v] ||= { a: 0, n: 0 }); ven[v].a += +x.amount; ven[v].n++; });
+    const topV = Object.entries(ven).sort((a, b) => b[1].a - a[1].a).slice(0, 8);
+    // Pecahan jenis untuk tempoh semasa
+    const jRows = Object.keys(JENIS).map(j => [j, rows.filter(x => x.jenis === j).reduce((a, x) => a + +x.amount, 0)]);
+    const insight = [
+      cur.t ? `${M.cur}: <b>${rm(cur.t)}</b> (${cur.n} resit)${chg === null ? "" : `, <b style="color:${chg > 0 ? "#ffaaa4" : "#7fd8a6"}">${chg > 0 ? "▲" : "▼"} ${Math.abs(chg).toFixed(0)}%</b> berbanding ${M.prev}`}.` : `${M.cur}: belum ada perbelanjaan${A.draf ? "" : " disahkan"}.`,
+      topCat ? `Kategori terbesar ${M.cur.toLowerCase()}: <b>${esc(catLabel(topCat[0]))}</b> ${rm(topCat[1])} (${Math.round(topCat[1] / cur.t * 100)}%).` : "",
+      avg ? `Purata ${M.unit}an (${past.length} ${M.unit} sebelum): <b>${rm(avg)}</b>${cur.t > avg * 1.3 ? " — tempoh semasa <b>melebihi purata</b>." : "."}` : "",
+      by[peakK].t ? `Tertinggi: <b>${esc(M.lab(peakK))}</b> ${rm(by[peakK].t)}.` : "",
+    ].filter(Boolean);
+    return `<div class="jn">${[["harian", "Harian", "30 hari"], ["mingguan", "Mingguan", "12 minggu"], ["bulanan", "Bulanan", "12 bulan"]].map(([k, t, d]) => `<button data-amode="${k}" class="${A.mode === k ? "on" : ""}">${t}<small>${d}</small></button>`).join("")}</div>
+      <div class="jn">${[["", "Semua"], ...Object.entries(JENIS)].map(([k, t]) => `<button data-ajenis="${k}" class="${A.jenis === k ? "on" : ""}">${JENIS_ICO[k] || ""} ${t.replace(/ \(.*\)| Tetap Bulanan| \/ Operasi/g, "")}</button>`).join("")}</div>
+      <label class="mute" style="display:flex;gap:8px;align-items:center;font-size:13px"><input type="checkbox" id="adraf" ${A.draf ? "checked" : ""}> Termasuk resit belum disemak</label>
+      ${A.busy ? '<p class="mute"><span class="spin"></span>Memuatkan analisa…</p>' : ""}
+      <div class="stats">
+        <div class="stat"><small>${M.cur}</small><b>${rm(cur.t)}</b><small>${chg === null ? "&nbsp;" : `<span style="color:${chg > 0 ? "#ffaaa4" : "#7fd8a6"}">${chg > 0 ? "▲" : "▼"} ${Math.abs(chg).toFixed(0)}%</span> vs ${M.prev}`}</small></div>
+        <div class="stat"><small>${M.prev[0].toUpperCase() + M.prev.slice(1)}</small><b>${rm(prev.t)}</b><small>${prev.n} resit</small></div>
+        <div class="stat"><small>Purata se${M.unit}</small><b>${rm(avg)}</b><small>${past.length} ${M.unit} lepas</small></div>
+        <div class="stat"><small>Jumlah ${keys.length} ${M.unit}</small><b>${rm(total)}</b><small>${rows.length} resit</small></div>
+      </div>
+      <div class="card info" style="background:#12263a;border:0"><ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:3px">${insight.map(t => `<li>${t}</li>`).join("")}</ul></div>
+      <div class="card"><div class="row" style="margin-bottom:6px"><div class="kick grow">TREND ${M.unit.toUpperCase()}AN ${A.jenis ? "· " + esc(JENIS[A.jenis]).toUpperCase() : ""}</div></div>
+        <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block" role="img" aria-label="Graf perbelanjaan ${M.unit}an">${grid}${bars}${avgLine}</svg>
+        <div class="row" style="flex-wrap:wrap;gap:10px;margin-top:6px">${series.filter(sr => keys.some(k => sr.v(k))).map(sr => `<span style="font-size:12.5px;display:inline-flex;align-items:center;gap:5px"><i style="width:10px;height:10px;border-radius:3px;background:${sr.col};display:inline-block"></i>${esc(sr.l)}</span>`).join("")}</div></div>
+      ${!A.jenis ? `<div class="stats">${jRows.map(([j, v]) => `<div class="stat" style="border-left:4px solid ${JCOL[j]}"><small>${JENIS_ICO[j]} ${JENIS[j]}</small><b>${rm(v)}</b><small>${total ? Math.round(v / total * 100) : 0}% · ${keys.length} ${M.unit}</small></div>`).join("")}</div>` : ""}
+      <div class="card"><div class="row" style="margin-bottom:8px"><div class="kick grow">IKUT KATEGORI · ${M.unit.toUpperCase()}AN</div><small class="mute">tekan kategori untuk lihat resit</small></div>${table}</div>
+      <div class="card"><div class="kick" style="margin-bottom:8px">KEDAI / PEMBEKAL UTAMA (${keys.length} ${M.unit})</div>${topV.length ? `<table class="tbl">${topV.map(([v, o]) => `<tr><td>${esc(v)}</td><td class="r mute">${o.n} resit</td><td class="r"><b>${rm(o.a)}</b></td></tr>`).join("")}</table>` : '<p class="mute">Tiada data.</p>'}</div>`;
+  }
+
   function exportView() {
     const L = S.rows.filter(x => x.status === "disahkan" && inReport(x));
     return `<div class="filters">${monthSel()}</div>
@@ -384,6 +476,7 @@ export function mountBelanja(host, ctx) {
     if (t.id === "cam" || t.id === "gal") { handleFiles(t.files); t.value = ""; return; }
     if (t.dataset.f) { S.f[t.dataset.f] = t.value; if (t.dataset.f === "month" || t.dataset.f === "rmonth") load(); else render(); }
     if (t.id === "paym") S.payMonth = t.value;
+    if (t.id === "adraf") { A.draf = t.checked; loadAna(); }
     if (t.name === "vehicle_id" && t.value) { const u = app.querySelector("[name=unit]"); if (u && u.value === "umum") u.value = "jualan"; }
   });
   app.addEventListener("input", e => { if (e.target.dataset.f === "q") { S.f.q = e.target.value; clearTimeout(S.qt); S.qt = setTimeout(() => { const pos = e.target.selectionStart; render(); const n = app.querySelector("[data-f=q]"); n?.focus(); try { n.setSelectionRange(pos, pos); } catch (_) {} }, 250); } });
@@ -409,7 +502,10 @@ export function mountBelanja(host, ctx) {
       return;
     }
     if (b.dataset.fj !== undefined) { S.f.jenis = b.dataset.fj; S.f.cat = ""; render(); return; }
-    if (b.dataset.tab) { S.tab = b.dataset.tab; S.editId = null; say(""); render(); return; }
+    if (b.dataset.tab) { S.tab = b.dataset.tab; S.editId = null; say(""); render(); if (S.tab === "ana") loadAna(); return; }
+    if (b.dataset.amode) { A.mode = b.dataset.amode; loadAna(); return; }
+    if (b.dataset.ajenis !== undefined) { A.jenis = b.dataset.ajenis; render(); return; }
+    if (b.dataset.acat) { S.tab = "list"; S.f.month = "all"; S.f.jenis = ""; S.f.cat = b.dataset.acat; S.f.status = ""; load(); return; }
     if (b.dataset.edit) { S.editId = b.dataset.edit; const ex = S.rows.find(r => r.id === S.editId); if (ex && !S.dups[ex.id]) checkDup(ex).then(() => { if (S.editId === ex.id) render(); }); render(); app.querySelector("#ed")?.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
     if (b.hasAttribute("data-close")) { S.editId = null; render(); return; }
     if (b.dataset.verify) {
