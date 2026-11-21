@@ -1,0 +1,27 @@
+name: Agent Network Safe Tests
+on:
+  push:
+    branches: [feature/agent-portal-v1]
+    paths:
+      - 'js/agent-*.mjs'
+      - 'tests/agent-*.test.mjs'
+      - 'supabase/agent_*.sql'
+      - '.github/workflows/agent-network-tests.yml'
+  pull_request:
+    paths:
+      - 'js/agent-*.mjs'
+      - 'tests/agent-*.test.mjs'
+      - 'supabase/agent_*.sql'
+      - '.github/workflows/agent-network-tests.yml'
+permissions:
+  contents: read
+jobs:
+  node-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Run isolated agent tests only
+        run: node --test tests/agent-*.test.mjs
