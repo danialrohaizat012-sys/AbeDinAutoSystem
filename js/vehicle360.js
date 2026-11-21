@@ -74,7 +74,8 @@ export function mountVehicle360(root,{vehicle,role,sales=[],customers=[],payment
     const repairs=Number(inspectionCosts[vehicle.id]?.kos||0);
     const extra=Number(vehicle.cost_transfer||0)+Number(vehicle.cost_puspakom||0)+Number(vehicle.cost_transport||0);
     const completed=String(sale?.status||'').toLowerCase()==='sold';
-    const revenue=completed?Number(sale.agreed_price||0):Number(vehicle.asking_price||0);
+    const paidAll=(payments||[]).filter(p=>p.sale_id===sale?.id).reduce((t,p)=>t+Number(p.amount||0),0);
+    const revenue=completed?(paidAll>0?paidAll:Number(sale.agreed_price||0)):Number(vehicle.asking_price||0);
     const margin=revenue-purchase-repairs-extra;
     const complete=purchase>0&&revenue>0;
     const card=(label,value)=>'<div class="ada-v360-kpi"><small>'+label+'</small><strong>'+value+'</strong></div>';
