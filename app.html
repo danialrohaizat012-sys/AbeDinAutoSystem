@@ -87,7 +87,7 @@
 <link rel="preconnect" href="https://buzpdyvvoiqgbeventwm.supabase.co" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm" crossorigin>
-<link rel="stylesheet" href="css/app.css?v=50.60">
+<link rel="stylesheet" href="css/app.css?v=50.61">
 <link rel="stylesheet" href="css/vehicle360.css?v=83.0">
 <link rel="stylesheet" href="css/admin-menu.css?v=83.6">
 <link rel="stylesheet" href="css/staff-dashboard.css?v=83.2">
@@ -1437,7 +1437,7 @@ async function openPublicCatalogue(vehicleId=null){
     </header>`;
     const abxCalc=price=>`<section class="abx-section abx-wrap abx-calc" id="abx-kira">
       <div class="abx-calc-copy"><h2>Kira Anggaran Ansuran</h2><p>Anggaran sahaja. Kadar sebenar bergantung kepada kelulusan bank.</p></div>
-      <form class="abx-calc-form" id="abx-calc"><label><span>Harga kereta (RM)</span><input type="number" id="abx-c-price" min="0" step="100" value="${Math.round(price)}"></label><label><span>Deposit (%)</span><input type="number" id="abx-c-dep" min="0" max="90" step="1" value="10"></label><label><span>Kadar faedah setahun (%)</span><input type="number" id="abx-c-rate" min="0" max="20" step="0.1" value="3.5"></label><label><span>Tempoh</span><select id="abx-c-years">${[5,6,7,8,9].map(y=>`<option value="${y}"${y===9?' selected':''}>${y} tahun</option>`).join('')}</select></label><div class="abx-calc-out"><span>Anggaran bulanan</span><strong id="abx-c-out">—</strong><small id="abx-c-loan"></small></div></form>
+      <form class="abx-calc-form" id="abx-calc"><label><span>Harga kereta (RM)</span><input type="number" id="abx-c-price" min="0" step="100" value="${Math.round(price)}"></label><label><span>Deposit (%)</span><input type="number" id="abx-c-dep" min="0" max="90" step="1" value="10"></label><label><span>Kadar faedah setahun (%)</span><input type="number" id="abx-c-rate" min="0" max="20" step="0.1" value="3.5"></label><label><span>Tempoh</span><select id="abx-c-years">${[5,6,7,8,9].map(y=>`<option value="${y}"${y===9?' selected':''}>${y} tahun</option>`).join('')}</select></label><div class="abx-calc-out"><span>Anggaran bulanan</span><strong id="abx-c-out">—</strong><small id="abx-c-loan"></small></div><p class="abx-calc-note">* Anggaran ansuran sahaja. Harga yang tertera <b>tidak termasuk</b> processing fee, Puspakom, tukar nama, roadtax dan insurans.</p></form>
     </section>`;
     const abxWhy=`<section class="abx-why abx-wrap" id="abx-kenapa"><h2>Kenapa Pilih Abe Din Auto?</h2><div class="abx-why-grid"><div>${ico.car}<p><b>Kereta Diperiksa</b>Setiap kereta melalui pemeriksaan menyeluruh.</p></div><div>${ico.coins}<p><b>Bantuan Pembiayaan</b>Urusan loan mudah &amp; pantas.</p></div><div>${ico.swap}<p><b>Trade-In</b>Tukar kereta lama dengan nilai terbaik.</p></div><div>${ico.shield}<p><b>Sokongan Selepas Jualan</b>Kami sentiasa bersama anda selepas pembelian.</p></div></div></section>`;
     const abxCta=`<section class="abx-cta"><img src="./catalogue-hero-showroom.webp" alt="" loading="lazy" decoding="async"><div class="abx-wrap abx-cta-in"><span class="abx-cta-ico">${ico.wa}</span><div><h2>Bercakap dengan kami sekarang!</h2><p>Dapatkan maklumat kereta, harga &amp; promosi terkini.</p></div><a class="abx-wa-btn abx-wa-big" href="${safe(waGeneral)}" target="_blank" rel="noopener">${ico.wa}WhatsApp Sekarang</a></div></section>`;
