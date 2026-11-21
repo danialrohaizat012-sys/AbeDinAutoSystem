@@ -71,7 +71,8 @@ jobs:
             supabase/agent_confirm_payout_v1.sql \
             supabase/agent_sale_attribution_v1.sql \
             supabase/agent_commission_approval_v2.sql \
-            supabase/agent_payout_prepare_approve_v1.sql; do
+            supabase/agent_payout_prepare_approve_v1.sql \
+            supabase/agent_hr_payout_verifier_v1.sql; do
             echo "Applying fixture migration: $migration"
             psql -X -v ON_ERROR_STOP=1 -f "$migration"
           done
