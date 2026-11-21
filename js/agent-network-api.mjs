@@ -74,7 +74,7 @@ export function createAgentApi(supabase, options = {}) {
       if (consentConfirmed !== true) throw new Error("Persetujuan pelanggan diperlukan");
       const customer_name = clean(customerName, 160);
       const customer_phone = clean(customerPhone, 24);
-      if (customer_name.length < 2 || customer_phone.length < 9) throw new Error("Maklumat pelanggan tidak lengkap");
+      if (customer_name.length < 2 || !/^\+?[0-9][0-9 ()-]{7,22}$/.test(customer_phone)) throw new Error("Maklumat pelanggan tidak lengkap");
       return result(await supabase.from("agent_leads").insert({
         agent_id: profile.id, vehicle_id: vehicleId,
         customer_name, customer_phone, consent_confirmed: true, status: "new"
