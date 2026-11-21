@@ -6,12 +6,14 @@ on:
       - 'js/agent-*.mjs'
       - 'tests/agent-*.test.mjs'
       - 'supabase/agent_*.sql'
+      - 'tests/postgres/**'
       - '.github/workflows/agent-network-tests.yml'
   pull_request:
     paths:
       - 'js/agent-*.mjs'
       - 'tests/agent-*.test.mjs'
       - 'supabase/agent_*.sql'
+      - 'tests/postgres/**'
       - '.github/workflows/agent-network-tests.yml'
 permissions:
   contents: read
@@ -25,3 +27,52 @@ jobs:
           persist-credentials: false
       - name: Run isolated agent tests only
         run: node --test tests/agent-*.test.mjs
+
+  postgres-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: ci_fixture_only
+          POSTGRES_DB: agent_network_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d agent_network_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: ci_fixture_only
+      PGDATABASE: agent_network_test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: PostgreSQL client
+        run: command -v psql || (sudo apt-get update && sudo apt-get install -y postgresql-client)
+      - name: Create synthetic schema
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/postgres/00_fixture.sql
+      - name: Apply agent migrations only to isolated service
+        run: |
+          set -euo pipefail
+          for migration in \
+            supabase/agent_network_v1.sql \
+            supabase/agent_admin_review_v1.sql \
+            supabase/agent_admin_gateway_v1.sql \
+            supabase/agent_application_integrity_v1.sql \
+            supabase/agent_payout_invariants_v1.sql \
+            supabase/agent_ledger_guards_v1.sql \
+            supabase/agent_confirm_payout_v1.sql \
+            supabase/agent_sale_attribution_v1.sql; do
+            echo "Applying fixture migration: $migration"
+            psql -X -v ON_ERROR_STOP=1 -f "$migration"
+          done
+          psql -X -v ON_ERROR_STOP=1 -c "grant select on all tables in schema public to service_role"
+      - name: Run real PostgreSQL integration assertions
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/postgres/10_integration.sql
