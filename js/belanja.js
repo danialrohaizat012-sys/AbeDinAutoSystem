@@ -72,30 +72,36 @@ export function mountBelanja(host, ctx) {
   root.innerHTML = `<style>${CSS}${EXTRA_CSS}</style><section class="shell" id="app"></section>`;
   const app = root.getElementById("app");
   const TABS = owner ? [["snap", "📷 Snap Resit"], ["list", "Senarai"], ["report", "Laporan"], ["export", "Eksport"], ["ai", "Tetapan AI"]] : [["snap", "📷 Snap Resit"], ["list", "Resit Saya"]];
-  const S = { tab: "snap", rows: [], names: {}, urls: {}, err: "", msg: "", cls: "", queue: [], editId: null, ai: null,
-    f: { month: ymNow(), cat: "", status: "", q: "", unit: "", jenis: "" }, prev: [], payMonth: ymNow(), busy: false };
+  const S = { dups: {}, tab: "snap", rows: [], names: {}, urls: {}, err: "", msg: "", cls: "", queue: [], editId: null, ai: null,
+    f: { month: "recent", rmonth: ymNow(), cat: "", status: "", q: "", unit: "", jenis: "" }, prev: [], payMonth: ymNow(), busy: false };
 
   const say = (t, c) => { S.msg = t; S.cls = c || ""; const m = app.querySelector("#bmsg"); if (m) { m.textContent = t; m.className = "msg " + (c || ""); } };
   const vName = id => { const v = vehicles.find(x => x.id === id); return v ? `${v.make || ""} ${v.model || ""} · ${v.plate || "-"}`.trim() : ""; };
   const matchPlate = p => { const n = normPlate(p); if (n.length < 3) return null; return vehicles.find(v => normPlate(v.plate) === n) || null; };
 
+  const RECENT_DAYS = 30;
+  const cutoff = () => new Date(Date.now() - RECENT_DAYS * 864e5).toISOString().slice(0, 10);
+  const range = m => `and(receipt_date.gte.${m}-01,receipt_date.lt.${addM(m, 1)}-01)`;
+  // Senarai: "recent" = semua resit yang DIMASUKKAN 30 hari lepas (apa pun tarikh pada resit), atau ikut bulan tarikh resit.
+  const inList = x => S.f.month === "all" || (S.f.month === "recent" ? (String(x.created_at).slice(0, 10) >= cutoff() || x.status === "draf") : String(x.receipt_date).startsWith(S.f.month));
+  const inReport = x => S.f.rmonth === "all" || String(x.receipt_date).startsWith(S.f.rmonth);
+
   async function load() {
-    let q = client.from("expenses").select("*").order("receipt_date", { ascending: false }).order("created_at", { ascending: false }).limit(2000);
-    if (S.f.month !== "all") q = q.gte("receipt_date", `${S.f.month}-01`).lt("receipt_date", `${addM(S.f.month, 1)}-01`);
+    let q = client.from("expenses").select("*").order("created_at", { ascending: false }).limit(3000);
+    if (S.f.month !== "all" && S.f.rmonth !== "all") {
+      const c = [`created_at.gte.${cutoff()}`, "status.eq.draf", range(S.f.rmonth)];
+      if (S.f.month !== "recent") c.push(range(S.f.month));
+      q = q.or(c.join(","));
+    }
     const r = await q;
     if (r.error) { S.err = /does not exist|schema cache/i.test(r.error.message) ? "Pangkalan data Perbelanjaan belum dipasang (V91)." : r.error.message; S.rows = []; }
-    else { S.err = ""; S.rows = r.data || []; }
-    // Draf lama (bulan lain) juga perlu disemak
-    if (!r.error && S.f.month !== "all") {
-      const d = await client.from("expenses").select("*").eq("status", "draf").or(`receipt_date.lt.${S.f.month}-01,receipt_date.gte.${addM(S.f.month, 1)}-01`).limit(500);
-      if (d.data?.length) { const ids = new Set(S.rows.map(x => x.id)); S.rows.push(...d.data.filter(x => !ids.has(x.id))); }
-    }
+    else { S.err = ""; S.rows = r.data || []; localDups(); }
     if (owner) {
       const ids = [...new Set(S.rows.map(x => x.created_by).filter(id => id && !S.names[id]))];
       if (ids.length) { const p = await client.from("profiles").select("id,full_name").in("id", ids); (p.data || []).forEach(x => S.names[x.id] = x.full_name); }
       if (!S.ai) { const a = await client.rpc("ai_config_status"); S.ai = a.data || { has_key: false }; }
       // Overhead 3 bulan sebelum -> senarai bil tetap yang dijangka setiap bulan
-      const m0 = S.f.month === "all" ? ymNow() : S.f.month;
+      const m0 = S.f.rmonth === "all" ? ymNow() : S.f.rmonth;
       const pv = await client.from("expenses").select("id,category,vendor,amount,receipt_date").eq("jenis", "overhead").eq("status", "disahkan")
         .gte("receipt_date", `${addM(m0, -3)}-01`).lt("receipt_date", `${m0}-01`).order("receipt_date", { ascending: false });
       S.prev = pv.data || [];
@@ -137,6 +143,7 @@ export function mountBelanja(host, ctx) {
           } catch (e) { aiNote = "AI tidak dapat baca: " + (e?.message || e) + " — sila isi sendiri."; }
         } else aiNote = "PDF — sila isi maklumat sendiri.";
         const v = matchPlate(d.plate);
+        if (d.receipt_date && d.receipt_date > todayK()) { const [yy, mm, dd] = d.receipt_date.split("-"); const sw = `${yy}-${dd}-${mm}`; if (+dd <= 12 && sw <= todayK()) d.receipt_date = sw; }
         const row = {
           receipt_date: d.receipt_date || todayK(), vendor: d.vendor || null, receipt_no: d.receipt_no || null,
           amount: Math.max(0, Number(d.amount) || 0), tax_amount: Math.max(0, Number(d.tax_amount) || 0),
@@ -148,16 +155,35 @@ export function mountBelanja(host, ctx) {
         const ins = await client.from("expenses").insert(row).select().single();
         if (ins.error) throw ins.error;
         S.rows.unshift(ins.data); await sign([path]);
-        job.state = "done"; job.expId = ins.data.id; job.note = aiNote;
+        const dd = await checkDup(ins.data), di = dateIssue(ins.data);
+        job.state = "done"; job.expId = ins.data.id; job.note = [aiNote, dd.length ? "⚠️ Mungkin resit berganda" : "", di ? "⚠️ " + di : ""].filter(Boolean).join(" · ");
         if (!S.editId) S.editId = ins.data.id;
       } catch (e) { job.state = "Gagal: " + (e?.message || e); }
       render();
     }
   }
 
-  function dupOf(x) {
-    return S.rows.filter(o => o.id !== x.id && o.status !== "ditolak" && +o.amount === +x.amount && o.receipt_date === x.receipt_date &&
-      (!x.vendor || !o.vendor || normPlate(o.vendor).slice(0, 6) === normPlate(x.vendor).slice(0, 6)));
+  // Semakan berganda terus dari pangkalan data (semua bulan, semua staf yang boleh dilihat)
+  const sameVendor = (a, b) => !a || !b || normPlate(a).slice(0, 6) === normPlate(b).slice(0, 6);
+  function dupOf(x) { return (S.dups[x.id] || []).filter(o => S.rows.find(r => r.id === o.id)?.status !== "ditolak"); }
+  async function checkDup(x) {
+    if (!x || !(+x.amount > 0)) { S.dups[x?.id] = []; return []; }
+    let q = client.from("expenses").select("id,vendor,receipt_date,amount,status,receipt_no").neq("id", x.id).neq("status", "ditolak").eq("amount", x.amount).limit(20);
+    const { data } = await q;
+    const d = (data || []).filter(o => (x.receipt_no && o.receipt_no && normPlate(o.receipt_no) === normPlate(x.receipt_no)) || (o.receipt_date === x.receipt_date && sameVendor(o.vendor, x.vendor)));
+    S.dups[x.id] = d; return d;
+  }
+  function localDups() {
+    const live = S.rows.filter(x => x.status !== "ditolak" && +x.amount > 0);
+    for (const x of live) S.dups[x.id] = live.filter(o => o.id !== x.id && +o.amount === +x.amount &&
+      ((x.receipt_no && o.receipt_no && normPlate(o.receipt_no) === normPlate(x.receipt_no)) || (o.receipt_date === x.receipt_date && sameVendor(o.vendor, x.vendor))));
+  }
+  // Tarikh pelik: masa hadapan, atau jauh lebih lama daripada tarikh resit dimasukkan
+  function dateIssue(x) {
+    const d = String(x.receipt_date || ""), made = String(x.created_at || todayK()).slice(0, 10);
+    if (d > todayK()) return "Tarikh resit di masa hadapan — sila betulkan";
+    if (Date.parse(made) - Date.parse(d) > 120 * 864e5) return "Tarikh resit lebih 4 bulan sebelum dimasukkan — sila semak tahun/bulan";
+    return "";
   }
 
   const catOptions = (jn, cur) => Object.entries(CATS).filter(([, c]) => c[1] === jn).map(([k, c]) => `<option value="${k}" ${k === cur ? "selected" : ""}>${c[0]}</option>`).join("");
@@ -192,6 +218,7 @@ export function mountBelanja(host, ctx) {
       <div class="grow"><b>${esc(x.vendor || "(tiada nama kedai)")}</b>
       <small>${JENIS_ICO[x.jenis] || ""} ${dmy(x.receipt_date)} · ${esc(catLabel(x.category))}${x.vehicle_id ? " · 🚗 " + esc(vName(x.vehicle_id)) : ""}</small>
       <small>${ST[x.status] ? `<span class="chip ${ST[x.status][1]}">${ST[x.status][0]}</span>` : ""}${x.paid_by === "staf" ? '<span class="chip c-blue">Tuntutan staf</span>' : ""}${owner && S.names[x.created_by] ? esc(S.names[x.created_by]) : ""}</small>
+      ${dateIssue(x) ? `<small style="color:#ffaaa4">⚠️ ${esc(dateIssue(x))}</small>` : ""}${S.dups[x.id]?.length ? `<small style="color:#ffaaa4">⚠️ Mungkin berganda</small>` : ""}
       ${x.status === "ditolak" && x.review_note ? `<small style="color:#ffaaa4">Sebab: ${esc(x.review_note)}</small>` : ""}</div>
       <div style="text-align:right"><div class="amt">${rm(x.amount)}</div>${(owner || x.status === "draf") ? `<button class="btn sm" data-edit="${x.id}" style="margin-top:6px">${x.status === "draf" ? "Semak" : "Buka"}</button>` : ""}</div></div>`;
   }
@@ -208,6 +235,7 @@ export function mountBelanja(host, ctx) {
     return `<form id="ed" class="card" style="border-color:#5a4a14;display:flex;flex-direction:column;gap:10px">
       <div class="row"><b class="grow">${x.status === "draf" ? "Semak resit" : "Butiran resit"}</b>${ST[x.status] ? `<span class="chip ${ST[x.status][1]}">${ST[x.status][0]}</span>` : ""}<button type="button" class="btn sm" data-close>✕</button></div>
       ${u ? (pdf ? `<a class="btn" href="${esc(u)}" target="_blank">📄 Buka PDF resit</a>` : `<img class="prev" src="${esc(u)}" data-zoom="${esc(u)}" alt="resit">`) : ""}
+      ${dateIssue(x) ? `<div class="warn">📅 ${esc(dateIssue(x))}. AI baca: ${dmy(x.receipt_date)}.</div>` : ""}
       ${dups.length ? `<div class="warn">⚠️ Mungkin resit berganda: ${dups.map(d => `${esc(d.vendor || "-")} ${dmy(d.receipt_date)} ${rm(d.amount)} (${ST[d.status]?.[0] || d.status})`).join("; ")}</div>` : ""}
       ${x.ai_raw && x.status === "draf" ? `<div class="info">🤖 Diisi oleh AI${x.ai_raw.confidence != null ? ` (keyakinan ${Math.round(x.ai_raw.confidence * 100)}%)` : ""}. Sila semak jumlah & tarikh.</div>` : ""}
       <div class="edit">
@@ -238,18 +266,18 @@ export function mountBelanja(host, ctx) {
 
   function filtered() {
     const q = S.f.q.trim().toLowerCase();
-    return S.rows.filter(x => (!S.f.jenis || x.jenis === S.f.jenis) && (!S.f.cat || x.category === S.f.cat) && (!S.f.status || x.status === S.f.status) && (!S.f.unit || x.unit === S.f.unit) &&
+    return S.rows.filter(x => inList(x) && (!S.f.jenis || x.jenis === S.f.jenis) && (!S.f.cat || x.category === S.f.cat) && (!S.f.status || x.status === S.f.status) && (!S.f.unit || x.unit === S.f.unit) &&
       (!q || [x.vendor, x.receipt_no, x.notes, vName(x.vehicle_id), S.names[x.created_by]].join(" ").toLowerCase().includes(q)));
   }
-  function monthSel() {
-    const ms = Array.from({ length: 24 }, (_, i) => addM(ymNow(), -i));
-    return `<select class="field" data-f="month"><option value="all" ${S.f.month === "all" ? "selected" : ""}>Semua bulan</option>${ms.map(m => `<option value="${m}" ${m === S.f.month ? "selected" : ""}>${monthName(m)}</option>`).join("")}</select>`;
+  function monthSel(key = "rmonth") {
+    const ms = Array.from({ length: 24 }, (_, i) => addM(ymNow(), -i)), cur = S.f[key];
+    return `<select class="field" data-f="${key}">${key === "month" ? `<option value="recent" ${cur === "recent" ? "selected" : ""}>Baru dimasukkan (30 hari)</option>` : ""}<option value="all" ${cur === "all" ? "selected" : ""}>Semua bulan</option>${ms.map(m => `<option value="${m}" ${m === cur ? "selected" : ""}>${key === "month" ? "Tarikh resit: " : ""}${monthName(m)}</option>`).join("")}</select>`;
   }
   function listView() {
     const L = filtered(), tot = L.filter(x => x.status !== "ditolak").reduce((a, x) => a + +x.amount, 0);
-    const base = S.rows.filter(x => x.status !== "ditolak"), jt = k => base.filter(x => !k || x.jenis === k).reduce((a, x) => a + +x.amount, 0);
+    const base = S.rows.filter(x => inList(x) && x.status !== "ditolak"), jt = k => base.filter(x => !k || x.jenis === k).reduce((a, x) => a + +x.amount, 0);
     return `<div class="jn">${[["", "Semua"], ...Object.entries(JENIS)].map(([k, t]) => `<button type="button" data-fj="${k}" class="${S.f.jenis === k ? "on" : ""}">${JENIS_ICO[k] || ""} ${t.replace(/ \(.*\)/, "")}<small>${rm(jt(k))}</small></button>`).join("")}</div>
-      <div class="filters">${monthSel()}
+      <div class="filters">${monthSel("month")}
       <select class="field" data-f="status"><option value="">Semua status</option>${Object.entries(ST).map(([k, v]) => `<option value="${k}" ${k === S.f.status ? "selected" : ""}>${v[0]}</option>`).join("")}</select>
       <select class="field" data-f="cat"><option value="">Semua kategori</option>${Object.entries(CATS).filter(([, c]) => !S.f.jenis || c[1] === S.f.jenis).map(([k, c]) => `<option value="${k}" ${k === S.f.cat ? "selected" : ""}>${c[0]}</option>`).join("")}</select>
       <input class="field" data-f="q" placeholder="Cari kedai, plat, staf…" value="${esc(S.f.q)}"></div>
@@ -258,7 +286,7 @@ export function mountBelanja(host, ctx) {
   }
 
   function reportView() {
-    const L = S.rows.filter(x => x.status === "disahkan" && (S.f.month === "all" || String(x.receipt_date).startsWith(S.f.month)));
+    const L = S.rows.filter(x => x.status === "disahkan" && inReport(x));
     const sum = a => a.reduce((s, x) => s + +x.amount, 0), total = sum(L);
     const by = (key) => { const m = {}; L.forEach(x => { const k = key(x); m[k] = (m[k] || 0) + +x.amount; }); return Object.entries(m).sort((a, b) => b[1] - a[1]); };
     const bars = (rows, lab) => rows.map(([k, v]) => `<div style="margin-bottom:8px"><div class="row"><span class="grow">${esc(lab(k))}</span><b>${rm(v)}</b></div><div class="bar"><i style="width:${total ? Math.round(v / total * 100) : 0}%"></i></div></div>`).join("") || '<p class="mute">Tiada data.</p>';
@@ -270,7 +298,7 @@ export function mountBelanja(host, ctx) {
       <div class="stat"><small>Kos kereta</small><b>${rm(sum(L.filter(x => x.vehicle_id)))}</b></div><div class="stat"><small>Belum disemak</small><b>${pending.length} · ${rm(sum(pending))}</b></div>
       <div class="stat"><small>SST dibayar</small><b>${rm(L.reduce((s, x) => s + +x.tax_amount, 0))}</b></div><div class="stat"><small>Tuntutan staf</small><b>${rm(sum(L.filter(x => x.paid_by === "staf")))}</b></div></div>
       <div class="stats">${Object.entries(JENIS).map(([k, t]) => `<div class="stat"><small>${JENIS_ICO[k]} ${t}</small><b>${rm(sum(jen(k)))}</b><small>${jen(k).length} resit · ${total ? Math.round(sum(jen(k)) / total * 100) : 0}%</small></div>`).join("")}</div>
-      ${S.f.month !== "all" ? overheadCheck(L) : ""}
+      ${S.f.rmonth !== "all" ? overheadCheck(L) : ""}
       ${Object.entries(JENIS).map(([k, t]) => { const J = jen(k), m = {}; J.forEach(x => m[x.category] = (m[x.category] || 0) + +x.amount); const rows = Object.entries(m).sort((a, b) => b[1] - a[1]), jt = sum(J);
         return `<div class="card"><div class="row" style="margin-bottom:8px"><div class="kick grow">${JENIS_ICO[k]} ${t.toUpperCase()}</div><b>${rm(jt)}</b></div>${rows.map(([c, v]) => `<div style="margin-bottom:8px"><div class="row"><span class="grow">${esc(catLabel(c))}</span><b>${rm(v)}</b></div><div class="bar"><i style="width:${jt ? Math.round(v / jt * 100) : 0}%"></i></div></div>`).join("") || '<p class="mute">Tiada data.</p>'}</div>`; }).join("")}
       <div class="card"><div class="kick" style="margin-bottom:8px">IKUT BAHAGIAN</div>${bars(by(x => x.unit), k => UNIT[k] || k)}</div>
@@ -283,19 +311,19 @@ export function mountBelanja(host, ctx) {
     const now = {}; L.filter(x => x.jenis === "overhead").forEach(x => { const k = key(x); (now[k] ||= { c: x.category, v: x.vendor, a: 0 }).a += +x.amount; });
     const exp = {}; S.prev.forEach(x => { const k = key(x); if (!exp[k]) exp[k] = { c: x.category, v: x.vendor, a: +x.amount, d: x.receipt_date }; });
     const keys = [...new Set([...Object.keys(exp), ...Object.keys(now)])];
-    if (!keys.length) return `<div class="card"><div class="kick" style="margin-bottom:6px">🏢 SEMAKAN BIL OVERHEAD ${monthName(S.f.month).toUpperCase()}</div><p class="mute">Belum ada sejarah overhead. Bila resit sewa, TNB, internet dan langganan disahkan, sistem akan ingatkan bil yang belum dibayar setiap bulan.</p></div>`;
+    if (!keys.length) return `<div class="card"><div class="kick" style="margin-bottom:6px">🏢 SEMAKAN BIL OVERHEAD ${monthName(S.f.rmonth).toUpperCase()}</div><p class="mute">Belum ada sejarah overhead. Bila resit sewa, TNB, internet dan langganan disahkan, sistem akan ingatkan bil yang belum dibayar setiap bulan.</p></div>`;
     const done = keys.filter(k => now[k]).length;
-    return `<div class="card"><div class="row" style="margin-bottom:8px"><div class="kick grow">🏢 SEMAKAN BIL OVERHEAD ${monthName(S.f.month).toUpperCase()}</div><b>${done}/${keys.length}</b></div>
+    return `<div class="card"><div class="row" style="margin-bottom:8px"><div class="kick grow">🏢 SEMAKAN BIL OVERHEAD ${monthName(S.f.rmonth).toUpperCase()}</div><b>${done}/${keys.length}</b></div>
       <table class="tbl">${keys.sort((a, b) => !!now[a] - !!now[b]).map(k => { const n = now[k], e = exp[k], o = n || e;
         return `<tr><td>${n ? "✅" : "⏳"} <b>${esc(catLabel(o.c))}</b><br><small class="mute">${esc(o.v || "-")}</small></td><td class="r">${n ? rm(n.a) : `<span class="mute">Belum ada resit</span><br><small class="mute">lepas: ${rm(e.a)} (${dmy(e.d)})</small>`}</td></tr>`; }).join("")}</table></div>`;
   }
 
   function exportView() {
-    const L = S.rows.filter(x => x.status === "disahkan" && (S.f.month === "all" || String(x.receipt_date).startsWith(S.f.month)));
+    const L = S.rows.filter(x => x.status === "disahkan" && inReport(x));
     return `<div class="filters">${monthSel()}</div>
       <div class="card" style="display:flex;flex-direction:column;gap:10px"><b>Fail untuk akauntan / LHDN</b>
       <p class="mute">${L.length} resit disahkan · ${rm(L.reduce((s, x) => s + +x.amount, 0))}. ZIP mengandungi semua gambar resit yang dinamakan & disusun ikut kategori, serta ringkasan Excel (CSV).</p>
-      <p class="mute">Susunan: <code>${esc(S.f.month === "all" ? "YYYY-MM" : S.f.month)}/Jenis/Kategori/tarikh_kedai_RMjumlah.jpg</code></p>
+      <p class="mute">Susunan: <code>${esc(S.f.rmonth === "all" ? "YYYY-MM" : S.f.rmonth)}/Jenis/Kategori/tarikh_kedai_RMjumlah.jpg</code></p>
       <div class="row"><button class="btn pri" data-zip ${L.length ? "" : "disabled"}>⬇ Muat turun ZIP (resit + ringkasan)</button><button class="btn" data-csv ${L.length ? "" : "disabled"}>⬇ Ringkasan sahaja (CSV)</button></div>
       <p class="mute">Simpan rekod perniagaan sekurang-kurangnya 7 tahun. Semua resit kekal dalam cloud sistem.</p></div>`;
   }
@@ -322,7 +350,7 @@ export function mountBelanja(host, ctx) {
     if (!p.receipt_date) { say("Isi tarikh resit.", "err"); return false; }
     const r = await client.from("expenses").update(p).eq("id", id).select().single();
     if (r.error) { say("Gagal simpan: " + r.error.message, "err"); return false; }
-    S.rows = S.rows.map(x => x.id === id ? r.data : x); if (!quiet) { S.editId = null; say("Resit disimpan.", "ok"); render(); }
+    S.rows = S.rows.map(x => x.id === id ? r.data : x); localDups(); await checkDup(r.data); if (!quiet) { S.editId = null; say("Resit disimpan.", "ok"); render(); }
     return true;
   }
   async function exportCsv(L, asBlob) {
@@ -332,7 +360,7 @@ export function mountBelanja(host, ctx) {
       x.paid_by === "staf" ? "Staf (tuntutan)" : "Syarikat", S.names[x.created_by] || "", (+x.tax_amount).toFixed(2), (+x.amount).toFixed(2), x.notes, fileName(x)].map(q).join(",")));
     lines.push(["", "", "", "", "", "", "", "", "", "JUMLAH", L.reduce((s, x) => s + +x.tax_amount, 0).toFixed(2), L.reduce((s, x) => s + +x.amount, 0).toFixed(2), "", ""].map(q).join(","));
     const blob = new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
-    if (asBlob) return blob; download(blob, `Perbelanjaan-AbeDinAuto-${S.f.month}.csv`);
+    if (asBlob) return blob; download(blob, `Perbelanjaan-AbeDinAuto-${S.f.rmonth}.csv`);
   }
   const fileName = x => `${String(x.receipt_date).slice(0, 7)}/${{ inventori: "1-Inventori", pembelian: "2-Pembelian", overhead: "3-Overhead" }[x.jenis] || "2-Pembelian"}/${slug(catLabel(x.category))}/${x.receipt_date}_${slug(x.vendor)}_RM${(+x.amount).toFixed(2)}_${x.id.slice(0, 4)}.${/\.pdf$/i.test(x.image_path || "") ? "pdf" : "jpg"}`;
   function download(blob, name) { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000); }
@@ -347,14 +375,14 @@ export function mountBelanja(host, ctx) {
       say(`Menyediakan ZIP… ${++n}/${L.length}`);
     }
     zip.file("Ringkasan.csv", await exportCsv(L, true));
-    download(await zip.generateAsync({ type: "blob" }), `Resit-AbeDinAuto-${S.f.month}.zip`);
+    download(await zip.generateAsync({ type: "blob" }), `Resit-AbeDinAuto-${S.f.rmonth}.zip`);
     say("ZIP siap dimuat turun.", "ok");
   }
 
   app.addEventListener("change", e => {
     const t = e.target;
     if (t.id === "cam" || t.id === "gal") { handleFiles(t.files); t.value = ""; return; }
-    if (t.dataset.f) { S.f[t.dataset.f] = t.value; if (t.dataset.f === "month") load(); else render(); }
+    if (t.dataset.f) { S.f[t.dataset.f] = t.value; if (t.dataset.f === "month" || t.dataset.f === "rmonth") load(); else render(); }
     if (t.id === "paym") S.payMonth = t.value;
     if (t.name === "vehicle_id" && t.value) { const u = app.querySelector("[name=unit]"); if (u && u.value === "umum") u.value = "jualan"; }
   });
@@ -382,7 +410,7 @@ export function mountBelanja(host, ctx) {
     }
     if (b.dataset.fj !== undefined) { S.f.jenis = b.dataset.fj; S.f.cat = ""; render(); return; }
     if (b.dataset.tab) { S.tab = b.dataset.tab; S.editId = null; say(""); render(); return; }
-    if (b.dataset.edit) { S.editId = b.dataset.edit; render(); app.querySelector("#ed")?.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
+    if (b.dataset.edit) { S.editId = b.dataset.edit; const ex = S.rows.find(r => r.id === S.editId); if (ex && !S.dups[ex.id]) checkDup(ex).then(() => { if (S.editId === ex.id) render(); }); render(); app.querySelector("#ed")?.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
     if (b.hasAttribute("data-close")) { S.editId = null; render(); return; }
     if (b.dataset.verify) {
       b.disabled = true; if (!(await save(b.dataset.verify, true))) { b.disabled = false; return; }
@@ -412,7 +440,7 @@ export function mountBelanja(host, ctx) {
       if (x.image_path && !x.claim_id) await client.storage.from("staff-docs").remove([x.image_path]).catch(() => {});
       S.rows = S.rows.filter(r => r.id !== x.id); S.editId = null; say("Resit dipadam.", "ok"); render(); return;
     }
-    const L = S.rows.filter(x => x.status === "disahkan" && (S.f.month === "all" || String(x.receipt_date).startsWith(S.f.month)));
+    const L = S.rows.filter(x => x.status === "disahkan" && inReport(x));
     if (b.hasAttribute("data-csv")) { exportCsv(L); return; }
     if (b.hasAttribute("data-zip")) { b.disabled = true; try { await exportZip(L); } catch (er) { say("Gagal ZIP: " + (er?.message || er), "err"); } b.disabled = false; return; }
   });

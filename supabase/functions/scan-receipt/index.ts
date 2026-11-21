@@ -69,7 +69,7 @@ PEMBELIAN / OPERASI:
 - iklan: Facebook/TikTok/Google ads (boost); marketing_lain: banner, cetakan, hadiah
 - armada_sewa: kos untuk kereta sewa
 - lain: selain di atas
-Tarikh di Malaysia biasanya DD/MM/YYYY — tukar kepada YYYY-MM-DD. Jumlah = TOTAL / JUMLAH yang dibayar. Jangan reka maklumat yang tiada.`;
+Tarikh di Malaysia ditulis DD/MM/YYYY (hari dahulu, kemudian bulan) — contoh 11/12/2026 = 11 Disember 2026, 12/11/26 = 12 November 2026. Tukar kepada YYYY-MM-DD. Resit biasanya bertarikh dalam beberapa minggu sebelum hari ini dan TIDAK PERNAH selepas hari ini; jika tahun kabur/2 digit, pilih tahun yang paling hampir dengan hari ini. Jumlah = TOTAL / JUMLAH yang dibayar. Jangan reka maklumat yang tiada.`;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
