@@ -69,10 +69,13 @@ jobs:
             supabase/agent_payout_invariants_v1.sql \
             supabase/agent_ledger_guards_v1.sql \
             supabase/agent_confirm_payout_v1.sql \
-            supabase/agent_sale_attribution_v1.sql; do
+            supabase/agent_sale_attribution_v1.sql \
+            supabase/agent_commission_approval_v2.sql; do
             echo "Applying fixture migration: $migration"
             psql -X -v ON_ERROR_STOP=1 -f "$migration"
           done
           psql -X -v ON_ERROR_STOP=1 -c "grant select on all tables in schema public to service_role"
       - name: Run real PostgreSQL integration assertions
-        run: psql -X -v ON_ERROR_STOP=1 -f tests/postgres/10_integration.sql
+        run: |
+          psql -X -v ON_ERROR_STOP=1 -f tests/postgres/10_integration.sql
+          psql -X -v ON_ERROR_STOP=1 -f tests/postgres/20_commission_approval.sql
