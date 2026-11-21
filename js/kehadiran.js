@@ -394,7 +394,39 @@ function viewPunch() {
   const btns = onRest ? `<button class="btn" data-act="rest" data-kind="rest_end">☕ Habis rehat</button>`
     : working ? `<button class="btn out" data-act="punch" data-kind="out">📸 Punch Balik</button>${st.allow_rest_punch ? `<button class="btn alt" data-act="rest" data-kind="rest_start">☕ Mula rehat</button>` : ""}`
     : `<button class="btn" data-act="punch" data-kind="in">📸 Punch Masuk</button>`;
-  const week = [...Array(7)].map((_, i) => { const k = addDays(today, i), s = schedFor(S.me, k); return `<div class="wk ${s.type}"><b>${i ? DAYS[dow(k)].slice(0, 3) : "Hari ini"}</b><span>${s.type === "work" ? `${hhmmOf(s.start)}–${hhmmOf(s.end)}` : s.type === "ph" ? "Cuti umum" : "Rehat"}</span></div>`; }).join("");
+  // Ringkasan hanya menggunakan rekod staf sendiri, tanpa mengubah data kehadiran.
+  const lastOut = [...mine].reverse().find(p => p.kind === "out");
+  const restStarts = mine.filter(p => p.kind === "rest_start");
+  const restEnds = mine.filter(p => p.kind === "rest_end");
+  const scheduledMin = sc.type === "work" ? Math.max(0, sc.end - sc.start - (sc.brk || 0)) : 0;
+  const liveWorked = () => {
+    let start = null, pause = null, total = 0;
+    const endNow = Date.now();
+    for (const p of mine) {
+      const time = new Date(p.punched_at).getTime();
+      if (p.kind === "in" && start == null) start = time;
+      else if (p.kind === "rest_start" && start != null && pause == null) pause = time;
+      else if (p.kind === "rest_end" && pause != null) { total += Math.max(0, pause - start); start = time; pause = null; }
+      else if (p.kind === "out" && start != null) { total += Math.max(0, (pause ?? time) - start); start = null; pause = null; }
+    }
+    if (start != null) total += Math.max(0, (pause ?? endNow) - start);
+    const mins = Math.round(total / 60000);
+    return { mins, percent: scheduledMin ? Math.min(100, Math.round(mins / scheduledMin * 100)) : null };
+  };
+  const worked = liveWorked();
+  const sumTile = (label, value) => `<div style="min-width:0;padding:12px 5px;border:1px solid var(--line,#39352d);border-radius:14px;text-align:center;background:rgba(255,255,255,.025)"><small class="mute" style="display:block;font-size:12px">${label}</small><b style="display:block;margin-top:7px;font-size:15px">${value}</b></div>`;
+  const summary = `<div class="card"><div class="r" style="align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap"><h3 style="margin:0">Ringkasan Hari Ini</h3><span class="chip pri">${dayLabel(today)}</span></div>
+    <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:12px">
+      ${sumTile("Masuk", firstIn ? hm(firstIn.punched_at) : "–")}
+      ${sumTile("Rehat", onRest ? "Sedang" : restStarts.length ? restEnds.length ? fmtMin(restEnds.reduce((acc,p,i)=>acc+Math.max(0,(new Date(p.punched_at)-new Date(restStarts[i]?.punched_at || p.punched_at))/60000),0)) : "Belum tamat" : "–")}
+      ${sumTile("Keluar", last?.kind === "out" ? hm(last.punched_at) : "–")}
+      ${sumTile("Jam kerja", `<span id="punch-worked">${fmtMin(worked.mins)}</span>`)}
+    </div>
+    <div style="margin-top:12px;padding:10px 12px;border:1px solid var(--line,#39352d);border-radius:12px">
+      <div class="r" style="justify-content:space-between;gap:8px"><small>Kemajuan waktu kerja</small><b id="punch-percent">${worked.percent == null ? "—" : worked.percent + "%"}</b></div>
+      <div style="height:8px;border-radius:8px;background:rgba(255,255,255,.14);overflow:hidden;margin:8px 0"><div id="punch-progress" style="height:100%;width:${worked.percent || 0}%;background:#e5b93b;border-radius:8px"></div></div>
+      <small class="mute">Sasaran: ${scheduledMin ? fmtMin(scheduledMin) : "Tiada syif dijadualkan"} · Tidak termasuk waktu rehat</small>
+    </div></div>`;
   return `<div class="ap"><div class="col"><div class="card" style="align-items:center;text-align:center">
       <div class="mute">${dayLabel(today)} · ${esc(schedText(sc))}</div>
       <div class="clock" id="clock">--:--</div>
@@ -403,7 +435,7 @@ function viewPunch() {
       <div class="mute">Punch masuk/balik perlu selfie dan GPS. Punch rehat hanya GPS. Masa ikut jam server.</div>
     </div>
     ${noLoc ? `<div class="notice">${S.owner ? "Belum ada lokasi tag. Tambah di tab Tetapan supaya punch disemak ikut kawasan." : "Owner belum menetapkan lokasi kerja."}</div>` : ""}
-    <div class="card"><h3>Jadual 7 hari</h3><div class="wkrow">${week}</div></div></div>
+    ${summary}</div>
     <div class="col"><div class="card"><h3>Punch saya hari ini</h3>${mine.length ? `<div class="pl">${[...mine].reverse().map(p => punchRow(p, false)).join("")}</div>` : `<p class="mute">Tiada punch lagi hari ini.</p>`}</div></div></div>`;
 }
 function dayChips(d) {
@@ -686,7 +718,29 @@ function payForm(s) {
 }
 
 let clockTimer = null, tickN = 0;
-function tickClock() { const el = $("#clock"); if (!el) return; const d = klDate(Date.now()); el.textContent = `${String(d.getUTCHours()).padStart(2,"0")}:${String(d.getUTCMinutes()).padStart(2,"0")}`; }
+function tickClock() {
+  const el = $("#clock"); if (!el) return;
+  const d = klDate(Date.now());
+  el.textContent = `${String(d.getUTCHours()).padStart(2,"0")}:${String(d.getUTCMinutes()).padStart(2,"0")}`;
+  const out = $("#punch-worked"); if (!out || !S.me || !S.settings) return;
+  const today = nowKey(), mine = S.punches.filter(p => p.staff_id === S.me && dayKey(p.punched_at) === today);
+  let start = null, pause = null, ms = 0;
+  for (const p of mine) {
+    const at = new Date(p.punched_at).getTime();
+    if (p.kind === "in" && start == null) start = at;
+    else if (p.kind === "rest_start" && start != null && pause == null) pause = at;
+    else if (p.kind === "rest_end" && pause != null) { ms += Math.max(0,pause-start); start=at; pause=null; }
+    else if (p.kind === "out" && start != null) { ms += Math.max(0,(pause ?? at)-start); start=null; pause=null; }
+  }
+  if (start != null) ms += Math.max(0,(pause ?? Date.now())-start);
+  const mins = Math.round(ms/60000), sc=schedFor(S.me,today);
+  const target=sc.type==="work" ? Math.max(0,sc.end-sc.start-(sc.brk||0)) : 0;
+  const pct=target ? Math.min(100,Math.round(mins/target*100)) : null;
+  out.textContent=fmtMin(mins);
+  const p=$("#punch-percent"), bar=$("#punch-progress");
+  if(p) p.textContent=pct==null ? "—" : pct+"%";
+  if(bar) bar.style.width=(pct||0)+"%";
+}
 
 /* ---------- punch (selfie + GPS) ---------- */
 async function startPunch(kind) {
