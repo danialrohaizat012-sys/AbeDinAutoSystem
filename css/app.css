@@ -2507,3 +2507,38 @@ html.ada-light #ada-cloud-gate .adx-pl-mini b{color:#b88a00}
 .ada-cs-note{margin:4px 0 0!important;font-size:11px;opacity:.7}
 #ada-cloud-gate button.ada-cs-paid{margin-top:6px!important;background:#3ecf8e!important;color:#032013!important;border:0!important;font-weight:800!important;padding:9px 12px!important;border-radius:10px!important;width:auto!important}
 html.ada-light .ada-cs-row{border-color:#0000000f}
+/* ===== V101: Analisa stok inventori ===== */
+#ada-cloud-gate main:has(.ivx) .cloud-hero{display:none!important}
+#ada-cloud-gate .ivx{--bg1:#151a1b;--bg2:#1d2324;--ln:#ffffff14;--tx:#f4f1ea;--mut:#8e979a;margin:10px 0 16px;display:flex;flex-direction:column;gap:10px}
+html.ada-light #ada-cloud-gate .ivx{--bg1:#fff;--bg2:#f4f4f6;--ln:#00000012;--tx:#15171a;--mut:#6b7176}
+#ada-cloud-gate .ivx-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px}
+#ada-cloud-gate .ivx .ivx-tile{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;gap:5px;padding:12px 13px;border-radius:16px;background:linear-gradient(160deg,color-mix(in srgb,var(--c) 14%,transparent),transparent 65%),var(--bg1);border:1px solid color-mix(in srgb,var(--c) 26%,var(--ln));color:var(--tx);min-width:0;transition:transform .15s,border-color .15s}
+#ada-cloud-gate .ivx .ivx-tile:hover{transform:translateY(-1px)}
+#ada-cloud-gate .ivx .ivx-tile.on{border-color:var(--c);box-shadow:0 0 0 2px color-mix(in srgb,var(--c) 45%,transparent)}
+#ada-cloud-gate .ivx-tl{display:flex;align-items:center;gap:7px;font-size:11.5px;font-weight:700;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#ada-cloud-gate .ivx-tl i{font-style:normal;width:20px;height:20px;border-radius:6px;display:inline-grid;place-items:center;font-size:11px;background:color-mix(in srgb,var(--c) 22%,transparent);color:var(--c);flex:none}
+#ada-cloud-gate .ivx-n{font-size:26px;font-weight:850;letter-spacing:-.04em;line-height:1.05;color:var(--c)}
+#ada-cloud-gate .ivx-bar{height:5px;border-radius:99px;background:var(--bg2);overflow:hidden}
+#ada-cloud-gate .ivx-bar em{display:block;height:100%;background:var(--c);border-radius:99px}
+#ada-cloud-gate .ivx-pct{font-size:10.5px;color:var(--mut)}
+#ada-cloud-gate .ivx-money{display:flex;justify-content:space-between;gap:6px;font-size:10.5px;color:var(--mut);border-top:1px solid var(--ln);padding-top:4px}
+#ada-cloud-gate .ivx-money b{color:var(--tx);font-weight:800;font-size:11.5px;font-variant-numeric:tabular-nums}
+#ada-cloud-gate .ivx-money b.pos{color:#4ade80}#ada-cloud-gate .ivx-money b.neg{color:#fb7185}
+html.ada-light #ada-cloud-gate .ivx-money b.pos{color:#16a34a}
+#ada-cloud-gate .ivx-strip{background:var(--bg1);border:1px solid var(--ln);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:9px}
+#ada-cloud-gate .ivx-seg{display:flex;gap:3px;height:9px;border-radius:99px;overflow:hidden;background:var(--bg2)}
+#ada-cloud-gate .ivx-seg i{display:block;height:100%}
+#ada-cloud-gate .ivx-meta{display:flex;flex-wrap:wrap;align-items:center;gap:7px}
+#ada-cloud-gate .ivx-lbl{font-size:10.5px;font-weight:800;letter-spacing:.08em;color:var(--mut);text-transform:uppercase;margin-right:2px}
+#ada-cloud-gate .ivx .ivx-chip{all:unset;box-sizing:border-box;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:99px;font-size:11.5px;font-weight:700;color:var(--tx);background:color-mix(in srgb,var(--c) 13%,transparent);border:1px solid color-mix(in srgb,var(--c) 30%,transparent)}
+#ada-cloud-gate .ivx .ivx-chip b{color:var(--c);font-weight:850}
+#ada-cloud-gate .ivx .ivx-chip.on{background:var(--c);color:#0b0f10}#ada-cloud-gate .ivx .ivx-chip.on b{color:#0b0f10}
+#ada-cloud-gate .ivx-sep{flex:1}
+#ada-cloud-gate .ivx-fact{font-size:11.5px;color:var(--mut);padding:5px 10px;border-radius:99px;background:var(--bg2)}
+#ada-cloud-gate .ivx-fact b{color:var(--tx);font-weight:800}
+#ada-cloud-gate .ivx-fact.warn b{color:#fb7185}
+@media(max-width:1250px){#ada-cloud-gate .ivx-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:700px){#ada-cloud-gate .ivx-grid{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding-bottom:4px;gap:8px}#ada-cloud-gate .ivx .ivx-tile{flex:0 0 46%;scroll-snap-align:start;padding:11px 12px}#ada-cloud-gate .ivx-n{font-size:23px}#ada-cloud-gate .ivx-sep{display:none}#ada-cloud-gate .ivx-meta{gap:6px}}
+#ada-cloud-gate .ivx-money{flex-direction:column;gap:1px}
+#ada-cloud-gate .ivx-money b{font-size:12.5px}
+@media(max-width:700px){#ada-cloud-gate .ivx-money{flex-direction:row;align-items:center}}
