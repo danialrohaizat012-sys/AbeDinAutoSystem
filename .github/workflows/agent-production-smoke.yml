@@ -1,7 +1,7 @@
 name: Agent Portal Production Smoke
 on:
   push:
-    branches: [main]
+    branches: [main, test/agent-prod-auth-smoke-20261122]
     paths:
       - agent.html
       - agent-payout-verify.html
