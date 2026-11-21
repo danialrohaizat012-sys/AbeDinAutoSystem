@@ -86,8 +86,18 @@ footer{font-size:12px;color:#748399;padding:15px 0}
 <section id="owner" hidden><div class="panel"><h1>Kelulusan Owner</h1>
 <p>Senarai permohonan belum diluluskan. Hanya akaun owner aktif boleh menggunakan aliran ini.</p>
 <div class="row"><button class="secondary" id="refreshOwner">Muat semula</button></div>
-<div id="ownerItems" class="items" style="margin-top:15px"></div></div></section>
-<footer>Portal ejen rasmi AbeDin Auto. Komisen dan bayaran sebenar hanya boleh disahkan melalui proses dalaman yang diaudit. Tiada pembayaran automatik melalui portal ini.</footer>
+<div id="ownerItems" class="items" style="margin-top:15px"></div></div>
+<div class="panel"><h2>Padanan Lead dengan Jualan</h2>
+<p>Owner mesti mengesahkan pelanggan dan kereta sebelum memautkan lead kepada nombor jualan rasmi.</p>
+<div id="unlinkedLeadItems" class="items"></div></div>
+<div class="panel"><h2>Kelulusan Komisen</h2>
+<div class="notice warn">Semak resit, bayaran penuh, kos, pembatalan dan rekod bank secara bebas. Kelulusan di sini tidak melakukan pindahan wang.</div>
+<div id="ownerLeadCommissions" class="items"></div></div>
+<div class="panel"><h2>Pengurusan Payout</h2>
+<p>Komisen diluluskan boleh disediakan menjadi payout. Pengesahan sudah dibayar memerlukan owner kedua yang berlainan dan bukti pindahan bank sebenar.</p>
+<div id="ownerCommissions" class="items"></div>
+<h3>Payout Ejen</h3><div id="ownerPayouts" class="items"></div></div></section>
+<footer>Portal ejen rasmi AbeDin Auto. Komisen dan bayaran sebenar hanya boleh disahkan melalui proses dalaman yang diaudit. Tiada pembayaran automatik melalui portal ini. <a href="agent-payout-verify.html" style="color:#185ca6">Pengesahan Payout HR</a>.</footer>
 </main>
 <script type="module">
 import {createClient} from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
@@ -163,6 +173,68 @@ async function adminRequest(data){
  headers:{'content-type':'application/json',apikey:'sb_publishable_zuuNipsMpalN_38SJwXpFA_MRzQ6eZ0','authorization':'Bearer '+session.session.access_token},
  body:JSON.stringify(data)});const result=await r.json();if(!r.ok)throw new Error(result?.error||'Permintaan gagal');return result;
 }
+function ownerActionButton(parent,label,payloadFactory){
+ const row=document.createElement('div');row.className='row';row.style.marginTop='10px';
+ const b=document.createElement('button');b.className='secondary';text(b,label);
+ b.onclick=async()=>{
+   const data=payloadFactory();if(!data)return;
+   b.disabled=true;
+   try{await adminRequest(data);message('Rekod berjaya disimpan dan diaudit.');await loadOwner();}
+   catch(err){fail(err);}finally{b.disabled=false;}
+ };row.append(b);parent.append(row);
+}
+async function loadOwnerFinance(){
+ const [unlinked,fin]=await Promise.all([
+   adminRequest({action:'lead_list'}),
+   adminRequest({action:'finance_list'})
+ ]);
+ showRows('unlinkedLeadItems',unlinked.leads,(el,l)=>{
+   const d=item(el,l.customer_name+' · '+l.customer_phone,'Lead '+l.id+' | Kereta '+(l.vehicle_id||'tiada'));
+   ownerActionButton(d,'Padankan dengan jualan rasmi',()=>{
+     const sale_id=prompt('Masukkan ID jualan (UUID) yang disahkan dalam sistem AbeDin Auto:');
+     if(!sale_id)return null;
+     const reason=prompt('Catat bukti persetujuan pelanggan dan pengesahan padanan (min. 15 aksara):');
+     if(!reason||reason.trim().length<15)return null;
+     return {action:'link_lead',lead_id:l.id,sale_id:sale_id.trim(),reason:reason.trim()};
+   });
+ });
+ const hasCommission=new Set((fin.commissions||[]).map(c=>c.sale_id));
+ showRows('ownerLeadCommissions',(fin.leads||[]).filter(l=>l.status==='won'&&!hasCommission.has(l.linked_sale_id)),(el,l)=>{
+   const d=item(el,l.customer_name,'Jualan: '+l.linked_sale_id+' | ID Ejen: '+l.agent_id);
+   ownerActionButton(d,'Luluskan komisen',()=>{
+     const amount=prompt('Amaun komisen yang dipersetujui (RM, contoh 500.00):');
+     if(!amount)return null;
+     const reason=prompt('Sebab dan bukti semakan kewangan, bayaran penuh, tiada refund (min. 20 aksara):');
+     if(!reason||reason.trim().length<20)return null;
+     if(!confirm('Saya sudah menyemak bukti jualan dan rekonsiliasi kewangan sebenar. Luluskan komisen RM '+amount+'?'))return null;
+     return {action:'approve_commission',lead_id:l.id,amount:amount.trim(),
+       reason:reason.trim(),finance_reconciled:true};
+   });
+ });
+ const allocated=new Set();
+ for(const p of fin.payouts||[]){/* payout item references are checked by database when prepared */}
+ showRows('ownerCommissions',(fin.commissions||[]).filter(c=>c.status==='approved'),(el,c)=>{
+   const d=item(el,'Komisen RM '+Number(c.agreed_amount).toLocaleString('ms-MY'),
+     'Jualan '+c.sale_id+' | Ejen '+c.agent_id);
+   ownerActionButton(d,'Sediakan payout',()=>{
+     const reason=prompt('Sebab penyediaan payout (min. 15 aksara):');
+     return reason?.trim().length>=15?{action:'prepare_payout',commission_id:c.id,reason:reason.trim()}:null;
+   });
+ });
+ showRows('ownerPayouts',fin.payouts,(el,p)=>{
+   const d=item(el,'RM '+Number(p.amount).toLocaleString('ms-MY')+' · '+p.status,
+     'Payout '+p.id+' | Ejen '+p.agent_id);
+   if(p.status==='draft') ownerActionButton(d,'Luluskan payout',()=>{
+     const reason=prompt('Sebab kelulusan payout (min. 15 aksara):');
+     return reason?.trim().length>=15?{action:'approve_payout',payout_id:p.id,reason:reason.trim()}:null;
+   });
+   if(p.status==='approved'){
+     const note=document.createElement('div');note.className='notice';
+     note.textContent='Menunggu pengesahan oleh HR Aiman selepas bayaran bank dibuat.';
+     d.append(note);
+   }
+ });
+}
 async function loadOwner(){if(!owner)return;
  try{const data=await adminRequest({action:'list'});showRows('ownerItems',data.applications,(el,a)=>{
  const d=item(el,a.full_name,a.email+' · '+a.phone+' · '+a.state);
@@ -174,7 +246,7 @@ async function loadOwner(){if(!owner)return;
  if(decision==='approve'&&!confirm('Sahkan kelulusan permohonan '+a.full_name+'?'))return;
  b.disabled=true;try{await adminRequest({action:'review',application_id:a.id,decision,reason});message('Keputusan berjaya disimpan.');await loadOwner();}
  catch(e){fail(e);}finally{b.disabled=false;}};row.append(b);}d.append(row);
- });}catch(e){fail(e);}
+ });await loadOwnerFinance();}catch(e){fail(e);}
 }
 $('refreshOwner').onclick=loadOwner;
 $('logout').onclick=async()=>{await supabase.auth.signOut();await sync();};
