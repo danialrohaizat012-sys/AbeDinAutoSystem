@@ -1,0 +1,34 @@
+name: Agent Portal Production Smoke
+on:
+  push:
+    branches: [main]
+    paths:
+      - agent.html
+      - agent-payout-verify.html
+      - .github/workflows/agent-production-smoke.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  production-pages:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Verify deployed portal paths and content
+        shell: bash
+        run: |
+          set -euo pipefail
+          for path in agent.html agent-payout-verify.html; do
+            url="https://abedinauto.my/$path"
+            echo "Checking $url"
+            curl --fail --location --silent --show-error --max-time 20 --retry 1 --output /tmp/agent-check.html "$url"
+            grep -q 'AbeDin Auto' /tmp/agent-check.html
+            if [ "$path" = "agent.html" ]; then
+              grep -q 'Menunggu pengesahan oleh HR Aiman' /tmp/agent-check.html
+              grep -q 'agent-portal-admin' /tmp/agent-check.html
+            else
+              grep -q 'Tarikh DAN masa pembayaran bank sebenar' /tmp/agent-check.html
+              grep -q 'agent-payout-verifier' /tmp/agent-check.html
+            fi
+            echo "PASS: $path contains current production release"
+          done
