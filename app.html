@@ -87,7 +87,7 @@
 <link rel="preconnect" href="https://buzpdyvvoiqgbeventwm.supabase.co" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm" crossorigin>
-<link rel="stylesheet" href="css/app.css?v=50.58">
+<link rel="stylesheet" href="css/app.css?v=50.59">
 <link rel="stylesheet" href="css/vehicle360.css?v=83.0">
 <link rel="stylesheet" href="css/admin-menu.css?v=83.6">
 <link rel="stylesheet" href="css/staff-dashboard.css?v=83.2">
@@ -969,19 +969,18 @@ function showEditSaleForm(saleId){
   const o=cloudModal('Edit Jualan · '+(v.plate||''),`<div class="cloud-notice">${safe([v.model_year,v.make,v.model].filter(Boolean).join(' '))} · ${safe(v.plate||'')}</div>
     <h3 class="ada-edit-h">Maklumat Jualan</h3>
     <label>Pelanggan<select name="customer_id">${customers.map(c=>`<option value="${safe(c.id)}"${c.id===x.customer_id?' selected':''}>${safe(c.full_name)} · ${safe(c.phone||'')}</option>`).join('')}</select></label>
-    <div class="ada-edit-grid"><label>Harga dipersetujui (RM)<input name="agreed_price" type="number" min="0.01" step="0.01" value="${Number(x.agreed_price||0)}" required></label><label>Tarikh jualan<input type="date" name="sale_date" value="${isoDate(x.created_at)}"></label></div>
+    <div class="ada-edit-grid"><label>Harga dipersetujui (RM) <small class="muted">🔒 dari inventori</small><input name="agreed_price" type="number" min="0.01" step="0.01" value="${Number(x.agreed_price||0)}" readonly class="ada-locked" title="Harga asal dari inventori tidak boleh diubah"></label><label>Tarikh jualan<input type="date" name="sale_date" value="${isoDate(x.created_at)}"></label></div>
     <h3 class="ada-edit-h">Maklumat Pelanggan</h3>
     <div class="ada-edit-grid"><label class="ada-edit-wide">Nama<input name="c_name" required></label><label>Telefon<input name="c_phone"></label><label>Email<input name="c_email" type="email"></label></div>
     <h3 class="ada-edit-h">Rekod Bayaran</h3>
     ${pays.length?pays.map(payBlock).join(''):'<p class="muted">Belum ada bayaran direkodkan.</p>'}
     <div class="ada-pay-sum" data-pay-sum></div>
-    <p class="muted ada-edit-note">Status jualan dan kenderaan tidak berubah melalui borang ini. Jumlah dibayar mesti sama dengan harga jualan${String(x.status||'').toLowerCase()==='sold'?' (jualan Sold)':', dan tidak boleh melebihi harga'}.</p>
+    <p class="muted ada-edit-note">Status jualan dan kenderaan tidak berubah melalui borang ini. Harga dipersetujui dikunci mengikut harga asal inventori; jumlah bayaran boleh diubah.</p>
     <button>Simpan Perubahan</button>`);
   const fm=o.querySelector('form'),err=o.querySelector('.ada-form-error'),csel=fm.querySelector('[name=customer_id]');
   wireRefGen(o,v.plate);wireLoan(o);
   o.querySelectorAll('[data-del-pay]').forEach(b=>b.addEventListener('click',async e=>{e.preventDefault();const p=pays.find(y=>String(y.id)===b.dataset.delPay);if(!p)return;
     const left=pays.filter(y=>y!==p&&o.querySelector(`[data-pay-id="${y.id}"]`)).reduce((a,y)=>a+Number(y.amount||0),0),bal=Number(x.agreed_price||0)-left;
-    if(String(x.status||'').toLowerCase()==='sold'&&Math.abs(bal)>0.009){alert(`Tidak boleh padam.\n\nJualan ini Sold. Selepas dipadam, dibayar ${money(left)} tetapi harga jualan ${money(x.agreed_price)}.\n\nUbah jumlah bayaran supaya jumlah dibayar sama dengan harga jualan, kemudian tekan Simpan.`);return}
     if(!confirm(`Padam bayaran ini?\n\n${p.kind==='deposit'?'Deposit':'Bayaran Penuh'} · ${money(p.amount)}\nRujukan: ${p.reference_no||'-'}\n\nSelepas dipadam: dibayar ${money(left)} · ${bal>0.5?'baki '+money(bal):bal<-0.5?'lebih bayar '+money(-bal):'bayar penuh'}.\n\nTindakan ini direkod dalam audit dan tidak boleh dibatalkan.`))return;
     b.disabled=true;b.textContent='Memadam…';const {data,error}=await client.rpc('delete_payment_record',{p_payment_id:p.id});
     if(error){b.disabled=false;b.textContent='🗑 Padam';alert('Gagal padam: '+(error.message||error));return}
@@ -990,7 +989,7 @@ function showEditSaleForm(saleId){
   const isSold=String(x.status||'').toLowerCase()==='sold';
   const payTotal=()=>[...fm.querySelectorAll('.ada-edit-pay [name=pamount]')].reduce((a,i)=>a+(Number(i.value)||0),0);
   const sumBox=fm.querySelector('[data-pay-sum]');
-  const paySum=()=>{const pr=Number(fm.agreed_price.value)||0,pd=payTotal(),d=pr-pd;const ok=isSold?Math.abs(d)<0.01:d>-0.01;sumBox.className='ada-pay-sum '+(ok?'ok':'bad');sumBox.innerHTML=`<span>Harga jualan <b>${money(pr)}</b></span><span>Jumlah dibayar <b>${money(pd)}</b></span><span class="st">${Math.abs(d)<0.01?'✓ Sama':d>0?(isSold?'✗ Kurang ':'Baki ')+money(d):'✗ Lebih bayar '+money(-d)}</span>`;return ok};
+  const paySum=()=>{const pr=Number(fm.agreed_price.value)||0,pd=payTotal(),d=pr-pd;const ok=true;sumBox.className='ada-pay-sum '+(Math.abs(d)<0.01?'ok':'info');sumBox.innerHTML=`<span>Harga jualan <b>${money(pr)}</b></span><span>Jumlah dibayar <b>${money(pd)}</b></span><span class="st">${Math.abs(d)<0.01?'✓ Sama':d>0?'Baki '+money(d):'Lebih bayar '+money(-d)}</span>`;return ok};
   fm.addEventListener('input',e=>{if(e.target.name==='pamount'||e.target.name==='agreed_price')paySum()});
   paySum();
   const fillCust=()=>{const c=customers.find(y=>y.id===csel.value)||{};fm.c_name.value=c.full_name||'';fm.c_phone.value=c.phone||'';fm.c_email.value=c.email||''};
@@ -1002,7 +1001,6 @@ function showEditSaleForm(saleId){
       const c=customers.find(y=>y.id===csel.value)||{},cn=fm.c_name.value.trim(),cp=fm.c_phone.value.trim(),ce=fm.c_email.value.trim();
       if(c.id&&(cn!==(c.full_name||'')||cp!==(c.phone||'')||ce!==(c.email||''))){await call('update_customer_details',{p_customer_id:c.id,p_full_name:cn,p_phone:cp,p_email:ce});done.push('pelanggan')}
       const price=Number(fm.agreed_price.value),sd=fm.sale_date.value||null;
-      if(!paySum()){const pd=payTotal();throw new Error(isSold?`Jualan Sold: jumlah dibayar (${money(pd)}) mesti sama dengan harga jualan (${money(price)}). Betulkan harga atau jumlah bayaran.`:`Jumlah dibayar (${money(pd)}) melebihi harga jualan (${money(price)}).`)}
       const saleChanged=csel.value!==x.customer_id||price!==Number(x.agreed_price)||(sd&&sd!==isoDate(x.created_at));
       const doSale=async()=>{if(saleChanged){await call('update_sale_details',{p_sale_id:x.id,p_customer_id:csel.value||null,p_agreed_price:price,p_sale_date:sd});done.push('jualan')}};
       if(price>=Number(x.agreed_price))await doSale();
@@ -1022,7 +1020,7 @@ function showSaleForm(preId){preId=typeof preId==='string'?preId:null;const cars
     <div data-cust-pane="new" class="ada-cust-new"><label>Nama pelanggan<input name="new_name" placeholder="Nama penuh seperti dalam IC" autocomplete="off"></label><div class="ada-edit-grid"><label>No. telefon<input name="new_phone" type="tel" placeholder="01x-xxxxxxx"></label><label>No. IC (pilihan)<input name="new_ic" placeholder="xxxxxx-xx-xxxx"></label></div><label>Email (pilihan)<input name="new_email" type="email"></label></div>
     <div data-cust-pane="old"><label>Pelanggan sedia ada<select name="customer_id">${customers.map(c=>`<option value="${c.id}">${safe(c.full_name)} · ${safe(c.phone||'')}</option>`).join('')}</select></label><div class="ada-edit-grid"><label class="ada-edit-wide">Nama pelanggan<input name="c_name"></label><label>Telefon<input name="c_phone" type="tel"></label><label>Email<input name="c_email" type="email"></label></div></div>
     <h3 class="ada-edit-h">Maklumat Jualan</h3>
-    <div class="ada-edit-grid"><label>Harga dipersetujui (RM)<input name="agreed_price" type="number" min="0.01" step="0.01" required></label><label>Tarikh jualan<input name="sale_date" type="date" value="${isoDate(new Date())}" required></label></div>
+    <div class="ada-edit-grid"><label>Harga dipersetujui (RM) <small class="muted">🔒 harga asal inventori</small><input name="agreed_price" type="number" min="0.01" step="0.01" required readonly class="ada-locked" title="Harga asal dari inventori tidak boleh diubah"></label><label>Tarikh jualan<input name="sale_date" type="date" value="${isoDate(new Date())}" required></label></div>
     <h3 class="ada-edit-h">Rekod Bayaran (Pilihan)</h3>
     <label class="ada-sale-pay-toggle"><input type="checkbox" name="record_payment"> Rekod bayaran pertama sekarang</label>
     <fieldset class="ada-edit-pay" data-new-sale-pay hidden disabled><legend>Bayaran 1</legend><div class="ada-edit-grid">
@@ -1035,13 +1033,13 @@ function showSaleForm(preId){preId=typeof preId==='string'?preId:null;const cars
       <label class="ada-edit-wide">Nota<input name="pnote" placeholder="Catatan bayaran (pilihan)"></label>
     </div></fieldset>
     <p class="muted ada-edit-note">Tanpa bayaran, kereta akan berstatus Reserved. Bayaran penuh yang mencukupi akan menandakan jualan Sold.</p>
-    <button>Cipta Sale / Reserve Kereta</button>`);{const fm=o.querySelector('form'),price=fm.querySelector('[name=agreed_price]');wireRefGen(o,cars.find(v=>v.id===preId)?.plate||cars[0]?.plate||'');wireLoan(o);const payToggle=fm.querySelector('[name=record_payment]'),payBox=fm.querySelector('[data-new-sale-pay]');payToggle.addEventListener('change',()=>{payBox.hidden=!payToggle.checked;payBox.disabled=!payToggle.checked});let touched=false;price.addEventListener('input',()=>{touched=true});fm.querySelector('[name=vehicle_id]').addEventListener('change',e=>{const v=cars.find(c=>c.id===e.target.value);if(v&&!touched){const pr=Number(v.promo_price)>0&&Number(v.promo_price)<Number(v.asking_price)?Number(v.promo_price):Number(v.asking_price||0);price.value=pr||''}const ref=fm.querySelector('[name=pref]');if(v&&ref){ref.value=genPayRef(v.plate);wireRefGen(o,v.plate)}});if(preId){const vs=fm.querySelector('[name=vehicle_id]');vs.value=preId;vs.dispatchEvent(new Event('change'))}attachPickerSearch(fm,'vehicle_id','🔍 Cari plat, jenama atau model...',id=>{const v=cars.find(c=>c.id===id)||{};return [v.plate,v.make,v.model,v.vehicle_id,v.model_year].join(' ')});if(customers.length)attachPickerSearch(fm,'customer_id','🔍 Cari nama atau telefon pelanggan...');const csel=fm.querySelector('[name=customer_id]');const fillCust=()=>{const c=customers.find(y=>y.id===csel?.value)||{};fm.querySelector('[name=c_name]').value=c.full_name||'';fm.querySelector('[name=c_phone]').value=c.phone||'';fm.querySelector('[name=c_email]').value=c.email||''};if(csel){csel.addEventListener('change',fillCust);fillCust()}
+    <button>Cipta Sale / Reserve Kereta</button>`);{const fm=o.querySelector('form'),price=fm.querySelector('[name=agreed_price]');wireRefGen(o,cars.find(v=>v.id===preId)?.plate||cars[0]?.plate||'');wireLoan(o);const payToggle=fm.querySelector('[name=record_payment]'),payBox=fm.querySelector('[data-new-sale-pay]');payToggle.addEventListener('change',()=>{payBox.hidden=!payToggle.checked;payBox.disabled=!payToggle.checked});let touched=false;price.addEventListener('input',()=>{touched=true});fm.querySelector('[name=vehicle_id]').addEventListener('change',e=>{const v=cars.find(c=>c.id===e.target.value);if(v){price.value=Number(v.asking_price||0)||''}const ref=fm.querySelector('[name=pref]');if(v&&ref){ref.value=genPayRef(v.plate);wireRefGen(o,v.plate)}});{const vs=fm.querySelector('[name=vehicle_id]');if(preId)vs.value=preId;vs.dispatchEvent(new Event('change'))}attachPickerSearch(fm,'vehicle_id','🔍 Cari plat, jenama atau model...',id=>{const v=cars.find(c=>c.id===id)||{};return [v.plate,v.make,v.model,v.vehicle_id,v.model_year].join(' ')});if(customers.length)attachPickerSearch(fm,'customer_id','🔍 Cari nama atau telefon pelanggan...');const csel=fm.querySelector('[name=customer_id]');const fillCust=()=>{const c=customers.find(y=>y.id===csel?.value)||{};fm.querySelector('[name=c_name]').value=c.full_name||'';fm.querySelector('[name=c_phone]').value=c.phone||'';fm.querySelector('[name=c_email]').value=c.email||''};if(csel){csel.addEventListener('change',fillCust);fillCust()}
   let mode=customers.length?'old':'new';const setMode=m=>{mode=m;fm.querySelectorAll('[data-cust-mode]').forEach(b=>b.classList.toggle('is-active',b.dataset.custMode===m));fm.querySelectorAll('[data-cust-pane]').forEach(p=>p.hidden=p.dataset.custPane!==m);fm.querySelector('[name=new_name]').required=m==='new';fm.querySelector('[name=c_name]').required=m==='old';if(m==='new')setTimeout(()=>fm.querySelector('[name=new_name]').focus(),30)};fm.querySelectorAll('[data-cust-mode]').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.custMode)));setMode(mode);
   fm.onsubmit=async e=>{e.preventDefault();const f=new FormData(e.currentTarget),err=o.querySelector('.ada-form-error'),btn=fm.querySelector('button:not([type=button])');err.textContent='';btn.disabled=true;let custId=f.get('customer_id'),created=false;
     try{
       const hasPay=!!f.get('record_payment'),price=Number(f.get('agreed_price')),amount=hasPay?Number(f.get('pamount')):null;
       if(!Number.isFinite(price)||price<=0)throw new Error('Harga dipersetujui tidak sah.');
-      if(hasPay&&(!Number.isFinite(amount)||amount<=0||amount>price))throw new Error('Jumlah bayaran mesti melebihi sifar dan tidak melebihi harga jualan.');
+      if(hasPay&&(!Number.isFinite(amount)||amount<=0))throw new Error('Jumlah bayaran mesti lebih daripada sifar.');
       if(!f.get('sale_date')||(hasPay&&!f.get('pdate')))throw new Error('Sila isi tarikh jualan dan tarikh bayaran.');
       const todayMY=isoDate(new Date());
       if(f.get('sale_date')>todayMY||(hasPay&&f.get('pdate')>todayMY))throw new Error('Tarikh jualan atau bayaran tidak boleh pada masa hadapan.');

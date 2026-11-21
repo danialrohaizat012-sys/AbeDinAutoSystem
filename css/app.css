@@ -2565,3 +2565,5 @@ button.ada-pay-del{width:auto!important;min-height:0!important;margin:0 0 0 6px!
 .ada-pay-sum b{font-weight:800}.ada-pay-sum .st{margin-left:auto;font-weight:800}
 .ada-pay-sum.ok{background:rgba(62,207,142,.12);border-color:rgba(62,207,142,.4)}.ada-pay-sum.ok .st{color:#3ecf8e}
 .ada-pay-sum.bad{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.45)}.ada-pay-sum.bad .st{color:#ef4444}
+input.ada-locked{opacity:.8;cursor:not-allowed;background-image:none!important}
+.ada-pay-sum.info{background:rgba(245,196,0,.10);border-color:rgba(245,196,0,.4)}.ada-pay-sum.info .st{color:#f5c400}
