@@ -87,7 +87,7 @@
 <link rel="preconnect" href="https://buzpdyvvoiqgbeventwm.supabase.co" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm" crossorigin>
-<link rel="stylesheet" href="css/app.css?v=50.56">
+<link rel="stylesheet" href="css/app.css?v=50.58">
 <link rel="stylesheet" href="css/vehicle360.css?v=83.0">
 <link rel="stylesheet" href="css/admin-menu.css?v=83.6">
 <link rel="stylesheet" href="css/staff-dashboard.css?v=83.2">
@@ -965,7 +965,7 @@ function showEditSaleForm(saleId){
   const v=vehicles.find(y=>y.id===x.vehicle_id)||{};
   const pays=payments.filter(p=>p.sale_id===x.id).sort((a,b)=>String(a.confirmed_at||'').localeCompare(String(b.confirmed_at||'')));
   const methods=PAY_METHODS;
-  const payBlock=(p,i)=>{const sl=splitLoan(payMethodOf(p)),m=sl.m;return `<fieldset class="ada-edit-pay" data-pay-id="${safe(p.id)}"><legend>Bayaran ${i+1}</legend><div class="ada-edit-grid"><label>Tarikh<input type="date" name="pdate" value="${isoDate(p.confirmed_at)}"></label><label>Jenis<select name="pkind"><option value="deposit"${p.kind==='deposit'?' selected':''}>Deposit</option><option value="full_payment"${p.kind==='full_payment'?' selected':''}>Bayaran Penuh</option></select></label><label>Kaedah<select name="pmethod" data-paymethod><option value="">-</option>${[...new Set([...methods,m].filter(Boolean))].map(o=>`<option${o===m?' selected':''}>${safe(o)}</option>`).join('')}</select></label><label>Jumlah (RM)<input type="number" name="pamount" min="0.01" step="0.01" value="${Number(p.amount||0)}" required></label>${loanBankField('ploanbank',sl.bank)}<label class="ada-edit-wide">No. rujukan${refInput('pref',p.reference_no||genPayRef(v.plate))}</label><label class="ada-edit-wide">Nota<input name="pnote" value="${safe(payNoteOf(p))}"></label></div></fieldset>`};
+  const payBlock=(p,i)=>{const sl=splitLoan(payMethodOf(p)),m=sl.m;return `<fieldset class="ada-edit-pay" data-pay-id="${safe(p.id)}"><legend>Bayaran ${i+1} · ${money(p.amount)} <button type="button" class="ada-pay-del" data-del-pay="${safe(p.id)}" title="Padam bayaran ini">🗑 Padam</button></legend><div class="ada-edit-grid"><label>Tarikh<input type="date" name="pdate" value="${isoDate(p.confirmed_at)}"></label><label>Jenis<select name="pkind"><option value="deposit"${p.kind==='deposit'?' selected':''}>Deposit</option><option value="full_payment"${p.kind==='full_payment'?' selected':''}>Bayaran Penuh</option></select></label><label>Kaedah<select name="pmethod" data-paymethod><option value="">-</option>${[...new Set([...methods,m].filter(Boolean))].map(o=>`<option${o===m?' selected':''}>${safe(o)}</option>`).join('')}</select></label><label>Jumlah (RM)<input type="number" name="pamount" min="0.01" step="0.01" value="${Number(p.amount||0)}" required></label>${loanBankField('ploanbank',sl.bank)}<label class="ada-edit-wide">No. rujukan${refInput('pref',p.reference_no||genPayRef(v.plate))}</label><label class="ada-edit-wide">Nota<input name="pnote" value="${safe(payNoteOf(p))}"></label></div></fieldset>`};
   const o=cloudModal('Edit Jualan · '+(v.plate||''),`<div class="cloud-notice">${safe([v.model_year,v.make,v.model].filter(Boolean).join(' '))} · ${safe(v.plate||'')}</div>
     <h3 class="ada-edit-h">Maklumat Jualan</h3>
     <label>Pelanggan<select name="customer_id">${customers.map(c=>`<option value="${safe(c.id)}"${c.id===x.customer_id?' selected':''}>${safe(c.full_name)} · ${safe(c.phone||'')}</option>`).join('')}</select></label>
@@ -974,10 +974,25 @@ function showEditSaleForm(saleId){
     <div class="ada-edit-grid"><label class="ada-edit-wide">Nama<input name="c_name" required></label><label>Telefon<input name="c_phone"></label><label>Email<input name="c_email" type="email"></label></div>
     <h3 class="ada-edit-h">Rekod Bayaran</h3>
     ${pays.length?pays.map(payBlock).join(''):'<p class="muted">Belum ada bayaran direkodkan.</p>'}
-    <p class="muted ada-edit-note">Status jualan dan kenderaan tidak berubah melalui borang ini.</p>
+    <div class="ada-pay-sum" data-pay-sum></div>
+    <p class="muted ada-edit-note">Status jualan dan kenderaan tidak berubah melalui borang ini. Jumlah dibayar mesti sama dengan harga jualan${String(x.status||'').toLowerCase()==='sold'?' (jualan Sold)':', dan tidak boleh melebihi harga'}.</p>
     <button>Simpan Perubahan</button>`);
   const fm=o.querySelector('form'),err=o.querySelector('.ada-form-error'),csel=fm.querySelector('[name=customer_id]');
   wireRefGen(o,v.plate);wireLoan(o);
+  o.querySelectorAll('[data-del-pay]').forEach(b=>b.addEventListener('click',async e=>{e.preventDefault();const p=pays.find(y=>String(y.id)===b.dataset.delPay);if(!p)return;
+    const left=pays.filter(y=>y!==p&&o.querySelector(`[data-pay-id="${y.id}"]`)).reduce((a,y)=>a+Number(y.amount||0),0),bal=Number(x.agreed_price||0)-left;
+    if(String(x.status||'').toLowerCase()==='sold'&&Math.abs(bal)>0.009){alert(`Tidak boleh padam.\n\nJualan ini Sold. Selepas dipadam, dibayar ${money(left)} tetapi harga jualan ${money(x.agreed_price)}.\n\nUbah jumlah bayaran supaya jumlah dibayar sama dengan harga jualan, kemudian tekan Simpan.`);return}
+    if(!confirm(`Padam bayaran ini?\n\n${p.kind==='deposit'?'Deposit':'Bayaran Penuh'} · ${money(p.amount)}\nRujukan: ${p.reference_no||'-'}\n\nSelepas dipadam: dibayar ${money(left)} · ${bal>0.5?'baki '+money(bal):bal<-0.5?'lebih bayar '+money(-bal):'bayar penuh'}.\n\nTindakan ini direkod dalam audit dan tidak boleh dibatalkan.`))return;
+    b.disabled=true;b.textContent='Memadam…';const {data,error}=await client.rpc('delete_payment_record',{p_payment_id:p.id});
+    if(error){b.disabled=false;b.textContent='🗑 Padam';alert('Gagal padam: '+(error.message||error));return}
+    b.closest('.ada-edit-pay')?.remove();try{paySum()}catch(_){}o.querySelectorAll('.ada-edit-pay legend').forEach((lg,k)=>{const n=lg.firstChild;if(n&&n.nodeType===3)n.textContent=n.textContent.replace(/^Bayaran \d+/,'Bayaran '+(k+1))});
+    const bl=Number(data?.balance||0);msg(`Bayaran ${money(p.amount)} dipadam. ${bl>0.5?'Baki belum dibayar '+money(bl)+'.':bl<-0.5?'Masih lebih bayar '+money(-bl)+'.':'Jualan kini bayar penuh.'}`);await refresh()}));
+  const isSold=String(x.status||'').toLowerCase()==='sold';
+  const payTotal=()=>[...fm.querySelectorAll('.ada-edit-pay [name=pamount]')].reduce((a,i)=>a+(Number(i.value)||0),0);
+  const sumBox=fm.querySelector('[data-pay-sum]');
+  const paySum=()=>{const pr=Number(fm.agreed_price.value)||0,pd=payTotal(),d=pr-pd;const ok=isSold?Math.abs(d)<0.01:d>-0.01;sumBox.className='ada-pay-sum '+(ok?'ok':'bad');sumBox.innerHTML=`<span>Harga jualan <b>${money(pr)}</b></span><span>Jumlah dibayar <b>${money(pd)}</b></span><span class="st">${Math.abs(d)<0.01?'✓ Sama':d>0?(isSold?'✗ Kurang ':'Baki ')+money(d):'✗ Lebih bayar '+money(-d)}</span>`;return ok};
+  fm.addEventListener('input',e=>{if(e.target.name==='pamount'||e.target.name==='agreed_price')paySum()});
+  paySum();
   const fillCust=()=>{const c=customers.find(y=>y.id===csel.value)||{};fm.c_name.value=c.full_name||'';fm.c_phone.value=c.phone||'';fm.c_email.value=c.email||''};
   csel.addEventListener('change',fillCust);fillCust();
   attachPickerSearch(fm,'customer_id','🔍 Cari nama atau telefon pelanggan...');
@@ -987,12 +1002,16 @@ function showEditSaleForm(saleId){
       const c=customers.find(y=>y.id===csel.value)||{},cn=fm.c_name.value.trim(),cp=fm.c_phone.value.trim(),ce=fm.c_email.value.trim();
       if(c.id&&(cn!==(c.full_name||'')||cp!==(c.phone||'')||ce!==(c.email||''))){await call('update_customer_details',{p_customer_id:c.id,p_full_name:cn,p_phone:cp,p_email:ce});done.push('pelanggan')}
       const price=Number(fm.agreed_price.value),sd=fm.sale_date.value||null;
-      if(csel.value!==x.customer_id||price!==Number(x.agreed_price)||(sd&&sd!==isoDate(x.created_at))){await call('update_sale_details',{p_sale_id:x.id,p_customer_id:csel.value||null,p_agreed_price:price,p_sale_date:sd});done.push('jualan')}
+      if(!paySum()){const pd=payTotal();throw new Error(isSold?`Jualan Sold: jumlah dibayar (${money(pd)}) mesti sama dengan harga jualan (${money(price)}). Betulkan harga atau jumlah bayaran.`:`Jumlah dibayar (${money(pd)}) melebihi harga jualan (${money(price)}).`)}
+      const saleChanged=csel.value!==x.customer_id||price!==Number(x.agreed_price)||(sd&&sd!==isoDate(x.created_at));
+      const doSale=async()=>{if(saleChanged){await call('update_sale_details',{p_sale_id:x.id,p_customer_id:csel.value||null,p_agreed_price:price,p_sale_date:sd});done.push('jualan')}};
+      if(price>=Number(x.agreed_price))await doSale();
       for(const fs of fm.querySelectorAll('.ada-edit-pay')){const p=pays.find(y=>String(y.id)===fs.dataset.payId);if(!p)continue;const q=n=>fs.querySelector(`[name=${n}]`).value;
         const kind=q('pkind'),amt=Number(q('pamount')),ref=q('pref').trim(),meth=withLoanBank(q('pmethod'),q('ploanbank')),note=q('pnote').trim(),pd=q('pdate')||null;
         const notes=(meth?`[Kaedah: ${meth}]`:'')+(note?(meth?' ':'')+note:'');
         if(kind!==p.kind||amt!==Number(p.amount)||ref!==(p.reference_no||'')||notes!==String(p.notes||'')||(pd&&pd!==isoDate(p.confirmed_at))){await call('update_payment_record',{p_payment_id:p.id,p_kind:kind,p_amount:amt,p_reference_no:ref,p_notes:notes||null,p_paid_date:pd});done.push('bayaran')}
       }
+      if(price<Number(x.agreed_price))await doSale();
       o.remove();await refresh();msg(done.length?'Perubahan disimpan: '+[...new Set(done)].join(', ')+'.':'Tiada perubahan untuk disimpan.');
     }catch(x2){err.textContent=(done.length?'Sebahagian disimpan ('+[...new Set(done)].join(', ')+'). ':'')+'Gagal: '+(x2.message||x2);btn.disabled=false;if(done.length)refresh()}
   };

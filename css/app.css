@@ -2558,3 +2558,10 @@ html.ada-light #ada-cloud-gate .ada-pager .ada-pg-b{border-color:#00000020!impor
 #ada-cloud-gate .ada-pager .ada-pg-b[disabled]{opacity:.35;cursor:default}
 #ada-cloud-gate .ada-pg-gap{padding:0 3px;opacity:.6}
 @media(max-width:700px){#ada-cloud-gate .ada-pager{justify-content:center}#ada-cloud-gate .ada-pg-info{width:100%;text-align:center}}
+/* V104 padam bayaran */
+.ada-edit-pay legend{display:flex;align-items:center;gap:10px}
+button.ada-pay-del{width:auto!important;min-height:0!important;margin:0 0 0 6px!important;padding:4px 10px!important;border-radius:8px!important;font-size:12px!important;font-weight:750!important;background:transparent!important;color:#ef4444!important;border:1px solid #ef444466!important;box-shadow:none!important;cursor:pointer}
+.ada-pay-sum{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;padding:10px 12px;border-radius:12px;margin:10px 0 4px;font-size:13px;border:1px solid}
+.ada-pay-sum b{font-weight:800}.ada-pay-sum .st{margin-left:auto;font-weight:800}
+.ada-pay-sum.ok{background:rgba(62,207,142,.12);border-color:rgba(62,207,142,.4)}.ada-pay-sum.ok .st{color:#3ecf8e}
+.ada-pay-sum.bad{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.45)}.ada-pay-sum.bad .st{color:#ef4444}
