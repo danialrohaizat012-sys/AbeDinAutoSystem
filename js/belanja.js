@@ -445,6 +445,9 @@ export function mountBelanja(host, ctx) {
     if (b.hasAttribute("data-zip")) { b.disabled = true; try { await exportZip(L); } catch (er) { say("Gagal ZIP: " + (er?.message || er), "err"); } b.disabled = false; return; }
   });
 
+  // Dibuka dari notifikasi resit -> terus buka resit berkenaan
+  const want = window.__adaOpenResit; window.__adaOpenResit = null;
+  if (want) { S.tab = "list"; S.f.month = "all"; S.editId = want; }
   render();
-  load();
+  load().then(() => { if (want && !S.rows.some(r => r.id === want)) { S.editId = null; say("Resit tidak dijumpai atau telah dipadam.", "err"); render(); } });
 }
