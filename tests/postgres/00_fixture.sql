@@ -38,7 +38,11 @@ create table public.sales (
 create table public.payments (
  id uuid primary key,
  sale_id uuid not null references public.sales(id),
- amount numeric(14,2) not null
+ kind text not null check (kind in ('deposit','full_payment')),
+ amount numeric(14,2) not null,
+ reference_no text not null,
+ confirmed_by uuid not null references public.profiles(id),
+ confirmed_at timestamptz not null default now()
 );
 
 -- service_role emulates the server role on Supabase; authenticated is RLS-limited.
