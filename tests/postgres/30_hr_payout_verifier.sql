@@ -4,7 +4,8 @@
 insert into public.agent_payout_verifiers(user_id,enabled,granted_by,reason)
 values('00000000-0000-4000-8000-000000000006',true,
        '00000000-0000-4000-8000-000000000001',
-       'Synthetic HR authorized as second verifier for integration tests');
+       'Synthetic HR authorized as second verifier for integration tests')
+on conflict(user_id) do update set enabled=true;
 
 select public.assert_test(
  (select role::text='sales_advisor' from public.profiles
