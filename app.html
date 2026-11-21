@@ -87,7 +87,7 @@
 <link rel="preconnect" href="https://buzpdyvvoiqgbeventwm.supabase.co" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm" crossorigin>
-<link rel="stylesheet" href="css/app.css?v=50.51">
+<link rel="stylesheet" href="css/app.css?v=50.52">
 <link rel="stylesheet" href="css/vehicle360.css?v=83.0">
 <link rel="stylesheet" href="css/admin-menu.css?v=83.6">
 <link rel="stylesheet" href="css/staff-dashboard.css?v=83.2">
@@ -481,7 +481,7 @@ function bindSalesReportCloud(){
 
 
 /* V84: Kemas kini masa nyata (<5 saat) — Supabase Realtime -> muat semula data halaman semasa */
-const LIVE_TABLES=['vehicles','sales','payments','customers','suppliers','puspakom','checklist_inspections','vehicle_images','vehicle_costs','staff_leaves','staff_claims','staff_advances','staff_hr','staff_pay','attendance_punches','attendance_requests','attendance_day_flags','buyer_applications'];
+const LIVE_TABLES=['expenses','vehicles','sales','payments','customers','suppliers','puspakom','checklist_inspections','vehicle_images','vehicle_costs','staff_leaves','staff_claims','staff_advances','staff_hr','staff_pay','attendance_punches','attendance_requests','attendance_day_flags','buyer_applications'];
 const LIVE_CORE=new Set(['vehicles','sales','payments','customers','suppliers','puspakom','checklist_inspections','vehicle_images','vehicle_costs']);
 const LIVE_MODULE_PAGES=new Set(['applications','belanja','kehadiran','pemeriksaan','profil','puspakom','runner','sewa','settings','staf']);
 let liveCh=null,liveQ=new Set(),liveT=null,liveStale=false,liveRetry=null,liveBusyT=null;
@@ -494,7 +494,7 @@ window.__adaLive=function(host,tables,fn,busy){if(!host)return;if(host.__adaLive
   const h=e=>{if(!host.isConnected){window.removeEventListener('ada-data',h);return}const t=(e.detail&&e.detail.tables)||[];if(tables&&t.length&&!tables.some(x=>t.includes(x)))return;
     const run=()=>{if(!host.isConnected)return;if(liveDirty(host.shadowRoot)||(busy&&busy())){clearTimeout(host.__adaLiveT);host.__adaLiveT=setTimeout(run,1500);return}try{fn()}catch(_){}};run()};
   host.__adaLiveH=h;window.addEventListener('ada-data',h)};
-async function liveApply(){const tabs=[...liveQ];liveQ.clear();if(!profile)return;
+async function liveApply(){const tabs=[...liveQ];liveQ.clear();if(!profile)return;if(tabs.includes('expenses')){dashExp=null;if(current==='dashboard'&&!LIVE_CORE.has('expenses'))tabs.push('vehicles')}
   window.dispatchEvent(new CustomEvent('ada-data',{detail:{tables:tabs}}));
   if(!tabs.some(t=>LIVE_CORE.has(t)))return;
   if(LIVE_MODULE_PAGES.has(current)){liveStale=true;return}
@@ -512,6 +512,86 @@ function startLive(){if(!profile)return;try{if(liveCh)client.removeChannel(liveC
 /* V85: Dashboard owner — reka bentuk moden */
 // V98: bulan jualan ikut TARIKH JUALAN (sales.created_at) dalam waktu Malaysia, bukan tarikh rekod dimasukkan
 const myYM=t=>{if(!t)return '';const d=new Date(new Date(t).getTime()+8*3600000);return isNaN(d)?'':d.toISOString().slice(0,7)};
+/* V99: Analitik dashboard — untung rugi harian/bulanan, inventori, graf berwarna */
+let dashPeriod='month',dashDayOff=0,dashExp=null,dashExpLoading=false;
+const ADX_PAL=['#5aa9ff','#a78bfa','#f472b6','#3ecf8e','#f5c400','#ff9f43','#22d3ee','#fb7185','#84cc16','#94a3b8'];
+function dashLoadExp(){if(dashExp||dashExpLoading||profile?.role!=='owner')return;dashExpLoading=true;client.from('expenses').select('receipt_date,amount,jenis,category,status,vehicle_id').eq('status','disahkan').limit(10000).then(({data,error})=>{dashExpLoading=false;dashExp=error?[]:(data||[]);if(current==='dashboard'&&!liveDirty(el('ada-cloud-gate')))renderCloud()},()=>{dashExpLoading=false;dashExp=[]})}
+if(!window.__adxClick){window.__adxClick=1;document.addEventListener('click',e=>{const t=e.target.closest?.('[data-adx-period],[data-adx-doff],[data-tip]');if(!t)return;
+  if(t.dataset.adxPeriod){dashPeriod=t.dataset.adxPeriod;renderCloud();return}
+  if(t.dataset.adxDoff){dashDayOff=Math.min(0,dashDayOff+Number(t.dataset.adxDoff));renderCloud();return}
+  const card=t.closest('.adx-card');const line=card&&card.querySelector('.adx-tipline');if(line){line.innerHTML=t.dataset.tip;line.classList.add('on');card.querySelectorAll('.sel').forEach(x=>x.classList.remove('sel'));t.classList.add('sel')}},true);
+  document.addEventListener('mouseover',e=>{const t=e.target.closest?.('[data-tip]');if(!t||!matchMedia('(hover:hover)').matches)return;const card=t.closest('.adx-card'),line=card&&card.querySelector('.adx-tipline');if(line){line.innerHTML=t.dataset.tip;line.classList.add('on')}})}
+function adxAnalytics(c){const {live,capOf,soldIds,st,I}=c;dashLoadExp();setTimeout(()=>document.querySelectorAll('#ada-cloud-gate .adx-scroll').forEach(x=>{if(!x.dataset.s){x.dataset.s=1;x.scrollLeft=x.scrollWidth}}),0);
+  const kl=t=>{if(!t)return '';const d=new Date(new Date(t).getTime()+8*3600000);return isNaN(d)?'':d.toISOString().slice(0,10)};
+  const sd=x=>kl(x.created_at||x.sold_at),todayK=kl(new Date());
+  const vOf=id=>vehicles.find(v=>v.id===id);
+  const rows=live.map(x=>{const v=vOf(x.vehicle_id),rev=Number(x.agreed_price||0),cost=v?capOf(v):0;return{d:sd(x),rev,cost,pr:rev-cost,v,x}}).filter(r=>r.d);
+  const exps=(dashExp||[]).filter(e=>e.jenis!=='inventori').map(e=>({d:String(e.receipt_date||'').slice(0,10),a:Number(e.amount||0),c:e.category}));
+  const now=new Date(new Date().getTime()+8*3600000),Y=now.getUTCFullYear(),M=now.getUTCMonth(),pad=n=>String(n).padStart(2,'0');
+  const dow=(now.getUTCDay()+6)%7,wk=new Date(Date.UTC(Y,M,now.getUTCDate()-dow)).toISOString().slice(0,10);
+  const pm=new Date(Date.UTC(Y,M-1,1)),pmK=pm.getUTCFullYear()+'-'+pad(pm.getUTCMonth()+1),mK=Y+'-'+pad(M+1);
+  const P={today:['Hari ini',d=>d===todayK],week:['Minggu ini',d=>d>=wk&&d<=todayK],month:['Bulan ini',d=>d.slice(0,7)===mK],last:['Bulan lepas',d=>d.slice(0,7)===pmK],year:['Tahun ini',d=>d.slice(0,4)===String(Y)],all:['Semua',()=>true]};
+  const f=(P[dashPeriod]||P.month)[1],pr=rows.filter(r=>f(r.d)),pe=exps.filter(e=>f(e.d));
+  const rev=pr.reduce((a,r)=>a+r.rev,0),cost=pr.reduce((a,r)=>a+r.cost,0),gross=rev-cost,opex=pe.reduce((a,e)=>a+e.a,0),net=gross-opex,mg=rev?gross/rev*100:0,nmg=rev?net/rev*100:0;
+  const avg=pr.length?gross/pr.length:0,best=[...pr].sort((a,b)=>b.pr-a.pr)[0];
+  const mx1=Math.max(rev,1),bar=(l,v,col,sign,sub)=>`<div class="adx-pl-row"><div class="adx-pl-l"><span><i style="background:${col}"></i>${l}</span><b class="${v<0?'neg':''}">${sign||''}${money(Math.abs(v))}</b></div><div class="adx-pl-track"><i style="width:${Math.max(v?2:0,Math.min(100,Math.abs(v)/mx1*100))}%;background:${col}"></i></div>${sub?`<small>${sub}</small>`:''}</div>`;
+  const chips=Object.entries(P).map(([k,[l]])=>`<button class="adx-chip${dashPeriod===k?' on':''}" data-adx-period="${k}">${l}</button>`).join('');
+  // Harian (bulan dipilih)
+  const dm=new Date(Date.UTC(Y,M+dashDayOff,1)),dY=dm.getUTCFullYear(),dM=dm.getUTCMonth(),dmK=dY+'-'+pad(dM+1),nd=new Date(Date.UTC(dY,dM+1,0)).getUTCDate();
+  const days=[];for(let i=1;i<=nd;i++){const k=dmK+'-'+pad(i),r=rows.filter(x=>x.d===k),e=exps.filter(x=>x.d===k);days.push({i,k,rev:r.reduce((a,x)=>a+x.rev,0),pr:r.reduce((a,x)=>a+x.pr,0),ex:e.reduce((a,x)=>a+x.a,0),n:r.length})}
+  const dMax=Math.max(1,...days.map(d=>Math.max(d.rev,Math.abs(d.pr)))),dNeg=Math.max(0,...days.map(d=>Math.max(0,-d.pr))),dTot=days.reduce((a,d)=>a+d.pr,0),dRev=days.reduce((a,d)=>a+d.rev,0),dN=days.reduce((a,d)=>a+d.n,0);
+  const W=Math.max(320,nd*18),H=170,base=dNeg?H*0.8:H-4,sc=(base-6)/dMax,bw=W/nd;
+  const dsvg=`<svg class="adx-svg" viewBox="0 0 ${W} ${H+18}" preserveAspectRatio="none"><defs><linearGradient id="gRev" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5aa9ff" stop-opacity=".55"/><stop offset="1" stop-color="#a78bfa" stop-opacity=".15"/></linearGradient><linearGradient id="gPr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4ade80"/><stop offset="1" stop-color="#10b981"/></linearGradient></defs><line x1="0" x2="${W}" y1="${base}" y2="${base}" class="adx-axis"/>${days.map((d,j)=>{const x=j*bw,tip=`<b>${d.i} ${dm.toLocaleDateString('ms-MY',{month:'short',timeZone:'UTC'})}</b> · ${d.n} unit · Jualan ${money(d.rev)} · Untung <em class="${d.pr<0?'dn':'up'}">${money(d.pr)}</em>${d.ex?` · Belanja ${money(d.ex)}`:''}`,rh=d.rev*sc,ph=Math.abs(d.pr)*sc;return `<g data-tip="${safe(tip)}" class="adx-hit${d.k===todayK?' today':''}"><rect x="${x}" y="0" width="${bw}" height="${H+18}" fill="transparent"/>${d.rev?`<rect x="${x+bw*.12}" y="${base-rh}" width="${bw*.76}" height="${rh}" rx="3" fill="url(#gRev)"/>`:''}${d.pr?`<rect x="${x+bw*.3}" y="${d.pr>=0?base-ph:base}" width="${bw*.4}" height="${Math.max(2,ph)}" rx="2" fill="${d.pr>=0?'url(#gPr)':'#fb7185'}"/>`:''}${(d.i===1||d.i%5===0||d.i===nd)?`<text x="${x+bw/2}" y="${H+14}" class="adx-tx">${d.i}</text>`:''}</g>`}).join('')}</svg>`;
+  // Bulanan 12
+  const ms=[];for(let i=11;i>=0;i--){const d=new Date(Date.UTC(Y,M-i,1)),k=d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1),r=rows.filter(x=>x.d.slice(0,7)===k),e=exps.filter(x=>x.d.slice(0,7)===k);ms.push({k,l:d.toLocaleDateString('ms-MY',{month:'short',timeZone:'UTC'}),rev:r.reduce((a,x)=>a+x.rev,0),pr:r.reduce((a,x)=>a+x.pr,0),ex:e.reduce((a,x)=>a+x.a,0),n:r.length})}
+  const mMax=Math.max(1,...ms.map(m=>Math.max(m.rev,m.pr,m.ex))),MW=600,MH=190,mb=MW/12,msc=(MH-26)/mMax;
+  const lineP=ms.map((m,j)=>`${j*mb+mb/2},${MH-(m.pr-m.ex>0?(m.pr-m.ex)*msc:0)}`).join(' ');
+  const msvg=`<svg class="adx-svg" viewBox="0 0 ${MW} ${MH+20}" preserveAspectRatio="none"><defs><linearGradient id="gMr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5aa9ff"/><stop offset="1" stop-color="#a78bfa"/></linearGradient><linearGradient id="gMp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4ade80"/><stop offset="1" stop-color="#059669"/></linearGradient><linearGradient id="gMe" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fdba74"/><stop offset="1" stop-color="#f97316"/></linearGradient></defs>${[.25,.5,.75,1].map(t=>`<line x1="0" x2="${MW}" y1="${MH-(MH-26)*t}" y2="${MH-(MH-26)*t}" class="adx-grid-l"/>`).join('')}<line x1="0" x2="${MW}" y1="${MH}" y2="${MH}" class="adx-axis"/>${ms.map((m,j)=>{const x=j*mb,tip=`<b>${m.l} ${m.k.slice(0,4)}</b> · ${m.n} unit · Jualan ${money(m.rev)} · Untung kasar <em class="up">${money(m.pr)}</em> · Belanja ${money(m.ex)} · Bersih <em class="${m.pr-m.ex<0?'dn':'up'}">${money(m.pr-m.ex)}</em>`;return `<g data-tip="${safe(tip)}" class="adx-hit${j===11?' today':''}"><rect x="${x}" y="0" width="${mb}" height="${MH+20}" fill="transparent"/><rect x="${x+mb*.14}" y="${MH-m.rev*msc}" width="${mb*.24}" height="${m.rev*msc}" rx="3" fill="url(#gMr)"/><rect x="${x+mb*.4}" y="${MH-Math.max(0,m.pr)*msc}" width="${mb*.22}" height="${Math.max(0,m.pr)*msc}" rx="3" fill="url(#gMp)"/><rect x="${x+mb*.64}" y="${MH-m.ex*msc}" width="${mb*.2}" height="${m.ex*msc}" rx="3" fill="url(#gMe)"/><text x="${x+mb/2}" y="${MH+15}" class="adx-tx">${m.l}</text></g>`}).join('')}<polyline points="${lineP}" fill="none" stroke="#f472b6" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>${ms.map((m,j)=>`<circle cx="${j*mb+mb/2}" cy="${MH-(m.pr-m.ex>0?(m.pr-m.ex)*msc:0)}" r="3.5" fill="#f472b6"/>`).join('')}</svg>`;
+  // Inventori
+  const stock=vehicles.filter(v=>!(soldIds.has(v.id)||st(v)==='sold'));
+  const byMake={};stock.forEach(v=>{const k=String(v.make||'Lain').trim().toUpperCase()||'LAIN';(byMake[k]=byMake[k]||{n:0,cap:0,ask:0});byMake[k].n++;byMake[k].cap+=capOf(v);byMake[k].ask+=Number(v.asking_price||0)});
+  let mk=Object.entries(byMake).sort((a,b)=>b[1].n-a[1].n);if(mk.length>7){const rest=mk.slice(6).reduce((a,[,o])=>({n:a.n+o.n,cap:a.cap+o.cap,ask:a.ask+o.ask}),{n:0,cap:0,ask:0});mk=[...mk.slice(0,6),['LAIN-LAIN',rest]]}
+  const tot=Math.max(1,stock.length),R=54,C=2*Math.PI*R;let acc=0;
+  const donut=`<svg class="adx-donut" viewBox="0 0 140 140"><circle cx="70" cy="70" r="${R}" fill="none" stroke="var(--bg2)" stroke-width="20"/>${mk.map(([k,o],i)=>{const len=o.n/tot*C,seg=`<circle data-tip="${safe(`<b>${k}</b> · ${o.n} unit · modal ${money(o.cap)} · potensi jual ${money(o.ask)}`)}" cx="70" cy="70" r="${R}" fill="none" stroke="${ADX_PAL[i%ADX_PAL.length]}" stroke-width="20" stroke-dasharray="${Math.max(0,len-1.5)} ${C}" stroke-dashoffset="${-acc}" transform="rotate(-90 70 70)"/>`;acc+=len;return seg}).join('')}<text x="70" y="66" class="adx-dn-v">${stock.length}</text><text x="70" y="84" class="adx-dn-l">unit stok</text></svg>`;
+  const age=v=>{const t=new Date(v.created_at);return isNaN(t)?0:Math.floor((Date.now()-t)/864e5)};
+  const bk=[['0–30 hari',0,30,'#3ecf8e'],['31–60 hari',31,60,'#f5c400'],['61–90 hari',61,90,'#ff9f43'],['90+ hari',91,1e9,'#fb7185']].map(([l,a,b,c])=>{const vs=stock.filter(v=>{const d=age(v);return d>=a&&d<=b});return{l,c,n:vs.length,cap:vs.reduce((x,v)=>x+capOf(v),0)}});
+  const bkMax=Math.max(1,...bk.map(b=>b.n)),avgAge=stock.length?Math.round(stock.reduce((a,v)=>a+age(v),0)/stock.length):0;
+  const capS=stock.reduce((a,v)=>a+capOf(v),0),askS=stock.reduce((a,v)=>a+Number(v.asking_price||0),0),potS=askS-capS;
+  const topP=[...rows].sort((a,b)=>b.pr-a.pr).slice(0,5),slow=[...stock].sort((a,b)=>age(b)-age(a)).slice(0,5);
+  const vlab=v=>v?`${safe(`${v.make||''} ${v.model||''}`.trim())} <span class="adx-plate">${safe(v.plate||'')}</span>`:'Kenderaan';
+  const mK2=v=>{v=Number(v||0);const a=Math.abs(v),sg=v<0?'−':'';return a>=1e6?`${sg}RM ${(a/1e6).toFixed(2)}j`:a>=1e4?`${sg}RM ${Math.round(a/1e3)}k`:money(v)};const rk=(i,col)=>`<span class="adx-rk" style="background:${col}22;color:${col}">${i+1}</span>`;
+  return {
+  pl:`<section class="adx-grid adx-plrow">
+ <div class="adx-card adx-pl"><div class="adx-card-h"><h3>Untung Rugi</h3><button class="adx-link" data-goto="belanja">Perbelanjaan ${I('arrow')}</button></div>
+  <div class="adx-chips">${chips}</div>
+  <div class="adx-pl-net ${net<0?'neg':''}"><span>Untung bersih · ${P[dashPeriod]?.[0]||'Bulan ini'}</span><b>${net<0?'−':''}${money(Math.abs(net))}</b><em>${nmg.toFixed(1)}% daripada jualan${dashExp===null?' · memuat belanja…':''}</em></div>
+  ${bar(`Hasil jualan · ${pr.length} unit`,rev,'linear-gradient(90deg,#5aa9ff,#a78bfa)')}
+  ${bar('Kos kereta dijual',cost,'linear-gradient(90deg,#94a3b8,#64748b)','− ','Modal + tukar nama, Puspakom, transport & baiki')}
+  ${bar(`Untung kasar · ${mg.toFixed(1)}%`,gross,gross<0?'#fb7185':'linear-gradient(90deg,#4ade80,#10b981)')}
+  ${bar(`Belanja operasi · ${pe.length} resit`,opex,'linear-gradient(90deg,#fdba74,#f97316)','− ','Resit disahkan (pembelian & overhead)')}
+  <div class="adx-pl-mini"><div><span>Purata untung / unit</span><b>${money(avg)}</b></div><div><span>Untung tertinggi</span><b>${best?money(best.pr):'—'}</b><small>${best?vlab(best.v):''}</small></div></div></div>
+ <div class="adx-card"><div class="adx-card-h"><div><h3>Untung Rugi Harian</h3><span class="adx-mut">${dm.toLocaleDateString('ms-MY',{month:'long',year:'numeric',timeZone:'UTC'})} · ${dN} unit · jualan ${money(dRev)} · untung <em class="${dTot<0?'dn':'up'}">${money(dTot)}</em></span></div><div class="adx-nav"><button class="adx-link" data-adx-doff="-1" aria-label="Bulan sebelum">‹</button><button class="adx-link" data-adx-doff="1" aria-label="Bulan seterusnya"${dashDayOff>=0?' disabled':''}>›</button></div></div>
+  <div class="adx-tipline">Tekan pada graf untuk lihat butiran hari</div>
+  <div class="adx-scroll">${dsvg}</div>
+  <div class="adx-keys"><span><i style="background:linear-gradient(#5aa9ff,#a78bfa)"></i>Jualan</span><span><i style="background:#22c55e"></i>Untung</span><span><i style="background:#fb7185"></i>Rugi</span></div>
+  <div class="adx-dstats">${(()=>{const act=days.filter(d=>d.n),bd=[...days].sort((a,b)=>b.pr-a.pr)[0],ex=days.reduce((a,d)=>a+d.ex,0),el=dashDayOff===0?Math.max(1,Number(todayK.slice(8,10))):nd;return [['Hari ada jualan',`${act.length} / ${el}`,'#5aa9ff'],['Purata untung / hari',money(dTot/el),'#3ecf8e'],[bd&&bd.pr?`Hari terbaik · ${bd.i} hb`:'Hari terbaik',bd&&bd.pr?money(bd.pr):'—','#f5c400'],['Belanja bulan ini',money(ex),'#ff9f43']].map(([l,v,c])=>`<div style="--c:${c}"><span>${l}</span><b>${v}</b></div>`).join('')})()}</div></div>
+</section>`,
+  trend:`<div class="adx-card"><div class="adx-card-h"><div><h3>Trend 12 Bulan</h3><span class="adx-mut">Jualan ${money(ms.reduce((a,m)=>a+m.rev,0))} · untung bersih <em class="up">${money(ms.reduce((a,m)=>a+m.pr-m.ex,0))}</em></span></div></div>
+  <div class="adx-tipline">Tekan pada bulan untuk lihat butiran</div>
+  <div class="adx-scroll adx-fit">${msvg}</div>
+  <div class="adx-keys"><span><i style="background:linear-gradient(#5aa9ff,#a78bfa)"></i>Jualan</span><span><i style="background:#22c55e"></i>Untung kasar</span><span><i style="background:#f97316"></i>Belanja</span><span><i style="background:#f472b6;border-radius:99px"></i>Untung bersih</span></div></div>`,
+  inv:`<section class="adx-grid adx-invrow">
+ <div class="adx-card"><div class="adx-card-h"><h3>Stok Ikut Jenama</h3><span class="adx-mut">${money(capS)} modal</span></div>
+  <div class="adx-tipline">Tekan pada carta untuk butiran</div>
+  <div class="adx-donut-wrap">${donut}<div class="adx-mk">${mk.map(([k,o],i)=>`<div data-tip="${safe(`<b>${k}</b> · ${o.n} unit · modal ${money(o.cap)} · potensi jual ${money(o.ask)}`)}"><span><i style="background:${ADX_PAL[i%ADX_PAL.length]}"></i>${safe(k)}</span><b>${o.n}</b><small>${Math.round(o.n/tot*100)}%</small></div>`).join('')||'<span class="adx-mut">Tiada stok</span>'}</div></div></div>
+ <div class="adx-card"><div class="adx-card-h"><h3>Umur Stok</h3><span class="adx-mut">Purata ${avgAge} hari</span></div>
+  <div class="adx-age">${bk.map(b=>`<div class="adx-age-r"><span class="adx-age-l">${b.l}</span><div class="adx-age-t"><i style="width:${b.n/bkMax*100}%;background:linear-gradient(90deg,${b.c},${b.c}aa)"></i></div><b>${b.n}</b><small>${money(b.cap)}</small></div>`).join('')}</div>
+  <div class="adx-inv3"><div style="--c:#5aa9ff"><span>Modal stok</span><b title="${money(capS)}">${mK2(capS)}</b></div><div style="--c:#a78bfa"><span>Potensi jual</span><b title="${money(askS)}">${mK2(askS)}</b></div><div style="--c:${potS<0?'#fb7185':'#3ecf8e'}"><span>Potensi untung</span><b title="${money(potS)}">${mK2(potS)}</b></div></div></div>
+ <div class="adx-card"><div class="adx-card-h"><h3>Untung Tertinggi</h3><span class="adx-mut">Semua jualan</span></div>
+  <div class="adx-rank">${topP.map((r,i)=>`<div><div class="adx-rank-l">${rk(i,ADX_PAL[i])}<span><b>${vlab(r.v)}</b><small>Jual ${money(r.rev)} · modal ${money(r.cost)}</small></span></div><b class="${r.pr<0?'neg':'pos'}">${money(r.pr)}</b></div>`).join('')||'<span class="adx-mut">Belum ada jualan</span>'}</div>
+  <div class="adx-card-h" style="margin:16px 0 10px"><h3>Stok Paling Lama</h3><button class="adx-link" data-goto="inventory">Inventori ${I('arrow')}</button></div>
+  <div class="adx-rank">${slow.map((v,i)=>{const d=age(v),col=d>90?'#fb7185':d>60?'#ff9f43':d>30?'#f5c400':'#3ecf8e';return `<div><div class="adx-rank-l">${rk(i,col)}<span><b>${vlab(v)}</b><small>Modal ${money(capOf(v))} · jual ${money(v.asking_price)}</small></span></div><b style="color:${col}">${d} hari</b></div>`}).join('')||'<span class="adx-mut">Tiada stok</span>'}</div></div>
+</section>`}}
 function ownerDash(){
   const st=v=>effStatus(v),cnt={available:0,reserved:0,preparation:0,sold:0};vehicles.forEach(v=>{const k=st(v);cnt[k]=(cnt[k]||0)+1});
   const total=vehicles.length||0,active=total-cnt.sold,published=vehicles.filter(v=>v.is_published&&st(v)!=='sold').length,unpublished=vehicles.filter(v=>st(v)==='available'&&!v.is_published).length;
@@ -536,6 +616,7 @@ function ownerDash(){
   const tile=(icon,label,val,foot,cls='')=>`<div class="adx-tile ${cls}"><div class="adx-tile-top"><span class="adx-ic">${I(icon)}</span><span class="adx-lbl">${label}</span></div><b class="adx-val">${val}</b><span class="adx-foot">${foot}</span></div>`;
   const att=[[cnt.preparation,'Kereta dalam preparation','Lengkapkan maklumat & gambar','inventory','car'],[unpublished,'Available belum live','Terbitkan ke katalog pelanggan','inventory','tag'],[pkTodo,'Puspakom belum lulus','Stok yang belum lulus pemeriksaan','puspakom','check'],[owing.length,'Bayaran belum selesai',owing.length?'Baki '+money(owingAmt):'Semua jualan dibayar penuh','sales','cash'],[cnt.reserved,'Reserved menunggu jualan','Lengkapkan transaksi jualan','sales','users']].filter(a=>a[0]>0);
   const custName=id=>safe(customers.find(c=>c.id===id)?.full_name||'Pelanggan');const vehName=id=>{const v=vehicles.find(x=>x.id===id);return v?safe(`${v.make||''} ${v.model||''}`.trim()):'Kenderaan'},vehPlate=id=>safe(vehicles.find(x=>x.id===id)?.plate||'');
+  const A=adxAnalytics({live,capOf,soldIds,st,I});
   const recentSales=[...live].sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||''))).slice(0,5);
   return `<div class="adx">
 <header class="adx-head"><div><span class="adx-date">${today}</span><h1>${greet}, ${nm} 👋</h1><p>Ringkasan perniagaan Abe Din Auto hari ini.</p></div><div class="adx-head-act"><button id="ada-dash-add" class="adx-btn ghost">${I('plus')}Daftar Kereta</button><button id="ada-dash-sale" class="adx-btn">${I('cash')}Jual Kereta</button></div></header>
@@ -545,14 +626,16 @@ function ownerDash(){
  ${tile('cash','Bayaran diterima',money(paid),owing.length?`<em class="dn">${money(owingAmt)}</em> belum dibayar`:'Tiada baki tertunggak')}
  ${tile('box','Modal dalam stok',money(capStock),`${stockVs.length} unit · potensi jual ${money(askStock)}`)}
 </section>
+${A.pl}
 <section class="adx-grid adx-row2">
  <div class="adx-card"><div class="adx-card-h"><h3>Status Stok</h3><button class="adx-link" data-goto="inventory">Inventori ${I('arrow')}</button></div>
   <div class="adx-stock-num"><b>${active}</b><span>unit stok aktif · ${published} live di katalog</span></div>
   <div class="adx-seg">${seg.map(([k,,c])=>cnt[k]?`<i style="flex:${cnt[k]};background:${c}"></i>`:'').join('')}</div>
-  <div class="adx-legend">${seg.map(([k,l,c])=>`<div><span><i style="background:${c}"></i>${l}</span><b>${cnt[k]||0}</b></div>`).join('')}</div></div>
- <div class="adx-card"><div class="adx-card-h"><h3>Jualan 6 Bulan</h3><span class="adx-mut">${money(months.reduce((a,m)=>a+m.v,0))}</span></div>
-  <div class="adx-bars">${months.map((m,i)=>`<div class="adx-bar${i===5?' on':''}" title="${m.l}: ${money(m.v)} (${m.n} unit)"><span class="adx-bar-n">${m.n||''}</span><i style="height:${m.v?Math.max(6,m.v/mx*100):2}%"></i><small>${m.l}</small></div>`).join('')}</div></div>
+  <div class="adx-legend">${seg.map(([k,l,c])=>`<div><span><i style="background:${c}"></i>${l}</span><b>${cnt[k]||0}</b></div>`).join('')}</div>
+  <div class="adx-stval">${seg.filter(([k])=>k!=='sold').map(([k,l,c])=>{const vs=vehicles.filter(v=>st(v)===k),cap=vs.reduce((a,v)=>a+capOf(v),0),ask=vs.reduce((a,v)=>a+Number(v.asking_price||0),0);return `<div><span><i style="background:${c}"></i>${l}</span><small>Modal ${money(cap)}</small><b>${money(ask)}</b></div>`}).join('')}<p>Nilai harga jual mengikut status</p></div></div>
+ ${A.trend}
 </section>
+${A.inv}
 <section class="adx-grid adx-row3">
  <div class="adx-card"><div class="adx-card-h"><h3>Perlu Perhatian</h3><span class="adx-mut">${att.length?att.length+' perkara':''}</span></div>
   ${att.length?`<div class="adx-att">${att.map(([n,t,d,g,ic])=>`<button class="adx-att-row" data-goto="${g}"><span class="adx-ic">${I(ic)}</span><span class="adx-att-t"><b>${t}</b><small>${d}</small></span><span class="adx-att-n">${n}</span></button>`).join('')}</div>`:`<div class="adx-empty">${I('check')}<span>Semua beres. Tiada tindakan diperlukan.</span></div>`}</div>
