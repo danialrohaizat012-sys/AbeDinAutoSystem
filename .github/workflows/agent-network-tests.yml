@@ -1,7 +1,7 @@
 name: Agent Network Safe Tests
 on:
   push:
-    branches: [feature/agent-portal-v1]
+    branches: [feature/agent-portal-v1, test/agent-release-final-20261122]
     paths:
       - 'js/agent-*.mjs'
       - 'tests/agent-*.test.mjs'
