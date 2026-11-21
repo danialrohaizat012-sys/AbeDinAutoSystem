@@ -32,3 +32,24 @@ jobs:
             fi
             echo "PASS: $path contains current production release"
           done
+      - name: Verify protected Supabase functions reject unauthenticated calls
+        shell: bash
+        run: |
+          set -euo pipefail
+          for function in agent-portal-admin agent-payout-verifier agent-portal-catalog; do
+            echo "Checking protected function: $function"
+            if [ "$function" = "agent-portal-catalog" ]; then
+              status=$(curl --location --silent --show-error --max-time 15 \
+                --output /tmp/ada-auth-check --write-out '%{http_code}' \
+                "https://buzpdyvvoiqgbeventwm.supabase.co/functions/v1/$function")
+            else
+              status=$(curl --location --silent --show-error --max-time 15 \
+                --output /tmp/ada-auth-check --write-out '%{http_code}' \
+                --request POST -H 'content-type: application/json' -d '{"action":"list"}' \
+                "https://buzpdyvvoiqgbeventwm.supabase.co/functions/v1/$function")
+            fi
+            case "$status" in
+              401|403) echo "PASS: $function rejects unsigned request (HTTP $status)" ;;
+              *) echo "FAIL: $function returned HTTP $status without authentication"; exit 1 ;;
+            esac
+          done
