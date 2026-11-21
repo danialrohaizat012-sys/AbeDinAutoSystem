@@ -63,11 +63,12 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 .kv{display:grid;grid-template-columns:1fr auto;gap:4px 12px;font-size:14px}.kv span:nth-child(even){text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
 .kv .tot{font-weight:800;font-size:17px;color:var(--pri);border-top:1px solid var(--line);padding-top:6px}
 .big{font-size:26px;font-weight:800;color:var(--pri);font-variant-numeric:tabular-nums}
-.ov{color:var(--fg);font:15px/1.45 var(--f);position:fixed;inset:0;background:#000c;z-index:50;display:flex;align-items:flex-end;justify-content:center;padding:0}
+.ov{color:var(--fg);font:15px/1.45 var(--f);position:fixed;inset:0;background:#000c;z-index:2147483000;display:flex;align-items:flex-end;justify-content:center;padding:0}
 @media (min-width:640px){.ov{align-items:center;padding:20px}}
-.sheet{background:var(--card);border:1px solid var(--line);border-radius:20px 20px 0 0;width:100%;max-width:560px;max-height:94vh;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+.sheet{background:var(--card);border:1px solid var(--line);border-radius:20px 20px 0 0;width:100%;max-width:560px;max-height:94vh;max-height:94dvh;overflow:auto;-webkit-overflow-scrolling:touch;padding:16px 16px max(16px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:12px}
 @media (min-width:640px){.sheet{border-radius:20px}}
-.cam{position:relative;border-radius:16px;overflow:hidden;background:#000;aspect-ratio:3/4;max-height:58vh;margin:0 auto;width:100%}
+.cam{position:relative;border-radius:16px;overflow:hidden;background:#000;aspect-ratio:3/4;height:46vh;height:min(46dvh,560px);width:auto;max-width:100%;align-self:center;margin:0 auto;flex:0 0 auto}
+#acts,.sheet .g2:last-child{position:sticky;bottom:0;background:var(--card);padding-top:6px;z-index:2}
 .cam video,.cam img{width:100%;height:100%;object-fit:cover;display:block}
 .cam video{transform:scaleX(-1)}
 .gps{font-size:13.5px;padding:10px 12px;border-radius:12px;background:var(--soft);border:1px solid var(--line)}
@@ -153,8 +154,8 @@ const nameOf = id => (S.staff.find(s => s.id === id) || {}).full_name || (id ===
 const $ = s => root.querySelector(s);
 function toast(m) { const t = document.createElement("div"); t.className = "toast"; t.textContent = m; root.appendChild(t); setTimeout(() => t.remove(), 3200); }
 function errMsg(e) { const m = e?.message || String(e); return /attendance_|relation .* does not exist|schema cache/i.test(m) ? "Pangkalan data kehadiran belum dipasang (V71)." : m; }
-function sheet(html) { const o = document.createElement("div"); o.className = "ov"; o.innerHTML = `<div class="sheet">${html}</div>`; o.addEventListener("click", e => { if (e.target === o) closeSheet(o); }); root.appendChild(o); return o; }
-function closeSheet(o) { o?.__cleanup?.(); o?.remove(); }
+function sheet(html) { const o = document.createElement("div"); o.className = "ov"; o.innerHTML = `<div class="sheet">${html}</div>`; o.addEventListener("click", e => { if (e.target === o) closeSheet(o); }); root.appendChild(o); document.documentElement.classList.add("ada-sheet-open"); return o; }
+function closeSheet(o) { o?.__cleanup?.(); o?.remove(); if (!root.querySelector(".ov")) document.documentElement.classList.remove("ada-sheet-open"); }
 function nearest(lat, lng) { let best = null; for (const l of S.locs.filter(x => x.active)) { const d = distM(lat, lng, l.lat, l.lng); if (!best || d < best.d) best = { ...l, d }; } return best; }
 
 /* ---------- data ---------- */
@@ -1046,6 +1047,7 @@ export function mountKehadiran(host, ctx) {
   if (!S.day) S.day = nowKey(); if (!S.month) S.month = nowKey().slice(0, 7); if (!S.week) S.week = weekStart(nowKey());
   if (!S.tabSet) { S.tab = S.owner ? "papan" : "punch"; S.tabSet = true; }
   if (!S.owner && !["punch","rekod"].includes(S.tab)) S.tab = "punch";
+  document.documentElement.classList.remove("ada-sheet-open");
   root = host.shadowRoot || host.attachShadow({ mode:"open" });
   root.innerHTML = `<style>${CSS}</style><div class="shell"><div class="wrap" id="app"></div></div>`;
   app = root.getElementById("app");

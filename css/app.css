@@ -2384,3 +2384,5 @@ html.ada-light:not(.ada-public-route) #ada-cloud-gate .adx .adx-head h1{color:#1
 .ada-form input[type=date]::-webkit-date-and-time-value{text-align:left;margin:0}
 .ada-form input[type=date]::-webkit-calendar-picker-indicator{cursor:pointer;opacity:.85;filter:invert(.8)}
 html.ada-light:not(.ada-public-route) .ada-form input[type=date]::-webkit-calendar-picker-indicator{filter:none}
+/* V97: bila borang/punch kehadiran dibuka, sembunyikan bar menu bawah supaya butang selfie tidak tertutup */
+html.ada-sheet-open #ada-cloud-gate .cloud-bottom,html.ada-sheet-open body .cloud-bottom{display:none!important}
