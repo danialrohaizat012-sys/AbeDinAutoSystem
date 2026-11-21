@@ -42,9 +42,32 @@
     return [...hsl2rgb(h, ns, clamp(nl)), a];
   }
   const out = (c, a, short) => c ? (a < 1 ? `rgba(${c[0]},${c[1]},${c[2]},${+c[3].toFixed(3)})` : `#${hex2(c[0])}${hex2(c[1])}${hex2(c[2])}`) : short;
+  // Warna pertama dalam nilai latar: kekal (aksen) atau ditukar (permukaan gelap)?
+  const HEXRE = /#([0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{4}|[0-9a-fA-F]{3})(?![\w-])/;
+  function rgbaOf(tok) {
+    let m = tok.match(HEXRE);
+    if (m) { const x = m[1], e = x.length <= 4 ? x.split("").map(c => c + c).join("") : x; return [parseInt(e.slice(0, 2), 16), parseInt(e.slice(2, 4), 16), parseInt(e.slice(4, 6), 16), e.length === 8 ? parseInt(e.slice(6, 8), 16) / 255 : 1]; }
+    m = tok.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+)\s*)?\)/); if (m) return [+m[1], +m[2], +m[3], m[4] == null ? 1 : +m[4]];
+    if (/\bblack\b/.test(tok)) return [0, 0, 0, 1];
+    return null;
+  }
+  const PROTECT = s => s.replace(/#/g, "#\u0000").replace(/rgb/g, "r\u0000gb");
+  // Teks putih: kekal putih atas latar aksen, jadi gelap atas permukaan yang dicerahkan; plat/lencana hitam tulen dikekalkan
+  function blockFix(body) {
+    const col = body.match(/(^|;)\s*color\s*:\s*(#fff(?:fff)?|white|#ffffff)\s*(?=;|$|!)/i);
+    if (!col) return body;
+    const bg = body.match(/(^|;)\s*background(?:-color)?\s*:\s*([^;]+)/i);
+    const v = bg ? bg[2] : "";
+    const c = v ? rgbaOf(v) : null;
+    if (c && c[3] >= .9 && c[0] <= 10 && c[1] <= 10 && c[2] <= 10) return PROTECT(body);              // plat nombor hitam: kekal
+    const accent = v && (/var\(--(?!bg|card|soft|line)/.test(v) || (c && flip(c[0], c[1], c[2], c[3]) === null && !(c[0] + c[1] + c[2] === 0)));
+    if (accent) return body;
+    return body.replace(col[0], `${col[1]}color:#\u00001c1914`);
+  }
   function convert(css) {
     if (cache.has(css)) return cache.get(css);
-    let t = css.replace(/color-scheme\s*:\s*dark/g, "color-scheme:light")
+    let t = css.replace(/\{([^{}]*)\}/g, (m, b) => "{" + blockFix(b) + "}")
+      .replace(/color-scheme\s*:\s*dark/g, "color-scheme:light")
       // pemboleh ubah warna teks atas butang (--pri-fg dll.) kekal gelap
       .replace(/(--[\w-]*-fg\s*:\s*)(#[0-9a-fA-F]{3,8})/g, (m, p, v) => p + v.replace("#", "#\u0000"))
       .replace(/#([0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{4}|[0-9a-fA-F]{3})(?![\w-])/g, (m, x) => {
@@ -53,7 +76,7 @@
         return out(flip(r, g, b, a), a, m);
       })
       .replace(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+)\s*)?\)/g, (m, r, g, b, a) => out(flip(+r, +g, +b, a == null ? 1 : +a), a == null ? 1 : +a, m))
-      .replace(/#\u0000/g, "#");
+      .replace(/#\u0000/g, "#").replace(/r\u0000gb/g, "rgb");
     t += "\n" + LIGHT_VARS;
     cache.set(css, t);
     return t;
@@ -79,7 +102,21 @@
     queueMicrotask(() => apply(r));
     return r;
   };
-  const sync = () => roots.forEach(r => { if (r.host?.isConnected === false) roots.delete(r); else apply(r); });
+  // Gaya gelap yang dimasukkan terus dalam halaman (cth. Laporan Jualan) — kecuali gaya yang sudah ada peraturan ada-light
+  const pageRoot = { querySelectorAll: sel => [...document.querySelectorAll("#ada-cloud-view style")].filter(st => !/ada-light/.test(st.__adaOrig || st.textContent)) };
+  const pageLight = css => convert(css).replace(/\n:host\{[^}]*\}$/, "");
+  const sync = () => { roots.forEach(r => { if (r.host?.isConnected === false) roots.delete(r); else apply(r); }); applyPage(); };
+  function applyPage() {
+    const light = isLight();
+    pageRoot.querySelectorAll().forEach(st => {
+      if (light) { if (st.__adaLight && st.textContent === st.__adaLightText) return; st.__adaOrig = st.textContent; st.__adaLightText = pageLight(st.__adaOrig); st.__adaLight = true; st.textContent = st.__adaLightText; }
+      else if (st.__adaLight) { st.__adaLight = false; if (st.textContent === st.__adaLightText) st.textContent = st.__adaOrig; }
+    });
+  }
+  let pend = false;
+  const startPage = () => new MutationObserver(ms => { if (pend || !ms.some(m => [...m.addedNodes].some(n => n.nodeName === "STYLE" || n.querySelector?.("style")))) return; pend = true; queueMicrotask(() => { pend = false; applyPage(); }); })
+    .observe(document.body, { childList: true, subtree: true });
+  if (document.body) startPage(); else document.addEventListener("DOMContentLoaded", startPage);
   new MutationObserver(sync).observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
   window.adaShadowThemeConvert = convert;   // untuk ujian
 })();
