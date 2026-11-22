@@ -29,6 +29,16 @@ section[hidden],.hidden{display:none!important}
 .stat{background:#f6f9fd;border:1px solid #dce5ef;border-radius:12px;padding:14px}.stat b{display:block;font-size:23px;margin:6px 0}
 .items{display:grid;gap:9px}.item{border:1px solid #e1e8f0;border-radius:12px;padding:13px}
 .item small{color:#65778e}.item .row{justify-content:space-between}
+.promo-toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.promo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.promo-card{border:1px solid #e1e8f0;border-radius:13px;overflow:hidden;background:#fff}
+.promo-photo{width:100%;aspect-ratio:16/10;object-fit:cover;display:block;background:#e8eef5}
+.promo-no-photo{display:grid;place-items:center;aspect-ratio:16/10;background:#edf3f9;color:#526984}
+.promo-body{padding:13px}.promo-title{font-size:15px;font-weight:750;line-height:1.35}
+.promo-price{font-size:17px;font-weight:750;color:#12589f;margin:8px 0}
+.promo-actions{display:flex;flex-wrap:wrap;gap:7px}
+.promo-actions button,.promo-actions a{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border:0;border-radius:9px;font-size:12px;font-weight:750;padding:10px;color:#164675;background:#e6effa;cursor:pointer}
+.promo-actions .promo-whatsapp{background:#116d4a;color:white}
 kbd{font:inherit;background:#e8f0fb;border-radius:7px;padding:4px 8px}
 footer{font-size:12px;color:#748399;padding:15px 0}
 @media(max-width:720px){.grid{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.panel{padding:16px}header{padding:16px}}
@@ -72,6 +82,13 @@ footer{font-size:12px;color:#748399;padding:15px 0}
 <div class="stats"><div class="stat">Lead saya<b id="countLeads">0</b></div>
 <div class="stat">Komisen saya<b id="countCommission">0</b></div>
 <div class="stat">Penyata pembayaran<b id="countPayout">0</b></div></div>
+<div id="agentPromo" hidden>
+<div class="promo-toolbar"><div><h2 style="margin:0">Stok Katalog Awam untuk Promosi</h2><p style="margin:5px 0">Pilih kereta Available, kemudian kongsi pautan khas ejen terus ke profil kereta.</p></div>
+<div class="row"><a class="secondary" href="/" target="_blank" rel="noopener" style="padding:12px;text-decoration:none;border-radius:10px;background:#e6eef7;color:#17477d;font-weight:700">Buka Katalog Awam</a><button type="button" class="secondary" id="refreshPromo">Segarkan Stok</button></div></div>
+<p id="promoSummary" aria-live="polite">Memuatkan stok...</p>
+<div id="promoCars" class="promo-grid"></div>
+<div class="notice warn">Kod rujukan ejen disertakan pada pautan, tetapi komisen tidak diberi berdasarkan klik. Pelanggan dan jualan mesti disahkan oleh owner.</div>
+</div>
 <div id="leadPanel" hidden><h2>Daftar lead pelanggan</h2>
 <div class="notice warn">Pastikan pelanggan telah bersetuju dihubungi oleh AbeDin Auto. Jangan masukkan nombor IC, lesen atau maklumat bank di sini.</div>
 <form id="leadForm"><label>Kereta yang diminati pelanggan<select name="vehicle_id" id="leadVehicle" required><option value="">Pilih kereta tersedia</option></select></label><div class="grid">
@@ -141,20 +158,55 @@ async function sync(){
   view(owner?'owner':profile?.status==='active'?'dashboard':'application');
  }catch(e){fail(e);}
 }
+function agentCarLink(car){
+ const u=new URL('/',location.origin);
+ u.searchParams.set('car',car.public_vehicle_id);
+ if(agent?.agent_code&&/^[A-Za-z0-9_-]{2,40}$/.test(agent.agent_code))u.searchParams.set('ref',agent.agent_code);
+ return u.href;
+}
+async function copyAgentLink(link){
+ try{await navigator.clipboard.writeText(link);message('Pautan promosi berjaya disalin.');}
+ catch{prompt('Salin pautan promosi kereta:',link);}
+}
 async function loadAgentCatalogue(){
+ if(agent?.status!=='active')return;
  const {data:session,error}=await supabase.auth.getSession();
  if(error||!session?.session?.access_token)throw new Error('Sesi pengguna tamat');
  const r=await fetch(project+'/functions/v1/agent-portal-catalog',{
   headers:{apikey:'sb_publishable_zuuNipsMpalN_38SJwXpFA_MRzQ6eZ0',
    authorization:'Bearer '+session.session.access_token}
  });
- const body=await r.json();if(!r.ok)throw new Error(body.error||'Gagal memuat stok');
+ const body=await r.json();if(!r.ok)throw new Error(body.error||'Gagal memuat stok awam');
+ if(body.source!=='public_catalogue'||!Array.isArray(body.vehicles))throw new Error('Katalog belum tersedia. Cuba segarkan.');
+ $('agentPromo').hidden=false;
+ $('promoSummary').textContent=body.vehicles.length+' kereta tersedia untuk dipromosikan.';
  const sel=$('leadVehicle');sel.replaceChildren();
  const first=document.createElement('option');first.value='';first.textContent='Pilih kereta tersedia';sel.append(first);
- for(const v of body.vehicles||[]){const op=document.createElement('option');op.value=v.id;
- op.textContent=[v.make,v.model,v.model_year].filter(Boolean).join(' ')+' | RM '+Number(v.asking_price||0).toLocaleString('ms-MY');
- sel.append(op);}
+ const grid=$('promoCars');grid.replaceChildren();
+ for(const v of body.vehicles){
+  if(typeof v.id!=='string'||typeof v.public_vehicle_id!=='string')continue;
+  const label=[v.make,v.model,v.model_year].filter(Boolean).join(' ');
+  const op=document.createElement('option');op.value=v.id;
+  op.textContent=label+' | RM '+Number(v.asking_price||0).toLocaleString('ms-MY');sel.append(op);
+  const url=agentCarLink(v);const box=document.createElement('article');box.className='promo-card';
+  if(v.image_url&&v.image_url.startsWith('https://buzpdyvvoiqgbeventwm.supabase.co/storage/v1/object/public/vehicle-images/')){
+    const img=document.createElement('img');img.className='promo-photo';img.loading='lazy';img.decoding='async';img.alt=label;img.src=v.image_url;box.append(img);
+  }else{const no=document.createElement('div');no.className='promo-no-photo';no.textContent='Foto belum tersedia';box.append(no);}
+  const content=document.createElement('div');content.className='promo-body';
+  const title=document.createElement('div');title.className='promo-title';title.textContent=label;
+  const price=document.createElement('div');price.className='promo-price';price.textContent='RM '+Number(v.asking_price||0).toLocaleString('ms-MY');
+  const actions=document.createElement('div');actions.className='promo-actions';
+  const open=document.createElement('a');open.href=url;open.target='_blank';open.rel='noopener';open.textContent='Lihat Katalog';
+  const copy=document.createElement('button');copy.type='button';copy.textContent='Salin Link';copy.onclick=()=>copyAgentLink(url);
+  const wa=document.createElement('a');wa.className='promo-whatsapp';wa.target='_blank';wa.rel='noopener';
+  wa.href='https://wa.me/?text='+encodeURIComponent(label+' | RM '+Number(v.asking_price||0).toLocaleString('ms-MY')+'\nLihat kereta AbeDin Auto: '+url);
+  wa.textContent='Kongsi WhatsApp';
+  const lead=document.createElement('button');lead.type='button';lead.textContent='Daftar Lead';
+  lead.onclick=()=>{sel.value=v.id;sel.scrollIntoView({behavior:'smooth',block:'center'});};
+  actions.append(open,copy,wa,lead);content.append(title,price,actions);box.append(content);grid.append(box);
+ }
 }
+$('refreshPromo').onclick=()=>loadAgentCatalogue().catch(fail);
 async function loadDashboard(){
  const [l,c,p]=await Promise.all([
  supabase.from('agent_leads').select('id,customer_name,status,created_at').eq('agent_id',agent.id).order('created_at',{ascending:false}).limit(50),
