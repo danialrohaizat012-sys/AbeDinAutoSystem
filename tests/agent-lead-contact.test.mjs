@@ -29,7 +29,7 @@ test('owner sees all agent contacts with context and direct buyer contact',()=>{
  assert.match(agent,/ownerContactLeads/);
 });
 test('WhatsApp and telephone use safe Malaysian phone normalization',()=>{
- assert.match(agent,/^0\[1-9\]/m); // local Malaysian prefix pattern
+ assert.match(agent,/if\(\/\^0\[1-9\]/); // local Malaysian prefix pattern
  assert.match(agent,/wa\.me\/'\+phone/);
  assert.match(agent,/call\.href='tel:\+'\+phone/);
  assert.match(owner,/wa\.href='https:\/\/wa\.me\/'\+phone/);
