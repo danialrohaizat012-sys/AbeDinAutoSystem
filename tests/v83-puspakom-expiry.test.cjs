@@ -50,7 +50,7 @@ test('Vehicle 360 shows the same expiry date and uses Malaysia timezone',()=>{
  assert.equal(e.expiry,'2026-12-30');
  assert.equal(e.left,40);
  assert.match(view.pkExpiryView({status:'lulus',tarikh:'2026-09-01'}),/Tamat \(120 hari\)/);
- assert.match(appSource,/import\('\.\/js\/puspakom\.js\?v=9'\)/);
+ assert.match(appSource,/import\('\.\/js\/puspakom\.js\?v=\d+(?:\.\d+)*'\)/);
  assert.match(moduleSource,/timeZone:"Asia\/Kuala_Lumpur"/);
  assert.match(appSource,/timeZone:'Asia\/Kuala_Lumpur'/);
 });

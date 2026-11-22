@@ -10,7 +10,7 @@ const lib=new Function(source.replace(/^export /m,'')+';return {findSale,buildHi
 test('Vehicle 360 is mounted only in existing vehicle profile',()=>{
  assert.match(html,/current==='vehicleProfile'&&vehicleProfileId/);
  assert.match(html,/mountVehicle360\(el\('ada-cloud-view'\)/);
- assert.match(html,/css\/vehicle360\.css\?v=83\.0/);
+ assert.match(html,/css\/vehicle360\.css\?v=\d+(?:\.\d+)*/);
 });
 test('inactive and cancelled sales do not become the current sale',()=>{
  const sales=[

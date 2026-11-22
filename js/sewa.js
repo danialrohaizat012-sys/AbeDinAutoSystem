@@ -416,11 +416,11 @@ export function mountSewa(host, ctx) {
       ${owner ? `<button class="tab" data-a="terma" aria-pressed="false">⚙ Tetapan</button>${ctx.manageStaff ? '<button class="tab" data-a="staf" aria-pressed="false">👤 Staf</button>' : ''}` : ''}</div>
       <div class="row"><input id="q" placeholder="Cari nama, no rujukan, telefon, model…" value="${esc(S.q)}" style="flex:1;min-width:200px"><button class="btn" data-a="refresh">Refresh</button></div>
       ${S.error ? `<div class="card" style="border-color:#5a2a26;color:var(--bad)">${esc(S.error)}</div>` : ''}
-      <div class="list">${!S.loaded ? '<div class="empty">Memuatkan…</div>' : (window.adaPg?window.adaPg.rows('sewa',rows,render):rows).map(r => `
+      <div class="list">${!S.loaded ? '<div class="empty">Memuatkan…</div>' : (globalThis.adaPg?globalThis.adaPg.rows('sewa',rows,render):rows).map(r => `
         <button class="item" data-open="${r.id}"><div><span class="ref">${esc(r.ref_no)}</span><br><b>${esc(r.nama)}</b></div>
         <span style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><span class="chip st-${r.status}">${STATUS[r.status] || r.status}</span>${(b => `<span class="chip ${b.cls}" style="opacity:.9">${b.t}</span>`)(statusBayar(r))}</span>
         <span class="sub">${esc(r.model)}${r.no_pendaftaran ? ' (' + esc(r.no_pendaftaran) + ')' : ''} · ${jenisTxt(r.jenis_sewa)}${r.jenis_harga === 'agen' ? ' · Agen' + (r.nama_agen ? ': ' + esc(r.nama_agen) : '') : ''} · ${dmy(r.ambil_tarikh)} ${hm(r.ambil_masa)} → ${dmy(r.pulang_tarikh)} ${hm(r.pulang_masa)}<br>${esc(r.telefon)} · dihantar ${when(r.created_at)}</span></button>`).join('')
-        || `<div class="empty">${S.rows.length ? 'Tiada padanan.' : 'Belum ada Perjanjian Sewa. Kongsi pautan borang kepada pelanggan.'}</div>`}</div>${S.loaded?(window.adaPg?window.adaPg.nav('sewa',rows.length):''):''}`;
+        || `<div class="empty">${S.rows.length ? 'Tiada padanan.' : 'Belum ada Perjanjian Sewa. Kongsi pautan borang kepada pelanggan.'}</div>`}</div>${S.loaded?(globalThis.adaPg?globalThis.adaPg.nav('sewa',rows.length):''):''}`;
   }
 
   function kv(pairs) { return `<div class="kv">${pairs.map(([k, v]) => `<div><small>${k}</small><span>${esc(v || '-')}</span></div>`).join('')}</div>`; }

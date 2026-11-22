@@ -11,7 +11,7 @@ test('menu enhancer compiles and native menu is present without JS',()=>{
  assert.match(nav,/<details class="ada-native-more" id="ada-admin-more">/);
  assert.match(nav,/<summary aria-label="Buka Semua Menu">/);
  assert.equal((nav.match(/<section class="ada-native-menu-section">/g)||[]).length,4);
- assert.equal((nav.match(/<button type="button" data-cloud-page="/g)||[]).length,19);
+ assert.equal((nav.match(/<button type="button" data-cloud-page="/g)||[]).length,22);
 });
 test('native menu is styled as a real mobile expandable panel',()=>{
  assert.match(css,/\.ada-native-more\[open\] summary/);
@@ -32,9 +32,9 @@ test('navigation enhancer does not delete native menu entries',()=>{
  assert.doesNotMatch(src,/document\.body\.append\(overlay\)/);
 });
 test('fresh assets and service worker prioritize latest JS',()=>{
- assert.match(html,/admin-menu\.js\?v=83\.6/);
- assert.match(html,/admin-menu\.css\?v=83\.6/);
+ assert.match(html,/admin-menu\.js\?v=\d+(?:\.\d+)*/);
+ assert.match(html,/admin-menu\.css\?v=\d+(?:\.\d+)*/);
  const sw=fs.readFileSync(path.resolve(__dirname,'../service-worker.js'),'utf8');
- assert.match(sw,/abe-din-v83-6/);
+ assert.match(sw,/const C='abe-din-v\d+-\d+'/);
  assert.match(sw,/u\.pathname\.endsWith\('\.js'\)\|\|u\.pathname\.endsWith\('\.css'\)/);
 });

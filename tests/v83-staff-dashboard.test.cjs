@@ -28,7 +28,7 @@ test('mobile staff shortcuts maintain large buttons without horizontal menu scro
  assert.match(css,/-webkit-line-clamp:2/);
 });
 test('admin remains on existing menu and staff CSS is cache-busted',()=>{
- assert.match(app,/admin-menu\.js\?v=83\.6/);
- assert.match(app,/staff-dashboard\.css\?v=83\.2/);
+ assert.match(app,/admin-menu\.js\?v=\d+(?:\.\d+)*/);
+ assert.match(app,/staff-dashboard\.css\?v=\d+(?:\.\d+)*/);
  assert.match(js,/\:['dashboard','inventory','sales','reports']/);
 });

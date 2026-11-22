@@ -3,7 +3,7 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
 const app=fs.readFileSync(path.resolve(__dirname,'../app.html'),'utf8');
-const start=app.indexOf('function receiptWhatsApp(');
+const start=app.indexOf('async function receiptWhatsApp(')>0?app.indexOf('async function receiptWhatsApp('):app.indexOf('function receiptWhatsApp(');
 const end=app.indexOf('function isoDate(',start);
 assert.ok(start>0&&end>start,'Receipt WhatsApp function should exist');
 const src=app.slice(start,end);

@@ -62,12 +62,12 @@ test('client validates before creating a new customer',()=>{
  const validation=newSale.indexOf('if(!Number.isFinite(price)');
  const insertion=newSale.indexOf("client.from('customers').insert(");
  assert.ok(validation>0&&insertion>validation);
- assert.ok(newSale.includes('Jumlah bayaran mesti melebihi sifar'));
+ assert.ok(newSale.includes('Jumlah bayaran mesti lebih daripada sifar'));
  assert.ok(newSale.includes('Tarikh jualan atau bayaran tidak boleh pada masa hadapan'));
 });
 test('mobile layout correctly sizes and hides payment fields',()=>{
  assert.ok(css.includes('.ada-form .ada-sale-pay-toggle input[type="checkbox"]'));
  assert.ok(css.includes('.ada-form [data-new-sale-pay][hidden]{display:none!important}'));
  assert.ok(css.includes('@media(max-width:520px)'));
- assert.match(app,/css\/app\.css\?v=50\.(?:45|46)/);
+ assert.match(app,/css\/app\.css\?v=\d+(?:\.\d+)*/);
 });

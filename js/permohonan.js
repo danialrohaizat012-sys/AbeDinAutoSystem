@@ -270,7 +270,7 @@ function renderApplications(){
  app.querySelectorAll('[data-n]').forEach(b=>b.textContent=n[b.dataset.n]);
  const count=app.querySelector('#applications-count');if(count)count.textContent=q?rows.length+' padanan untuk "'+S.q+'"':'';
  app.querySelectorAll('[data-app-filter]').forEach(b=>b.classList.toggle('on',b.dataset.appFilter===viewFilter));
- target.innerHTML=rows.length?(window.adaPg?window.adaPg.rows('apps',rows,renderApplications):rows).map(a=>{
+ target.innerHTML=rows.length?(globalThis.adaPg?globalThis.adaPg.rows('apps',rows,renderApplications):rows).map(a=>{
   const isUnread=!a.read_at,open=expandedId===a.id;
   const phone=msisdn(a.applicant_phone);
   const text='Salam '+(a.applicant_name||'')+', saya dari Abe Din Auto berkenaan permohonan kereta '+(a.car_interest||'')+'.';
@@ -288,7 +288,7 @@ function renderApplications(){
     '<button type="button" class="btn" data-op="paste" data-id="'+esc(a.id)+'">Paste</button>'+
     '<button type="button" class="btn app-delete" data-op="delete" data-id="'+esc(a.id)+'">Padam</button></div></details></div>'+
    (open?detailView(a):'')+(editingId===a.id?editForm(a):'')+'</article>';
- }).join('')+(window.adaPg?window.adaPg.nav('apps',rows.length):''):'<div class="pm-empty">'+(applications.length?(q?'Tiada padanan untuk carian ini.':'Tiada permohonan bagi status ini.'):'Belum ada permohonan diterima. Kongsi borang kepada pelanggan di bawah.')+'</div>';
+ }).join('')+(globalThis.adaPg?globalThis.adaPg.nav('apps',rows.length):''):'<div class="pm-empty">'+(applications.length?(q?'Tiada padanan untuk carian ini.':'Tiada permohonan bagi status ini.'):'Belum ada permohonan diterima. Kongsi borang kepada pelanggan di bawah.')+'</div>';
 }
 
 async function loadApplications(){

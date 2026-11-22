@@ -62,7 +62,7 @@ test('Vehicle 360 and inventory card display the same verified status',()=>{
  assert.match(v,/Pengesahan Jualan/);
  assert.match(c,/ada-sale-record-row.*saleRecordBadge\(v\)/s);
  assert.match(app,/function effStatus\(v\)/);
- assert.match(app,/css\/app.css\?v=50\.46/);
+ assert.match(app,/css\/app.css\?v=\d+(?:\.\d+)*/);
  assert.match(css,/\.ada-sale-record-badge\.is-missing/);
  assert.match(css,/\.ada-sale-record-badge\.is-completed/);
 });

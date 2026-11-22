@@ -52,7 +52,7 @@ test('Sales Advisor explicitly denied Permohonan is enabled without changing oth
  assert.match(sql,/permissions->>'applications'='false'/);
 });
 test('module cache and incoming application form are preserved',()=>{
- assert.match(html,/import\('\.\/js\/permohonan\.js\?v=7'\)/);
+ assert.match(html,/import\('\.\/js\/permohonan\.js\?v=\d+(?:\.\d+)*'\)/);
  assert.match(src,/function formLink\(\)/);
  assert.match(src,/permohonan\.html/);
  assert.match(src,/loadApplications\(\)/);

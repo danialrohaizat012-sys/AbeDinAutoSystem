@@ -1,0 +1,6 @@
+-- Abe Din Auto V109 (sudah dipasang): logik status jualan & pembetulan padam bayaran.
+-- Sold bila ada Bayaran Penuh ATAU jumlah dibayar >= harga; selain itu Reserved.
+-- record_sale_payment: Bayaran Penuh tidak lagi disekat walaupun kurang daripada harga inventori.
+-- update_sale_details / update_payment_record / delete_payment_record: status diselaraskan melalui sale_sync_status().
+-- delete_payment_record: audit_logs guna lajur "entity" (sebelum ini "entity_type" menyebabkan ralat).
+-- Lihat definisi penuh di Supabase (migrasi v109_sale_status_logic).

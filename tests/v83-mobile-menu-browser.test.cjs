@@ -43,7 +43,7 @@ test('enhanced menu retains all 15 pages, closes after navigation, handles staff
   const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
   await setup(page,true);
   await page.locator('#ada-admin-more summary').tap();
-  assert.equal(await page.locator('.ada-native-menu-list button[data-cloud-page]').count(),15);
+  assert.equal(await page.locator('.ada-native-menu-list button[data-cloud-page]').count(),18);
   await page.locator('.ada-native-menu-list button[data-cloud-page="runner"]').tap();
   assert.deepEqual(await page.evaluate(()=>window.visited),['runner']);
   assert.equal(await page.locator('#ada-admin-more').evaluate(e=>e.open),false);

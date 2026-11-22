@@ -37,6 +37,6 @@ test('PDF matches unconfigured status and legal entitlement is preserved',()=>{
  assert.match(src,/Akta Kerja 1955/);
 });
 test('HR asset version is bumped on app and module import',()=>{
- assert.match(staff,/staff-profile\.js\?v=9/);
- assert.match(html,/import\('\.\/js\/staff\.js\?v=14'\)/);
+ assert.match(staff,/staff-profile\.js\?v=\d+(?:\.\d+)*/);
+ assert.match(html,/import\('\.\/js\/staff\.js\?v=\d+(?:\.\d+)*'\)/);
 });

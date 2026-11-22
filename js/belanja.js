@@ -284,7 +284,7 @@ export function mountBelanja(host, ctx) {
       <select class="field" data-f="cat"><option value="">Semua kategori</option>${Object.entries(CATS).filter(([, c]) => !S.f.jenis || c[1] === S.f.jenis).map(([k, c]) => `<option value="${k}" ${k === S.f.cat ? "selected" : ""}>${c[0]}</option>`).join("")}</select>
       <input class="field" data-f="q" placeholder="Cari kedai, plat, staf…" value="${esc(S.f.q)}"></div>
       <div class="row"><span class="mute grow">${L.length} resit</span><b>${rm(tot)}</b></div>
-      <div class="list">${(window.adaPg?window.adaPg.rows("blj",L,render):L).map(card).join("") || '<div class="empty">Tiada resit untuk tapisan ini.</div>'}</div>${(window.adaPg?window.adaPg.nav("blj",L.length):"")}`;
+      <div class="list">${(globalThis.adaPg?globalThis.adaPg.rows("blj",L,render):L).map(card).join("") || '<div class="empty">Tiada resit untuk tapisan ini.</div>'}</div>${(globalThis.adaPg?globalThis.adaPg.nav("blj",L.length):"")}`;
   }
 
   function reportView() {

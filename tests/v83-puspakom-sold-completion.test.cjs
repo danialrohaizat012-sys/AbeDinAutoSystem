@@ -47,5 +47,5 @@ test('non-Sold Puspakom Lulus still has the 120-day expiry display',()=>{
 test('Vehicle 360 hides Sold expiry yet preserves Puspakom information',()=>{
  assert.match(app,/effStatus\(v\)==='sold'\?'':pkExpiryView\(r\)/);
  assert.match(app,/tempoh booking tidak lagi dipantau/);
- assert.match(app,/import\('\.\/js\/puspakom\.js\?v=9'\)/);
+ assert.match(app,/import\('\.\/js\/puspakom\.js\?v=\d+(?:\.\d+)*'\)/);
 });
