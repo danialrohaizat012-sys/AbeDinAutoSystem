@@ -44,6 +44,10 @@ jobs:
           curl --fail --location --silent --show-error --max-time 20 \
             -H 'Cache-Control: no-cache' --output /tmp/agent-enquiry.html \
             "https://abedinauto.my/agent-inquiry.html?release=$GITHUB_SHA"
+          echo "Enquiry HTML size: $(wc -c < /tmp/agent-enquiry.html)"
+          for marker in 'Hantar Pertanyaan' 'agent-public-inquiry' 'name="consent"' 'id="agentCode" name="ref"'; do
+            if grep -Fq "$marker" /tmp/agent-enquiry.html; then echo "ENQUIRY FOUND: $marker"; else echo "ENQUIRY MISSING: $marker"; fi
+          done
           grep -q 'Hantar Pertanyaan' /tmp/agent-enquiry.html
           grep -q 'agent-public-inquiry' /tmp/agent-enquiry.html
           grep -q 'name="consent"' /tmp/agent-enquiry.html
