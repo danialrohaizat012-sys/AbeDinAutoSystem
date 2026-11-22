@@ -3,11 +3,11 @@
 const GROUPS=[
  {label:'Utama',pages:['dashboard','inventory','sales','customers','reports']},
  {label:'Operasi',pages:['pemeriksaan','puspakom','runner','belanja','suppliers']},
- {label:'Sokongan',pages:['applications','sewa','kehadiran','staf']},
+ {label:'Sokongan',pages:['applications','agents','sewa','kehadiran','staf']},
  {label:'Akaun',pages:['profil','settings']}
 ];
-const LABELS={dashboard:'Dashboard',inventory:'Inventori Kenderaan',sales:'Jualan Kereta',customers:'Pelanggan',reports:'Laporan Jualan',pemeriksaan:'Pemeriksaan',puspakom:'Puspakom',runner:'Runner',belanja:'Perbelanjaan',suppliers:'Pembekal',applications:'Permohonan',sewa:'Sewa Kereta',kehadiran:'Kehadiran',staf:'Staf',profil:'Profil Saya',settings:'Tetapan'};
-const ICONS={dashboard:'⌂',inventory:'▤',sales:'▣',customers:'♙',reports:'▥',pemeriksaan:'◎',puspakom:'✓',runner:'⛟',belanja:'🧾',suppliers:'▣',applications:'✎',sewa:'⚿',kehadiran:'⏱',staf:'👥',profil:'☺',settings:'⚙'};
+const LABELS={dashboard:'Dashboard',inventory:'Inventori Kenderaan',sales:'Jualan Kereta',customers:'Pelanggan',reports:'Laporan Jualan',pemeriksaan:'Pemeriksaan',puspakom:'Puspakom',runner:'Runner',belanja:'Perbelanjaan',suppliers:'Pembekal',applications:'Permohonan',agents:'Pengurusan Ejen',sewa:'Sewa Kereta',kehadiran:'Kehadiran',staf:'Staf',profil:'Profil Saya',settings:'Tetapan'};
+const ICONS={dashboard:'⌂',inventory:'▤',sales:'▣',customers:'♙',reports:'▥',pemeriksaan:'◎',puspakom:'✓',runner:'⛟',belanja:'🧾',suppliers:'▣',applications:'✎',agents:'♧',sewa:'⚿',kehadiran:'⏱',staf:'👥',profil:'☺',settings:'⚙'};
 export function mountAdminMenu(){
  const panel=document.getElementById('ada-cloud-panel');
  const aside=panel?.querySelector('.cloud-side'),more=document.getElementById('ada-admin-more');
