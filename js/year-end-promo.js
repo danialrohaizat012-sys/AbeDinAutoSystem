@@ -53,7 +53,9 @@
       }
     });
     document.addEventListener('keydown', onKey);
-    document.body.appendChild(root);
+    // The catalogue gate itself uses maximum z-index; mount inside it so the dialog is not obscured.
+    const gate = document.getElementById('ada-cloud-gate');
+    (gate || document.body).appendChild(root);
     document.body.classList.add('ada-promo-open');
     if (!preview) remember();
     root.querySelector('.ada-promo-close')?.focus();
@@ -68,7 +70,7 @@
   const style = document.createElement('style');
   style.textContent = `
     .ada-promo-open{overflow:hidden!important}
-    .ada-promo-overlay{position:fixed;inset:0;z-index:2147483000;background:rgba(10,20,35,.72);display:flex;align-items:center;justify-content:center;padding:18px;box-sizing:border-box}
+    .ada-promo-overlay{position:fixed;inset:0;z-index:2147483647;background:rgba(10,20,35,.72);display:flex;align-items:center;justify-content:center;padding:18px;box-sizing:border-box}
     .ada-promo-dialog{position:relative;width:min(100%,420px);max-height:calc(100dvh - 36px);overflow:auto;box-sizing:border-box;background:#fff;color:#19243a;border-radius:22px;padding:30px 23px 22px;text-align:center;box-shadow:0 25px 70px #071a3780;font-family:system-ui,-apple-system,sans-serif}
     .ada-promo-close{position:absolute;right:12px;top:10px;border:0;background:#f1f4f7;color:#334155;width:34px;height:34px;border-radius:50%;font-size:26px;line-height:1;cursor:pointer}
     .ada-promo-tag{display:inline-block;background:#fff1da;color:#9a4e00;font-size:11px;letter-spacing:.07em;font-weight:850;border-radius:100px;padding:9px 13px;margin-bottom:12px}
