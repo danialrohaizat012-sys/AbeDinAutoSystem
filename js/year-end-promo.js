@@ -1,7 +1,8 @@
 /* AbeDin Auto: public vehicle detail year-end promotion. No polling or Supabase calls. */
 (() => {
   'use strict';
-  const KEY = 'ada-year-end-2026-promo-shown';
+  const KEY = 'ada-year-end-2026-promo-shown-v2';
+  const preview = new URLSearchParams(location.search).get('promo_test') === '1';
   let pending = null;
   const seen = () => { try { return sessionStorage.getItem(KEY) === '1'; } catch { return false; } };
   const remember = () => { try { sessionStorage.setItem(KEY, '1'); } catch {} };
@@ -10,7 +11,7 @@
     document.body.classList.remove('ada-promo-open');
   }
   function show(carId) {
-    if (seen() || new URLSearchParams(location.search).get('car') !== carId ||
+    if ((!preview && seen()) || new URLSearchParams(location.search).get('car') !== carId ||
         !document.querySelector('#ada-public-catalogue.abx-detail .abx-info-card')) return;
     const url = new URL('/agent-inquiry.html', location.origin);
     url.searchParams.set('car', carId);
@@ -43,13 +44,13 @@
     document.addEventListener('keydown', onKey);
     document.body.appendChild(root);
     document.body.classList.add('ada-promo-open');
-    remember();
+    if (!preview) remember();
     root.querySelector('.ada-promo-close')?.focus();
   }
   window.adaScheduleYearEndPromo = function (carId) {
     if (pending) clearTimeout(pending);
     close();
-    if (!carId || seen()) return;
+    if (!carId || (!preview && seen())) return;
     pending = setTimeout(() => { pending = null; show(String(carId)); }, 10000);
   };
   window.addEventListener('popstate', () => { if (pending) clearTimeout(pending); pending = null; close(); });
