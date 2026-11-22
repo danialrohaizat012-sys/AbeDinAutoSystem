@@ -260,7 +260,7 @@ async function loadOwnerFinance(){
    adminRequest({action:'finance_list'})
  ]);
  showRows('unlinkedLeadItems',unlinked.leads,(el,l)=>{
-   const d=item(el,l.customer_name+' · '+l.customer_phone,'Lead '+l.id+' | Kereta '+(l.vehicle_id||'tiada'));
+   const d=item(el,l.customer_name+' · '+l.customer_phone,(l.lead_source==='public_referral'?'Pendaftaran pelanggan melalui link ejen '+(l.referral_code_snapshot||''):'Pendaftaran manual ejen')+' | Lead '+l.id+' | Kereta '+(l.vehicle_id||'tiada'));
    ownerActionButton(d,'Padankan dengan jualan rasmi',()=>{
      const sale_id=prompt('Masukkan ID jualan (UUID) yang disahkan dalam sistem AbeDin Auto:');
      if(!sale_id)return null;
