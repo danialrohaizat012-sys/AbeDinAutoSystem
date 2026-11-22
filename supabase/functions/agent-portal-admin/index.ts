@@ -44,28 +44,73 @@ Deno.serve(async(req)=>{
  }
  if(payload.action==="direct_inquiry_list"){
    const {data,error}=await admin.from("catalogue_direct_inquiries")
-     .select("id,vehicle_id,customer_name,customer_phone,source,status,created_at")
+     .select("id,vehicle_id,customer_name,customer_phone,source,status,owner_read_at,created_at")
      .order("created_at",{ascending:false}).limit(100);
    return error?res(500,{error:"Unable to load direct enquiries"}):res(200,{inquiries:data});
+ }
+ if(payload.action==="owner_lead_mark_read"){
+   const id=payload.lead_id;
+   const type=payload.lead_type;
+   if(typeof id!=="string"||!uuid.test(id)||!["agent","direct"].includes(String(type)))
+     return res(400,{error:"Valid lead ID and type required"});
+   const table=type==="agent"?"agent_leads":"catalogue_direct_inquiries";
+   const {data,error}=await admin.from(table).update({owner_read_at:new Date().toISOString()})
+     .eq("id",id).select("id,owner_read_at").maybeSingle();
+   if(error||!data)return res(404,{error:"Lead not found or cannot be marked read"});
+   return res(200,{lead:data});
+ }
+ if(payload.action==="commission_vehicle_list"){
+   const [vehicles,offers]=await Promise.all([
+     admin.from("vehicles").select("id,vehicle_id,make,model,model_year,status,catalogue_status").order("created_at",{ascending:false}).limit(200),
+     admin.from("agent_vehicle_commission_offers").select("vehicle_id,category,indicative_amount,active,updated_at").limit(200)
+   ]);
+   if(vehicles.error||offers.error)return res(500,{error:"Unable to load vehicle commission offers"});
+   const byVehicle=new Map((offers.data||[]).map(o=>[o.vehicle_id,o]));
+   return res(200,{vehicles:(vehicles.data||[]).map(v=>({...v,offer:byVehicle.get(v.id)||null}))});
+ }
+ if(payload.action==="commission_offer_set"){
+   const vehicle=payload.vehicle_id,cat=payload.category,amount=payload.amount,active=payload.active;
+   if(typeof vehicle!=="string"||!uuid.test(vehicle)||
+      !["standard","premium","special"].includes(String(cat))||
+      typeof amount!=="string"||!/^(?:0|[1-9]\\d{0,5})(?:\\.\\d{1,2})?$/.test(amount)||
+      Number(amount)>100000||typeof active!=="boolean")
+      return res(400,{error:"Valid vehicle, category and indicative amount are required"});
+   const {data:car,error:carError}=await admin.from("vehicles").select("id").eq("id",vehicle).maybeSingle();
+   if(carError||!car)return res(404,{error:"Vehicle not found"});
+   const {data,error}=await admin.from("agent_vehicle_commission_offers")
+      .upsert({vehicle_id:vehicle,category:cat,indicative_amount:Number(amount),active,updated_by:identity.user.id,updated_at:new Date().toISOString()},{onConflict:"vehicle_id"})
+      .select("vehicle_id,category,indicative_amount,active").single();
+   if(error)return res(500,{error:"Unable to save commission category"});
+   await admin.from("agent_audit_events").insert({
+     actor_user_id:identity.user.id,entity_type:"vehicle",entity_id:vehicle,
+     action:"agent_commission_offer_set",reason:"Owner set non-binding agent commission category "+String(cat)
+   });
+   return res(200,{offer:data,note:"Indicative only; sale and commission require separate owner approval"});
  }
  if(payload.action==="lead_contact_list"){
    // Owner only, because authentication and active owner checks run before this branch.
    const {data:leads,error}=await admin.from("agent_leads")
-     .select("id,agent_id,vehicle_id,customer_name,customer_phone,status,lead_source,referral_code_snapshot,linked_sale_id,created_at")
+     .select("id,agent_id,vehicle_id,customer_name,customer_phone,status,lead_source,referral_code_snapshot,linked_sale_id,agent_read_at,owner_read_at,created_at")
      .order("created_at",{ascending:false}).limit(100);
    if(error)return res(500,{error:"Unable to load agent customer contacts"});
    const vehicleIds=[...new Set((leads||[]).map(x=>x.vehicle_id).filter(Boolean))];
    const agentIds=[...new Set((leads||[]).map(x=>x.agent_id).filter(Boolean))];
    const [cars,agents]=await Promise.all([
      vehicleIds.length?admin.from("vehicles").select("id,vehicle_id,make,model,model_year").in("id",vehicleIds):Promise.resolve({data:[],error:null}),
-     agentIds.length?admin.from("agent_profiles").select("id,agent_code").in("id",agentIds):Promise.resolve({data:[],error:null})
+     agentIds.length?admin.from("agent_profiles").select("id,agent_code,application_id").in("id",agentIds):Promise.resolve({data:[],error:null})
    ]);
    if(cars.error||agents.error)return res(500,{error:"Unable to load lead vehicle information"});
+   const applicationIds=[...new Set((agents.data||[]).map(x=>x.application_id).filter(Boolean))];
+   const applications=applicationIds.length?await admin.from("agent_applications")
+      .select("id,full_name").in("id",applicationIds):{data:[],error:null};
+   if(applications.error)return res(500,{error:"Unable to load agent names"});
+   const byApplication=new Map((applications.data||[]).map(x=>[x.id,x.full_name]));
    const byCar=new Map((cars.data||[]).map(x=>[x.id,x]));
    const byAgent=new Map((agents.data||[]).map(x=>[x.id,x]));
    return res(200,{leads:(leads||[]).map(x=>({
      ...x,
      agent_code:byAgent.get(x.agent_id)?.agent_code||x.referral_code_snapshot||null,
+     agent_name:byApplication.get(byAgent.get(x.agent_id)?.application_id)||null,
      car:byCar.get(x.vehicle_id)||null
    }))});
  }
