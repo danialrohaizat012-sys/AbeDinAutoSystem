@@ -8,7 +8,8 @@ on:
       - js/agent-admin-panel.js
       - tests/agent-admin-integration.test.mjs
       - tests/agent-lead-contact.test.mjs
-      - tests/agent-read-commission.test.mjs
+      - tests/agent-read-commission.test.mjs tests/agent-admin-theme.test.mjs
+      - tests/agent-admin-theme.test.mjs
       - agent.html
       - supabase/functions/agent-portal-admin/index.ts
       - .github/workflows/agent-admin-integration.yml
@@ -41,6 +42,8 @@ jobs:
           grep -Fq 'direct_inquiry_list' /tmp/abedin-agent-panel.js
           grep -Fq 'WhatsApp Pelanggan' /tmp/abedin-agent-panel.js
           grep -Fq 'lead_contact_list' /tmp/abedin-agent-panel.js
+          grep -Fq -- '--ag-bg:#161b1e' /tmp/abedin-agent-panel.js
+          grep -Fq 'html.ada-light .ada-agent-owner' /tmp/abedin-agent-panel.js
           grep -Fq 'commission_offer_set' /tmp/abedin-agent-panel.js
           grep -Fq 'ag-mini-head' /tmp/abedin-agent-panel.js
           curl -fsSL --retry 2 --max-time 20 -H 'Cache-Control: no-cache' "https://abedinauto.my/agent.html?check=$GITHUB_SHA" -o /tmp/abedin-agent.html
