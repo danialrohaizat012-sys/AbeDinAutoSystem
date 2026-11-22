@@ -15,7 +15,7 @@ test('lead list compact by default; detail available on click with car link',()=
  assert.match(agent,/leadCarLink\(panel/);
  assert.match(admin,/node\('details','ag-mini'\)/);
  assert.match(admin,/node\('summary','ag-mini-head'\)/);
- assert.match(admin,/u\.searchParams\.set\('car',car\.vehicle_id\)/);
+ assert.match(admin,/url\.searchParams\.set\('car',car\.vehicle_id\)/);
 });
 test('agent and owner independent read flags persisted in database',()=>{
  assert.match(sql,/add column if not exists agent_read_at/);
