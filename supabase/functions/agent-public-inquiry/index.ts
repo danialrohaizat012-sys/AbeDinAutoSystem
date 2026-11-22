@@ -23,7 +23,7 @@ Deno.serve(async(req)=>{
  const car=typeof data.car==="string"?data.car.trim():"";
  const name=typeof data.customer_name==="string"?data.customer_name.trim():"";
  const phone=typeof data.customer_phone==="string"?data.customer_phone.trim():"";
- if(!refPattern.test(ref)||ref.length>30||!car||car.length>80||
+ if((ref!==""&&(!refPattern.test(ref)||ref.length>30))||!car||car.length>80||
     name.length<2||name.length>160||phone.length<9||phone.length>24||
     data.consent!==true)return respond(400,{error:"Please check all required fields and consent"},origin);
  const url=Deno.env.get("SUPABASE_URL")||"";
@@ -36,8 +36,8 @@ Deno.serve(async(req)=>{
  const digest=await crypto.subtle.digest("SHA-256",dataToHash);
  const hash=Array.from(new Uint8Array(digest)).map(x=>x.toString(16).padStart(2,"0")).join("");
  const client=createClient(url,key,{auth:{autoRefreshToken:false,persistSession:false}});
- const {data:result,error}=await client.rpc("agent_submit_public_inquiry_gateway_v1",{
-  p_referral_code:ref,p_public_vehicle_id:car,p_customer_name:name,
+ const {data:result,error}=await client.rpc(ref?"agent_submit_public_inquiry_gateway_v1":"agent_submit_direct_inquiry_gateway_v1",{
+  ...(ref?{p_referral_code:ref}:{}),p_public_vehicle_id:car,p_customer_name:name,
   p_customer_phone:phone,p_consent:true,p_request_hash:hash
  });
  if(error){
@@ -47,6 +47,6 @@ Deno.serve(async(req)=>{
  }
  if(result?.status==="rate_limited")return respond(429,{error:"Terlalu banyak permintaan. Cuba kemudian."},origin);
  return respond(201,{success:true,lead_id:result.lead_id,
-  agent_code:result.agent_code,vehicle_id:result.vehicle_id,
+  source:ref?"public_referral":"public_direct",vehicle_id:result.vehicle_id,
   message:"Pertanyaan direkodkan dan akan disemak oleh AbeDin Auto."},origin);
 });
