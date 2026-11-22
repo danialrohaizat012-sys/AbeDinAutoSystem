@@ -1,7 +1,7 @@
 name: Agent Admin Integration Check
 on:
   push:
-    branches: [main]
+    branches: [main, test/agent-admin-live-20261122]
     paths:
       - app.html
       - js/admin-menu.js
