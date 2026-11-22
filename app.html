@@ -179,6 +179,11 @@ html.ada-staff-embed #ada-public-catalogue.abx-home .abx-pages{margin-top:15px!i
 @media(max-width:900px){html.ada-staff-embed #ada-public-catalogue.abx-home .abx-search{grid-template-columns:repeat(2,minmax(0,1fr))!important}html.ada-staff-embed #ada-public-catalogue.abx-home .abx-search-btn{grid-column:1/-1!important}html.ada-staff-embed #ada-public-catalogue.abx-home .abx-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
 @media(max-width:520px){html.ada-staff-embed #ada-public-catalogue.abx-home .abx-wrap{width:calc(100% - 20px)!important}html.ada-staff-embed .ada-staff-embedded-intro{padding:17px 14px!important}html.ada-staff-embed .ada-staff-embedded-intro h2{font-size:18px!important}html.ada-staff-embed .ada-staff-embedded-intro .ada-mini-dot{display:none!important}html.ada-staff-embed #ada-public-catalogue.abx-home .abx-search-zone{margin-top:10px!important;padding:10px!important}html.ada-staff-embed #ada-public-catalogue.abx-home .abx-search{gap:8px!important}html.ada-staff-embed #ada-public-catalogue.abx-home .abx-field select{font-size:11px!important;padding:0 5px!important}html.ada-staff-embed #ada-public-catalogue.abx-home .abx-head h2{font-size:15px!important}html.ada-staff-embed #ada-public-catalogue.abx-home .abx-grid{gap:8px!important}html.ada-staff-embed #ada-public-catalogue.abx-home .abx-card-body{padding:9px!important}html.ada-staff-embed #ada-public-catalogue.abx-home .abx-card-body h3{font-size:12px!important}html.ada-staff-embed #ada-public-catalogue.abx-home .abx-price strong{font-size:15px!important}html.ada-staff-embed #ada-public-catalogue.abx-home .abx-head-tools{width:100%!important;justify-content:space-between!important}}
 </style>
+<style id="ada-agent-referral-cta">
+.ada-agent-enquiry-card{display:block;text-align:center;background:#126d4c;color:#fff!important;font-size:13px;font-weight:800;text-decoration:none;border-radius:10px;padding:12px;margin-top:12px;position:relative;z-index:3}
+.ada-agent-enquiry-detail{display:flex!important;justify-content:center;align-items:center;background:#126d4c!important;color:#fff!important;font-weight:800!important;width:100%;min-height:48px;text-decoration:none!important}
+@media(max-width:650px){.ada-agent-enquiry-card{font-size:14px;padding:13px}.ada-agent-enquiry-detail{min-height:52px}}
+</style>
 </head><body><script id="ada-boot-app">
 (function(){
   const activate=(id,isModule)=>{
@@ -1354,7 +1359,16 @@ async function openPublicCatalogue(vehicleId=null){
     const instOf=v=>Number(v.monthly_installment||0);
     const priceBlock=v=>{const disc=publicDiscountPct(v);return `<div class="abx-price">${disc>0?`<span class="abx-old">${money(Number(v.asking_price||0))}</span><span class="abx-off">${disc}% OFF</span>`:''}<strong>${money(publicOfferPrice(v))}</strong></div>${instOf(v)>0?`<span class="abx-inst">${ico.coins}<b>RM${instOf(v).toLocaleString('en-MY')}</b> / bulan</span>`:'<span class="abx-inst abx-inst-ask">Tanya ansuran</span>'}`};
     const badgeOf=v=>{const st=publicStatus(v);if(st==='sold')return ['SOLD','is-sold'];if(st==='reserved')return ['RESERVED','is-res'];if(publicDiscountPct(v)>0)return ['HOT DEAL','is-hot'];const km=Number(v.mileage_km||0);if(km>0&&km<60000)return ['LOW MILEAGE','is-low'];const age=Date.now()-new Date(v.created_at||0).getTime();if(age<14*864e5)return ['BARU MASUK','is-new'];return ['AVAILABLE','is-avail']};
-    const card=(v,cls='')=>{const im=imgOf(v),[bl,bc]=badgeOf(v),t=safe(titleOf(v));return `<article class="abx-card ${cls} ${publicStatus(v)==='sold'?'is-sold-card':publicStatus(v)==='reserved'?'is-res-card':''}"><a class="abx-card-media abx-link" href="${carLink(v)}" aria-label="${t}">${im.url?`<img src="${safe(im.url)}" alt="${t}" loading="lazy" decoding="async">`:`<span class="abx-noimg">${ico.car}<small>Foto akan dikemas kini</small></span>`}${bc==='is-sold'?`<span class="abx-sold-seal" aria-label="Telah terjual"><i><svg viewBox="0 0 24 24"><path d="M5 12.5l4.2 4.2L19 7"/></svg></i><b>SOLD</b><small>TELAH TERJUAL</small></span>`:bc==='is-res'?`<span class="abx-sold-seal is-res" aria-label="Telah ditempah"><i><svg viewBox="0 0 24 24"><rect x="5.5" y="11" width="13" height="9" rx="2"/><path d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3"/></svg></i><b>RESERVED</b><small>TELAH DITEMPAH</small></span>`:`<span class="abx-badge ${bc}">${bl}</span>`}${im.n?`<span class="abx-count">${im.n} foto</span>`:''}</a><div class="abx-card-body"><h3><a class="abx-link" href="${carLink(v)}">${t}</a></h3><div class="abx-meta"><span>${ico.cal}${safe(v.model_year||'—')}</span><span>${ico.gauge}${Number(v.mileage_km||0).toLocaleString('en-MY')} km</span></div>${priceBlock(v)}<a class="abx-go abx-link" href="${carLink(v)}" aria-label="Lihat ${t}">${ico.arrow}</a></div></article>`};
+    const inquiryUrl=publicVehicleId=>{
+      const u=new URL('/agent-inquiry.html',location.origin);
+      u.searchParams.set('car',String(publicVehicleId));
+      u.searchParams.set('ref',agentReferralCode);
+      return u.pathname+u.search;
+    };
+    const referralButton=v=>agentReferralCode&&publicStatus(v)==='available'
+      ?'<a class="ada-agent-enquiry-card" href="'+safe(inquiryUrl(v.vehicle_id))+'">Daftar Minat · Ejen '+safe(agentReferralCode)+'</a>'
+      :'';
+    const card=(v,cls='')=>{const im=imgOf(v),[bl,bc]=badgeOf(v),t=safe(titleOf(v));return `<article class="abx-card ${cls} ${publicStatus(v)==='sold'?'is-sold-card':publicStatus(v)==='reserved'?'is-res-card':''}"><a class="abx-card-media abx-link" href="${carLink(v)}" aria-label="${t}">${im.url?`<img src="${safe(im.url)}" alt="${t}" loading="lazy" decoding="async">`:`<span class="abx-noimg">${ico.car}<small>Foto akan dikemas kini</small></span>`}${bc==='is-sold'?`<span class="abx-sold-seal" aria-label="Telah terjual"><i><svg viewBox="0 0 24 24"><path d="M5 12.5l4.2 4.2L19 7"/></svg></i><b>SOLD</b><small>TELAH TERJUAL</small></span>`:bc==='is-res'?`<span class="abx-sold-seal is-res" aria-label="Telah ditempah"><i><svg viewBox="0 0 24 24"><rect x="5.5" y="11" width="13" height="9" rx="2"/><path d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3"/></svg></i><b>RESERVED</b><small>TELAH DITEMPAH</small></span>`:`<span class="abx-badge ${bc}">${bl}</span>`}${im.n?`<span class="abx-count">${im.n} foto</span>`:''}</a><div class="abx-card-body"><h3><a class="abx-link" href="${carLink(v)}">${t}</a></h3><div class="abx-meta"><span>${ico.cal}${safe(v.model_year||'—')}</span><span>${ico.gauge}${Number(v.mileage_km||0).toLocaleString('en-MY')} km</span></div>${priceBlock(v)}<a class="abx-go abx-link" href="${carLink(v)}" aria-label="Lihat ${t}">${ico.arrow}</a>${referralButton(v)}</div></article>`};
     const abxHeader=`<header class="abx-top">
       <div class="abx-wrap abx-top-in">
         <a class="abx-logo" href="/" aria-label="Abe Din Auto"><img src="${safe(logo)}" alt="Abe Din Auto"></a>
@@ -1375,7 +1389,7 @@ async function openPublicCatalogue(vehicleId=null){
     box.querySelector('#abx-calc').addEventListener('input',calc);box.querySelector('#abx-calc').addEventListener('submit',e=>e.preventDefault());calc();};
     const abxBindCommon=()=>{
     box.addEventListener('click',e=>{const a=e.target.closest('a[href^="#abx-"]');if(!a)return;const t=box.querySelector(a.getAttribute('href'));if(t){e.preventDefault();t.scrollIntoView({behavior:'smooth',block:'start'})}});
-    box.addEventListener('click',e=>{const a=e.target.closest('a.abx-link');if(!a)return;if(document.documentElement.classList.contains('ada-staff-embed')){a.target='_blank';a.rel='noopener noreferrer';return}e.preventDefault();const id=new URL(a.href,location.href).searchParams.get('car');if(!id)return;history.pushState({publicCar:id},'','/?car='+encodeURIComponent(id));openPublicCatalogue(id);window.scrollTo({top:0,behavior:'instant'})});
+    box.addEventListener('click',e=>{const a=e.target.closest('a.abx-link');if(!a)return;if(document.documentElement.classList.contains('ada-staff-embed')){a.target='_blank';a.rel='noopener noreferrer';return}e.preventDefault();const id=new URL(a.href,location.href).searchParams.get('car');if(!id)return;history.pushState({publicCar:id},'','/?car='+encodeURIComponent(id)+agentReferralSuffix());openPublicCatalogue(id);window.scrollTo({top:0,behavior:'instant'})});
     box.addEventListener('click',e=>{const a=e.target.closest('[data-abx-home]');if(!a)return;e.preventDefault();const where=a.dataset.abxHome;const go=()=>{if(where==='stok'){const t=document.querySelector('#ada-public-catalogue #abx-stok');if(t)t.scrollIntoView({behavior:'smooth',block:'start'})}};if(vehicleId){history.pushState(null,'','/');openPublicCatalogue().then(()=>setTimeout(go,60))}else if(where==='stok')go();else box.scrollTo({top:0,behavior:'smooth'})});
     };
   if(!vehicleId){
@@ -1523,8 +1537,8 @@ async function openPublicCatalogue(vehicleId=null){
       inquiry.searchParams.set('car',String(vehicleId));
       inquiry.searchParams.set('ref',agentReferralCode);
       const cta=document.createElement('a');
-      cta.className='abx-btn abx-btn-line';
-      cta.href=inquiry.href;cta.textContent='Daftar Minat melalui Ejen';
+      cta.className='abx-btn ada-agent-enquiry-detail';
+      cta.href=inquiry.href;cta.textContent='Daftar Minat · Ejen '+agentReferralCode;
       detailActions.prepend(cta);
     }
   }
