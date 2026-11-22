@@ -1,7 +1,7 @@
 /* AbeDin Auto: public vehicle detail year-end promotion. No polling or Supabase calls. */
 (() => {
   'use strict';
-  const KEY = 'ada-year-end-2026-promo-shown-v2';
+  const KEY = 'ada-year-end-2026-promo-shown-v3';
   const preview = new URLSearchParams(location.search).get('promo_test') === '1';
   let pending = null;
   const seen = () => { try { return sessionStorage.getItem(KEY) === '1'; } catch { return false; } };
@@ -11,10 +11,14 @@
     document.body.classList.remove('ada-promo-open');
   }
   function show(carId) {
-    if ((!preview && seen()) || new URLSearchParams(location.search).get('car') !== carId ||
-        !document.querySelector('#ada-public-catalogue.abx-detail .abx-info-card')) return;
-    const url = new URL('/agent-inquiry.html', location.origin);
-    url.searchParams.set('car', carId);
+    const detail = Boolean(carId);
+    const catalogue = document.querySelector('#ada-public-catalogue');
+    if ((!preview && seen()) || !catalogue ||
+        (detail && (!catalogue.classList.contains('abx-detail') || !catalogue.querySelector('.abx-info-card'))) ||
+        (!detail && !catalogue.classList.contains('abx-home'))) return;
+    const url = detail ? new URL('/agent-inquiry.html', location.origin) : new URL(location.href);
+    if (detail) url.searchParams.set('car', carId);
+    else url.hash = 'abx-stok';
     const ref = new URLSearchParams(location.search).get('ref') || '';
     if (/^[A-Za-z0-9_-]{2,40}$/.test(ref)) url.searchParams.set('ref', ref);
     url.searchParams.set('promo', 'year-end-2026');
@@ -29,7 +33,7 @@
         <h2 id="ada-promo-title">PENGHANTARAN<br><span>PERCUMA!</span></h2>
         <p class="ada-promo-region">Seluruh Malaysia</p>
         <p id="ada-promo-copy">Daftar minat dan mulakan urusan penghantaran dokumen permohonan <strong>hari ini</strong> untuk menyertai promosi hujung tahun AbeDin Auto.</p>
-        <a class="ada-promo-primary" href="${url.href}">DAFTAR MINAT PROMOSI</a>
+        <a class="ada-promo-primary" href="${url.href}">${detail ? "DAFTAR MINAT PROMOSI" : "LIHAT KERETA PROMOSI"}</a>
         <button class="ada-promo-later" type="button">Terus Tengok Kereta</button>
         <small>Tertakluk kepada kelayakan, kawasan liputan dan terma promosi. Pendaftaran minat bukan penghantaran dokumen.</small>
       </section>`;
@@ -40,7 +44,14 @@
       if (previousFocus?.isConnected && typeof previousFocus.focus === 'function') previousFocus.focus();
     };
     const onKey = e => { if (e.key === 'Escape') dismiss(); };
-    root.addEventListener('click', e => { if (e.target === root || e.target.closest('.ada-promo-close,.ada-promo-later')) dismiss(); });
+    root.addEventListener('click', e => {
+      if (e.target === root || e.target.closest('.ada-promo-close,.ada-promo-later')) dismiss();
+      if (!detail && e.target.closest('.ada-promo-primary')) {
+        e.preventDefault();
+        dismiss();
+        document.querySelector('#abx-stok')?.scrollIntoView({behavior:'smooth',block:'start'});
+      }
+    });
     document.addEventListener('keydown', onKey);
     document.body.appendChild(root);
     document.body.classList.add('ada-promo-open');
@@ -50,8 +61,8 @@
   window.adaScheduleYearEndPromo = function (carId) {
     if (pending) clearTimeout(pending);
     close();
-    if (!carId || (!preview && seen())) return;
-    pending = setTimeout(() => { pending = null; show(String(carId)); }, 10000);
+    if (!document.getElementById('ada-public-catalogue') || (!preview && seen())) return;
+    pending = setTimeout(() => { pending = null; show(carId ? String(carId) : null); }, 10000);
   };
   window.addEventListener('popstate', () => { if (pending) clearTimeout(pending); pending = null; close(); });
   const style = document.createElement('style');
