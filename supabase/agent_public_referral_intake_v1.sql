@@ -1,0 +1,97 @@
+-- Public promotional attribution. No changes to existing sales/payment records.
+-- Public visitors never receive database INSERT permissions.
+begin;
+alter table public.agent_leads
+ add column if not exists lead_source text not null default 'agent_manual',
+ add column if not exists referral_code_snapshot text;
+alter table public.agent_leads drop constraint if exists agent_leads_source_check;
+alter table public.agent_leads add constraint agent_leads_source_check
+ check (lead_source in ('agent_manual','public_referral'));
+
+create table if not exists public.agent_public_inquiry_limits (
+ request_hash text not null,
+ window_started_at timestamptz not null,
+ attempt_count integer not null default 0,
+ primary key(request_hash,window_started_at),
+ constraint agent_public_inquiry_limits_hash check(request_hash ~ '^[0-9a-f]{64}$'),
+ constraint agent_public_inquiry_limits_counter check(attempt_count between 0 and 20)
+);
+alter table public.agent_public_inquiry_limits enable row level security;
+revoke all on public.agent_public_inquiry_limits from public,anon,authenticated;
+
+create or replace function agent_internal.submit_public_inquiry_v1(
+ p_referral_code text, p_public_vehicle_id text, p_customer_name text,
+ p_customer_phone text, p_consent boolean, p_request_hash text
+) returns jsonb language plpgsql security definer set search_path=''
+as $$
+declare
+ v_agent public.agent_profiles%rowtype;
+ v_car public.vehicles%rowtype;
+ v_phone text := regexp_replace(coalesce(p_customer_phone,''),'[^0-9]','','g');
+ v_name text := btrim(coalesce(p_customer_name,''));
+ v_hour timestamptz := date_trunc('hour',now());
+ v_count integer;
+ v_duplicate uuid;
+ v_lead uuid;
+begin
+ if p_consent is not true or v_name !~ '^[[:print:][:space:]]{2,160}$'
+   or char_length(v_name)>160 or v_phone !~ '^[0-9]{9,15}$'
+   or coalesce(p_referral_code,'') !~ '^ADA-AG-[0-9]{4,}$'
+   or char_length(coalesce(p_referral_code,''))>30
+   or char_length(coalesce(p_public_vehicle_id,''))>80
+   or coalesce(p_request_hash,'') !~ '^[0-9a-f]{64}$' then
+  raise exception 'Invalid inquiry information' using errcode='22023';
+ end if;
+ -- A deterministic row lock prevents concurrent duplicate submissions.
+ perform pg_advisory_xact_lock(hashtext(p_request_hash));
+ insert into public.agent_public_inquiry_limits(request_hash,window_started_at,attempt_count)
+ values(p_request_hash,v_hour,1)
+ on conflict(request_hash,window_started_at)
+ do update set attempt_count=agent_public_inquiry_limits.attempt_count+1
+ returning attempt_count into v_count;
+ if v_count>6 then
+  raise exception 'Too many requests. Try again later' using errcode='P0001';
+ end if;
+ select * into v_agent from public.agent_profiles
+  where agent_code=p_referral_code and status='active';
+ if not found then raise exception 'Agent not currently active' using errcode='23514'; end if;
+ select * into v_car from public.vehicles
+  where vehicle_id=p_public_vehicle_id and is_published=true
+    and status::text='available' and catalogue_status='available';
+ if not found then raise exception 'Car is no longer available' using errcode='23514'; end if;
+ -- Lock by vehicle and normalized customer phone to prevent referral hijacking.
+ perform pg_advisory_xact_lock(hashtext(v_car.id::text||':'||v_phone));
+ select id into v_duplicate from public.agent_leads
+ where vehicle_id=v_car.id and regexp_replace(customer_phone,'[^0-9]','','g')=v_phone
+   and created_at>now()-interval '30 days'
+ order by created_at asc limit 1;
+ if v_duplicate is not null then
+   raise exception 'Inquiry already registered for this car. Contact AbeDin Auto' using errcode='23505';
+ end if;
+ insert into public.agent_leads
+  (agent_id,vehicle_id,customer_name,customer_phone,consent_confirmed,status,
+   lead_source,referral_code_snapshot)
+ values(v_agent.id,v_car.id,v_name,v_phone,true,'new','public_referral',v_agent.agent_code)
+ returning id into v_lead;
+ insert into public.agent_audit_events(actor_user_id,entity_type,entity_id,action,reason)
+ values(null,'agent_lead',v_lead,'public_inquiry',
+ 'Customer consented to contact from referral code '||v_agent.agent_code);
+ return jsonb_build_object('lead_id',v_lead,'status','new',
+  'agent_code',v_agent.agent_code,'vehicle_id',v_car.vehicle_id);
+end $$;
+revoke all on function agent_internal.submit_public_inquiry_v1(text,text,text,text,boolean,text)
+ from public,anon,authenticated;
+grant execute on function agent_internal.submit_public_inquiry_v1(text,text,text,text,boolean,text) to service_role;
+create or replace function public.agent_submit_public_inquiry_gateway_v1(
+ p_referral_code text,p_public_vehicle_id text,p_customer_name text,
+ p_customer_phone text,p_consent boolean,p_request_hash text
+) returns jsonb language sql security invoker set search_path=''
+as $$
+ select agent_internal.submit_public_inquiry_v1(
+ p_referral_code,p_public_vehicle_id,p_customer_name,p_customer_phone,p_consent,p_request_hash);
+$$;
+revoke all on function public.agent_submit_public_inquiry_gateway_v1(text,text,text,text,boolean,text)
+ from public,anon,authenticated;
+grant execute on function public.agent_submit_public_inquiry_gateway_v1(text,text,text,text,boolean,text)
+ to service_role;
+commit;
