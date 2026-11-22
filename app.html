@@ -1202,8 +1202,10 @@ async function loadPublicSettings(){
 }
 async function loadCatalogueSocialLinks(){try{const {data,error}=await client.rpc('get_catalogue_social_links');if(error)throw error;const x=Array.isArray(data)?data[0]:data;if(x){publicSettings.tiktok_url=String(x.tiktok_url||'');publicSettings.maps_url=String(x.maps_url||'')}}catch(e){console.warn('Social links unavailable',e)}}
 function cleanWhatsAppNumber(v){const n=String(v||'').replace(/[^0-9]/g,'');return n.startsWith('0')?'6'+n:n}
-function vehiclePublicLink(vehicleId){const u=new URL(location.origin+'/');u.searchParams.set('car',vehicleId);return u.href}
-function whatsappText(v,link){const template=publicSettings.whatsapp_message||'Hi Abe Din Auto, saya berminat dengan kereta ini: {link}';return template.replaceAll('{link}',link).replaceAll('{vehicle}',v?`${v.make||''} ${v.model||''}`.trim():'').replaceAll('{price}',v?money(publicOfferPrice(v)):'')}
+const agentReferralCode=(()=>{const v=new URLSearchParams(location.search).get('ref')||'';return /^[A-Za-z0-9_-]{2,40}$/.test(v)?v:''})();
+const agentReferralSuffix=()=>agentReferralCode?'&ref='+encodeURIComponent(agentReferralCode):'';
+function vehiclePublicLink(vehicleId){const u=new URL(location.origin+'/');u.searchParams.set('car',vehicleId);if(agentReferralCode)u.searchParams.set('ref',agentReferralCode);return u.href}
+function whatsappText(v,link){const template=publicSettings.whatsapp_message||'Hi Abe Din Auto, saya berminat dengan kereta ini: {link}';const message=template.replaceAll('{link}',link).replaceAll('{vehicle}',v?`${v.make||''} ${v.model||''}`.trim():'').replaceAll('{price}',v?money(publicOfferPrice(v)):'');return message+(agentReferralCode?'\nKod rujukan ejen: '+agentReferralCode:'')}
 function whatsappUrl(v,link){const n=cleanWhatsAppNumber(publicSettings.whatsapp_number);if(!n)return '';return `https://wa.me/${n}?text=${encodeURIComponent(whatsappText(v,link))}`}
 function showShareMenu(v){
  document.querySelector('.ada-share-sheet')?.remove();
@@ -1324,7 +1326,7 @@ async function openPublicCatalogue(vehicleId=null){
     const publicStatus=v=>String(v.status||v.vehicle_status||'available').toLowerCase();
     const statusLabel=v=>publicStatus(v)==='sold'?'SOLD':publicStatus(v)==='reserved'?'RESERVED':'AVAILABLE';
     const waNum=cleanWhatsAppNumber(publicSettings.whatsapp_number);
-    const wa=t=>waNum?`https://wa.me/${waNum}?text=${encodeURIComponent(t)}`:'#';
+    const wa=t=>waNum?`https://wa.me/${waNum}?text=${encodeURIComponent(t+(agentReferralCode?'\nKod rujukan ejen: '+agentReferralCode:''))}`:'#';
     const waGeneral=wa('Hi Abe Din Auto, saya ingin bertanya tentang kereta yang ada.');
     const waTrade=wa('Hi Abe Din Auto, saya ingin tukar kereta lama (trade-in). Boleh bantu nilaikan?');
     const waRent=wa('Hi Abe Din Auto, saya ingin bertanya tentang sewa kereta.');
@@ -1348,7 +1350,7 @@ async function openPublicCatalogue(vehicleId=null){
     };
     const imgOf=v=>{const imgs=Array.isArray(v.images)?v.images:[],c=imgs.find(x=>x.is_cover)||imgs[0];return {n:imgs.length,url:c?PUBLIC_BUCKET+c.storage_path:''}};
     const titleOf=v=>catDisplayTitle(v);
-    const carLink=v=>'?car='+encodeURIComponent(v.vehicle_id);
+    const carLink=v=>'?car='+encodeURIComponent(v.vehicle_id)+agentReferralSuffix();
     const instOf=v=>Number(v.monthly_installment||0);
     const priceBlock=v=>{const disc=publicDiscountPct(v);return `<div class="abx-price">${disc>0?`<span class="abx-old">${money(Number(v.asking_price||0))}</span><span class="abx-off">${disc}% OFF</span>`:''}<strong>${money(publicOfferPrice(v))}</strong></div>${instOf(v)>0?`<span class="abx-inst">${ico.coins}<b>RM${instOf(v).toLocaleString('en-MY')}</b> / bulan</span>`:'<span class="abx-inst abx-inst-ask">Tanya ansuran</span>'}`};
     const badgeOf=v=>{const st=publicStatus(v);if(st==='sold')return ['SOLD','is-sold'];if(st==='reserved')return ['RESERVED','is-res'];if(publicDiscountPct(v)>0)return ['HOT DEAL','is-hot'];const km=Number(v.mileage_km||0);if(km>0&&km<60000)return ['LOW MILEAGE','is-low'];const age=Date.now()-new Date(v.created_at||0).getTime();if(age<14*864e5)return ['BARU MASUK','is-new'];return ['AVAILABLE','is-avail']};
@@ -1512,8 +1514,8 @@ async function openPublicCatalogue(vehicleId=null){
   box.insertAdjacentHTML('beforeend',signature);
   el('ada-cloud-gate').querySelector('.wrap').appendChild(box);
   box.querySelectorAll('a.ada-public-view').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const u=new URL(a.href,location.href),id=u.searchParams.get('car');if(!id)return;history.pushState({publicCar:id},'','/?car='+encodeURIComponent(id));openPublicCatalogue(id);window.scrollTo({top:0,behavior:'instant'})}));
-  box.querySelector('#ada-cat-back')&&(box.querySelector('#ada-cat-back').onclick=()=>{if(vehicleId){box.remove();history.replaceState(null,'','/?catalogue=1');openPublicCatalogue()}else{location.href='/admin'}});box.querySelectorAll('[data-staff-login]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();location.href='/admin'}));
-  box.querySelector('#ada-public-back-list')?.addEventListener('click',()=>{history.replaceState(null,'','/?catalogue=1');openPublicCatalogue()});
+  box.querySelector('#ada-cat-back')&&(box.querySelector('#ada-cat-back').onclick=()=>{if(vehicleId){box.remove();history.replaceState(null,'','/?catalogue=1'+agentReferralSuffix());openPublicCatalogue()}else{location.href='/admin'}});box.querySelectorAll('[data-staff-login]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();location.href='/admin'}));
+  box.querySelector('#ada-public-back-list')?.addEventListener('click',()=>{history.replaceState(null,'','/?catalogue=1'+agentReferralSuffix());openPublicCatalogue()});
   box.querySelectorAll('[data-public-image]').forEach(b=>b.addEventListener('click',()=>{const main=box.querySelector('#ada-public-main-image'),frame=box.querySelector('.ada-public-main-photo');if(main){if(main.src===b.dataset.publicImage)return;frame?.classList.add('is-switching');const apply=()=>{main.src=b.dataset.publicImage;box.querySelectorAll('[data-public-image]').forEach(x=>x.classList.toggle('is-active',x===b));const counter=box.querySelector('.ada-public-image-counter');if(counter)counter.textContent=(Number(b.dataset.publicIndex)+1)+'/'+box.querySelectorAll('[data-public-image]').length;setTimeout(()=>frame?.classList.remove('is-switching'),80)};setTimeout(apply,90)}}));
   
 }
@@ -1534,10 +1536,10 @@ if(adminEntry){
   history.replaceState(null,'','/admin/');
   await verify();
 }else if(params.has('car')){
-  history.replaceState(null,'','/?car='+encodeURIComponent(params.get('car')));
+  history.replaceState(null,'','/?car='+encodeURIComponent(params.get('car'))+agentReferralSuffix());
   await openPublicCatalogue(params.get('car'));
 }else{
-  history.replaceState(null,'','/');
+  history.replaceState(null,'','/'+(agentReferralCode?'?ref='+encodeURIComponent(agentReferralCode):''));
   await openPublicCatalogue();
 }
 
