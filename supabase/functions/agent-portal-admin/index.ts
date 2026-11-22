@@ -32,7 +32,7 @@ Deno.serve(async(req)=>{
  }
  if(payload.action==="finance_list"){
    const [leads,commissions,payouts]=await Promise.all([
-     admin.from("agent_leads").select("id,agent_id,customer_name,status,linked_sale_id,created_at")
+     admin.from("agent_leads").select("id,agent_id,customer_name,status,linked_sale_id,lead_source,referral_code_snapshot,created_at")
        .not("linked_sale_id","is",null).order("created_at",{ascending:false}).limit(100),
      admin.from("agent_commissions").select("id,agent_id,lead_id,sale_id,agreed_amount,status,created_at")
        .order("created_at",{ascending:false}).limit(100),
@@ -44,7 +44,7 @@ Deno.serve(async(req)=>{
  }
  if(payload.action==="lead_list"){
    const {data,error}=await admin.from("agent_leads")
-     .select("id,agent_id,customer_name,customer_phone,status,linked_sale_id,vehicle_id,created_at")
+     .select("id,agent_id,customer_name,customer_phone,status,linked_sale_id,vehicle_id,lead_source,referral_code_snapshot,created_at")
      .is("linked_sale_id",null).order("created_at",{ascending:false}).limit(100);
    return error?res(500,{error:"Unable to load leads"}):res(200,{leads:data});
  }
