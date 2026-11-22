@@ -11,6 +11,9 @@ test('agent inventory is derived from same published public-catalogue RPC',()=>{
  assert.match(api,/status\|\|""/);
  assert.match(api,/==="available"/);
  assert.match(api,/public_vehicle_id:v\.vehicle_id/);
+ assert.match(api,/get_public_vehicle_offers/);
+ assert.match(api,/display_price:/);
+ assert.match(api,/monthly_installment:/);
  assert.match(api,/id:v\.id/);
  assert.doesNotMatch(api,/purchase_cost|cost_transfer|consign_phone|supplier_id/);
 });
@@ -23,6 +26,7 @@ test('agent promotion contains share and lead actions',()=>{
  assert.match(portal,/u\.searchParams\.set\('car',car\.public_vehicle_id\)/);
  assert.match(portal,/u\.searchParams\.set\('ref',agent\.agent_code\)/);
  assert.match(portal,/op\.value=v\.id/);
+ assert.match(portal,/v\.display_price\?\?v\.asking_price/);
  assert.match(portal,/agent\?\.status!=='active'/);
 });
 test('public catalogue keeps safe referral code on detail and WhatsApp',()=>{
