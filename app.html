@@ -1316,6 +1316,7 @@ async function registerPublicCatalogueVisitor(){
   }catch(_){return null}
 }
 async function openPublicCatalogue(vehicleId=null){
+  window.adaScheduleYearEndPromo?.(null);
   setRouteMode('public');
   el('ada-login-box').hidden=true;el('ada-cloud-panel').hidden=true;const cloudHeader=el('ada-cloud-gate').querySelector('.wrap > header');if(cloudHeader)cloudHeader.hidden=true;msg('Memuatkan catalogue awam...');
   const settingsP=ensurePublicSettings(),offersP=loadPublicOffers();
