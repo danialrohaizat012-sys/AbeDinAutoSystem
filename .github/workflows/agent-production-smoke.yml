@@ -47,12 +47,12 @@ jobs:
           echo "PASS: customer enquiry form served by production"
           echo "Checking public catalogue referral integration"
           curl --fail --location --silent --show-error --max-time 20 \
-            --output /tmp/ada-public-app.html "https://abedinauto.my/app.html?car=ADA-TEST-INVALID&ref=TEST_AGENT"
+            -H 'Cache-Control: no-cache' --output /tmp/ada-public-app.html "https://abedinauto.my/app.html?car=ADA-TEST-INVALID&ref=TEST_AGENT&release=$GITHUB_SHA"
           grep -q 'agentReferralCode' /tmp/ada-public-app.html
           grep -q 'agentReferralSuffix' /tmp/ada-public-app.html
           grep -q 'ada-agent-enquiry-card' /tmp/ada-public-app.html
           grep -q 'Daftar Minat melalui Ejen' /tmp/ada-public-app.html
-          grep -q "history.pushState({publicCar:id},'','/?car='+encodeURIComponent(id)+agentReferralSuffix())" /tmp/ada-public-app.html || { echo 'Referral ID lost in navigation'; exit 1; }
+          grep -Fq "agentReferralSuffix());openPublicCatalogue(id)" /tmp/ada-public-app.html || { echo 'Referral ID lost in navigation'; exit 1; }
           echo "PASS: public catalogue contains agent referral code support"
       - name: Verify protected Supabase functions reject unauthenticated calls
         shell: bash
