@@ -72,7 +72,7 @@ Deno.serve(async(req)=>{
    const vehicle=payload.vehicle_id,cat=payload.category,amount=payload.amount,active=payload.active;
    if(typeof vehicle!=="string"||!uuid.test(vehicle)||
       !["standard","premium","special"].includes(String(cat))||
-      typeof amount!=="string"||!/^(?:0|[1-9]\\d{0,5})(?:\\.\\d{1,2})?$/.test(amount)||
+      typeof amount!=="string"||!/^(?:0|[1-9]\d{0,5})(?:\.\d{1,2})?$/.test(amount)||
       Number(amount)>100000||typeof active!=="boolean")
       return res(400,{error:"Valid vehicle, category and indicative amount are required"});
    const {data:car,error:carError}=await admin.from("vehicles").select("id").eq("id",vehicle).maybeSingle();
