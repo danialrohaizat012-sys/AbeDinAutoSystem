@@ -8,7 +8,7 @@ on:
       - js/agent-admin-panel.js
       - tests/agent-admin-integration.test.mjs
       - tests/agent-lead-contact.test.mjs
-      - tests/agent-read-commission.test.mjs tests/agent-admin-theme.test.mjs
+      - tests/agent-read-commission.test.mjs
       - tests/agent-admin-theme.test.mjs
       - agent.html
       - supabase/functions/agent-portal-admin/index.ts
@@ -29,7 +29,7 @@ jobs:
         with:
           node-version: '22'
       - name: Check Agent Network owner access and menu integration
-        run: node --test tests/agent-admin-integration.test.mjs tests/agent-lead-contact.test.mjs tests/agent-read-commission.test.mjs
+        run: node --test tests/agent-admin-integration.test.mjs tests/agent-lead-contact.test.mjs tests/agent-read-commission.test.mjs tests/agent-admin-theme.test.mjs
       - name: Check live admin bundle after deployment
         shell: bash
         run: |
