@@ -184,6 +184,7 @@ html.ada-staff-embed #ada-public-catalogue.abx-home .abx-pages{margin-top:15px!i
 .ada-agent-enquiry-detail{display:flex!important;justify-content:center;align-items:center;background:#126d4c!important;color:#fff!important;font-weight:800!important;width:100%;min-height:48px;text-decoration:none!important}
 @media(max-width:650px){.ada-agent-enquiry-card{font-size:14px;padding:13px}.ada-agent-enquiry-detail{min-height:52px}}
 </style>
+<script src="./js/year-end-promo.js"></script>
 </head><body><script id="ada-boot-app">
 (function(){
   const activate=(id,isModule)=>{
@@ -1531,6 +1532,7 @@ async function openPublicCatalogue(vehicleId=null){
   // Customer-initiated lead referral is kept separate from commission approval.
   // Only show for car details opened with a validated agent code.
   if(vehicleId){
+    window.adaScheduleYearEndPromo?.(String(vehicleId));
     const detailActions=box.querySelector('.abx-d-row');
     const current=rows.find(v=>String(v.vehicle_id)===String(vehicleId));
     if(detailActions&&current&&publicStatus(current)==='available'){
