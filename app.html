@@ -1366,7 +1366,7 @@ async function openPublicCatalogue(vehicleId=null){
       return u.pathname+u.search;
     };
     const referralButton=v=>publicStatus(v)==='available'
-      ?'<a class="ada-agent-enquiry-card" href="'+safe(inquiryUrl(v.vehicle_id))+'">Daftar Minat'+(agentReferralCode?' · Ejen '+safe(agentReferralCode):'')+'</a>'
+      ?'<a class="ada-agent-enquiry-card" href="'+safe(inquiryUrl(v.vehicle_id))+'">Daftar Minat</a>'
       :'';
     const card=(v,cls='')=>{const im=imgOf(v),[bl,bc]=badgeOf(v),t=safe(titleOf(v));return `<article class="abx-card ${cls} ${publicStatus(v)==='sold'?'is-sold-card':publicStatus(v)==='reserved'?'is-res-card':''}"><a class="abx-card-media abx-link" href="${carLink(v)}" aria-label="${t}">${im.url?`<img src="${safe(im.url)}" alt="${t}" loading="lazy" decoding="async">`:`<span class="abx-noimg">${ico.car}<small>Foto akan dikemas kini</small></span>`}${bc==='is-sold'?`<span class="abx-sold-seal" aria-label="Telah terjual"><i><svg viewBox="0 0 24 24"><path d="M5 12.5l4.2 4.2L19 7"/></svg></i><b>SOLD</b><small>TELAH TERJUAL</small></span>`:bc==='is-res'?`<span class="abx-sold-seal is-res" aria-label="Telah ditempah"><i><svg viewBox="0 0 24 24"><rect x="5.5" y="11" width="13" height="9" rx="2"/><path d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3"/></svg></i><b>RESERVED</b><small>TELAH DITEMPAH</small></span>`:`<span class="abx-badge ${bc}">${bl}</span>`}${im.n?`<span class="abx-count">${im.n} foto</span>`:''}</a><div class="abx-card-body"><h3><a class="abx-link" href="${carLink(v)}">${t}</a></h3><div class="abx-meta"><span>${ico.cal}${safe(v.model_year||'—')}</span><span>${ico.gauge}${Number(v.mileage_km||0).toLocaleString('en-MY')} km</span></div>${priceBlock(v)}<a class="abx-go abx-link" href="${carLink(v)}" aria-label="Lihat ${t}">${ico.arrow}</a>${referralButton(v)}</div></article>`};
     const abxHeader=`<header class="abx-top">
@@ -1539,7 +1539,7 @@ async function openPublicCatalogue(vehicleId=null){
       if(agentReferralCode)inquiry.searchParams.set('ref',agentReferralCode);
       const cta=document.createElement('a');
       cta.className='abx-btn ada-agent-enquiry-detail';
-      cta.href=inquiry.href;cta.textContent='Daftar Minat'+(agentReferralCode?' · Ejen '+agentReferralCode:'');
+      cta.href=inquiry.href;cta.textContent='Daftar Minat';
       detailActions.prepend(cta);
     }
   }
