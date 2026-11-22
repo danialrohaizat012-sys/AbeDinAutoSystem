@@ -59,18 +59,20 @@ $('form').addEventListener('submit',async e=>{
  const form=e.currentTarget;
  const f=new FormData(form);
  if(!form.reportValidity())return;
+ const refCode=$('agentCode').value.trim();
+ if(!/^ADA-AG-[0-9]{4,}$/.test(refCode)||refCode.length>30){status('Sila masukkan kod ejen berdaftar yang sah.',true);return;}
  const button=$('submit');button.disabled=true;
  try{
   const res=await fetch('https://buzpdyvvoiqgbeventwm.supabase.co/functions/v1/agent-public-inquiry',{
    method:'POST',headers:{'content-type':'application/json'},
-   body:JSON.stringify({ref:String(f.get('ref')||'').trim(),car,customer_name:String(f.get('customer_name')||'').trim(),
+   body:JSON.stringify({ref:refCode,car,customer_name:String(f.get('customer_name')||'').trim(),
     customer_phone:String(f.get('customer_phone')||'').trim(),consent:f.get('consent')==='on',
     company_website:String(f.get('company_website')||'')})
   });
   const data=await res.json();
   if(!res.ok)throw new Error(data.error||'Pertanyaan gagal dihantar.');
   form.hidden=true;
-  status('Terima kasih! Pertanyaan telah direkodkan di bawah kod ejen '+String(f.get('ref')||'').trim()+'. Pasukan AbeDin Auto akan menyemaknya.');
+  status('Terima kasih! Pertanyaan telah direkodkan di bawah kod ejen '+$('agentCode').value.trim()+'. Pasukan AbeDin Auto akan menyemaknya.');
  }catch(err){status(err.message||'Gagal menghantar pertanyaan.',true);}
  finally{button.disabled=false;}
 });
