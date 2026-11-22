@@ -48,27 +48,86 @@ export function mountAgentAdmin(host,{client,profile}={}){
  let loading=false,disposed=false;
  host.className='ada-agent-owner';
  const style=node('style');style.textContent='.ada-agent-owner .ag-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:15px}.ada-agent-owner h2{margin:0;font-size:24px}.ada-agent-owner h3{margin:0 0 7px;font-size:17px}.ada-agent-owner p{margin:5px 0 12px;color:#66788b;font-size:13px;line-height:1.5}.ada-agent-owner .ag-counts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:14px 0}.ada-agent-owner .ag-stat,.ada-agent-owner .ag-card{padding:16px;background:var(--card-bg,#fff);border:1px solid #d9e3ec;border-radius:14px}.ada-agent-owner .ag-stat b{display:block;font-size:25px}.ada-agent-owner .ag-stat small{color:#597188;font-size:12px}.ada-agent-owner .ag-sections{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.ada-agent-owner .ag-line{padding:12px 0;border-bottom:1px solid #e5eaf0;overflow-wrap:anywhere}.ada-agent-owner .ag-line:last-child{border:0}.ada-agent-owner .ag-line strong{display:block;font-size:14px}.ada-agent-owner .ag-line small{display:block;color:#687d90;font-size:12px;margin-top:4px}.ada-agent-owner .ag-controls{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.ada-agent-owner button,.ada-agent-owner .ag-link{padding:10px 13px;border-radius:9px;border:0;background:#e8eff7;color:#194e81;font:inherit;font-size:13px;font-weight:750;text-decoration:none;cursor:pointer}.ada-agent-owner .ag-primary{background:#1762a8!important;color:#fff!important}.ada-agent-owner .ag-whatsapp{background:#116d4a!important;color:white!important}.ada-agent-owner .ag-mini{border:1px solid #dce4ed;border-radius:10px;margin:7px 0;background:#fff}.ada-agent-owner .ag-mini-head{list-style:none;cursor:pointer;padding:12px;display:flex;justify-content:space-between;align-items:center;gap:8px}.ada-agent-owner .ag-mini-head::-webkit-details-marker{display:none}.ada-agent-owner .ag-mini-title{display:grid;gap:4px;min-width:0}.ada-agent-owner .ag-mini-title small{font-size:12px;color:#63778a}.ada-agent-owner .ag-mini-body{padding:12px;border-top:1px solid #e3e9ef}.ada-agent-owner .ag-read,.ada-agent-owner .ag-unread{white-space:nowrap;padding:5px 8px;border-radius:20px;font-size:11px}.ada-agent-owner .ag-read{background:#dcf0e3;color:#16603c}.ada-agent-owner .ag-unread{background:#fff0d6;color:#855b1b}.ada-agent-owner .ag-config{display:grid;grid-template-columns:1.5fr 1fr 1fr auto;gap:8px;align-items:end}.ada-agent-owner .ag-config label{display:grid;gap:5px;font-size:12px}.ada-agent-owner .ag-config select,.ada-agent-owner .ag-config input{border:1px solid #cdd9e4;border-radius:9px;padding:10px;max-width:100%;min-width:0}.ada-agent-owner .ag-config input[type=checkbox]{width:auto}@media(max-width:650px){.ada-agent-owner .ag-config{grid-template-columns:1fr 1fr}.ada-agent-owner .ag-config label:first-child{grid-column:1/-1}}.ada-agent-owner .ag-status{border-radius:9px;background:#eaf3fc;color:#1c527d;padding:11px;font-size:13px}.ada-agent-owner .ag-status.bad{background:#ffefe9;color:#8a422b}@media(max-width:850px){.ada-agent-owner .ag-sections{grid-template-columns:1fr}.ada-agent-owner .ag-counts{grid-template-columns:repeat(2,minmax(0,1fr))}}';
- // Explicit light-surface palette: the admin dark/light theme must not override contrast.
+ // Match the parent system theme: dark by default, light only with html.ada-light.
+ // Scoped tokens avoid changing other dashboard modules.
  style.textContent += `
- .ada-agent-owner{--ag-surface:#ffffff;--ag-ink:#172536;--ag-muted:#526477;--ag-border:#d6e0eb;color:var(--ag-ink)!important;color-scheme:light}
- .ada-agent-owner .ag-card,.ada-agent-owner .ag-stat,.ada-agent-owner .ag-mini{background:var(--ag-surface)!important;border-color:var(--ag-border)!important;color:var(--ag-ink)!important}
- .ada-agent-owner h2,.ada-agent-owner h3,.ada-agent-owner .ag-line strong,.ada-agent-owner .ag-mini-title strong,.ada-agent-owner .ag-stat b{color:var(--ag-ink)!important;opacity:1!important}
- .ada-agent-owner .ag-config label,.ada-agent-owner .ag-config label span,.ada-agent-owner .ag-mini-body p{color:var(--ag-ink)!important;opacity:1!important}
- .ada-agent-owner p,.ada-agent-owner .ag-line small,.ada-agent-owner .ag-mini-title small,.ada-agent-owner .ag-stat small{color:var(--ag-muted)!important;opacity:1!important}
- .ada-agent-owner .ag-config select,.ada-agent-owner .ag-config input:not([type=checkbox]){
-   appearance:auto;-webkit-appearance:auto;background:#fff!important;color:#172536!important;
-   -webkit-text-fill-color:#172536!important;border:1px solid #b8c7d8!important;
-   color-scheme:light!important;min-height:44px;opacity:1!important
+ .ada-agent-owner{
+   --ag-bg:#161b1e;--ag-raised:#1d2428;--ag-raised-hover:#242d32;
+   --ag-ink:#f1f2ee;--ag-muted:#acb8bc;--ag-border:#343d41;
+   --ag-accent:#d7b468;--ag-accent-ink:#161b1e;
+   --ag-field:#222a2f;--ag-field-ink:#f1f2ee;--ag-field-border:#526066;
+   --ag-soft:#303b41;--ag-soft-ink:#e1e9ec;
+   --ag-status-bg:#22302f;--ag-status-ink:#c1ded2;
+   color:var(--ag-ink)!important;color-scheme:dark;min-width:0;
  }
- .ada-agent-owner .ag-config select option{background:#fff!important;color:#172536!important}
- .ada-agent-owner .ag-config input[type=checkbox]{accent-color:#1762a8;color-scheme:light!important}
- .ada-agent-owner .ag-mini-body{color:#172536!important}
- .ada-agent-owner .ag-read{background:#dcf0e3!important;color:#16603c!important}
- .ada-agent-owner .ag-unread{background:#fff0d6!important;color:#855b1b!important}
- .ada-agent-owner button:not(.ag-primary),.ada-agent-owner .ag-link:not(.ag-primary):not(.ag-whatsapp){background:#e8eff7!important;color:#194e81!important;-webkit-text-fill-color:#194e81!important}
- .ada-agent-owner .ag-primary{background:#1762a8!important;color:#fff!important;-webkit-text-fill-color:#fff!important}
- .ada-agent-owner .ag-whatsapp{background:#116d4a!important;color:#fff!important}
- @media(max-width:650px){.ada-agent-owner .ag-card{padding:16px!important}.ada-agent-owner .ag-config{gap:10px!important}}
+ html.ada-light .ada-agent-owner{
+   --ag-bg:#ffffff;--ag-raised:#f7f9fb;--ag-raised-hover:#eef3f7;
+   --ag-ink:#21323b;--ag-muted:#526977;--ag-border:#d8e1e8;
+   --ag-accent:#8f6a2e;--ag-accent-ink:#fff;
+   --ag-field:#fff;--ag-field-ink:#21323b;--ag-field-border:#a5b6c5;
+   --ag-soft:#eaf0f4;--ag-soft-ink:#23445b;
+   --ag-status-bg:#e8f1ee;--ag-status-ink:#245846;
+   color-scheme:light;
+ }
+ .ada-agent-owner .ag-card,.ada-agent-owner .ag-stat,.ada-agent-owner .ag-mini{
+   background:var(--ag-bg)!important;border:1px solid var(--ag-border)!important;
+   color:var(--ag-ink)!important;box-shadow:none!important;
+ }
+ .ada-agent-owner .ag-card{border-radius:14px!important}
+ .ada-agent-owner .ag-stat{border-radius:12px!important}
+ .ada-agent-owner h2,.ada-agent-owner h3,.ada-agent-owner .ag-line strong,
+ .ada-agent-owner .ag-mini-title strong,.ada-agent-owner .ag-stat b{
+   color:var(--ag-ink)!important;opacity:1!important;
+ }
+ .ada-agent-owner p,.ada-agent-owner .ag-line small,.ada-agent-owner .ag-mini-title small,
+ .ada-agent-owner .ag-stat small,.ada-agent-owner .ag-config label,.ada-agent-owner .ag-mini-body p{
+   color:var(--ag-muted)!important;opacity:1!important;
+ }
+ .ada-agent-owner .ag-mini{background:var(--ag-raised)!important}
+ .ada-agent-owner .ag-mini-head:hover,.ada-agent-owner .ag-mini[open] .ag-mini-head{
+   background:var(--ag-raised-hover)!important
+ }
+ .ada-agent-owner .ag-mini-body,.ada-agent-owner .ag-line{border-color:var(--ag-border)!important}
+ .ada-agent-owner .ag-mini-body{color:var(--ag-ink)!important}
+ .ada-agent-owner .ag-config select,.ada-agent-owner .ag-config input:not([type=checkbox]){
+   appearance:auto;-webkit-appearance:auto;background:var(--ag-field)!important;
+   color:var(--ag-field-ink)!important;-webkit-text-fill-color:var(--ag-field-ink)!important;
+   border:1px solid var(--ag-field-border)!important;border-radius:9px!important;
+   min-height:42px;opacity:1!important;color-scheme:inherit;
+ }
+ .ada-agent-owner .ag-config select option{background:var(--ag-field)!important;color:var(--ag-field-ink)!important}
+ .ada-agent-owner .ag-config input[type=checkbox]{accent-color:var(--ag-accent);width:20px;height:20px}
+ .ada-agent-owner button:not(.ag-primary),.ada-agent-owner .ag-link:not(.ag-primary):not(.ag-whatsapp){
+   background:var(--ag-soft)!important;color:var(--ag-soft-ink)!important;
+   -webkit-text-fill-color:var(--ag-soft-ink)!important;border:1px solid var(--ag-border)!important;
+ }
+ .ada-agent-owner .ag-primary{
+   background:var(--ag-accent)!important;color:var(--ag-accent-ink)!important;
+   -webkit-text-fill-color:var(--ag-accent-ink)!important;border:1px solid transparent!important
+ }
+ .ada-agent-owner .ag-whatsapp{background:#146848!important;color:#fff!important;-webkit-text-fill-color:#fff!important}
+ .ada-agent-owner .ag-status{
+   background:var(--ag-status-bg)!important;color:var(--ag-status-ink)!important;
+   border:1px solid var(--ag-border)!important
+ }
+ .ada-agent-owner .ag-status.bad{background:#382927!important;color:#f1b5a7!important}
+ html.ada-light .ada-agent-owner .ag-status.bad{background:#fff1ed!important;color:#903f2b!important}
+ .ada-agent-owner .ag-read{background:#244537!important;color:#bfe8cc!important}
+ .ada-agent-owner .ag-unread{background:#45361e!important;color:#f5d894!important}
+ html.ada-light .ada-agent-owner .ag-read{background:#e0f1e6!important;color:#196443!important}
+ html.ada-light .ada-agent-owner .ag-unread{background:#fff0d5!important;color:#815717!important}
+ .ada-agent-owner .ag-counts{gap:10px!important}
+ .ada-agent-owner .ag-sections{gap:13px!important}
+ .ada-agent-owner .ag-config{gap:10px!important}
+ .ada-agent-owner .ag-config label{font-weight:600!important}
+ .ada-agent-owner button:focus-visible,.ada-agent-owner a:focus-visible,
+ .ada-agent-owner input:focus-visible,.ada-agent-owner select:focus-visible,
+ .ada-agent-owner summary:focus-visible{outline:2px solid var(--ag-accent)!important;outline-offset:2px}
+ @media(max-width:650px){
+   .ada-agent-owner .ag-card{padding:14px!important}
+   .ada-agent-owner .ag-stat{padding:12px!important}
+   .ada-agent-owner .ag-config{gap:9px!important}
+ }
  `;
  const top=node('div','ag-header'),heading=node('div');
  heading.append(node('h2','','Pengurusan Ejen'),node('p','','Permohonan, lead, pembeli terus dan komisen dalam dashboard admin.'));
