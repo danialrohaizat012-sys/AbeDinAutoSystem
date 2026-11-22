@@ -1514,6 +1514,20 @@ async function openPublicCatalogue(vehicleId=null){
   box.insertAdjacentHTML('beforeend',signature);
   el('ada-cloud-gate').querySelector('.wrap').appendChild(box);
   box.querySelectorAll('a.ada-public-view').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const u=new URL(a.href,location.href),id=u.searchParams.get('car');if(!id)return;history.pushState({publicCar:id},'','/?car='+encodeURIComponent(id));openPublicCatalogue(id);window.scrollTo({top:0,behavior:'instant'})}));
+  // Customer-initiated lead referral is kept separate from commission approval.
+  // Only show for car details opened with a validated agent code.
+  if(vehicleId&&agentReferralCode){
+    const detailActions=box.querySelector('.abx-d-row');
+    if(detailActions){
+      const inquiry=new URL('/agent-inquiry.html',location.origin);
+      inquiry.searchParams.set('car',String(vehicleId));
+      inquiry.searchParams.set('ref',agentReferralCode);
+      const cta=document.createElement('a');
+      cta.className='abx-btn abx-btn-line';
+      cta.href=inquiry.href;cta.textContent='Daftar Minat melalui Ejen';
+      detailActions.prepend(cta);
+    }
+  }
   box.querySelector('#ada-cat-back')&&(box.querySelector('#ada-cat-back').onclick=()=>{if(vehicleId){box.remove();history.replaceState(null,'','/?catalogue=1'+agentReferralSuffix());openPublicCatalogue()}else{location.href='/admin'}});box.querySelectorAll('[data-staff-login]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();location.href='/admin'}));
   box.querySelector('#ada-public-back-list')?.addEventListener('click',()=>{history.replaceState(null,'','/?catalogue=1'+agentReferralSuffix());openPublicCatalogue()});
   box.querySelectorAll('[data-public-image]').forEach(b=>b.addEventListener('click',()=>{const main=box.querySelector('#ada-public-main-image'),frame=box.querySelector('.ada-public-main-photo');if(main){if(main.src===b.dataset.publicImage)return;frame?.classList.add('is-switching');const apply=()=>{main.src=b.dataset.publicImage;box.querySelectorAll('[data-public-image]').forEach(x=>x.classList.toggle('is-active',x===b));const counter=box.querySelector('.ada-public-image-counter');if(counter)counter.textContent=(Number(b.dataset.publicIndex)+1)+'/'+box.querySelectorAll('[data-public-image]').length;setTimeout(()=>frame?.classList.remove('is-switching'),80)};setTimeout(apply,90)}}));
