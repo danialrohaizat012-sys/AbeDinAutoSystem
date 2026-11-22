@@ -18,13 +18,14 @@ button:disabled{opacity:.5}.notice{border-radius:10px;background:#eaf3ff;color:#
 a{color:#165ca7}footer{font-size:12px;color:#728398;text-align:center;margin-top:16px}
 .honey{position:absolute;left:-99999px;opacity:0;pointer-events:none}
 </style></head>
-<body><header><strong>AbeDin Auto</strong><small>Pertanyaan kereta melalui ejen berdaftar</small></header>
+<body><header><strong>AbeDin Auto</strong><small>Pertanyaan kereta AbeDin Auto</small></header>
 <main><div class="panel">
 <h1>Daftar Minat Kereta</h1>
-<p>Isi maklumat untuk dihubungi oleh AbeDin Auto mengenai kereta pilihan anda. Maklumat akan dihantar kepada pasukan kami dan dikaitkan dengan kod rujukan ejen.</p>
+<p>Isi maklumat untuk dihubungi oleh AbeDin Auto mengenai kereta pilihan anda. Maklumat akan disimpan dalam sistem AbeDin Auto supaya pasukan kami boleh menghubungi anda.</p>
 <div id="notice" role="status" aria-live="polite" class="notice">Menyemak pautan rujukan...</div>
 <div id="content" hidden>
-<p><strong>Kod rujukan ejen:</strong> <span id="agentCode"></span></p>
+<input id="agentCode" name="ref" type="hidden" value="">
+<p id="refHint" hidden></p>
 <p><a id="carLink" target="_blank" rel="noopener">Lihat butiran kereta dalam katalog awam</a></p>
 <form id="form">
 <label for="customerName">Nama pelanggan</label>
@@ -32,8 +33,9 @@ a{color:#165ca7}footer{font-size:12px;color:#728398;text-align:center;margin-top
 <label for="customerPhone">Nombor telefon</label>
 <input id="customerPhone" name="customer_phone" type="tel" maxlength="24" autocomplete="tel" required>
 <div class="honey" aria-hidden="true"><label for="companyWebsite">Laman syarikat<input id="companyWebsite" name="company_website" tabindex="-1" autocomplete="off"></label></div>
-<label class="check"><input name="consent" type="checkbox" required> Saya bersetuju AbeDin Auto menghubungi saya mengenai pertanyaan kereta ini. Saya faham nama dan nombor telefon akan direkodkan untuk urusan pertanyaan dan semakan ejen.</label>
+<label class="check"><input name="consent" type="checkbox" required> Saya bersetuju AbeDin Auto menghubungi saya mengenai pertanyaan kereta ini. Saya faham nama dan telefon akan disimpan dalam sistem AbeDin Auto dan boleh dikongsi ke WhatsApp untuk tindakan susulan.</label>
 <button id="submit" type="submit">Hantar Pertanyaan</button>
+<a id="whatsappAfter" hidden target="_blank" rel="noopener" style="display:block;text-align:center;margin-top:13px;padding:14px;border-radius:10px;background:#116d4a;color:white;text-decoration:none;font-weight:750">Buka WhatsApp AbeDin Auto</a>
 </form>
 </div></div>
 <footer>Jangan masukkan nombor IC, lesen memandu, nombor akaun bank atau maklumat sensitif.</footer>
@@ -43,11 +45,13 @@ a{color:#165ca7}footer{font-size:12px;color:#728398;text-align:center;margin-top
 const $=id=>document.getElementById(id);
 const params=new URLSearchParams(location.search);
 const ref=params.get('ref')||'',car=params.get('car')||'';
-const valid=/^ADA-AG-[0-9]{4,}$/.test(ref)&&ref.length<=30&&car.length>=1&&car.length<=80&&/^[a-zA-Z0-9_-]+$/.test(car);
+const validCar=car.length>=1&&car.length<=80&&/^[a-zA-Z0-9_-]+$/.test(car);
+const validRef=/^ADA-AG-[0-9]{4,}$/.test(ref)&&ref.length<=30;
 function status(msg,bad=false){$('notice').textContent=msg;$('notice').className='notice'+(bad?' error':'');}
-if(!valid){status('Pautan ejen tidak sah. Dapatkan pautan terbaru daripada ejen AbeDin Auto.',true);return;}
-$('agentCode').textContent=ref;
-const link=new URL('/',location.origin);link.searchParams.set('car',car);link.searchParams.set('ref',ref);$('carLink').href=link.href;
+if(!validCar||(ref&&!validRef)){status('Pautan kereta atau kod ejen tidak sah. Dapatkan pautan terbaru daripada AbeDin Auto.',true);return;}
+$('agentCode').value=validRef?ref:'';
+// Referral code is held invisibly; the server checks the actual agent record.
+const link=new URL('/',location.origin);link.searchParams.set('car',car);if(validRef)link.searchParams.set('ref',ref);$('carLink').href=link.href;
 $('content').hidden=false;
 status('Lengkapkan borang untuk menghantar pertanyaan.');
 $('form').addEventListener('submit',async e=>{
@@ -55,18 +59,25 @@ $('form').addEventListener('submit',async e=>{
  const form=e.currentTarget;
  const f=new FormData(form);
  if(!form.reportValidity())return;
+ const refCode=$('agentCode').value.trim();
+ if(refCode&&(!/^ADA-AG-[0-9]{4,}$/.test(refCode)||refCode.length>30)){status('Pautan rujukan tidak sah.',true);return;}
  const button=$('submit');button.disabled=true;
  try{
   const res=await fetch('https://buzpdyvvoiqgbeventwm.supabase.co/functions/v1/agent-public-inquiry',{
    method:'POST',headers:{'content-type':'application/json'},
-   body:JSON.stringify({ref,car,customer_name:String(f.get('customer_name')||'').trim(),
+   body:JSON.stringify({ref:refCode,car,customer_name:String(f.get('customer_name')||'').trim(),
     customer_phone:String(f.get('customer_phone')||'').trim(),consent:f.get('consent')==='on',
     company_website:String(f.get('company_website')||'')})
   });
   const data=await res.json();
   if(!res.ok)throw new Error(data.error||'Pertanyaan gagal dihantar.');
   form.hidden=true;
-  status('Terima kasih! Pertanyaan telah direkodkan di bawah kod ejen '+ref+'. Pasukan AbeDin Auto akan menyemaknya.');
+  status('Terima kasih! Pertanyaan anda berjaya disimpan dalam sistem AbeDin Auto. Sila teruskan ke WhatsApp untuk menghantar salinan kepada pasukan jualan.');
+  const waMessage='Salam AbeDin Auto, saya sudah daftar minat kereta.\\nNama: '+String(f.get('customer_name')||'').trim()+'\\nTelefon: '+String(f.get('customer_phone')||'').trim()+'\\nKereta: '+car+'\\nNo. rujukan: '+String(data.lead_id||'');
+  const waUrl='https://wa.me/601156366925?text='+encodeURIComponent(waMessage);
+  const waLink=$('whatsappAfter');waLink.href=waUrl;waLink.hidden=false;
+  // Browser opens WhatsApp with a prepared message; the customer must tap Send.
+  window.open(waUrl,'_blank','noopener');
  }catch(err){status(err.message||'Gagal menghantar pertanyaan.',true);}
  finally{button.disabled=false;}
 });
