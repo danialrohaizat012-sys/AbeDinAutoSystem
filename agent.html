@@ -303,6 +303,11 @@ async function loadAgentCatalogue(){
   const content=document.createElement('div');content.className='promo-body';
   const title=document.createElement('div');title.className='promo-title';title.textContent=label;
   const price=document.createElement('div');price.className='promo-price';price.textContent='RM '+Number(v.display_price??v.asking_price??0).toLocaleString('ms-MY');
+  const commissionNote=document.createElement('small');commissionNote.style.display='block';commissionNote.style.marginBottom='10px';
+  const category={standard:'Standard',premium:'Premium',special:'Khas'}[v.commission_category];
+  text(commissionNote,category&&v.indicative_commission!==null
+    ?'Komisen cadangan ejen: '+category+' · RM '+Number(v.indicative_commission||0).toLocaleString('ms-MY')+' (tertakluk kelulusan jualan)'
+    :'Kategori komisen belum ditetapkan oleh owner');
   const actions=document.createElement('div');actions.className='promo-actions';
   const open=document.createElement('a');open.href=url;open.target='_blank';open.rel='noopener';open.textContent='Lihat Katalog';
   const copy=document.createElement('button');copy.type='button';copy.textContent='Salin Link';copy.onclick=()=>copyAgentLink(url);
@@ -316,7 +321,7 @@ async function loadAgentCatalogue(){
   inquiryLink.target='_blank';inquiryLink.rel='noopener';inquiryLink.textContent='Link Daftar Minat';
   const lead=document.createElement('button');lead.type='button';lead.textContent='Daftar Lead';
   lead.onclick=()=>{sel.value=v.id;sel.scrollIntoView({behavior:'smooth',block:'center'});};
-  actions.append(open,copy,wa,inquiryLink,lead);content.append(title,price,actions);box.append(content);grid.append(box);
+  actions.append(open,copy,wa,inquiryLink,lead);content.append(title,price,commissionNote,actions);box.append(content);grid.append(box);
  }
 }
 $('refreshPromo').onclick=()=>loadAgentCatalogue().catch(fail);
