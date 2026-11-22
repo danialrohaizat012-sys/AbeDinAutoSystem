@@ -45,6 +45,8 @@ jobs:
           grep -q 'agent-public-inquiry' /tmp/agent-enquiry.html
           grep -q 'name="consent"' /tmp/agent-enquiry.html
           grep -q 'id="agentCode" name="ref"' /tmp/agent-enquiry.html
+          grep -Fq "ref:refCode,car,customer_name:" /tmp/agent-enquiry.html
+          grep -Fq "const refCode=\$('agentCode').value.trim();" /tmp/agent-enquiry.html
           echo "PASS: customer enquiry form served by production"
           echo "Checking public catalogue referral integration"
           curl --fail --location --silent --show-error --max-time 20 \
