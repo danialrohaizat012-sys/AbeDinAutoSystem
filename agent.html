@@ -187,19 +187,19 @@ async function loadAgentCatalogue(){
   if(typeof v.id!=='string'||typeof v.public_vehicle_id!=='string')continue;
   const label=[v.make,v.model,v.model_year].filter(Boolean).join(' ');
   const op=document.createElement('option');op.value=v.id;
-  op.textContent=label+' | RM '+Number(v.asking_price||0).toLocaleString('ms-MY');sel.append(op);
+  op.textContent=label+' | RM '+Number(v.display_price??v.asking_price??0).toLocaleString('ms-MY');sel.append(op);
   const url=agentCarLink(v);const box=document.createElement('article');box.className='promo-card';
   if(v.image_url&&v.image_url.startsWith('https://buzpdyvvoiqgbeventwm.supabase.co/storage/v1/object/public/vehicle-images/')){
     const img=document.createElement('img');img.className='promo-photo';img.loading='lazy';img.decoding='async';img.alt=label;img.src=v.image_url;box.append(img);
   }else{const no=document.createElement('div');no.className='promo-no-photo';no.textContent='Foto belum tersedia';box.append(no);}
   const content=document.createElement('div');content.className='promo-body';
   const title=document.createElement('div');title.className='promo-title';title.textContent=label;
-  const price=document.createElement('div');price.className='promo-price';price.textContent='RM '+Number(v.asking_price||0).toLocaleString('ms-MY');
+  const price=document.createElement('div');price.className='promo-price';price.textContent='RM '+Number(v.display_price??v.asking_price??0).toLocaleString('ms-MY');
   const actions=document.createElement('div');actions.className='promo-actions';
   const open=document.createElement('a');open.href=url;open.target='_blank';open.rel='noopener';open.textContent='Lihat Katalog';
   const copy=document.createElement('button');copy.type='button';copy.textContent='Salin Link';copy.onclick=()=>copyAgentLink(url);
   const wa=document.createElement('a');wa.className='promo-whatsapp';wa.target='_blank';wa.rel='noopener';
-  wa.href='https://wa.me/?text='+encodeURIComponent(label+' | RM '+Number(v.asking_price||0).toLocaleString('ms-MY')+'\nLihat kereta AbeDin Auto: '+url);
+  wa.href='https://wa.me/?text='+encodeURIComponent(label+' | RM '+Number(v.display_price??v.asking_price??0).toLocaleString('ms-MY')+'\nLihat kereta AbeDin Auto: '+url);
   wa.textContent='Kongsi WhatsApp';
   const lead=document.createElement('button');lead.type='button';lead.textContent='Daftar Lead';
   lead.onclick=()=>{sel.value=v.id;sel.scrollIntoView({behavior:'smooth',block:'center'});};
