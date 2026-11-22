@@ -20,7 +20,10 @@ create table public.profiles (
 );
 create table public.vehicles (
  id uuid primary key,
- status text not null
+ vehicle_id text unique,
+ status text not null,
+ is_published boolean not null default false,
+ catalogue_status text not null default 'available'
 );
 create table public.customers (
  id uuid primary key,
