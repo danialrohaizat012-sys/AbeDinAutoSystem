@@ -27,6 +27,10 @@ Deno.serve(async req=>{
  if(error)return response(500,{error:"Unable to load public catalogue"});
  const {data:offers, error:offerError}=await server.rpc("get_public_vehicle_offers");
  if(offerError)return response(500,{error:"Unable to load public prices"});
+ const {data:commissionOffers,error:commissionError}=await server.from("agent_vehicle_commission_offers")
+   .select("vehicle_id,category,indicative_amount,active").eq("active",true).limit(200);
+ if(commissionError)return response(500,{error:"Unable to load commission categories"});
+ const commissionMap=new Map((commissionOffers||[]).map(x=>[x.vehicle_id,x]));
  const offerMap=new Map((Array.isArray(offers)?offers:[]).map(x=>[String(x.vehicle_id),x]));
  const rows=Array.isArray(data)?data:[];
  const available=rows.filter(v=>String(v.status||"").toLowerCase()==="available");
@@ -43,6 +47,8 @@ Deno.serve(async req=>{
        return promo>0&&base>0&&promo<base?promo:base;
      })(),
      monthly_installment:offerMap.get(String(v.vehicle_id))?.monthly_installment||null,
+     commission_category:commissionMap.get(v.id)?.category||null,
+     indicative_commission:commissionMap.get(v.id)?.indicative_amount??null,
      image_url:path?"https://buzpdyvvoiqgbeventwm.supabase.co/storage/v1/object/public/vehicle-images/"+path.split("/").map(encodeURIComponent).join("/"):null};
  }).filter(v=>typeof v.id==="string"&&typeof v.public_vehicle_id==="string");
  return response(200,{vehicles,total:vehicles.length,source:"public_catalogue",share_token:share.token});
