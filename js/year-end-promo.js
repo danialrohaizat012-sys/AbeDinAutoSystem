@@ -32,12 +32,12 @@
         <button class="ada-promo-close" type="button" aria-label="Tutup promosi">×</button>
         <div class="ada-promo-tag">PROMOSI HUJUNG TAHUN • 2026</div>
         <div class="ada-promo-icon" aria-hidden="true">🚚</div>
-        <h2 id="ada-promo-title">PENGHANTARAN<br><span>PERCUMA!</span></h2>
-        <p class="ada-promo-region">Seluruh Malaysia</p>
-        <p id="ada-promo-copy">Daftar minat dan mulakan urusan penghantaran dokumen permohonan <strong>hari ini</strong> untuk menyertai promosi hujung tahun AbeDin Auto.</p>
+        <h2 id="ada-promo-title">JIMAT<br><span>RM300–RM500!</span></h2>
+        <p class="ada-promo-region">Penghantaran Percuma Seluruh Malaysia</p>
+        <p id="ada-promo-copy">Jimat anggaran <strong>RM300 hingga RM500 kos penghantaran</strong> sempena promosi hujung tahun! Daftar minat hari ini untuk memulakan permohonan kereta pilihan anda.</p>
         <a class="ada-promo-primary" href="${url.href}">${detail ? "DAFTAR MINAT PROMOSI" : "LIHAT KERETA PROMOSI"}</a>
         <button class="ada-promo-later" type="button">Terus Tengok Kereta</button>
-        <small>Tertakluk kepada kelayakan, kawasan liputan dan terma promosi. Pendaftaran minat bukan penghantaran dokumen.</small>
+        <small>Anggaran penjimatan mengikut lokasi penghantaran. Promosi tertakluk kepada kelayakan, kawasan liputan dan terma. Daftar minat bukan penghantaran dokumen.</small>
       </section>`;
     const previousFocus = document.activeElement;
     const dismiss = () => {
