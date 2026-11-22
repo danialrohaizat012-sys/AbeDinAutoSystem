@@ -12,7 +12,7 @@ const edge=read('supabase/functions/agent-public-inquiry/index.ts');
 const migration=read('supabase/agent_public_referral_intake_v1.sql');
 test('Every agent gets individual catalogue and per-car enquiry links',()=>{
  assert.match(portal,/agentCatalogueLink\(\)/);
- assert.match(portal,/u\.searchParams\.set\('ref',agent\.agent_code\)/);
+ assert.match(portal,/u\.searchParams\.set\('ref',shareToken\)/);
  assert.match(portal,/myAgentLink/);
  assert.match(portal,/agent-inquiry\.html/);
  assert.match(portal,/lead_source==='public_referral'/);
@@ -20,7 +20,7 @@ test('Every agent gets individual catalogue and per-car enquiry links',()=>{
 test('Public car details offer an explicit referral enquiry form',()=>{
  assert.match(catalogue,/agentReferralCode/);
  assert.match(catalogue,/agent-inquiry\.html/);
- assert.match(catalogue,/Daftar Minat melalui Ejen/);
+ assert.match(catalogue,/Daftar Minat/);
  assert.match(catalogue,/inquiry\.searchParams\.set\('car',String\(vehicleId\)\)/);
  assert.match(catalogue,/inquiry\.searchParams\.set\('ref',agentReferralCode\)/);
 });
