@@ -28,6 +28,7 @@ jobs:
               grep -q 'agent-portal-admin' /tmp/agent-check.html
               grep -q 'Stok Katalog Awam untuk Promosi' /tmp/agent-check.html
               grep -q 'Kongsi WhatsApp' /tmp/agent-check.html
+              grep -q 'display_price' /tmp/agent-check.html
             else
               grep -q 'Tarikh DAN masa pembayaran bank sebenar' /tmp/agent-check.html
               grep -q 'agent-payout-verifier' /tmp/agent-check.html
