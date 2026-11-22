@@ -74,7 +74,9 @@ jobs:
             supabase/agent_payout_prepare_approve_v1.sql \
             supabase/agent_hr_payout_verifier_v1.sql \
             supabase/agent_verifier_only_finalize_v2.sql \
-            supabase/agent_public_referral_intake_v1.sql; do
+            supabase/agent_public_referral_intake_v1.sql \
+            supabase/agent_direct_public_inquiries_v1.sql \
+            supabase/agent_direct_lead_exclusivity_v1.sql; do
             echo "Applying fixture migration: $migration"
             psql -X -v ON_ERROR_STOP=1 -f "$migration"
           done
@@ -85,3 +87,4 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 -f tests/postgres/20_commission_approval.sql
           psql -X -v ON_ERROR_STOP=1 -f tests/postgres/30_hr_payout_verifier.sql
           psql -X -v ON_ERROR_STOP=1 -f tests/postgres/40_public_referral.sql
+          psql -X -v ON_ERROR_STOP=1 -f tests/postgres/50_direct_public_inquiry.sql
