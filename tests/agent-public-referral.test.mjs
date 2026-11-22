@@ -40,7 +40,7 @@ test('Backend validates authenticated agent record and published car before inse
  assert.match(migration,/pg_advisory_xact_lock/);
  assert.match(migration,/rate_limited/);
  assert.match(migration,/grant execute .*service_role/s);
- assert.match(edge,/admin|client\.rpc\("agent_submit_public_inquiry_gateway_v1"/);
+ assert.match(edge,/client\.rpc\(ref\?"agent_submit_public_inquiry_gateway_v1":"agent_submit_direct_inquiry_gateway_v1"/);
  assert.match(edge,/data\.consent!==true/);
  assert.match(edge,/req\.headers\.get\("origin"\)/);
  assert.match(edge,/Terlalu banyak permintaan/);
