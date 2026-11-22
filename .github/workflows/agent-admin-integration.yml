@@ -33,14 +33,23 @@ jobs:
         run: |
           set -euo pipefail
           curl -fsSL --retry 2 --max-time 20 -H "Cache-Control: no-cache" "https://abedinauto.my/app.html?admin=1&check=$GITHUB_SHA" -o /tmp/abedin-admin.html
+          echo "LIVE ADMIN BYTES $(wc -c < /tmp/abedin-admin.html)"
           grep -Fq 'data-cloud-page="agents"' /tmp/abedin-admin.html
           grep -Fq "if(page==='agents')return p.role==='owner'&&p.enabled===true" /tmp/abedin-admin.html
           curl -fsSL --retry 2 --max-time 20 -H "Cache-Control: no-cache" "https://abedinauto.my/js/agent-admin-panel.js?check=$GITHUB_SHA" -o /tmp/abedin-agent-panel.js
+          echo "LIVE PANEL BYTES $(wc -c < /tmp/abedin-agent-panel.js)"
+          for marker in 'Permohonan Ejen' 'direct_inquiry_list' 'WhatsApp Pelanggan' 'lead_contact_list'; do
+            if grep -Fq "$marker" /tmp/abedin-agent-panel.js; then echo "PANEL FOUND $marker"; else echo "PANEL MISSING $marker"; fi
+          done
           grep -Fq 'Permohonan Ejen' /tmp/abedin-agent-panel.js
           grep -Fq 'direct_inquiry_list' /tmp/abedin-agent-panel.js
           grep -Fq 'WhatsApp Pelanggan' /tmp/abedin-agent-panel.js
           grep -Fq 'lead_contact_list' /tmp/abedin-agent-panel.js
           curl -fsSL --retry 2 --max-time 20 -H 'Cache-Control: no-cache' "https://abedinauto.my/agent.html?check=$GITHUB_SHA" -o /tmp/abedin-agent.html
+          echo "LIVE AGENT BYTES $(wc -c < /tmp/abedin-agent.html)"
+          for marker in 'WhatsApp Pelanggan' 'customer_phone,status,lead_source'; do
+            if grep -Fq "$marker" /tmp/abedin-agent.html; then echo "AGENT FOUND $marker"; else echo "AGENT MISSING $marker"; fi
+          done
           grep -Fq 'WhatsApp Pelanggan' /tmp/abedin-agent.html
           grep -Fq 'customer_phone,status,lead_source' /tmp/abedin-agent.html
           echo "PASS: Agent module available on live admin hosting"
