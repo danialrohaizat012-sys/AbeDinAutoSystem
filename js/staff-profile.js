@@ -276,7 +276,7 @@ export function mountProfile(app, ctx, staff, onBack) {
   }
   async function loadSlip() {
     P.slipBusy = true; render();
-    try { const [k, sl] = await Promise.all([import("./kehadiran.js?v=7"), import("./slip.js?v=1")]); P.slipHtml = sl.slipHtml; P.printSlip = sl.printSlip; P.slip = await k.computeSlip(client, me, id, P.slipMonth); }
+    try { const [k, sl] = await Promise.all([import("./kehadiran.js?v=8"), import("./slip.js?v=1")]); P.slipHtml = sl.slipHtml; P.printSlip = sl.printSlip; P.slip = await k.computeSlip(client, me, id, P.slipMonth); }
     catch (e) { P.slip = null; say(e?.message || String(e), "err"); }
     P.slipBusy = false; render();
   }

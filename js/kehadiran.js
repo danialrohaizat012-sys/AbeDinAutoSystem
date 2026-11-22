@@ -112,8 +112,11 @@ table.ros td{padding:4px 3px}table.ros td.rest select{opacity:.65}table.ros td.p
 .er{display:grid;grid-template-columns:1.2fr 1fr 40px auto;gap:8px;align-items:center}
 .er .th{width:40px;height:40px;border-radius:8px;object-fit:cover;background:#222;display:grid;place-items:center;color:var(--mute)}
 .sw-dot{width:14px;height:14px;border-radius:4px;flex:none}
+.shrow{display:flex;align-items:center;gap:10px;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.shrow.on{border-color:var(--pri);box-shadow:0 0 0 2px #e8b10b33}.shrow .grow{min-width:0}.shrow .acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.shlist{display:flex;flex-direction:column;gap:8px}
 td.who{white-space:normal;min-width:120px;font-weight:600}td.act{white-space:nowrap;text-align:right}td.act .sm{margin-left:4px}
-.ap{display:grid;grid-template-columns:1fr;gap:14px}
+.ap{display:grid;grid-template-columns:1fr;gap:14px;align-items:start}
 @media (min-width:980px){.ap{grid-template-columns:1fr 1fr}.ap>.full{grid-column:1/-1}.pl.cols2{display:grid;grid-template-columns:1fr 1fr;gap:8px}}
 .otin{width:76px;padding:6px 8px}
 .pd{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:10px 12px;align-self:start}
@@ -221,6 +224,7 @@ async function signPhotos(list) {
 
 /* ---------- jadual kerja: syif, hari rehat, cuti umum ---------- */
 const shiftById = id => (S.shifts || []).find(x => x.id === id);
+const staffUsing = id => Object.values(S.astaff || {}).filter(a => a.shift_id === id).length;
 const shiftObj = sh => ({ start:tMin(sh.start_time), end:tMin(sh.end_time), brk:+sh.break_min || 0, name:sh.name, color:sh.color, shiftId:sh.id });
 function schedFor(sid, k) {
   const st = S.settings, a = (S.astaff || {})[sid] || {}, r = (S.roster || {})[sid + "|" + k], ph = (S.holidays || {})[k];
@@ -653,8 +657,10 @@ function viewTetapan() {
   const locs = S.locs.map(l => `<div class="loc"><div class="grow"><b>${esc(l.name)}</b> ${l.active ? "" : `<span class="chip">Tidak aktif</span>`}<div class="mute">Radius ${l.radius_m} m · <a href="${gmaps(l.lat, l.lng)}" target="_blank" rel="noopener" style="color:var(--pri)">Lihat peta</a></div></div>
     <button class="sm" data-act="loctoggle" data-id="${esc(l.id)}">${l.active ? "Matikan" : "Aktifkan"}</button><button class="sm bad" data-act="locdel" data-id="${esc(l.id)}">Padam</button></div>`).join("");
   const staff = S.staff.filter(s => s.enabled !== false && s.role !== "owner");
-  const shifts = (S.shifts || []).map(sh => `<div class="loc"><span class="sw-dot" style="background:${esc(sh.color)}"></span><div class="grow"><b>${esc(sh.name)}</b> ${sh.active ? "" : `<span class="chip">Tidak aktif</span>`}<div class="mute">${String(sh.start_time).slice(0, 5)}–${String(sh.end_time).slice(0, 5)} · rehat ${sh.break_min} min</div></div>
-    <button class="sm" data-act="shtoggle" data-id="${esc(sh.id)}">${sh.active ? "Matikan" : "Aktifkan"}</button><button class="sm bad" data-act="shdel" data-id="${esc(sh.id)}">Padam</button></div>`).join("");
+  const used = id => staffUsing(id);
+  const shifts = (S.shifts || []).map(sh => `<div class="shrow ${S.shEdit === sh.id ? "on" : ""}"><span class="sw-dot" style="background:${esc(sh.color)}"></span><div class="grow"><b>${esc(sh.name)}</b> ${sh.active ? "" : `<span class="chip">Tidak aktif</span>`}<div class="mute">${String(sh.start_time).slice(0, 5)}–${String(sh.end_time).slice(0, 5)} · rehat ${sh.break_min} min${used(sh.id) ? ` · ${used(sh.id)} staf` : ""}</div></div>
+    <span class="acts"><button class="sm" data-act="shedit" data-id="${esc(sh.id)}">✎ Edit</button><button class="sm" data-act="shtoggle" data-id="${esc(sh.id)}">${sh.active ? "Matikan" : "Aktifkan"}</button><button class="sm bad" data-act="shdel" data-id="${esc(sh.id)}">Padam</button></span></div>`).join("");
+  const se = S.shEdit && shiftById(S.shEdit), sv = se ? { name:se.name, color:se.color, start:String(se.start_time).slice(0, 5), end:String(se.end_time).slice(0, 5), brk:se.break_min } : { name:"", color:"#e8b10b", start:"08:30", end:"17:30", brk:60 };
   const wk = [...Array(7)].map((_, i) => addDays(S.week, i)), act = (S.shifts || []).filter(x => x.active);
   const roster = staff.map(s => `<tr><th class="nm">${esc(s.full_name)}</th>${wk.map(k => { const r = S.roster[s.id + "|" + k], sc = schedFor(s.id, k), v = r ? (r.shift_id || "rest") : "";
     return `<td class="${sc.type}"><select data-roster="${esc(s.id)}|${k}" class="rs"><option value="" ${v === "" ? "selected" : ""}>Lalai${r ? "" : ` (${sc.type === "work" ? hhmmOf(sc.start) : sc.type === "ph" ? "CU" : "rehat"})`}</option><option value="rest" ${v === "rest" ? "selected" : ""}>Rehat</option>${act.map(x => `<option value="${esc(x.id)}" ${v === x.id ? "selected" : ""}>${esc(x.name)}</option>`).join("")}</select></td>`; }).join("")}</tr>`).join("");
@@ -673,11 +679,12 @@ function viewTetapan() {
       <label class="sw"><input type="checkbox" name="enforce_geofence" ${st.enforce_geofence ? "checked" : ""}> Sekat punch di luar kawasan lokasi tag</label>
       <label class="sw"><input type="checkbox" name="require_selfie" ${st.require_selfie ? "checked" : ""}> Wajib selfie</label>
       <button class="btn" type="submit">Simpan tetapan</button></form>
-    <div class="card"><h3>Syif</h3><p class="mute">Rehat syif ditolak automatik jika staf kerja 6 jam atau lebih tanpa punch rehat.</p>${shifts || `<p class="mute">Belum ada syif.</p>`}
+    <div class="card"><h3>Syif</h3><p class="mute">Rehat syif ditolak automatik jika staf kerja 6 jam atau lebih tanpa punch rehat.</p><div class="shlist">${shifts || `<p class="mute">Belum ada syif.</p>`}</div>
       <form id="f-shift" style="display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:12px">
-        <div class="g2"><div><label>Nama syif</label><input class="field" name="name" required placeholder="cth: Syif Pagi"></div><div><label>Warna</label><input class="field" type="color" name="color" value="#e8b10b" style="height:42px;padding:4px"></div></div>
-        <div class="g3"><div><label>Masuk</label><input class="field" type="time" name="start_time" value="08:30" required></div><div><label>Balik</label><input class="field" type="time" name="end_time" value="17:30" required></div><div><label>Rehat (min)</label><input class="field" type="number" min="0" max="240" name="break_min" value="60"></div></div>
-        <button class="btn" type="submit">+ Tambah syif</button></form></div>
+        <b>${se ? `Edit syif: ${esc(se.name)}` : "Tambah syif baharu"}</b>
+        <div class="g2"><div><label>Nama syif</label><input class="field" name="name" required placeholder="cth: Syif Pagi" value="${esc(sv.name)}"></div><div><label>Warna</label><input class="field" type="color" name="color" value="${esc(sv.color)}" style="height:42px;padding:4px"></div></div>
+        <div class="g3"><div><label>Masuk</label><input class="field" type="time" name="start_time" value="${sv.start}" required></div><div><label>Balik</label><input class="field" type="time" name="end_time" value="${sv.end}" required></div><div><label>Rehat (min)</label><input class="field" type="number" min="0" max="240" name="break_min" value="${sv.brk}"></div></div>
+        ${se ? `<div class="g2"><button class="btn alt" type="button" data-act="shcancel">Batal</button><button class="btn" type="submit">Simpan perubahan</button></div>` : `<button class="btn" type="submit">+ Tambah syif</button>`}</form></div>
     <div class="card full"><div class="r"><h3>Jadual mingguan</h3><span class="r" style="gap:6px"><button class="sm" data-act="wk" data-n="-7">‹</button><span class="mute">${dayLabel(wk[0])} – ${dayLabel(wk[6])}</span><button class="sm" data-act="wk" data-n="7">›</button></span></div>
       <p class="mute">Ubah syif atau beri hari rehat untuk tarikh tertentu. "Lalai" ikut syif & hari kerja staf. Disimpan terus.</p>
       ${staff.length ? `<div class="tw"><table class="ros"><thead><tr><th class="nm">Staf</th>${wk.map(k => `<th class="${S.holidays[k] ? "ph" : ""}">${DAYS[dow(k)].slice(0, 3)}<br><span class="mute">${+k.slice(8)}/${+k.slice(5, 7)}</span></th>`).join("")}</tr></thead><tbody>${roster}</tbody></table></div>` : `<p class="mute">Belum ada staf.</p>`}</div>
@@ -1001,11 +1008,13 @@ function onClick(e) {
       else { const { error } = await S.client.from("attendance_locations").update({ active:!l.active }).eq("id", l.id); if (error) throw error; l.active = !l.active; }
     });
   }
+  else if (a === "shedit") { S.shEdit = t.dataset.id; render(); root.querySelector("#f-shift")?.scrollIntoView({ block:"nearest", behavior:"smooth" }); root.querySelector("#f-shift [name=name]")?.focus(); }
+  else if (a === "shcancel") { S.shEdit = null; render(); }
   else if (a === "shtoggle" || a === "shdel") {
     const sh = shiftById(t.dataset.id); if (!sh) return;
-    if (a === "shdel" && !confirm(`Padam syif "${sh.name}"? Staf dalam syif ini kembali ke waktu kerja umum dan jadual tarikh yang guna syif ini dibuang.`)) return;
+    if (a === "shdel" && !confirm(`Padam syif "${sh.name}"?${staffUsing(sh.id) ? ` ${staffUsing(sh.id)} staf guna syif ini.` : ""} Staf dalam syif ini kembali ke waktu kerja umum dan jadual tarikh yang guna syif ini dibuang.`)) return;
     run(async () => {
-      if (a === "shdel") { const { error } = await S.client.from("attendance_shifts").delete().eq("id", sh.id); if (error) throw error; S.shifts = S.shifts.filter(x => x !== sh); Object.values(S.astaff).forEach(x => { if (x.shift_id === sh.id) x.shift_id = null; }); }
+      if (a === "shdel") { const { error } = await S.client.from("attendance_shifts").delete().eq("id", sh.id); if (error) throw error; if (S.shEdit === sh.id) S.shEdit = null; S.shifts = S.shifts.filter(x => x !== sh); Object.values(S.astaff).forEach(x => { if (x.shift_id === sh.id) x.shift_id = null; }); }
       else { const { error } = await S.client.from("attendance_shifts").update({ active:!sh.active }).eq("id", sh.id); if (error) throw error; sh.active = !sh.active; }
     });
   }
@@ -1046,7 +1055,10 @@ async function onSubmit(e) {
     } else if (f.id === "f-shift") {
       const v = { name:String(fd.get("name")).trim(), start_time:fd.get("start_time"), end_time:fd.get("end_time"), break_min:+fd.get("break_min") || 0, color:fd.get("color") || "#e8b10b" };
       if (tMin(v.end_time) <= tMin(v.start_time)) throw new Error("Waktu balik syif mesti selepas waktu masuk.");
-      const { data, error } = await S.client.from("attendance_shifts").insert(v).select().single(); if (error) throw error; S.shifts.push(data); toast("Syif ditambah");
+      if (S.shEdit) {
+        const { data, error } = await S.client.from("attendance_shifts").update(v).eq("id", S.shEdit).select().single(); if (error) throw error;
+        S.shifts = S.shifts.map(x => x.id === data.id ? data : x).sort((x, y) => String(x.start_time).localeCompare(String(y.start_time))); S.shEdit = null; toast("Syif dikemas kini");
+      } else { const { data, error } = await S.client.from("attendance_shifts").insert(v).select().single(); if (error) throw error; S.shifts.push(data); toast("Syif ditambah"); }
     } else if (f.id === "f-hol") {
       const v = { day:fd.get("day"), name:String(fd.get("name")).trim(), kind:fd.get("kind") };
       const { data, error } = await S.client.from("attendance_holidays").upsert(v, { onConflict:"day" }).select().single(); if (error) throw error; S.holidays[data.day] = data; toast("Cuti ditambah");

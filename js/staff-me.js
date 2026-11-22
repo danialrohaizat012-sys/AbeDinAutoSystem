@@ -58,7 +58,7 @@ export function mountStaffMe(host, ctx) {
   }
   async function loadSlip() {
     S.slipBusy = true; S.slipErr = ""; render();
-    try { const m = await import("./kehadiran.js?v=7"); S.slip = await m.computeSlip(client, me, uid, S.month); }
+    try { const m = await import("./kehadiran.js?v=8"); S.slip = await m.computeSlip(client, me, uid, S.month); }
     catch (e) { S.slipErr = e?.message || String(e); S.slip = null; }
     S.slipBusy = false; render();
   }
