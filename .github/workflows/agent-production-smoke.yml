@@ -26,6 +26,11 @@ jobs:
             echo "Checking $url"
             curl --fail --location --silent --show-error --max-time 20 --retry 1 \
               -H 'Cache-Control: no-cache' --output /tmp/agent-check.html "$url?release=$GITHUB_SHA"
+            echo "Page $path size $(wc -c < /tmp/agent-check.html)"
+            for word in 'Pendaftaran pelanggan melalui link ejen' 'Daftar Minat' 'agent-portal-admin'; do
+              printf "Check %s: " "$word"
+              if grep -q "$word" /tmp/agent-check.html; then echo yes; else echo no; fi
+            done
             grep -q 'AbeDin Auto' /tmp/agent-check.html
             if [ "$path" = "agent.html" ]; then
               grep -q 'Menunggu pengesahan oleh HR Aiman' /tmp/agent-check.html
@@ -55,7 +60,7 @@ jobs:
           grep -q 'agentReferralSuffix' /tmp/ada-public-app.html
           grep -q 'ada-agent-enquiry-card' /tmp/ada-public-app.html
           grep -q 'Daftar Minat melalui Ejen' /tmp/ada-public-app.html
-          grep -q "history.pushState({publicCar:id},'','/?car='+encodeURIComponent(id)+agentReferralSuffix())" /tmp/ada-public-app.html || { echo 'Referral ID lost in navigation'; exit 1; }
+          grep -Fq 'agentReferralSuffix());openPublicCatalogue(id)' /tmp/ada-public-app.html
           echo "PASS: public catalogue contains agent referral code support"
       - name: Verify protected Supabase functions reject unauthenticated calls
         shell: bash
