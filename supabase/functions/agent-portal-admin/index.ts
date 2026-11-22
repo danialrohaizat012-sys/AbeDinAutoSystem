@@ -42,6 +42,12 @@ Deno.serve(async(req)=>{
    if(leads.error||commissions.error||payouts.error)return res(500,{error:"Unable to load finance records"});
    return res(200,{leads:leads.data,commissions:commissions.data,payouts:payouts.data});
  }
+ if(payload.action==="direct_inquiry_list"){
+   const {data,error}=await admin.from("catalogue_direct_inquiries")
+     .select("id,vehicle_id,customer_name,customer_phone,source,status,created_at")
+     .order("created_at",{ascending:false}).limit(100);
+   return error?res(500,{error:"Unable to load direct enquiries"}):res(200,{inquiries:data});
+ }
  if(payload.action==="lead_list"){
    const {data,error}=await admin.from("agent_leads")
      .select("id,agent_id,customer_name,customer_phone,status,linked_sale_id,vehicle_id,lead_source,referral_code_snapshot,created_at")
