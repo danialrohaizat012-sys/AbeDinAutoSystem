@@ -35,8 +35,9 @@ a{color:#165ca7}footer{font-size:12px;color:#728398;text-align:center;margin-top
 <div class="honey" aria-hidden="true"><label for="companyWebsite">Laman syarikat<input id="companyWebsite" name="company_website" tabindex="-1" autocomplete="off"></label></div>
 <label class="check"><input name="consent" type="checkbox" required> Saya bersetuju AbeDin Auto menghubungi saya mengenai pertanyaan kereta ini. Saya faham nama dan telefon akan disimpan dalam sistem AbeDin Auto dan boleh dikongsi ke WhatsApp untuk tindakan susulan.</label>
 <button id="submit" type="submit">Hantar Pertanyaan</button>
-<a id="whatsappAfter" hidden target="_blank" rel="noopener" style="display:block;text-align:center;margin-top:13px;padding:14px;border-radius:10px;background:#116d4a;color:white;text-decoration:none;font-weight:750">Buka WhatsApp AbeDin Auto</a>
 </form>
+<a id="whatsappAfter" hidden rel="noopener" style="display:block;text-align:center;margin-top:13px;padding:14px;border-radius:10px;background:#116d4a;color:white;text-decoration:none;font-weight:750">Teruskan ke WhatsApp AbeDin Auto</a>
+<p id="whatsappHelp" hidden style="font-size:13px">Mesej WhatsApp telah disediakan. Tekan <strong>Send</strong> di WhatsApp untuk menghantarnya.</p>
 </div></div>
 <footer>Jangan masukkan nombor IC, lesen memandu, nombor akaun bank atau maklumat sensitif.</footer>
 </main>
@@ -72,12 +73,21 @@ $('form').addEventListener('submit',async e=>{
   const data=await res.json();
   if(!res.ok)throw new Error(data.error||'Pertanyaan gagal dihantar.');
   form.hidden=true;
-  status('Terima kasih! Pertanyaan anda berjaya disimpan dalam sistem AbeDin Auto. Sila teruskan ke WhatsApp untuk menghantar salinan kepada pasukan jualan.');
-  const waMessage='Salam AbeDin Auto, saya sudah daftar minat kereta.\nNama: '+String(f.get('customer_name')||'').trim()+'\nTelefon: '+String(f.get('customer_phone')||'').trim()+'\nKereta: '+car+'\nNo. rujukan: '+String(data.lead_id||'');
+  status('Pertanyaan berjaya disimpan. Anda akan dibawa ke WhatsApp. Tekan Send untuk menghantar mesej kepada pasukan jualan.');
+  const promo=params.get('promo')==='year-end-2026';
+  const waMessage='Salam AbeDin Auto, saya sudah daftar minat kereta.'
+    +'\nNama: '+String(f.get('customer_name')||'').trim()
+    +'\nTelefon: '+String(f.get('customer_phone')||'').trim()
+    +'\nKereta: '+car
+    +'\nPautan kereta: '+link.href
+    +(promo?'\nPromosi: Hujung Tahun 2026 (anggaran jimat RM300-RM500 kos penghantaran)':'')
+    +'\nNo. rujukan lead: '+String(data.lead_id||'');
   const waUrl='https://wa.me/601156366925?text='+encodeURIComponent(waMessage);
   const waLink=$('whatsappAfter');waLink.href=waUrl;waLink.hidden=false;
-  // Browser opens WhatsApp with a prepared message; the customer must tap Send.
-  window.open(waUrl,'_blank','noopener');
+  $('whatsappHelp').hidden=false;
+  // User-triggered submission; Safari may block window.open after an asynchronous request.
+  // Navigate current tab only after database success so the prepared message reliably opens.
+  window.location.assign(waUrl);
  }catch(err){status(err.message||'Gagal menghantar pertanyaan.',true);}
  finally{button.disabled=false;}
 });
