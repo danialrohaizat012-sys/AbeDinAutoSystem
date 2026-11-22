@@ -18,12 +18,10 @@
     if ((!preview && seen()) || !catalogue ||
         (detail && (!catalogue.classList.contains('abx-detail') || !catalogue.querySelector('.abx-info-card'))) ||
         (!detail && !catalogue.classList.contains('abx-home'))) return;
-    const url = detail ? new URL('/agent-inquiry.html', location.origin) : new URL(location.href);
-    if (detail) url.searchParams.set('car', carId);
-    else url.hash = 'abx-stok';
-    const ref = new URLSearchParams(location.search).get('ref') || '';
-    if (/^[A-Za-z0-9_-]{2,40}$/.test(ref)) url.searchParams.set('ref', ref);
-    url.searchParams.set('promo', 'year-end-2026');
+    const message = 'Saya nak grab promosi';
+    const url = 'https://wa.me/601156366925?text=' + encodeURIComponent(
+      detail ? message + '\\nKereta: ' + location.origin + '/?car=' + encodeURIComponent(carId) : message
+    );
     const root = document.createElement('div');
     root.id = 'ada-year-end-promo';
     root.className = 'ada-promo-overlay';
@@ -35,7 +33,7 @@
         <h2 id="ada-promo-title">JIMAT<br><span>RM300–RM500!</span></h2>
         <p class="ada-promo-region">Penghantaran Percuma Seluruh Malaysia</p>
         <p id="ada-promo-copy">Jimat anggaran <strong>RM300 hingga RM500 kos penghantaran</strong> sempena promosi hujung tahun! Daftar minat hari ini untuk memulakan permohonan kereta pilihan anda.</p>
-        <a class="ada-promo-primary" href="${url.href}">${detail ? "DAFTAR MINAT PROMOSI" : "LIHAT KERETA PROMOSI"}</a>
+        <a class="ada-promo-primary" href="${url}" rel="noopener">SAYA NAK GRAB</a>
         <button class="ada-promo-later" type="button">Terus Tengok Kereta</button>
         <small>Anggaran penjimatan mengikut lokasi penghantaran. Promosi tertakluk kepada kelayakan, kawasan liputan dan terma. Daftar minat bukan penghantaran dokumen.</small>
       </section>`;
@@ -48,10 +46,10 @@
     const onKey = e => { if (e.key === 'Escape') dismiss(); };
     root.addEventListener('click', e => {
       if (e.target === root || e.target.closest('.ada-promo-close,.ada-promo-later')) dismiss();
-      if (!detail && e.target.closest('.ada-promo-primary')) {
-        e.preventDefault();
-        dismiss();
-        document.querySelector('#abx-stok')?.scrollIntoView({behavior:'smooth',block:'start'});
+      if (e.target.closest('.ada-promo-primary')) {
+        // Normal anchor navigation works on iOS Safari without popup blockers.
+        // WhatsApp prepares the text; customer taps Send.
+        remember();
       }
     });
     document.addEventListener('keydown', onKey);
