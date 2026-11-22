@@ -17,8 +17,21 @@ Deno.serve(async req=>{
  const {data:agent,error:agentErr}=await server.from("agent_profiles").select("status")
  .eq("user_id",auth.user.id).maybeSingle();
  if(agentErr||agent?.status!=="active")return response(403,{error:"Active agent required"});
- const {data,error}=await server.from("vehicles").select("id,make,model,model_year,asking_price")
- .eq("status","available").order("make",{ascending:true}).limit(200);
- if(error)return response(500,{error:"Unable to load catalogue"});
- return response(200,{vehicles:data||[]});
+ // Reuse the EXACT public-catalogue visibility and car-link contract.
+ // Public RPC returns vehicle_id (display/share ID) separately from id (UUID).
+ // Never expose acquisition price, supplier information, plate or staff finance.
+ const {data,error}=await server.rpc("get_public_catalogue",{p_vehicle_id:null});
+ if(error)return response(500,{error:"Unable to load public catalogue"});
+ const rows=Array.isArray(data)?data:[];
+ const available=rows.filter(v=>String(v.status||"").toLowerCase()==="available");
+ const vehicles=available.slice(0,200).map(v=>{
+   const imgs=Array.isArray(v.images)?v.images:[];
+   const cover=imgs.find(x=>x.is_cover)||imgs[0];
+   const path=typeof cover?.storage_path==="string"?cover.storage_path:"";
+   return {id:v.id,public_vehicle_id:v.vehicle_id,
+     make:v.make,model:v.model,model_year:v.model_year,
+     asking_price:v.asking_price,
+     image_url:path?"https://buzpdyvvoiqgbeventwm.supabase.co/storage/v1/object/public/vehicle-images/"+path.split("/").map(encodeURIComponent).join("/"):null};
+ }).filter(v=>typeof v.id==="string"&&typeof v.public_vehicle_id==="string");
+ return response(200,{vehicles,total:vehicles.length,source:"public_catalogue"});
 });
