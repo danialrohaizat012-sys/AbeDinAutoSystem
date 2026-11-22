@@ -130,7 +130,7 @@ const project='https://buzpdyvvoiqgbeventwm.supabase.co';
 const supabase=createClient(project,'sb_publishable_zuuNipsMpalN_38SJwXpFA_MRzQ6eZ0',{
  auth:{storageKey:'abe-agent-network-session',autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}});
 const $=id=>document.getElementById(id);
-let me=null,agent=null,owner=false;
+let me=null,agent=null,owner=false,shareToken='';
 function message(msg,bad=false){$('alert').textContent=msg;$('alert').className='notice '+(bad?'warn error':'');}
 function view(id){for(const b of document.querySelectorAll('[data-view]'))b.setAttribute('aria-current',b.dataset.view===id?'page':'false');
 for(const s of document.querySelectorAll('main section'))s.hidden=s.id!==id;
@@ -147,7 +147,7 @@ async function sync(){
  try{
   me=await current();owner=false;agent=null;$('logout').hidden=!me;
   $('ownerTab').hidden=true;$('applyForm').hidden=true;$('leadPanel').hidden=true;
-  if(!me){$('applicationStatus').textContent='Log masuk dan sahkan e-mel terlebih dahulu.';$('agentStatus').textContent='Log masuk untuk melihat akaun ejen.';message('Sila log masuk atau daftar akaun ejen.');view('account');return;}
+  if(!me){shareToken='';$('applicationStatus').textContent='Log masuk dan sahkan e-mel terlebih dahulu.';$('agentStatus').textContent='Log masuk untuk melihat akaun ejen.';message('Sila log masuk atau daftar akaun ejen.');view('account');return;}
   if(!me.email_confirmed_at){message('Sila sahkan e-mel melalui pautan pengesahan yang diterima.');view('account');return;}
   const {data:staff,error:staffErr}=await supabase.from('profiles').select('role,enabled').eq('id',me.id).maybeSingle();
   if(staffErr)throw staffErr;owner=staff?.role==='owner'&&staff.enabled===true;
@@ -168,13 +168,13 @@ async function sync(){
 }
 function agentCatalogueLink(){
  const u=new URL('/',location.origin);
- if(agent?.agent_code)u.searchParams.set('ref',agent.agent_code);
+ if(/^[a-f0-9]{32}$/.test(shareToken))u.searchParams.set('ref',shareToken);
  return u.href;
 }
 function agentCarLink(car){
  const u=new URL('/',location.origin);
  u.searchParams.set('car',car.public_vehicle_id);
- if(agent?.agent_code&&/^[A-Za-z0-9_-]{2,40}$/.test(agent.agent_code))u.searchParams.set('ref',agent.agent_code);
+ if(/^[a-f0-9]{32}$/.test(shareToken))u.searchParams.set('ref',shareToken);
  return u.href;
 }
 async function copyAgentLink(link){
@@ -191,6 +191,8 @@ async function loadAgentCatalogue(){
  });
  const body=await r.json();if(!r.ok)throw new Error(body.error||'Gagal memuat stok awam');
  if(body.source!=='public_catalogue'||!Array.isArray(body.vehicles))throw new Error('Katalog belum tersedia. Cuba segarkan.');
+ if(typeof body.share_token!=='string'||!/^[a-f0-9]{32}$/.test(body.share_token))throw new Error('Link ejen belum tersedia. Cuba lagi.');
+ shareToken=body.share_token;
  $('agentPromo').hidden=false;
  const myLink=agentCatalogueLink();
  $('myAgentLink').textContent=myLink;
@@ -220,7 +222,7 @@ async function loadAgentCatalogue(){
   wa.textContent='Kongsi WhatsApp';
   const inquiry=new URL('/agent-inquiry.html',location.origin);
   inquiry.searchParams.set('car',v.public_vehicle_id);
-  inquiry.searchParams.set('ref',agent.agent_code);
+  inquiry.searchParams.set('ref',shareToken);
   const inquiryLink=document.createElement('a');inquiryLink.href=inquiry.href;
   inquiryLink.target='_blank';inquiryLink.rel='noopener';inquiryLink.textContent='Link Daftar Minat';
   const lead=document.createElement('button');lead.type='button';lead.textContent='Daftar Lead';
