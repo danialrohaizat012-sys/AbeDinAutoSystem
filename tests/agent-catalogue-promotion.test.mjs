@@ -24,7 +24,7 @@ test('agent promotion contains share and lead actions',()=>{
  assert.match(portal,/Salin Link/);
  assert.match(portal,/Daftar Lead/);
  assert.match(portal,/u\.searchParams\.set\('car',car\.public_vehicle_id\)/);
- assert.match(portal,/u\.searchParams\.set\('ref',agent\.agent_code\)/);
+ assert.match(portal,/u\.searchParams\.set\('ref',shareToken\)/);
  assert.match(portal,/op\.value=v\.id/);
  assert.match(portal,/v\.display_price\?\?v\.asking_price/);
  assert.match(portal,/agent\?\.status!=='active'/);
@@ -34,6 +34,6 @@ test('public catalogue keeps safe referral code on detail and WhatsApp',()=>{
  assert.match(catalogue,/\/\^\[A-Za-z0-9_-\]\{2,40\}\$\//);
  assert.match(catalogue,/u\.searchParams\.set\('ref',agentReferralCode\)/);
  assert.match(catalogue,/const carLink=v=>[\s\S]*?agentReferralSuffix\(\)/);
- assert.match(catalogue,/Kod rujukan ejen:/);
+ assert.doesNotMatch(catalogue,/Kod rujukan ejen:/);
  assert.match(catalogue,/history\.replaceState\(null,'','\/\?car='\+encodeURIComponent\(params\.get\('car'\)\)\+agentReferralSuffix\(\)\)/);
 });
