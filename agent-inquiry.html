@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ms"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#142f52"><title>AbeDin Auto | Pertanyaan Kereta</title>
+<style>
+:root{font:16px system-ui,-apple-system,"Segoe UI",sans-serif;color:#192e47;background:#f1f5fa}
+*{box-sizing:border-box}body{margin:0}header{background:#152e53;color:#fff;padding:19px max(16px,calc((100% - 620px)/2))}
+header strong{font-size:22px}header small{display:block;color:#c8d8ed;margin-top:5px}
+main{max-width:620px;margin:25px auto;padding:0 16px 42px}
+.panel{background:white;border:1px solid #d7e2ee;border-radius:17px;padding:23px;box-shadow:0 8px 28px #182f5010}
+h1{font-size:25px;margin:0 0 8px}p{color:#556b82;line-height:1.6}
+label{display:block;font-weight:650;font-size:14px;margin:17px 0 6px}
+input{width:100%;padding:13px 14px;border:1px solid #b8c6d8;border-radius:10px;font:inherit}
+input[type=checkbox]{width:auto;margin:0 9px 0 0;accent-color:#176ab7}
+.check{display:flex;align-items:flex-start;font-weight:450;line-height:1.5}
+button{width:100%;padding:14px;border:0;border-radius:10px;background:#176ab7;color:white;font:inherit;font-weight:750;cursor:pointer}
+button:disabled{opacity:.5}.notice{border-radius:10px;background:#eaf3ff;color:#214c7b;padding:13px;margin:15px 0;line-height:1.5}
+.notice.error{background:#fff1ed;color:#8d402d}
+a{color:#165ca7}footer{font-size:12px;color:#728398;text-align:center;margin-top:16px}
+.honey{position:absolute;left:-99999px;opacity:0;pointer-events:none}
+</style></head>
+<body><header><strong>AbeDin Auto</strong><small>Pertanyaan kereta melalui ejen berdaftar</small></header>
+<main><div class="panel">
+<h1>Daftar Minat Kereta</h1>
+<p>Isi maklumat untuk dihubungi oleh AbeDin Auto mengenai kereta pilihan anda. Maklumat akan dihantar kepada pasukan kami dan dikaitkan dengan kod rujukan ejen.</p>
+<div id="notice" role="status" aria-live="polite" class="notice">Menyemak pautan rujukan...</div>
+<div id="content" hidden>
+<p><strong>Kod rujukan ejen:</strong> <span id="agentCode"></span></p>
+<p><a id="carLink" target="_blank" rel="noopener">Lihat butiran kereta dalam katalog awam</a></p>
+<form id="form">
+<label for="customerName">Nama pelanggan</label>
+<input id="customerName" name="customer_name" maxlength="160" autocomplete="name" required minlength="2">
+<label for="customerPhone">Nombor telefon</label>
+<input id="customerPhone" name="customer_phone" type="tel" maxlength="24" autocomplete="tel" required>
+<div class="honey" aria-hidden="true"><label for="companyWebsite">Laman syarikat<input id="companyWebsite" name="company_website" tabindex="-1" autocomplete="off"></label></div>
+<label class="check"><input name="consent" type="checkbox" required> Saya bersetuju AbeDin Auto menghubungi saya mengenai pertanyaan kereta ini. Saya faham nama dan nombor telefon akan direkodkan untuk urusan pertanyaan dan semakan ejen.</label>
+<button id="submit" type="submit">Hantar Pertanyaan</button>
+</form>
+</div></div>
+<footer>Jangan masukkan nombor IC, lesen memandu, nombor akaun bank atau maklumat sensitif.</footer>
+</main>
+<script>
+(()=>{
+const $=id=>document.getElementById(id);
+const params=new URLSearchParams(location.search);
+const ref=params.get('ref')||'',car=params.get('car')||'';
+const valid=/^ADA-AG-[0-9]{4,}$/.test(ref)&&ref.length<=30&&car.length>=1&&car.length<=80&&/^[a-zA-Z0-9_-]+$/.test(car);
+function status(msg,bad=false){$('notice').textContent=msg;$('notice').className='notice'+(bad?' error':'');}
+if(!valid){status('Pautan ejen tidak sah. Dapatkan pautan terbaru daripada ejen AbeDin Auto.',true);return;}
+$('agentCode').textContent=ref;
+const link=new URL('/',location.origin);link.searchParams.set('car',car);link.searchParams.set('ref',ref);$('carLink').href=link.href;
+$('content').hidden=false;
+status('Lengkapkan borang untuk menghantar pertanyaan.');
+$('form').addEventListener('submit',async e=>{
+ e.preventDefault();
+ const form=e.currentTarget;
+ const f=new FormData(form);
+ if(!form.reportValidity())return;
+ const button=$('submit');button.disabled=true;
+ try{
+  const res=await fetch('https://buzpdyvvoiqgbeventwm.supabase.co/functions/v1/agent-public-inquiry',{
+   method:'POST',headers:{'content-type':'application/json'},
+   body:JSON.stringify({ref,car,customer_name:String(f.get('customer_name')||'').trim(),
+    customer_phone:String(f.get('customer_phone')||'').trim(),consent:f.get('consent')==='on',
+    company_website:String(f.get('company_website')||'')})
+  });
+  const data=await res.json();
+  if(!res.ok)throw new Error(data.error||'Pertanyaan gagal dihantar.');
+  form.hidden=true;
+  status('Terima kasih! Pertanyaan telah direkodkan di bawah kod ejen '+ref+'. Pasukan AbeDin Auto akan menyemaknya.');
+ }catch(err){status(err.message||'Gagal menghantar pertanyaan.',true);}
+ finally{button.disabled=false;}
+});
+})();
+</script></body></html>
