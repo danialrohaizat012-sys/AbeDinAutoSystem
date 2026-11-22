@@ -163,6 +163,7 @@ function leadContact(parent,lead,car){
  const summary=document.createElement('details');summary.className='lead-collapse';
  const head=document.createElement('summary');
  const carTitle=formatLeadCar(car,lead.vehicle_id);
+ const directLead=lead.lead_source==='public_direct';
  const agentRead=lead.agent_read_at?'Dibaca ejen':'Belum baca ejen';
  const ownerRead=lead.owner_read_at?'Dibaca owner':'Belum baca owner';
  const heading=document.createElement('div');heading.className='lead-head';
@@ -170,7 +171,7 @@ function leadContact(parent,lead,car){
  const model=document.createElement('small');text(model,carTitle);
  heading.append(name,model);
  const badges=document.createElement('div');badges.className='lead-badges';
- for(const [label,isRead] of [[agentRead,Boolean(lead.agent_read_at)],[ownerRead,Boolean(lead.owner_read_at)]]){
+ for(const [label,isRead] of (directLead?[[ownerRead,Boolean(lead.owner_read_at)]]:[[agentRead,Boolean(lead.agent_read_at)],[ownerRead,Boolean(lead.owner_read_at)]])){
    const badge=document.createElement('span');badge.className='lead-badge'+(isRead?' read':'');text(badge,label);badges.append(badge);
  }
  head.append(heading,badges);summary.append(head);
@@ -182,7 +183,7 @@ function leadContact(parent,lead,car){
    'Telefon: '+(lead.customer_phone||'Tiada nombor'),
    'Kereta diminati: '+formatLeadCar(car,lead.vehicle_id),
    'Status: '+(lead.status||'new'),
-   'Sumber: '+(lead.lead_source==='public_referral'?'Pautan promosi ejen':'Pendaftaran ejen'),
+   'Sumber: '+(lead.lead_source==='public_direct'?'Pembeli terus':lead.lead_source==='public_referral'?'Pautan promosi ejen':'Pendaftaran ejen'),
    'Tarikh: '+(lead.created_at?new Date(lead.created_at).toLocaleString('ms-MY'):'—')
  ]){const p=document.createElement('div');text(p,value);d.append(p);}
  parent.append(d);
