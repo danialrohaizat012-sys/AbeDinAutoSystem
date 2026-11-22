@@ -1,0 +1,38 @@
+name: Agent Admin Integration Check
+on:
+  push:
+    branches: [main]
+    paths:
+      - app.html
+      - js/admin-menu.js
+      - js/agent-admin-panel.js
+      - tests/agent-admin-integration.test.mjs
+      - .github/workflows/agent-admin-integration.yml
+  pull_request:
+    paths:
+      - .github/workflows/agent-admin-integration.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  agent-admin:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check Agent Network owner access and menu integration
+        run: node --test tests/agent-admin-integration.test.mjs
+      - name: Check live admin bundle after deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL --retry 2 --max-time 20 -H "Cache-Control: no-cache" "https://abedinauto.my/app.html?admin=1&check=$GITHUB_SHA" -o /tmp/abedin-admin.html
+          grep -Fq 'data-cloud-page="agents"' /tmp/abedin-admin.html
+          grep -Fq "if(page==='agents')return p.role==='owner'&&p.enabled===true" /tmp/abedin-admin.html
+          curl -fsSL --retry 2 --max-time 20 -H "Cache-Control: no-cache" "https://abedinauto.my/js/agent-admin-panel.js?check=$GITHUB_SHA" -o /tmp/abedin-agent-panel.js
+          grep -Fq 'Permohonan Ejen' /tmp/abedin-agent-panel.js
+          grep -Fq 'direct_inquiry_list' /tmp/abedin-agent-panel.js
+          echo "PASS: Agent module available on live admin hosting"
