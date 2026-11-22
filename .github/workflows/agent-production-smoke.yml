@@ -31,6 +31,7 @@ jobs:
               grep -q 'Kongsi WhatsApp' /tmp/agent-check.html
               grep -q 'display_price' /tmp/agent-check.html
               grep -q 'Pendaftaran pelanggan melalui link ejen' /tmp/agent-check.html
+              grep -q 'ownerDirectInquiries' /tmp/agent-check.html
             else
               grep -q 'Tarikh DAN masa pembayaran bank sebenar' /tmp/agent-check.html
               grep -q 'agent-payout-verifier' /tmp/agent-check.html
@@ -44,6 +45,11 @@ jobs:
           grep -q 'Hantar Pertanyaan' /tmp/agent-enquiry.html
           grep -q 'agent-public-inquiry' /tmp/agent-enquiry.html
           grep -q 'name="consent"' /tmp/agent-enquiry.html
+          grep -Fq 'id="agentCode" name="ref" type="hidden"' /tmp/agent-enquiry.html
+          grep -Fq '[hidden]{display:none!important}' /tmp/agent-enquiry.html
+          grep -Fq 'refCode,car,customer_name:' /tmp/agent-enquiry.html
+          grep -q 'whatsappAfter' /tmp/agent-enquiry.html
+          grep -q 'wa.me/601156366925' /tmp/agent-enquiry.html
           grep -q 'id="agentCode" name="ref"' /tmp/agent-enquiry.html
           grep -Fq "ref:refCode,car,customer_name:" /tmp/agent-enquiry.html
           grep -Fq "const refCode=\$('agentCode').value.trim();" /tmp/agent-enquiry.html
@@ -55,6 +61,10 @@ jobs:
           grep -q 'agentReferralSuffix' /tmp/ada-public-app.html
           grep -q 'ada-agent-enquiry-card' /tmp/ada-public-app.html
           grep -q 'ada-agent-enquiry-detail' /tmp/ada-public-app.html
+          grep -q 'Daftar Minat' /tmp/ada-public-app.html
+          if grep -Fq "Daftar Minat'+(agentReferralCode?' · Ejen" /tmp/ada-public-app.html; then
+            echo 'FAIL: agent identity displayed to buyer'; exit 1
+          fi
           grep -Fq "agentReferralSuffix());openPublicCatalogue(id)" /tmp/ada-public-app.html || { echo 'Referral ID lost in navigation'; exit 1; }
           echo "PASS: public catalogue contains agent referral code support"
       - name: Verify protected Supabase functions reject unauthenticated calls
