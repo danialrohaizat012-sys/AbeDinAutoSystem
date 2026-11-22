@@ -1,13 +1,16 @@
 name: Agent Portal Production Smoke
 on:
   push:
-    branches: [main]
+    branches: [main, test/agent-login-visibility-20261122]
     paths:
       - agent.html
       - tests/agent-auth-visibility.test.mjs
       - agent-inquiry.html
       - app.html
       - agent-payout-verify.html
+      - .github/workflows/agent-production-smoke.yml
+  pull_request:
+    paths:
       - .github/workflows/agent-production-smoke.yml
   workflow_dispatch:
 permissions:
