@@ -1,11 +1,13 @@
 /* AbeDin Auto: public vehicle detail year-end promotion. No polling or Supabase calls. */
 (() => {
   'use strict';
-  const KEY = 'ada-year-end-2026-promo-shown-v3';
+  // Show once per catalogue page load, not once per browser tab lifetime.
+  // Safari may restore sessionStorage across browser visits, hiding the promotion indefinitely.
   const preview = new URLSearchParams(location.search).get('promo_test') === '1';
   let pending = null;
-  const seen = () => { try { return sessionStorage.getItem(KEY) === '1'; } catch { return false; } };
-  const remember = () => { try { sessionStorage.setItem(KEY, '1'); } catch {} };
+  let shownThisPage = false;
+  const seen = () => shownThisPage;
+  const remember = () => { shownThisPage = true; };
   function close() {
     document.getElementById('ada-year-end-promo')?.remove();
     document.body.classList.remove('ada-promo-open');
