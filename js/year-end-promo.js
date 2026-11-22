@@ -3,6 +3,23 @@
   'use strict';
   // Show once per catalogue page load, not once per browser tab lifetime.
   // Safari may restore sessionStorage across browser visits, hiding the promotion indefinitely.
+  const DEFAULT = {
+    enabled:true,badge:'PROMOSI HUJUNG TAHUN • 2026',headline:'JIMAT',highlight:'RM300–RM500!',
+    subtitle:'Penghantaran Percuma Seluruh Malaysia',
+    description:'Jimat anggaran RM300 hingga RM500 kos penghantaran sempena promosi hujung tahun! Daftar minat hari ini untuk memulakan permohonan kereta pilihan anda.',
+    button_text:'SAYA NAK GRAB',whatsapp_text:'Saya nak grab promosi',whatsapp_number:'601156366925',
+    disclaimer:'Anggaran penjimatan mengikut lokasi penghantaran. Promosi tertakluk kepada kelayakan, kawasan liputan dan terma.'
+  };
+  let promotion = {...DEFAULT};
+  const esc = v => String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  window.adaSetYearEndPromoConfig = data => {
+    if (data && typeof data === 'object') promotion = {...DEFAULT,...data};
+    if (!promotion.enabled) {
+      if (pending) clearTimeout(pending);
+      pending = null;
+      close();
+    }
+  };
   const preview = new URLSearchParams(location.search).get('promo_test') === '1';
   let pending = null;
   let shownThisPage = false;
@@ -15,11 +32,12 @@
   function show(carId) {
     const detail = Boolean(carId);
     const catalogue = document.querySelector('#ada-public-catalogue');
-    if ((!preview && seen()) || !catalogue ||
+    if (!promotion.enabled || (!preview && seen()) || !catalogue ||
         (detail && (!catalogue.classList.contains('abx-detail') || !catalogue.querySelector('.abx-info-card'))) ||
         (!detail && !catalogue.classList.contains('abx-home'))) return;
-    const message = 'Saya nak grab promosi';
-    const url = 'https://wa.me/601156366925?text=' + encodeURIComponent(
+    const message = String(promotion.whatsapp_text || DEFAULT.whatsapp_text);
+    const phone = /^60\d{8,11}$/.test(String(promotion.whatsapp_number||'')) ? promotion.whatsapp_number : DEFAULT.whatsapp_number;
+    const url = 'https://wa.me/' + phone + '?text=' + encodeURIComponent(
       detail ? message + '\\nKereta: ' + location.origin + '/?car=' + encodeURIComponent(carId) : message
     );
     const root = document.createElement('div');
@@ -28,14 +46,14 @@
     root.innerHTML = `
       <section class="ada-promo-dialog" role="dialog" aria-modal="true" aria-labelledby="ada-promo-title" aria-describedby="ada-promo-copy">
         <button class="ada-promo-close" type="button" aria-label="Tutup promosi">×</button>
-        <div class="ada-promo-tag">PROMOSI HUJUNG TAHUN • 2026</div>
+        <div class="ada-promo-tag">${esc(promotion.badge)}</div>
         <div class="ada-promo-icon" aria-hidden="true">🚚</div>
-        <h2 id="ada-promo-title">JIMAT<br><span>RM300–RM500!</span></h2>
-        <p class="ada-promo-region">Penghantaran Percuma Seluruh Malaysia</p>
-        <p id="ada-promo-copy">Jimat anggaran <strong>RM300 hingga RM500 kos penghantaran</strong> sempena promosi hujung tahun! Daftar minat hari ini untuk memulakan permohonan kereta pilihan anda.</p>
-        <a class="ada-promo-primary" href="${url}" rel="noopener">SAYA NAK GRAB</a>
+        <h2 id="ada-promo-title">${esc(promotion.headline)}<br><span>${esc(promotion.highlight)}</span></h2>
+        <p class="ada-promo-region">${esc(promotion.subtitle)}</p>
+        <p id="ada-promo-copy">${esc(promotion.description)}</p>
+        <a class="ada-promo-primary" href="${esc(url)}" rel="noopener">${esc(promotion.button_text)}</a>
         <button class="ada-promo-later" type="button">Terus Tengok Kereta</button>
-        <small>Anggaran penjimatan mengikut lokasi penghantaran. Promosi tertakluk kepada kelayakan, kawasan liputan dan terma. Daftar minat bukan penghantaran dokumen.</small>
+        <small>${esc(promotion.disclaimer)}</small>
       </section>`;
     const previousFocus = document.activeElement;
     const dismiss = () => {
@@ -63,7 +81,7 @@
   window.adaScheduleYearEndPromo = function (carId) {
     if (pending) clearTimeout(pending);
     close();
-    if (!document.getElementById('ada-public-catalogue') || (!preview && seen())) return;
+    if (!promotion.enabled || !document.getElementById('ada-public-catalogue') || (!preview && seen())) return;
     pending = setTimeout(() => { pending = null; show(carId ? String(carId) : null); }, 10000);
   };
   window.addEventListener('popstate', () => { if (pending) clearTimeout(pending); pending = null; close(); });
