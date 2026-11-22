@@ -14,9 +14,12 @@ Deno.serve(async req=>{
  const server=createClient(url,key,{auth:{autoRefreshToken:false,persistSession:false}});
  const {data:auth,error:authErr}=await server.auth.getUser(token);
  if(authErr||!auth.user?.id||!auth.user.email_confirmed_at)return response(401,{error:"Unverified user"});
- const {data:agent,error:agentErr}=await server.from("agent_profiles").select("status")
+ const {data:agent,error:agentErr}=await server.from("agent_profiles").select("id,status")
  .eq("user_id",auth.user.id).maybeSingle();
  if(agentErr||agent?.status!=="active")return response(403,{error:"Active agent required"});
+ const {data:share,error:shareErr}=await server.from("agent_public_share_tokens")
+   .select("token").eq("agent_id",agent.id).maybeSingle();
+ if(shareErr||!share?.token)return response(503,{error:"Agent promotion link unavailable"});
  // Reuse the EXACT public-catalogue visibility and car-link contract.
  // Public RPC returns vehicle_id (display/share ID) separately from id (UUID).
  // Never expose acquisition price, supplier information, plate or staff finance.
@@ -42,5 +45,5 @@ Deno.serve(async req=>{
      monthly_installment:offerMap.get(String(v.vehicle_id))?.monthly_installment||null,
      image_url:path?"https://buzpdyvvoiqgbeventwm.supabase.co/storage/v1/object/public/vehicle-images/"+path.split("/").map(encodeURIComponent).join("/"):null};
  }).filter(v=>typeof v.id==="string"&&typeof v.public_vehicle_id==="string");
- return response(200,{vehicles,total:vehicles.length,source:"public_catalogue"});
+ return response(200,{vehicles,total:vehicles.length,source:"public_catalogue",share_token:share.token});
 });
