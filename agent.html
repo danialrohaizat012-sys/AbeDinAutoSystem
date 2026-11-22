@@ -109,6 +109,9 @@ footer{font-size:12px;color:#748399;padding:15px 0}
 <p>Senarai permohonan belum diluluskan. Hanya akaun owner aktif boleh menggunakan aliran ini.</p>
 <div class="row"><button class="secondary" id="refreshOwner">Muat semula</button></div>
 <div id="ownerItems" class="items" style="margin-top:15px"></div></div>
+<div class="panel"><h2>Pertanyaan Pelanggan Terus (Tanpa Ejen)</h2>
+<p>Pelanggan yang mendaftar minat melalui katalog awam tanpa link ejen. Rekod ini tidak menghasilkan komisen ejen.</p>
+<div id="ownerDirectInquiries" class="items"></div></div>
 <div class="panel"><h2>Padanan Lead dengan Jualan</h2>
 <p>Owner mesti mengesahkan pelanggan dan kereta sebelum memautkan lead kepada nombor jualan rasmi.</p>
 <div id="unlinkedLeadItems" class="items"></div></div>
@@ -255,6 +258,11 @@ function ownerActionButton(parent,label,payloadFactory){
  };row.append(b);parent.append(row);
 }
 async function loadOwnerFinance(){
+ const direct=await adminRequest({action:'direct_inquiry_list'});
+ showRows('ownerDirectInquiries',direct.inquiries||[],(el,x)=>{
+   item(el,x.customer_name+' · '+x.customer_phone,
+     'Pelanggan terus · Kereta '+x.vehicle_id+' · '+x.status+' · '+new Date(x.created_at).toLocaleString('ms-MY'));
+ });
  const [unlinked,fin]=await Promise.all([
    adminRequest({action:'lead_list'}),
    adminRequest({action:'finance_list'})
