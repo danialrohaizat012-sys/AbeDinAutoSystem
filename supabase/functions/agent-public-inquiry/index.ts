@@ -7,6 +7,7 @@ const headers=(origin:string|null)=>({"content-type":"application/json; charset=
 const respond=(status:number,result:unknown,origin:string|null)=>
   new Response(JSON.stringify(result),{status,headers:headers(origin)});
 const refPattern=/^ADA-AG-[0-9]{4,}$/;
+const tokenPattern=/^[a-f0-9]{32}$/;
 Deno.serve(async(req)=>{
  const origin=req.headers.get("origin");
  if(req.method==="OPTIONS")return new Response(null,{status:204,headers:headers(origin)});
@@ -23,7 +24,7 @@ Deno.serve(async(req)=>{
  const car=typeof data.car==="string"?data.car.trim():"";
  const name=typeof data.customer_name==="string"?data.customer_name.trim():"";
  const phone=typeof data.customer_phone==="string"?data.customer_phone.trim():"";
- if((ref!==""&&(!refPattern.test(ref)||ref.length>30))||!car||car.length>80||
+ if((ref!==""&&!refPattern.test(ref)&&!tokenPattern.test(ref))||!car||car.length>80||
     name.length<2||name.length>160||phone.length<9||phone.length>24||
     data.consent!==true)return respond(400,{error:"Please check all required fields and consent"},origin);
  const url=Deno.env.get("SUPABASE_URL")||"";
@@ -36,8 +37,19 @@ Deno.serve(async(req)=>{
  const digest=await crypto.subtle.digest("SHA-256",dataToHash);
  const hash=Array.from(new Uint8Array(digest)).map(x=>x.toString(16).padStart(2,"0")).join("");
  const client=createClient(url,key,{auth:{autoRefreshToken:false,persistSession:false}});
+ let privateAgentCode=ref;
+ if(tokenPattern.test(ref)){
+   const {data:tokenRow,error:tokenError}=await client.from("agent_public_share_tokens")
+      .select("agent_id").eq("token",ref).maybeSingle();
+   if(tokenError||!tokenRow?.agent_id)return respond(409,{error:"Pautan promosi tidak sah."},origin);
+   const {data:agent,error:agentError}=await client.from("agent_profiles")
+      .select("agent_code,status").eq("id",tokenRow.agent_id).maybeSingle();
+   if(agentError||!agent||agent.status!=="active")
+     return respond(409,{error:"Pautan promosi tidak lagi aktif."},origin);
+   privateAgentCode=agent.agent_code;
+ }
  const {data:result,error}=await client.rpc(ref?"agent_submit_public_inquiry_gateway_v1":"agent_submit_direct_inquiry_gateway_v1",{
-  ...(ref?{p_referral_code:ref}:{}),p_public_vehicle_id:car,p_customer_name:name,
+  ...(ref?{p_referral_code:privateAgentCode}:{}),p_public_vehicle_id:car,p_customer_name:name,
   p_customer_phone:phone,p_consent:true,p_request_hash:hash
  });
  if(error){
