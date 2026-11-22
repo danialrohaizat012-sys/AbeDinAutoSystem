@@ -7,7 +7,7 @@ import {join} from 'node:path';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const agent=read('agent.html'),owner=read('js/agent-admin-panel.js'),api=read('supabase/functions/agent-portal-admin/index.ts');
 test('agent dashboard displays customer name, phone, vehicle and actions',()=>{
- assert.match(agent,/select\('id,vehicle_id,customer_name,customer_phone,status,lead_source,created_at'\)/);
+ assert.match(agent,/select\('id,vehicle_id,customer_name,customer_phone,status,lead_source,agent_read_at,owner_read_at,created_at'\)/);
  assert.match(agent,/function leadContact\(/);
  assert.match(agent,/WhatsApp Pelanggan/);
  assert.match(agent,/Hubungi Telefon/);
@@ -26,8 +26,9 @@ test('owner sees all agent contacts with context and direct buyer contact',()=>{
  assert.match(api,/lead_contact_list/);
  assert.match(api,/agent_code:byAgent\.get/);
  assert.match(owner,/request\('lead_contact_list'\)/);
- assert.match(owner,/contactControls\(r,a,car\)/);
+ assert.match(owner,/compactLead\(pb,a,a\.car,ownerRead,true\)/);
  assert.match(agent,/ownerContactLeads/);
+ assert.match(api,/agent_name:byApplication\.get/);
 });
 test('WhatsApp and telephone use safe Malaysian phone normalization',()=>{
  assert.match(agent,/if\(\/\^0\[1-9\]/); // local Malaysian prefix pattern
