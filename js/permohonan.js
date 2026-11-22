@@ -94,9 +94,62 @@ input:focus,select:focus{border-color:var(--gold)}
   .row .btn{flex:0 0 auto;width:100%}
   .btn{min-height:46px}
 }
+/* V108: susunan baharu — Permohonan diterima di atas */
+.pm-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.pm-head-act{display:flex;gap:8px}
+.pm-head-act .btn{flex:0 0 auto;min-height:42px}
+.pm-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.pm-tab{display:flex;flex-direction:column;align-items:flex-start;gap:2px;border:1px solid var(--line);background:var(--soft);border-radius:14px;padding:10px 12px;cursor:pointer;color:var(--mute);font-size:12.5px;font-weight:700;text-align:left}
+.pm-tab b{font-size:22px;color:var(--fg);line-height:1.1}
+.pm-tab.on{border-color:var(--gold);background:rgba(216,173,87,.12);color:var(--gold)}
+.pm-tab.on b{color:var(--gold)}
+.pm-tab[data-app-filter=unread] b{color:#ffcf6e}
+.pm-search{margin:12px 0 2px}
+.pm-search input{font-size:16px}
+#applications{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+.pm-item{border:1px solid var(--line);border-radius:14px;background:#0d1213;padding:12px;min-width:0}
+.pm-item.is-new{border-color:rgba(230,183,93,.55);background:linear-gradient(150deg,rgba(230,183,93,.09),#0d1213 60%)}
+.pm-top{display:flex;gap:11px;align-items:flex-start;min-width:0}
+.pm-av{flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-weight:800;font-size:14px;background:#1f2627;color:var(--gold)}
+.pm-item.is-new .pm-av{background:var(--gold);color:var(--gold-fg)}
+.pm-main{min-width:0;flex:1}
+.pm-name{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pm-name b{font-size:15.5px;overflow-wrap:anywhere}
+.pm-meta{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:4px;font-size:12.5px;color:var(--mute)}
+.pm-car{color:var(--fg);font-weight:600}
+.pm-act{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;align-items:stretch}
+.pm-act>.btn{flex:1 1 0;min-height:42px;font-size:13px;padding:8px 10px}
+.pm-act .btn.on{border-color:var(--gold);color:var(--gold)}
+.pm-more{position:relative;flex:0 0 auto}
+.pm-more>summary{list-style:none;min-height:42px;min-width:46px;padding:8px 12px;font-size:18px;line-height:1}
+.pm-more>summary::-webkit-details-marker{display:none}
+.pm-menu{position:absolute;right:0;top:calc(100% + 6px);z-index:5;display:flex;flex-direction:column;gap:6px;min-width:150px;padding:8px;border:1px solid var(--line);border-radius:12px;background:#141a1b;box-shadow:0 12px 30px rgba(0,0,0,.45)}
+.pm-menu .btn{min-height:40px;font-size:13px;justify-content:flex-start}
+.pm-detail{margin-top:10px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.pm-dsec{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#080b0c;min-width:0}
+.pm-dsec h5{margin:0 0 6px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold)}
+.pm-dsec dl{margin:0;display:flex;flex-direction:column;gap:5px}
+.pm-dsec dl div{display:grid;grid-template-columns:minmax(90px,38%) 1fr;gap:8px;font-size:13px}
+.pm-dsec dt{color:var(--mute)}.pm-dsec dd{margin:0;overflow-wrap:anywhere}
+.pm-detail>.hint{grid-column:1/-1}
+.pm-empty{padding:22px 14px;text-align:center;color:var(--mute);border:1px dashed var(--line);border-radius:14px;font-size:14px}
+.pm-share h3{margin-bottom:10px}
+.pm-ok{margin-bottom:12px;font-size:13px}
+.pm-share-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:6px}
+.pm-share-grid>div{min-width:0}
+.pm-share-grid .row{margin-top:10px}
+.pm-how{margin-top:14px;font-size:13px;color:var(--mute)}
+.pm-how summary{cursor:pointer;color:var(--fg);font-weight:600}
+.pm-how ol{margin:8px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+@container (max-width:680px){
+  .pm-share-grid,.pm-detail{grid-template-columns:1fr}
+  .pm-act>.btn{flex:1 1 calc(50% - 6px)}
+  .pm-tab b{font-size:19px}
+  .pm-head-act{width:100%}.pm-head-act .btn.pri{flex:1}
+}
 `;
 
-const S = { phone: '' };
+const S = { phone: '', q: '' };
 let app = null, ctx = {};
 
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -117,33 +170,38 @@ function render() {
   const link = formLink();
   const toCustomer = 'https://wa.me/' + msisdn(S.phone) + '?text=' + encodeURIComponent(inviteText());
   app.innerHTML = `
-  <div><h2>Borang Permohonan</h2><p class="lead">Kongsi link borang kepada pelanggan. Maklumat yang dihantar akan disimpan dalam sistem untuk semakan staf.</p></div>
-  <div class="steps">
-    <div><b>Staf kongsi link</b>Salin link atau hantar terus ke WhatsApp pelanggan.</div>
-    <div><b>Pelanggan isi borang</b>Maklumat pemohon, pekerjaan, perujuk/waris dan kereta.</div>
-    <div><b>Simpan ke sistem</b>Permohonan direkod dahulu, kemudian boleh kongsi melalui WhatsApp.</div>
-  </div>
-  ${num ? `<p class="ok">✓ Borang akan dihantar ke WhatsApp <b>+${esc(num)}</b> (ikut Tetapan).</p>`
-        : `<div class="warn">Nombor WhatsApp Abe Din belum ditetapkan. Owner perlu isi di <b>Tetapan → WhatsApp Abe Din</b>, jika tidak pelanggan perlu pilih sendiri kepada siapa mahu hantar.</div>`}
-  <div class="card">
-    <h3>Link borang</h3>
-    <div class="link" id="link">${esc(link)}</div>
-    <div class="row">
-      <button class="btn pri" data-act="copy">Salin link</button>
-      <a class="btn" href="${esc(link)}" target="_blank" rel="noopener">Buka borang</a>
+  <div class="pm-head"><div><h2>Permohonan</h2><p class="lead">Semak permohonan pelanggan dan kongsi borang.</p></div>
+    <div class="pm-head-act"><button class="btn" data-act="reload" title="Muat semula">↻</button><button class="btn pri" data-act="jump-share">＋ Kongsi borang</button></div></div>
+  <section class="card pm-inbox">
+    <div class="pm-tabs" role="tablist">
+      <button type="button" class="pm-tab on" data-app-filter="all"><span>Semua</span><b data-n="all">–</b></button>
+      <button type="button" class="pm-tab" data-app-filter="unread"><span>Belum baca</span><b data-n="unread">–</b></button>
+      <button type="button" class="pm-tab" data-app-filter="read"><span>Sudah baca</span><b data-n="read">–</b></button>
     </div>
-  </div>
-  <div class="card">
-    <h3>Hantar terus ke pelanggan</h3>
-    <div class="field">
-      <label for="phone">No. WhatsApp pelanggan</label>
-      <input id="phone" type="tel" inputmode="tel" value="${esc(S.phone)}" placeholder="cth: 012-345 6789">
-      <div class="hint">Biarkan kosong untuk pilih kenalan dalam WhatsApp.</div>
+    <div class="pm-search"><input id="app-q" type="search" placeholder="Cari nama, telefon atau kereta…" value="${esc(S.q || '')}" autocomplete="off"></div>
+    <p class="hint" id="applications-count">Memuatkan rekod…</p>
+    <p id="app-feedback" role="status" aria-live="polite" class="hint"></p>
+    <div id="applications" role="status">Memuatkan rekod…</div>
+  </section>
+  <section class="card pm-share" id="pm-share">
+    <h3>Kongsi borang kepada pelanggan</h3>
+    ${num ? `<p class="ok pm-ok">✓ Salinan borang boleh dihantar ke WhatsApp <b>+${esc(num)}</b></p>`
+          : `<div class="warn">Nombor WhatsApp Abe Din belum ditetapkan. Owner perlu isi di <b>Tetapan → WhatsApp Abe Din</b>.</div>`}
+    <div class="pm-share-grid">
+      <div>
+        <label>Link borang</label>
+        <div class="link" id="link">${esc(link)}</div>
+        <div class="row"><button class="btn pri" data-act="copy">Salin link</button><a class="btn" href="${esc(link)}" target="_blank" rel="noopener">Buka borang</a></div>
+      </div>
+      <div>
+        <label for="phone">Hantar terus ke WhatsApp pelanggan</label>
+        <input id="phone" type="tel" inputmode="tel" value="${esc(S.phone)}" placeholder="cth: 012-345 6789">
+        <div class="row"><a class="btn wa" id="send" href="${esc(toCustomer)}" target="_blank" rel="noopener">Hantar link</a><button class="btn" data-act="copymsg">Salin mesej</button></div>
+        <div class="hint">Biarkan kosong untuk pilih kenalan dalam WhatsApp.</div>
+      </div>
     </div>
-    <div class="row"><a class="btn wa" id="send" href="${esc(toCustomer)}" target="_blank" rel="noopener">Hantar link melalui WhatsApp</a>
-      <button class="btn" data-act="copymsg">Salin mesej</button></div>
-  </div>
-  <div class="card"><h3>Permohonan diterima</h3><p class="hint" id="applications-count">Memuatkan rekod…</p><div class="row app-filter"><button type="button" class="btn on" data-app-filter="all">Semua</button><button type="button" class="btn" data-app-filter="unread">Belum Baca</button><button type="button" class="btn" data-app-filter="read">Sudah Baca</button><button type="button" class="btn" data-act="reload">Muat semula</button></div><p id="app-feedback" role="status" aria-live="polite" class="hint"></p><div id="applications" style="margin-top:12px" role="status">Memuatkan rekod…</div></div>`;
+    <details class="pm-how"><summary>Cara ia berfungsi</summary><ol><li>Staf kongsi link borang.</li><li>Pelanggan isi maklumat pemohon, pekerjaan, waris dan kereta.</li><li>Permohonan disimpan dalam sistem dan muncul di senarai atas.</li></ol></details>
+  </section>`;
 }
 
 
@@ -194,32 +252,45 @@ function editForm(a){
   detailKeys.map(key=>field('detail_'+key,fieldNames[key]||key,d[key])).join('')+
   '</div><div class="app-actions"><button class="btn" type="button" data-op="paste" data-id="'+esc(a.id)+'">Paste dari clipboard</button><button class="btn pri" type="submit">Simpan</button><button class="btn" type="button" data-op="cancel" data-id="'+esc(a.id)+'">Batal</button></div></form>';
 }
+const groups=[['Pemohon',['nama','ic','tel','email','kahwin','tanggungan','bangsa','agama','pendidikan']],['Alamat',['alamatTetap','alamatSekarang','tempoh','rumah']],['Pekerjaan',['majikan','jawatan','gred','mulaKerja','telPejabat','alamatMajikan']],['Waris / Rujukan',['warisNama','warisHubungan','warisTel','warisAlamat']],['Kereta',['kereta']]];
+function detailView(a){
+ const d=detailsOf(a),known=new Set(groups.flatMap(g=>g[1]));
+ const extra=Object.keys(d).filter(k=>!known.has(k)&&d[k]!==''&&d[k]!=null);
+ const sec=(t,keys)=>{const rows=keys.filter(k=>d[k]!==undefined&&d[k]!==''&&d[k]!=null);if(!rows.length)return '';return '<div class="pm-dsec"><h5>'+esc(t)+'</h5><dl>'+rows.map(k=>'<div><dt>'+esc(fieldNames[k]||k)+'</dt><dd>'+esc(d[k])+'</dd></div>').join('')+'</dl></div>'};
+ return '<div class="pm-detail">'+groups.map(g=>sec(g[0],g[1])).join('')+(extra.length?sec('Lain-lain',extra):'')+'<p class="hint">Rujukan: '+esc(a.id)+'</p></div>';
+}
+function ago(t){const s=(Date.now()-new Date(t))/1000;if(s<3600)return Math.max(1,Math.round(s/60))+' min lalu';if(s<86400)return Math.round(s/3600)+' jam lalu';if(s<172800)return 'Semalam';return new Date(t).toLocaleDateString('ms-MY',{day:'numeric',month:'short',year:'numeric'})}
 function renderApplications(){
  const target=app?.querySelector('#applications');if(!target)return;
- const rows=applications.filter(a=>viewFilter==='all'||(viewFilter==='unread'?!a.read_at:!!a.read_at));
+ const q=String(S.q||'').trim().toLowerCase();
+ const base=q?applications.filter(a=>[a.applicant_name,a.applicant_phone,a.car_interest,a.applicant_email].some(x=>String(x||'').toLowerCase().includes(q))):applications;
+ const rows=base.filter(a=>viewFilter==='all'||(viewFilter==='unread'?!a.read_at:!!a.read_at));
  const unread=applications.filter(a=>!a.read_at).length;
- const count=app.querySelector('#applications-count');if(count)count.textContent=applications.length+' rekod · '+unread+' belum baca';
- const chips=app.querySelectorAll('[data-app-filter]');
- chips.forEach(b=>b.classList.toggle('on',b.dataset.appFilter===viewFilter));
+ const n={all:applications.length,unread,read:applications.length-unread};
+ app.querySelectorAll('[data-n]').forEach(b=>b.textContent=n[b.dataset.n]);
+ const count=app.querySelector('#applications-count');if(count)count.textContent=q?rows.length+' padanan untuk "'+S.q+'"':'';
+ app.querySelectorAll('[data-app-filter]').forEach(b=>b.classList.toggle('on',b.dataset.appFilter===viewFilter));
  target.innerHTML=rows.length?(window.adaPg?window.adaPg.rows('apps',rows,renderApplications):rows).map(a=>{
-  const isUnread=!a.read_at;
-  const prefix='<div class="app-entry"><div class="app-summary"><b>'+esc(a.applicant_name)+'</b><span class="app-read '+(isUnread?'unread':'read')+'">'+(isUnread?'Belum Baca':'Sudah Baca')+'</span><small>'+
-    esc(new Date(a.created_at).toLocaleString('ms-MY'))+' · '+esc(a.applicant_phone)+' · '+esc(a.car_interest)+'</small></div></div>';
+  const isUnread=!a.read_at,open=expandedId===a.id;
   const phone=msisdn(a.applicant_phone);
   const text='Salam '+(a.applicant_name||'')+', saya dari Abe Din Auto berkenaan permohonan kereta '+(a.car_interest||'')+'.';
   const wa=phone?'https://wa.me/'+phone+'?text='+encodeURIComponent(text):'';
-  const actions='<div class="app-actions">'+
-   '<button type="button" class="btn" data-op="view" data-id="'+esc(a.id)+'">Lihat</button>'+
-   '<button type="button" class="btn" data-op="edit" data-id="'+esc(a.id)+'">Edit</button>'+
-   '<button type="button" class="btn" data-op="copy" data-id="'+esc(a.id)+'">Copy</button>'+
-   '<button type="button" class="btn" data-op="paste" data-id="'+esc(a.id)+'">Paste</button>'+
-   (wa?'<a class="btn wa" href="'+esc(wa)+'" target="_blank" rel="noopener noreferrer">WhatsApp</a>':'<button class="btn" disabled title="Tiada nombor telefon">WhatsApp</button>')+
-   '<button type="button" class="btn '+(isUnread?'pri':'')+'" data-op="read" data-id="'+esc(a.id)+'">'+(isUnread?'Tanda Sudah Baca':'Tanda Belum Baca')+'</button>'+
-   '<button type="button" class="btn app-delete" data-op="delete" data-id="'+esc(a.id)+'">Delete</button></div>';
-  const detail=expandedId===a.id?'<pre class="app-detail">'+esc(recordText(a))+'</pre>':'';
-  return '<div class="app-record">'+prefix+actions+detail+(editingId===a.id?editForm(a):'')+'</div>';
- }).join('')+(window.adaPg?window.adaPg.nav('apps',rows.length):''):'<p class="hint">'+(applications.length?'Tiada permohonan bagi status ini.':'Belum ada permohonan diterima.')+'</p>';
+  const ini=String(a.applicant_name||'?').trim().split(/\s+/).slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
+  return '<article class="pm-item'+(isUnread?' is-new':'')+(open?' is-open':'')+'">'+
+   '<div class="pm-top"><span class="pm-av">'+esc(ini)+'</span><div class="pm-main"><div class="pm-name"><b>'+esc(a.applicant_name||'-')+'</b>'+(isUnread?'<span class="app-read unread">Baru</span>':'')+'</div>'+
+   '<div class="pm-meta">'+(a.car_interest?'<span class="pm-car">🚗 '+esc(a.car_interest)+'</span>':'')+(a.applicant_phone?'<span>📞 '+esc(a.applicant_phone)+'</span>':'')+'<span>🕒 '+esc(ago(a.created_at))+'</span></div></div></div>'+
+   '<div class="pm-act">'+(wa?'<a class="btn wa" href="'+esc(wa)+'" target="_blank" rel="noopener noreferrer">WhatsApp</a>':'<button class="btn" disabled>Tiada telefon</button>')+
+   '<button type="button" class="btn'+(open?' on':'')+'" data-op="view" data-id="'+esc(a.id)+'">'+(open?'Tutup':'Lihat butiran')+'</button>'+
+   '<button type="button" class="btn '+(isUnread?'pri':'')+'" data-op="read" data-id="'+esc(a.id)+'">'+(isUnread?'✓ Sudah baca':'Belum baca')+'</button>'+
+   '<details class="pm-more"><summary class="btn" aria-label="Lagi">⋯</summary><div class="pm-menu">'+
+    '<button type="button" class="btn" data-op="edit" data-id="'+esc(a.id)+'">Edit</button>'+
+    '<button type="button" class="btn" data-op="copy" data-id="'+esc(a.id)+'">Copy</button>'+
+    '<button type="button" class="btn" data-op="paste" data-id="'+esc(a.id)+'">Paste</button>'+
+    '<button type="button" class="btn app-delete" data-op="delete" data-id="'+esc(a.id)+'">Padam</button></div></details></div>'+
+   (open?detailView(a):'')+(editingId===a.id?editForm(a):'')+'</article>';
+ }).join('')+(window.adaPg?window.adaPg.nav('apps',rows.length):''):'<div class="pm-empty">'+(applications.length?(q?'Tiada padanan untuk carian ini.':'Tiada permohonan bagi status ini.'):'Belum ada permohonan diterima. Kongsi borang kepada pelanggan di bawah.')+'</div>';
 }
+
 async function loadApplications(){
  const target=app?.querySelector('#applications');
  if(!target||!ctx.client)return;
@@ -348,6 +419,7 @@ export function mountPermohonan(el, c) {
   root.innerHTML = `<style>${CSS}</style><div class="shell"><div class="wrap" id="app"></div></div>`;
   app = root.getElementById('app');
   app.addEventListener('input', e => {
+    if (e.target.id === 'app-q') { S.q = e.target.value; renderApplications(); return; }
     if (e.target.id === 'phone') S.phone = e.target.value;
     else return;
     refreshLinks();
@@ -362,6 +434,7 @@ export function mountPermohonan(el, c) {
     if(b.dataset.act==='copy')copy(formLink(),b);
     if(b.dataset.act==='copymsg')copy(inviteText(),b);
     if(b.dataset.act==='reload')loadApplications();
+    if(b.dataset.act==='jump-share'){const sh=app.querySelector('#pm-share');sh?.scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>app.querySelector('#phone')?.focus({preventScroll:true}),450)}
   });
   render();
   loadApplications();
