@@ -7,6 +7,9 @@ on:
       - js/admin-menu.js
       - js/agent-admin-panel.js
       - tests/agent-admin-integration.test.mjs
+      - tests/agent-lead-contact.test.mjs
+      - agent.html
+      - supabase/functions/agent-portal-admin/index.ts
       - .github/workflows/agent-admin-integration.yml
   pull_request:
     paths:
@@ -24,7 +27,7 @@ jobs:
         with:
           node-version: '22'
       - name: Check Agent Network owner access and menu integration
-        run: node --test tests/agent-admin-integration.test.mjs
+        run: node --test tests/agent-admin-integration.test.mjs tests/agent-lead-contact.test.mjs
       - name: Check live admin bundle after deployment
         shell: bash
         run: |
@@ -35,4 +38,9 @@ jobs:
           curl -fsSL --retry 2 --max-time 20 -H "Cache-Control: no-cache" "https://abedinauto.my/js/agent-admin-panel.js?check=$GITHUB_SHA" -o /tmp/abedin-agent-panel.js
           grep -Fq 'Permohonan Ejen' /tmp/abedin-agent-panel.js
           grep -Fq 'direct_inquiry_list' /tmp/abedin-agent-panel.js
+          grep -Fq 'WhatsApp Pelanggan' /tmp/abedin-agent-panel.js
+          grep -Fq 'lead_contact_list' /tmp/abedin-agent-panel.js
+          curl -fsSL --retry 2 --max-time 20 -H 'Cache-Control: no-cache' "https://abedinauto.my/agent.html?check=$GITHUB_SHA" -o /tmp/abedin-agent.html
+          grep -Fq 'WhatsApp Pelanggan' /tmp/abedin-agent.html
+          grep -Fq 'customer_phone,status,lead_source' /tmp/abedin-agent.html
           echo "PASS: Agent module available on live admin hosting"
