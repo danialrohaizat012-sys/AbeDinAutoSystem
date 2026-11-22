@@ -50,7 +50,7 @@ begin
  do update set attempt_count=agent_public_inquiry_limits.attempt_count+1
  returning attempt_count into v_count;
  if v_count>6 then
-  raise exception 'Too many requests. Try again later' using errcode='P0001';
+  return jsonb_build_object('status','rate_limited');
  end if;
  select * into v_agent from public.agent_profiles
   where agent_code=p_referral_code and status='active';
