@@ -20,7 +20,7 @@ test('Agent module is owner-only and cannot bypass backend authorization',()=>{
 test('Current admin dashboard renders integrated module',()=>{
  assert.match(app,/current==='agents'/);
  assert.match(app,/ada-agent-admin-host/);
- assert.match(app,/import\('\.\/js\/agent-admin-panel\.js\?v=3'\)/);
+ assert.match(app,/import\('\.\/js\/agent-admin-panel\.js\?v=\d+'\)/);
  assert.match(app,/'sewa','agents','reports'/);
 });
 test('Admin panel includes operational tasks and buyer segregation',()=>{
