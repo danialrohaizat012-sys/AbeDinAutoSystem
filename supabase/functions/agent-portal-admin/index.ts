@@ -48,6 +48,27 @@ Deno.serve(async(req)=>{
      .order("created_at",{ascending:false}).limit(100);
    return error?res(500,{error:"Unable to load direct enquiries"}):res(200,{inquiries:data});
  }
+ if(payload.action==="lead_contact_list"){
+   // Owner only, because authentication and active owner checks run before this branch.
+   const {data:leads,error}=await admin.from("agent_leads")
+     .select("id,agent_id,vehicle_id,customer_name,customer_phone,status,lead_source,referral_code_snapshot,linked_sale_id,created_at")
+     .order("created_at",{ascending:false}).limit(100);
+   if(error)return res(500,{error:"Unable to load agent customer contacts"});
+   const vehicleIds=[...new Set((leads||[]).map(x=>x.vehicle_id).filter(Boolean))];
+   const agentIds=[...new Set((leads||[]).map(x=>x.agent_id).filter(Boolean))];
+   const [cars,agents]=await Promise.all([
+     vehicleIds.length?admin.from("vehicles").select("id,vehicle_id,make,model,model_year").in("id",vehicleIds):Promise.resolve({data:[],error:null}),
+     agentIds.length?admin.from("agent_profiles").select("id,agent_code").in("id",agentIds):Promise.resolve({data:[],error:null})
+   ]);
+   if(cars.error||agents.error)return res(500,{error:"Unable to load lead vehicle information"});
+   const byCar=new Map((cars.data||[]).map(x=>[x.id,x]));
+   const byAgent=new Map((agents.data||[]).map(x=>[x.id,x]));
+   return res(200,{leads:(leads||[]).map(x=>({
+     ...x,
+     agent_code:byAgent.get(x.agent_id)?.agent_code||x.referral_code_snapshot||null,
+     car:byCar.get(x.vehicle_id)||null
+   }))});
+ }
  if(payload.action==="lead_list"){
    const {data,error}=await admin.from("agent_leads")
      .select("id,agent_id,customer_name,customer_phone,status,linked_sale_id,vehicle_id,lead_source,referral_code_snapshot,created_at")
