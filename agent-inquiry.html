@@ -46,7 +46,7 @@ const $=id=>document.getElementById(id);
 const params=new URLSearchParams(location.search);
 const ref=params.get('ref')||'',car=params.get('car')||'';
 const validCar=car.length>=1&&car.length<=80&&/^[a-zA-Z0-9_-]+$/.test(car);
-const validRef=/^ADA-AG-[0-9]{4,}$/.test(ref)&&ref.length<=30;
+const validRef=(/^ADA-AG-[0-9]{4,}$/.test(ref)&&ref.length<=30)||/^[a-f0-9]{32}$/.test(ref);
 function status(msg,bad=false){$('notice').textContent=msg;$('notice').className='notice'+(bad?' error':'');}
 if(!validCar||(ref&&!validRef)){status('Pautan kereta atau kod ejen tidak sah. Dapatkan pautan terbaru daripada AbeDin Auto.',true);return;}
 $('agentCode').value=validRef?ref:'';
@@ -60,7 +60,7 @@ $('form').addEventListener('submit',async e=>{
  const f=new FormData(form);
  if(!form.reportValidity())return;
  const refCode=$('agentCode').value.trim();
- if(refCode&&(!/^ADA-AG-[0-9]{4,}$/.test(refCode)||refCode.length>30)){status('Pautan rujukan tidak sah.',true);return;}
+ if(refCode&&!((/^ADA-AG-[0-9]{4,}$/.test(refCode)&&refCode.length<=30)||/^[a-f0-9]{32}$/.test(refCode))){status('Pautan rujukan tidak sah.',true);return;}
  const button=$('submit');button.disabled=true;
  try{
   const res=await fetch('https://buzpdyvvoiqgbeventwm.supabase.co/functions/v1/agent-public-inquiry',{
@@ -73,7 +73,7 @@ $('form').addEventListener('submit',async e=>{
   if(!res.ok)throw new Error(data.error||'Pertanyaan gagal dihantar.');
   form.hidden=true;
   status('Terima kasih! Pertanyaan anda berjaya disimpan dalam sistem AbeDin Auto. Sila teruskan ke WhatsApp untuk menghantar salinan kepada pasukan jualan.');
-  const waMessage='Salam AbeDin Auto, saya sudah daftar minat kereta.\\nNama: '+String(f.get('customer_name')||'').trim()+'\\nTelefon: '+String(f.get('customer_phone')||'').trim()+'\\nKereta: '+car+'\\nNo. rujukan: '+String(data.lead_id||'');
+  const waMessage='Salam AbeDin Auto, saya sudah daftar minat kereta.\nNama: '+String(f.get('customer_name')||'').trim()+'\nTelefon: '+String(f.get('customer_phone')||'').trim()+'\nKereta: '+car+'\nNo. rujukan: '+String(data.lead_id||'');
   const waUrl='https://wa.me/601156366925?text='+encodeURIComponent(waMessage);
   const waLink=$('whatsappAfter');waLink.href=waUrl;waLink.hidden=false;
   // Browser opens WhatsApp with a prepared message; the customer must tap Send.
