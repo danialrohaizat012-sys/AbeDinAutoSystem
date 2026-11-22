@@ -21,7 +21,8 @@ jobs:
           for path in agent.html agent-payout-verify.html; do
             url="https://abedinauto.my/$path"
             echo "Checking $url"
-            curl --fail --location --silent --show-error --max-time 20 --retry 1 --output /tmp/agent-check.html "$url"
+            curl --fail --location --silent --show-error --max-time 20 --retry 1 \
+              -H 'Cache-Control: no-cache' --output /tmp/agent-check.html "$url?release=$GITHUB_SHA"
             grep -q 'AbeDin Auto' /tmp/agent-check.html
             if [ "$path" = "agent.html" ]; then
               grep -q 'Menunggu pengesahan oleh HR Aiman' /tmp/agent-check.html
