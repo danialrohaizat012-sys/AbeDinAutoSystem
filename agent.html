@@ -39,7 +39,7 @@ section[hidden],.hidden{display:none!important}
 .promo-actions{display:flex;flex-wrap:wrap;gap:7px}
 .promo-actions button,.promo-actions a{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border:0;border-radius:9px;font-size:12px;font-weight:750;padding:10px;color:#164675;background:#e6effa;cursor:pointer}
 .promo-actions .promo-whatsapp{background:#116d4a;color:white}
-.lead-contact-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}.lead-contact-actions a{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border-radius:9px;padding:10px 13px;font-size:13px;font-weight:750;background:#e6eef7;color:#17477d}.lead-contact-actions a.wa{background:#116d4a;color:#fff}.lead-contact-actions a.call{background:#e6eef7;color:#17477d}.lead-detail{display:grid;gap:5px;margin-top:9px;color:#50667b;font-size:13px;line-height:1.45;overflow-wrap:anywhere}kbd{font:inherit;background:#e8f0fb;border-radius:7px;padding:4px 8px}
+.lead-contact-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}.lead-contact-actions a{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border-radius:9px;padding:10px 13px;font-size:13px;font-weight:750;background:#e6eef7;color:#17477d}.lead-contact-actions a.wa{background:#116d4a;color:#fff}.lead-contact-actions a.call{background:#e6eef7;color:#17477d}.lead-collapse{border:1px solid #dce5ef;border-radius:12px;margin-bottom:9px;background:white;overflow:hidden}.lead-collapse summary{cursor:pointer;list-style:none;display:flex;gap:10px;align-items:center;justify-content:space-between;padding:13px;flex-wrap:wrap}.lead-collapse summary::-webkit-details-marker{display:none}.lead-head{display:grid;gap:4px;flex:1;min-width:150px}.lead-head small{color:#64788c;font-size:12px}.lead-badges{display:flex;gap:5px;flex-wrap:wrap}.lead-badge{background:#fff0da;color:#8b601d;border-radius:20px;padding:4px 7px;font-size:11px;font-weight:700}.lead-badge.read{background:#dcefe4;color:#146342}.lead-collapsed-content{padding:12px;border-top:1px solid #e3eaf1}.lead-car-link{display:block;margin:10px 0;font-size:13px;font-weight:750;color:#1762a8;overflow-wrap:anywhere}.lead-detail{display:grid;gap:5px;margin-top:9px;color:#50667b;font-size:13px;line-height:1.45;overflow-wrap:anywhere}kbd{font:inherit;background:#e8f0fb;border-radius:7px;padding:4px 8px}
 footer{font-size:12px;color:#748399;padding:15px 0}
 @media(max-width:720px){.grid{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.panel{padding:16px}header{padding:16px}}
 </style>
@@ -82,6 +82,7 @@ footer{font-size:12px;color:#748399;padding:15px 0}
 <div class="stats"><div class="stat">Lead saya<b id="countLeads">0</b></div>
 <div class="stat">Komisen saya<b id="countCommission">0</b></div>
 <div class="stat">Penyata pembayaran<b id="countPayout">0</b></div></div>
+<div class="row" style="margin:12px 0;justify-content:space-between"><h2 style="margin:0">Lead Saya</h2><button class="secondary" type="button" id="refreshMyLeads">Muat Semula Lead</button></div>
 <div class="notice" style="margin:14px 0"><strong>Lead Saya</strong><p style="margin:5px 0 0">Nama, telefon, kereta diminati dan butang WhatsApp pelanggan dipaparkan di sini.</p></div>
 <div id="leadItems" class="items"></div>
 <div id="agentPromo" hidden>
@@ -159,6 +160,23 @@ function contactPhone(phone){
  return null;
 }
 function leadContact(parent,lead,car){
+ const summary=document.createElement('details');summary.className='lead-collapse';
+ const head=document.createElement('summary');
+ const carTitle=formatLeadCar(car,lead.vehicle_id);
+ const agentRead=lead.agent_read_at?'Dibaca ejen':'Belum baca ejen';
+ const ownerRead=lead.owner_read_at?'Dibaca owner':'Belum baca owner';
+ const heading=document.createElement('div');heading.className='lead-head';
+ const name=document.createElement('strong');text(name,lead.customer_name||'Pelanggan');
+ const model=document.createElement('small');text(model,carTitle);
+ heading.append(name,model);
+ const badges=document.createElement('div');badges.className='lead-badges';
+ for(const [label,isRead] of [[agentRead,Boolean(lead.agent_read_at)],[ownerRead,Boolean(lead.owner_read_at)]]){
+   const badge=document.createElement('span');badge.className='lead-badge'+(isRead?' read':'');text(badge,label);badges.append(badge);
+ }
+ head.append(heading,badges);summary.append(head);
+ const body=document.createElement('div');body.className='lead-collapsed-content';
+ summary.append(body);parent.append(summary);
+ parent=body;
  const d=document.createElement('div');d.className='lead-detail';
  for(const value of [
    'Telefon: '+(lead.customer_phone||'Tiada nombor'),
@@ -176,6 +194,32 @@ function leadContact(parent,lead,car){
   'Salam '+String(lead.customer_name||'')+', saya dari AbeDin Auto. Terima kasih kerana berminat dengan '+formatLeadCar(car,lead.vehicle_id)+'. Boleh kami bantu berkenaan kereta ini?'
  );
  acts.append(wa,call);parent.append(acts);
+}
+function leadCarLink(parent,car,vehicleId){
+ if(!car?.vehicle_id)return;
+ const link=document.createElement('a');link.className='lead-car-link';
+ const u=new URL('/',location.origin);u.searchParams.set('car',car.vehicle_id);
+ link.href=u.href;link.target='_blank';link.rel='noopener noreferrer';
+ text(link,'Lihat Kereta: '+formatLeadCar(car,vehicleId));
+ parent.append(link);
+}
+function leadReadButton(parent,lead,audience,refresh){
+ if((audience==='agent'&&lead.agent_read_at)||(audience==='owner'&&lead.owner_read_at))return;
+ const b=document.createElement('button');b.className='secondary';b.type='button';text(b,'Tandakan Sudah Baca');
+ b.onclick=async()=>{
+  b.disabled=true;
+  try{
+   if(audience==='agent'){
+     const {error}=await supabase.rpc('agent_mark_own_lead_read_v1',{p_lead:lead.id});
+     if(error)throw error;
+   }else{
+     await adminRequest({action:'owner_lead_mark_read',lead_type:lead.lead_source==='public_direct'?'direct':'agent',lead_id:lead.id});
+   }
+   message('Status sudah dibaca disimpan. Ejen dan owner boleh lihat selepas memuat semula.');
+   await refresh();
+  }catch(err){fail(err)}finally{b.disabled=false}
+ };
+ parent.append(b);
 }
 function showRows(target,rows,fn){const el=$(target);el.replaceChildren();if(!rows?.length){item(el,'Tiada rekod','');return;}
 for(const x of rows)fn(el,x);}
@@ -276,10 +320,11 @@ async function loadAgentCatalogue(){
  }
 }
 $('refreshPromo').onclick=()=>loadAgentCatalogue().catch(fail);
+$('refreshMyLeads').onclick=()=>loadDashboard().catch(fail);
 async function loadDashboard(){
  if(!me?.email_confirmed_at||agent?.status!=='active')return;
  const [l,c,p,publicCars]=await Promise.all([
- supabase.from('agent_leads').select('id,vehicle_id,customer_name,customer_phone,status,lead_source,created_at').eq('agent_id',agent.id).order('created_at',{ascending:false}).limit(50),
+ supabase.from('agent_leads').select('id,vehicle_id,customer_name,customer_phone,status,lead_source,agent_read_at,owner_read_at,created_at').eq('agent_id',agent.id).order('created_at',{ascending:false}).limit(50),
  supabase.from('agent_commissions').select('id,agreed_amount,status,created_at').eq('agent_id',agent.id).order('created_at',{ascending:false}).limit(50),
  supabase.from('agent_payouts').select('id,amount,status,paid_at').eq('agent_id',agent.id).order('created_at',{ascending:false}).limit(50),
  supabase.rpc('get_public_catalogue',{p_vehicle_id:null})]);
@@ -287,8 +332,12 @@ async function loadDashboard(){
  const carMap=new Map((!publicCars.error&&Array.isArray(publicCars.data)?publicCars.data:[]).map(v=>[v.id,v]));
  text($('countLeads'),l.data.length);text($('countCommission'),c.data.length);text($('countPayout'),p.data.length);
  showRows('leadItems',l.data,(el,x)=>{
-   const card=item(el,x.customer_name||'Pelanggan','Lead pelanggan berdaftar');
+   const card=document.createElement('div');
    leadContact(card,x,carMap.get(x.vehicle_id));
+   const panel=card.querySelector('.lead-collapsed-content');
+   leadCarLink(panel,carMap.get(x.vehicle_id),x.vehicle_id);
+   leadReadButton(panel,x,'agent',loadDashboard);
+   el.append(card);
  });
  const rm=v=>new Intl.NumberFormat('ms-MY',{style:'currency',currency:'MYR'}).format(Number(v||0));
  showRows('commissionItems',c.data,(el,x)=>item(el,rm(x.agreed_amount),x.status));
@@ -311,10 +360,19 @@ function ownerActionButton(parent,label,payloadFactory){
  };row.append(b);parent.append(row);
 }
 async function loadOwnerFinance(){
- const direct=await adminRequest({action:'direct_inquiry_list'});
+ const [direct,vehicleDetails]=await Promise.all([
+   adminRequest({action:'direct_inquiry_list'}),
+   adminRequest({action:'commission_vehicle_list'})
+ ]);
+ const carById=new Map((vehicleDetails.vehicles||[]).map(x=>[x.id,x]));
  showRows('ownerDirectInquiries',direct.inquiries||[],(el,x)=>{
-   const card=item(el,x.customer_name||'Pembeli terus','Pertanyaan terus tanpa ejen');
-   leadContact(card,{...x,lead_source:'public_direct'},null);
+   const card=document.createElement('div');
+   const lead={...x,lead_source:'public_direct'};
+   leadContact(card,lead,carById.get(x.vehicle_id)||null);
+   const panel=card.querySelector('.lead-collapsed-content');
+   leadCarLink(panel,carById.get(x.vehicle_id),x.vehicle_id);
+   leadReadButton(panel,lead,'owner',loadOwner);
+   el.append(card);
  });
  const [unlinked,fin,contacts]=await Promise.all([
    adminRequest({action:'lead_list'}),
@@ -322,8 +380,13 @@ async function loadOwnerFinance(){
    adminRequest({action:'lead_contact_list'})
  ]);
  showRows('ownerContactLeads',contacts.leads||[],(el,x)=>{
-   const card=item(el,x.customer_name||'Pelanggan','Ejen: '+(x.agent_code||x.agent_id||'Tidak diketahui'));
+   const card=document.createElement('div');
    leadContact(card,x,x.car);
+   const panel=card.querySelector('.lead-collapsed-content');
+   const name=document.createElement('p');text(name,'Nama ejen: '+(x.agent_name||'Tidak direkodkan')+' · ID '+(x.agent_code||'—'));panel.prepend(name);
+   leadCarLink(panel,x.car,x.vehicle_id);
+   leadReadButton(panel,x,'owner',loadOwner);
+   el.append(card);
  });
  showRows('unlinkedLeadItems',unlinked.leads,(el,l)=>{
    const d=item(el,l.customer_name+' · '+l.customer_phone,(l.lead_source==='public_referral'?'Pendaftaran pelanggan melalui link ejen '+(l.referral_code_snapshot||''):'Pendaftaran manual ejen')+' | Lead '+l.id+' | Kereta '+(l.vehicle_id||'tiada'));
