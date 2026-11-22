@@ -51,6 +51,10 @@ jobs:
           echo "Checking public catalogue referral integration"
           curl --fail --location --silent --show-error --max-time 20 \
             -H 'Cache-Control: no-cache' --output /tmp/ada-public-app.html "https://abedinauto.my/app.html?car=ADA-TEST-INVALID&ref=TEST_AGENT&release=$GITHUB_SHA"
+          echo "PUBLIC SIZE $(wc -c < /tmp/ada-public-app.html)"
+          for marker in 'agentReferralCode' 'agentReferralSuffix' 'ada-agent-enquiry-card' 'Daftar Minat melalui Ejen' 'agentReferralSuffix());openPublicCatalogue(id)'; do
+            if grep -Fq "$marker" /tmp/ada-public-app.html; then echo "PUBLIC FOUND: $marker"; else echo "PUBLIC MISSING: $marker"; fi
+          done
           grep -q 'agentReferralCode' /tmp/ada-public-app.html
           grep -q 'agentReferralSuffix' /tmp/ada-public-app.html
           grep -q 'ada-agent-enquiry-card' /tmp/ada-public-app.html
