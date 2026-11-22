@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - agent.html
+      - tests/agent-auth-visibility.test.mjs
       - agent-inquiry.html
       - app.html
       - agent-payout-verify.html
@@ -16,6 +17,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify login-only dashboard visibility
+        run: node --test tests/agent-auth-visibility.test.mjs
       - name: Verify deployed portal paths and content
         shell: bash
         run: |
@@ -29,6 +36,8 @@ jobs:
             if [ "$path" = "agent.html" ]; then
               grep -q 'Menunggu pengesahan oleh HR Aiman' /tmp/agent-check.html
               grep -q 'agent-portal-admin' /tmp/agent-check.html
+              grep -Fq 'data-view="dashboard" id="dashboardTab" hidden' /tmp/agent-check.html
+              grep -Fq "if(!sessionData?.session?.access_token)return null" /tmp/agent-check.html
               grep -q 'Stok Katalog Awam untuk Promosi' /tmp/agent-check.html
               grep -q 'Kongsi WhatsApp' /tmp/agent-check.html
               grep -q 'display_price' /tmp/agent-check.html
