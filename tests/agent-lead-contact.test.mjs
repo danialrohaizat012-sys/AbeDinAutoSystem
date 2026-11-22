@@ -13,6 +13,7 @@ test('agent dashboard displays customer name, phone, vehicle and actions',()=>{
  assert.match(agent,/Hubungi Telefon/);
  assert.match(agent,/leadContact\(card,x,carMap\.get\(x\.vehicle_id\)\)/);
  assert.match(agent,/get_public_catalogue/);
+ assert.ok(agent.indexOf('id="leadItems"') < agent.indexOf('id="agentPromo"'), 'Lead list should appear above stock cards');
 });
 test('the agent lead query is restricted to own agent ID',()=>{
  assert.match(agent,/supabase\.from\('agent_leads'\).*\.eq\('agent_id',agent\.id\)/);
