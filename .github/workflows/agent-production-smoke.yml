@@ -35,6 +35,10 @@ jobs:
             echo "Checking $url"
             curl --fail --location --silent --show-error --max-time 20 --retry 1 \
               -H 'Cache-Control: no-cache' --output /tmp/agent-check.html "$url?release=$GITHUB_SHA"
+            echo "LIVE SIZE $(wc -c </tmp/agent-check.html)"
+            for marker in 'data-view="dashboard" id="dashboardTab" hidden' 'if(!sessionData?.session?.access_token)return null' 'shareToken=body.share_token'; do
+              if grep -Fq "$marker" /tmp/agent-check.html; then echo "LIVE FOUND: $marker"; else echo "LIVE MISSING: $marker"; fi
+            done
             grep -q 'AbeDin Auto' /tmp/agent-check.html
             if [ "$path" = "agent.html" ]; then
               grep -q 'Menunggu pengesahan oleh HR Aiman' /tmp/agent-check.html
