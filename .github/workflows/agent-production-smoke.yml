@@ -26,12 +26,20 @@ jobs:
             if [ "$path" = "agent.html" ]; then
               grep -q 'Menunggu pengesahan oleh HR Aiman' /tmp/agent-check.html
               grep -q 'agent-portal-admin' /tmp/agent-check.html
+              grep -q 'Stok Katalog Awam untuk Promosi' /tmp/agent-check.html
+              grep -q 'Kongsi WhatsApp' /tmp/agent-check.html
             else
               grep -q 'Tarikh DAN masa pembayaran bank sebenar' /tmp/agent-check.html
               grep -q 'agent-payout-verifier' /tmp/agent-check.html
             fi
             echo "PASS: $path contains current production release"
           done
+          echo "Checking public catalogue referral integration"
+          curl --fail --location --silent --show-error --max-time 20 \
+            --output /tmp/ada-public-app.html "https://abedinauto.my/app.html?car=ADA-TEST-INVALID&ref=TEST_AGENT"
+          grep -q 'agentReferralCode' /tmp/ada-public-app.html
+          grep -q 'agentReferralSuffix' /tmp/ada-public-app.html
+          echo "PASS: public catalogue contains agent referral code support"
       - name: Verify protected Supabase functions reject unauthenticated calls
         shell: bash
         run: |
