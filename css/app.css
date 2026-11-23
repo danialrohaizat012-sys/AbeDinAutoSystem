@@ -2240,6 +2240,13 @@ html.ada-light .ada-np-txt small{color:#5d574a}
 html .ada-head-tools .cloud-pill{display:none!important}}
 #ada-notif-panel .ada-np-head button{background:none!important;border:0!important;box-shadow:none!important;min-height:0!important;width:auto!important;margin:0!important}
 #ada-notif-panel .ada-np-item{margin:0!important;min-height:0!important;box-shadow:none!important}
+/* V120: elak teks notifikasi bertindih — item tidak boleh dimampatkan oleh flex & tinggi ikut kandungan */
+#ada-notif-panel .ada-np-list{flex:1 1 auto;min-height:0}
+#ada-notif-panel .ada-np-item{flex:0 0 auto!important;height:auto!important;max-height:none!important;align-items:flex-start!important;line-height:1.35!important;white-space:normal!important;overflow:visible!important}
+#ada-notif-panel .ada-np-txt{flex:1 1 auto;overflow-wrap:anywhere;word-break:break-word}
+#ada-notif-panel .ada-np-txt b,#ada-notif-panel .ada-np-txt small,#ada-notif-panel .ada-np-txt em{display:block;line-height:1.35!important;white-space:normal!important}
+#ada-notif-panel .ada-np-ico{flex:0 0 auto}
+#ada-notif-panel>*:not(.ada-np-list){flex:0 0 auto}
 
 
 /* V83: Jual Kereta matches Edit Jualan fields, with an optional first payment. */
