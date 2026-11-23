@@ -719,7 +719,7 @@ function ownerDash(){
   const A=adxAnalytics({live,capOf,ownCap,soldIds,st,I});
   const recentSales=[...live].sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||''))).slice(0,5);
   return `<div class="adx">
-<header class="adx-head"><div><span class="adx-date">${today}</span><h1>${greet}, ${nm} 👋</h1><p>Ringkasan perniagaan Abe Din Auto hari ini.</p></div><div class="adx-head-act"><button id="ada-dash-add" class="adx-btn ghost">${I('plus')}Daftar Kereta</button><button id="ada-dash-sale" class="adx-btn">${I('cash')}Jual Kereta</button></div></header>
+<header class="adx-head"><div><span class="adx-date">${today}</span><h1>${greet}, ${nm} 👋</h1><p>Ringkasan perniagaan Abe Din Auto hari ini.</p></div></header>
 <section class="adx-grid adx-kpis">
  <div class="adx-hero"><div class="adx-hero-top"><span class="adx-lbl">Untung Kasar</span><span class="adx-pill ${profit<0?'neg':''}">${margin.toFixed(1)}% margin</span></div><b class="adx-hero-val ${profit<0?'neg':''}">${money(profit)}</b><div class="adx-hero-bar"><i style="width:${saleVal?Math.max(4,Math.min(100,capSold/saleVal*100)):0}%"></i></div><div class="adx-hero-legend"><span><i class="c1"></i>Modal ${money(capSold)}</span><span><i class="c2"></i>Jualan ${money(saleVal)}</span></div><span class="adx-foot">${soldVs.length} unit dijual · termasuk kos tukar nama, Puspakom, transport & baiki</span></div>
  ${tile('chart','Jualan bulan ini',money(cur.v),`${cur.n} unit${delta===null?'':` · <em class="${delta<0?'dn':'up'}">${delta<0?'▼':'▲'} ${Math.abs(delta).toFixed(0)}%</em> vs ${prev.l}`}`)}
