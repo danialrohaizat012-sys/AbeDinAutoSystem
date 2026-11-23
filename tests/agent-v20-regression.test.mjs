@@ -42,14 +42,17 @@ test('portal only exposes navigation after active agent lookup',()=>{
 
 test('proposed RLS requires active agent for each protected read',()=>{
  const sql=readFileSync(new URL('supabase/migrations/20261123_agent_v20_active_read_policies.sql',root),'utf8');
- for(const table of ['agent_leads','agent_commissions','agent_payouts']){
+ for(const table of ['agent_leads','agent_commissions','agent_payouts','agent_payout_items']){
   const start=sql.indexOf('create policy '+table+'_read_own');
   assert.ok(start>=0,'missing read policy for '+table);
   const end=sql.indexOf(';',start);
   const policy=sql.slice(start,end);
   assert.match(policy,/a\.user_id\s*=\s*\(select auth\.uid\(\)\)/);
   assert.match(policy,/a\.status\s*=\s*'active'/);
-  assert.match(policy,/a\.id\s*=\s*agent_(?:leads|commissions|payouts)\.agent_id/);
+  if(table==='agent_payout_items'){
+   assert.match(policy,/p\.id\s*=\s*agent_payout_items\.payout_id/);
+   assert.match(policy,/a\.id\s*=\s*p\.agent_id/);
+  }else assert.match(policy,/a\.id\s*=\s*agent_(?:leads|commissions|payouts)\.agent_id/);
  }
 });
 
