@@ -300,7 +300,7 @@ async function sync(){
   if(profile?.status==='active'){$('agentStatus').textContent='ID ejen: '+profile.agent_code+' | Status: Aktif';$('leadPanel').hidden=false;await loadDashboard();await loadAgentCatalogue();}
   else {$('agentStatus').textContent=app?'Permohonan: '+app.status+'. Dashboard hanya aktif selepas kelulusan.':'Belum menjadi ejen. Hantar permohonan dahulu.';
    for(const id of ['leadItems','commissionItems','payoutItems'])$(id).replaceChildren();for(const id of ['countLeads','countCommission','countPayout'])text($(id),'0');}
-  message('Log masuk sebagai '+me.email+'.');
+  {const nm=($('agentDetailsForm').elements.display_name.value||app?.full_name||'').trim();message(nm?'Selamat datang, '+nm+'!':'Selamat datang! ('+me.email+')');}
   view(profile?.status==='active'?'dashboard':owner?'owner':'account');
  }catch(e){fail(e);}
 }
