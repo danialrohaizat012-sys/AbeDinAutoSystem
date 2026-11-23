@@ -6,6 +6,7 @@ on:
       - 'agent-v20.html'
       - 'js/agent-v20-data.mjs'
       - 'tests/agent-v20-regression.test.mjs'
+      - 'supabase/migrations/20261123_agent_v20_active_read_policies.sql'
       - '.github/workflows/agent-v20-checks.yml'
   workflow_dispatch:
 jobs:
