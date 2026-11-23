@@ -1,6 +1,25 @@
 <!doctype html><html lang="ms"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AbeDin Auto | Portal Ejen V20</title><style>
-:root{font-family:system-ui,-apple-system,sans-serif;color-scheme:dark}body{margin:0;background:#101419;color:#f3f5f7}main{max-width:860px;margin:auto;padding:20px}h1{font-size:1.4rem}nav{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0}button,a{border:1px solid #40525a;background:#202b32;color:#fff;border-radius:10px;padding:11px 14px;font:inherit}button[aria-selected=true]{background:#165a61;border-color:#63b8ba}button:focus-visible,a:focus-visible{outline:3px solid #a8e6df}a{display:inline-block;text-decoration:none}ul{list-style:none;padding:0}li{padding:13px;background:#1d262d;border:1px solid #34434c;border-radius:12px;margin:9px 0}li span{display:block;color:#bdc9d0;font-size:.9rem;margin-top:5px}#status{min-height:24px;color:#bde5e1}section[hidden],[hidden]{display:none!important}</style></head><body><main>
-<a href="app.html">Kembali ke sistem</a><h1>Portal Ejen V20</h1><p>Lead, komisen dan bayaran daripada akaun ejen anda.</p>
+:root{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color-scheme:dark;--bg:#0c1119;--surface:#151e2a;--line:#2d3c4b;--text:#f5f8fc;--muted:#a5b6c7;--accent:#48b7bb}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse 80% 45% at 50% -15%,#1b4c58 0%,transparent 75%),var(--bg);color:var(--text);line-height:1.5}
+main{width:min(100% - 32px,960px);margin:0 auto;padding:clamp(22px,5vw,52px) 0 64px}
+a,button,input{font:inherit}a{color:#d4f9f7;text-decoration:none}.back-link{display:inline-flex;align-items:center;gap:8px;color:#c5d8e3;font-size:.92rem;padding:10px 0;margin-bottom:32px}.back-link:hover{text-decoration:underline}
+.portal-head{margin-bottom:26px}.eyebrow{display:inline-flex;align-items:center;gap:8px;color:#83d5d5;font-size:.75rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase;margin:0 0 12px}.eyebrow:before{content:"";width:8px;height:8px;border-radius:50%;background:#55d8bc;box-shadow:0 0 0 4px #55d8bc20}
+h1{font-size:clamp(1.85rem,5vw,2.65rem);letter-spacing:-.04em;line-height:1.12;margin:0 0 12px} .intro{color:var(--muted);margin:0;max-width:540px;font-size:1rem}
+#agent-login{max-width:480px;background:linear-gradient(155deg,#1a2836,#121b27);border:1px solid #334656;border-radius:22px;padding:clamp(22px,5vw,34px);box-shadow:0 22px 60px #0005;display:grid;gap:18px}
+#agent-login[hidden]{display:none}#agent-login label{display:grid;gap:8px;font-size:.9rem;font-weight:650;color:#e5eef5}
+#agent-login input{display:block;width:100%;min-width:0;height:50px;background:#0d1520;border:1px solid #425261;border-radius:12px;padding:0 14px;color:white;outline:none;transition:border-color .2s,box-shadow .2s}
+#agent-login input:focus{border-color:#6cdbd8;box-shadow:0 0 0 3px #6cdbd822}
+button{border:1px solid #3b5560;background:#1c3440;color:#efffff;border-radius:12px;padding:12px 17px;min-height:46px;cursor:pointer;font-weight:650}
+button:hover{background:#28505b}button:focus-visible,a:focus-visible{outline:3px solid #9be8e2;outline-offset:3px}
+#agent-login button{width:100%;margin-top:5px;min-height:52px;background:linear-gradient(110deg,#35aeb3,#237f94);border-color:#5bc9cb;font-weight:800;color:#fff}
+#agent-login button:hover{filter:brightness(1.1)}#agent-logout{margin-bottom:16px}
+nav{display:flex;flex-wrap:wrap;gap:9px;margin:22px 0 16px}nav button[aria-selected=true]{background:#207b82;border-color:#67d0d0}
+#refresh{margin-bottom:12px}#status{min-height:24px;color:#acd9d7;font-size:.9rem;margin:18px 0}
+section ul{list-style:none;padding:0;display:grid;gap:10px}section li{padding:17px;background:var(--surface);border:1px solid var(--line);border-radius:14px}section li span{display:block;color:var(--muted);font-size:.86rem;margin-top:5px}
+section[hidden],[hidden]{display:none!important}
+@media(max-width:600px){main{width:min(100% - 28px,480px);padding-top:18px}.back-link{margin-bottom:26px}.portal-head{margin-bottom:24px}#agent-login{border-radius:18px;padding:22px 18px;gap:16px}nav{display:grid;grid-template-columns:1fr 1fr}nav button{font-size:.85rem;padding:10px}#refresh{width:100%}}
+</style></head><body><main>
+<a class="back-link" href="app.html">← Kembali ke sistem</a><header class="portal-head"><p class="eyebrow">ABE DIN AUTO · RUANG EJEN</p><h1>Portal Ejen</h1><p class="intro">Urus lead pelanggan, semak komisen dan lihat sejarah pembayaran dalam satu tempat.</p></header>
 <form id="agent-login"><label>Email <input name="email" type="email" autocomplete="username" required></label> <label>Kata laluan <input name="password" type="password" autocomplete="current-password" required></label> <button type="submit">Log masuk ejen</button></form><button id="agent-logout" type="button" hidden>Log keluar ejen</button><nav id="agent-tabs" aria-label="Menu ejen" hidden><button data-tab="leads" aria-selected="true">Lead Saya</button><button data-tab="commissions" aria-selected="false">Komisen Saya</button><button data-tab="payouts" aria-selected="false">Sejarah Bayaran</button></nav>
 <button id="refresh" hidden>Muat Semula</button><p id="status" role="status" aria-live="polite"></p>
 <section id="leads"></section><section id="commissions" hidden></section><section id="payouts" hidden></section>
