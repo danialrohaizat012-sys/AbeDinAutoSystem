@@ -92,6 +92,16 @@ nav#tabs button{flex:0 0 auto!important;scroll-snap-align:start;white-space:nowr
 .stats.slide .stat b{font-size:26px!important;margin:6px 0 0}
 .rank-card{border-radius:18px!important}
 @media(max-width:520px){.rank-card{grid-template-columns:1fr!important}.rank-card .rk{display:flex;align-items:baseline;gap:8px}.rank-card .rs{display:grid!important;grid-template-columns:repeat(4,1fr);gap:6px!important}.rank-card .rs b{font-size:18px!important}.rank-card .rs div{font-size:11px!important}}
+
+.ch-card{background:#fff;border:1px solid #e3ebf4;border-radius:16px;padding:14px;margin-top:12px}
+.ch-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.ch-head b{font-size:15px;color:#16335b}.ch-head span{font-size:12px;color:#6b7f93;background:#f1f5fa;padding:3px 9px;border-radius:999px}
+.ch-cols{display:grid;grid-template-columns:repeat(14,1fr);gap:4px;align-items:end;height:150px}
+.ch-col{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:3px;min-width:0}
+.ch-col i{width:100%;max-width:22px;border-radius:7px 7px 3px 3px;transition:height .6s ease}
+.ch-col em{font-style:normal;font-size:10.5px;font-weight:700;color:#16335b;min-height:13px}
+.ch-col small{font-size:10px;color:#8a9bb0}
+.ch-row{margin:10px 0}.ch-lab{display:flex;justify-content:space-between;gap:8px;font-size:13px;margin-bottom:5px}.ch-lab span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#23384f}.ch-lab b{white-space:nowrap;color:#16335b}
+.ch-track{height:12px;border-radius:999px;background:#eef3f9;overflow:hidden}.ch-track i{display:block;height:100%;border-radius:999px;transition:width .6s ease}
 </style>
 </head>
 <body>
@@ -143,7 +153,7 @@ nav#tabs button{flex:0 0 auto!important;scroll-snap-align:start;white-space:nowr
 <p id="agentStatus" class="agent-chip">Maklumat ejen akan dipaparkan selepas permohonan diluluskan.</p>
 <div id="myRankCard" class="rank-card" hidden></div><a href="#agentPromo" id="goAgentPromos" class="cta-card"><span class="cta-ico">🚗</span><span class="cta-txt"><b>Katalog Kereta</b><small>Pilih kereta &amp; kongsi link rujukan anda</small></span><span class="cta-go">›</span></a>
 <div class="stats slide"><div class="stat"><span>👆 Klik hari ini</span><b id="countClicksToday">0</b></div><div class="stat"><span>📈 Klik 30 hari</span><b id="countClicksMonth">0</b></div><div class="stat"><span>🔥 Lead saya</span><b id="countLeads">0</b></div><div class="stat"><span>💰 Komisen</span><b id="countCommission">0</b></div><div class="stat"><span>🧾 Pembayaran</span><b id="countPayout">0</b></div></div>
-<div class="panel" id="agentClickPanel"><h2>Analitik Klik Promosi</h2><p class="agent-v20-note">Klik unik mengikut pelayar, hari dan kereta. Klik tidak bermaksud lead atau jualan.</p><div id="clickCarStats" class="items"></div></div><div class="row" style="margin:12px 0;justify-content:space-between"><h2 style="margin:0">Lead Saya</h2><button class="secondary" type="button" id="refreshMyLeads">Muat Semula Data</button></div>
+<div class="panel" id="agentClickPanel"><h2>Analitik Klik Promosi</h2><p class="agent-v20-note">Klik unik pada link anda. Klik tidak bermaksud lead atau jualan.</p><div id="clickCarStats" class="items"></div></div><div class="row" style="margin:12px 0;justify-content:space-between"><h2 style="margin:0">Lead Saya</h2><button class="secondary" type="button" id="refreshMyLeads">Muat Semula Data</button></div>
 <div class="notice" style="margin:14px 0"><strong>Lead Saya</strong><p style="margin:5px 0 0">Nama, telefon, kereta diminati dan butang WhatsApp pelanggan dipaparkan di sini.</p></div>
 <div class="lead-tools"><label for="leadSearch">Cari lead<input id="leadSearch" type="search" placeholder="Nama pelanggan atau kereta" autocomplete="off"></label><label for="leadReadFilter">Status bacaan<select id="leadReadFilter"><option value="all">Semua lead</option><option value="unread">Belum baca</option><option value="read">Sudah baca</option></select></label></div><p id="leadFilterCount" class="agent-v20-note" aria-live="polite"></p><div id="leadItems" class="items"></div>
 <div id="agentPromo" hidden>
@@ -531,7 +541,7 @@ async function loadAgentCatalogue(){
  if(body.source!=='public_catalogue'||!Array.isArray(body.vehicles))throw new Error('Katalog belum tersedia. Cuba segarkan.');
  if(typeof body.share_token!=='string'||!/^[a-f0-9]{32}$/.test(body.share_token))throw new Error('Link ejen belum tersedia. Cuba lagi.');
  shareToken=body.share_token;
- promoVehicles=body.vehicles;
+ promoVehicles=body.vehicles;try{renderClickCharts()}catch(_){}
  supabase.from('agent_promo_copy_v20').select('slot,published').order('slot').then(({data})=>{ownerPromoCopies=(data||[]).filter(x=>x.published)},()=>{});
 
  $('agentPromo').hidden=false;
@@ -644,10 +654,39 @@ async function loadAgentClickStats(){
  if(error){$('clickCarStats').textContent='Statistik klik belum tersedia.';return}
  const localDate=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kuala_Lumpur',year:'numeric',month:'2-digit',day:'2-digit'}).format(today);
  text($('countClicksToday'),data.filter(x=>x.clicked_on===localDate).length);text($('countClicksMonth'),data.length);
+ clickData={rows:data,today:localDate};renderClickCharts();
+}
+let clickData=null;
+const CHART_COLORS=['#ff6b6b','#ffa94d','#ffd43b','#69db7c','#38d9a9','#4dabf7','#748ffc','#da77f2','#f783ac','#20c997'];
+function renderClickCharts(){
+ const target=$('clickCarStats');if(!target||!clickData)return;target.replaceChildren();
+ const data=clickData.rows;
+ if(!data.length){target.innerHTML='<p class="agent-v20-note">Belum ada klik direkodkan. Kongsi link kereta untuk mula!</p>';return}
+ // Trend 14 hari
+ const days=[];const base=new Date(clickData.today+'T00:00:00Z');
+ for(let i=13;i>=0;i--){const d=new Date(base.getTime()-i*86400000);days.push(d.toISOString().slice(0,10))}
+ const perDay=new Map(days.map(d=>[d,0]));for(const x of data)if(perDay.has(x.clicked_on))perDay.set(x.clicked_on,perDay.get(x.clicked_on)+1);
+ const maxD=Math.max(1,...perDay.values());
+ const trend=document.createElement('div');trend.className='ch-card';
+ trend.innerHTML='<div class="ch-head"><b>📊 Trend klik 14 hari</b><span>'+[...perDay.values()].reduce((a,b)=>a+b,0)+' klik</span></div>';
+ const cols=document.createElement('div');cols.className='ch-cols';
+ days.forEach((d,i)=>{const v=perDay.get(d);const c=document.createElement('div');c.className='ch-col';
+  const bar=document.createElement('i');bar.style.height=Math.max(4,v/maxD*100)+'%';bar.style.background='linear-gradient(180deg,'+CHART_COLORS[i%10]+','+CHART_COLORS[(i+3)%10]+')';bar.title=d+': '+v+' klik';
+  const num=document.createElement('em');num.textContent=v||'';const lb=document.createElement('small');lb.textContent=String(+d.slice(8));
+  c.append(num,bar,lb);cols.append(c)});
+ trend.append(cols);target.append(trend);
+ // Klik ikut kereta
  const counts=new Map();for(const x of data){const k=x.public_vehicle_id||'Katalog umum';counts.set(k,(counts.get(k)||0)+1)}
- const target=$('clickCarStats');target.replaceChildren();
- for(const [car,count] of [...counts].sort((a,b)=>b[1]-a[1]).slice(0,10)){const item=document.createElement('div');item.className='item';item.textContent=car+' · '+count+' klik unik';target.append(item)}
- if(!counts.size)target.textContent='Belum ada klik direkodkan.';
+ const top=[...counts].sort((a,b)=>b[1]-a[1]).slice(0,8),maxC=top[0]?.[1]||1,total=data.length;
+ const cars=document.createElement('div');cars.className='ch-card';
+ cars.innerHTML='<div class="ch-head"><b>🚗 Kereta paling diklik</b><span>30 hari</span></div>';
+ top.forEach(([id,n],i)=>{const v=(typeof promoVehicles!=='undefined'?promoVehicles:[]).find(x=>x.public_vehicle_id===id);
+  const name=v?[v.make,v.model,v.model_year].filter(Boolean).join(' '):id;
+  const row=document.createElement('div');row.className='ch-row';
+  const lab=document.createElement('div');lab.className='ch-lab';const t=document.createElement('span');t.textContent=(i<3?['🥇','🥈','🥉'][i]+' ':'')+name;const c=document.createElement('b');c.textContent=n+' · '+Math.round(n*100/total)+'%';lab.append(t,c);
+  const track=document.createElement('div');track.className='ch-track';const fill=document.createElement('i');fill.style.width=(n/maxC*100)+'%';fill.style.background='linear-gradient(90deg,'+CHART_COLORS[i%10]+','+CHART_COLORS[(i+2)%10]+')';track.append(fill);
+  row.append(lab,track);cars.append(row)});
+ target.append(cars);
 }
 async function loadDashboard(){
  if(!me?.email_confirmed_at||agent?.status!=='active')return;
