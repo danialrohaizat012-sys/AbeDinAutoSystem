@@ -1,0 +1,2 @@
+-- V111: senarai ejen untuk owner (dashboard admin > Ejen). Sudah dijalankan di Supabase.
+-- Lihat fungsi public.owner_agent_list_v1() - owner sahaja, security definer.

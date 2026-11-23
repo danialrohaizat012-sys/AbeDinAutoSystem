@@ -167,12 +167,29 @@ export function mountAgentAdmin(host,{client,profile}={}){
  async function load(){
   if(loading||disposed)return;loading=true;refresh.disabled=true;status('Menyemak data ejen...');
   try{
-   const [apps,leads,direct,fin,contacts,vehicleData]=await Promise.all([request('list'),request('lead_list'),request('direct_inquiry_list'),request('finance_list'),request('lead_contact_list'),request('commission_vehicle_list')]);
+   const [apps,leads,direct,fin,contacts,vehicleData,agentRes]=await Promise.all([request('list'),request('lead_list'),request('direct_inquiry_list'),request('finance_list'),request('lead_contact_list'),request('commission_vehicle_list'),client.rpc('owner_agent_list_v1')]);
+   const agents=Array.isArray(agentRes?.data)?agentRes.data:[];
    if(disposed)return;
    const applications=apps.applications||[],agentLeads=contacts.leads||[],directLeads=direct.inquiries||[],commissions=fin.commissions||[],payouts=fin.payouts||[];
    const vehicles=vehicleData.vehicles||[],carMap=new Map(vehicles.map(v=>[v.id,v]));
-   counts.replaceChildren(stat('Permohonan menunggu',applications.length),stat('Jumlah lead ejen',agentLeads.length),stat('Pembeli terus',directLeads.length),stat('Komisen belum dibayar',commissions.filter(c=>c.status!=='paid').length));
+   counts.replaceChildren(stat('Ejen aktif',agents.filter(x=>x.agent_status==='active').length),stat('Permohonan menunggu',applications.length),stat('Jumlah lead ejen',agentLeads.length),stat('Pembeli terus',directLeads.length),stat('Komisen belum dibayar',commissions.filter(c=>c.status!=='paid').length));
    content.replaceChildren();
+   const pl=section(content,'Senarai Ejen ('+agents.length+')','Semua ejen berdaftar dan prestasi mereka. Tekan nama untuk butiran.');
+   if(agentRes?.error)pl.append(node('p','','Gagal memuat senarai ejen: '+agentRes.error.message));
+   else if(!agents.length)pl.append(node('p','','Belum ada ejen berdaftar.'));
+   const label={active:'Aktif',suspended:'Digantung',inactive:'Tidak aktif'};
+   for(const g of agents){
+    const d=node('details','ag-mini'),sm=node('summary','ag-mini-head'),t=node('div','ag-mini-title');
+    t.append(node('strong','',g.name||g.email||'Ejen'),node('small','',[g.agent_code||'Tiada kod',g.phone,[g.city,g.state].filter(Boolean).join(', ')].filter(Boolean).join(' · ')));
+    const act=g.agent_status==='active',st=act?'Aktif':g.application_status==='pending'?'Menunggu kelulusan':(label[g.agent_status]||g.application_status||g.agent_status);
+    sm.append(t,node('span',act?'ag-read':'ag-unread',st));
+    const b=node('div','ag-mini-body');
+    b.append(node('p','','Klik pautan: '+g.clicks+' (30 hari: '+g.clicks_30d+') · Lead: '+g.leads+' · Komisen: '+g.commissions+' ('+amount(g.commission_total)+') · Dibayar: '+amount(g.paid_total)));
+    b.append(node('p','','E-mel: '+(g.email||'—')+' · Mohon: '+date(g.applied_at)+' · Aktif sejak: '+date(g.activated_at)));
+    contactControls(b,{customer_phone:g.phone,customer_name:g.name},null);
+    const wa=b.querySelector('.ag-whatsapp');if(wa){wa.textContent='WhatsApp Ejen';wa.href=wa.href.split('?')[0];}
+    d.append(sm,b);pl.append(d);
+   }
    const pa=section(content,'Permohonan Ejen','Owner semak maklumat sebelum meluluskan permohonan.');
    if(!applications.length)pa.append(node('p','','Tiada permohonan menunggu.'));
    for(const a of applications){
