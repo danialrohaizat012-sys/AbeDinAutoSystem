@@ -112,7 +112,7 @@ input,select,textarea{min-height:44px}
 </div></section>
 
 <section id="dashboard" hidden><div class="panel"><h1>Dashboard Ejen</h1><p class="agent-v20-note">Pengurusan ejen asal dengan keselamatan dan penambahbaikan V20. Semua fungsi katalog, lead, komisen dan pembayaran dikekalkan.</p>
-<p id="agentStatus">Maklumat ejen akan dipaparkan selepas permohonan diluluskan.</p>
+<p id="agentStatus">Maklumat ejen akan dipaparkan selepas permohonan diluluskan.</p><div class="notice" style="margin:12px 0"><strong>Promosi Kereta Ejen</strong><p style="margin:6px 0 10px">Pilih kereta, lihat ayat promosi yang diluluskan owner dan kongsi terus ke WhatsApp.</p><a href="#agentPromo" id="goAgentPromos" style="display:inline-block;background:#16689f;color:white;padding:11px 16px;border-radius:10px;text-decoration:none;font-weight:700">Buka Katalog & Ayat Promosi</a></div>
 <div class="stats"><div class="stat">Klik unik (hari ini)<b id="countClicksToday">0</b></div><div class="stat">Klik unik (30 hari)<b id="countClicksMonth">0</b></div><div class="stat">Lead saya<b id="countLeads">0</b></div>
 <div class="stat">Komisen saya<b id="countCommission">0</b></div>
 <div class="stat">Penyata pembayaran<b id="countPayout">0</b></div></div>
@@ -346,7 +346,7 @@ function fillPromoCopy(t,v){
 async function loadPublishedPromo(){
  const {data,error}=await supabase.from('agent_promo_copy_v20').select('slot,published').order('slot');
  const target=$('agentPromoCopies');target.replaceChildren();
- if(error){target.textContent='Ayat promosi belum tersedia.';return}
+ if(error){target.textContent='Ayat promosi tidak dapat dimuatkan. Sila cuba Segarkan Stok atau hubungi owner.';return}
  publishedPromoCopies=data.filter(x=>x.published);
  renderCardPromoCopies();
  const selected=promoVehicles.find(x=>x.public_vehicle_id===$('promoCarChoice').value)||promoVehicles[0];
@@ -358,7 +358,7 @@ async function loadPublishedPromo(){
   const b=document.createElement('button');b.className='secondary';b.textContent='Salin Ayat '+entry.slot+' + Link Kereta';
   b.onclick=()=>copyAgentLink(sentence+'\\n'+agentCarLink(selected));box.append(b);target.append(box);
  }
- if(!target.childElementCount)target.textContent='Owner belum menerbitkan ayat promosi.';
+ if(!target.childElementCount)target.textContent='Owner belum menerbitkan ayat promosi. Lima draf tersedia untuk disemak dan diterbitkan oleh owner dalam Kelulusan Owner.';
 }
 function renderCardPromoCopies(){
  for(const box of $('promoCars').querySelectorAll('.promo-card')){
@@ -400,6 +400,7 @@ async function loadOwnerPromo(){
  }
 }
 $('copyPromoAiPrompt').onclick=()=>copyAgentLink('Jana tepat 5 ayat promosi kereta terpakai AbeDin Auto dalam Bahasa Melayu. Setiap ayat maksimum 500 aksara dan wajib mengandungi {model}, {tahun}, {harga}. Gaya berlainan, menarik dan profesional. Jangan mereka-reka diskaun, kelulusan pinjaman, jaminan, keadaan kereta atau stok. Nomborkan 1 hingga 5.');
+$('goAgentPromos').onclick=e=>{e.preventDefault();const panel=$('agentPromo');if(panel.hidden){message('Katalog promosi sedang dimuatkan atau belum tersedia. Tekan Segarkan Stok selepas ia muncul.',true);return}panel.scrollIntoView({behavior:'smooth',block:'start'});};
 $('promoCarChoice').onchange=loadPublishedPromo;
 async function loadAgentCatalogue(){
  if(agent?.status!=='active')return;
