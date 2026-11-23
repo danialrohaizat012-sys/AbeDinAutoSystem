@@ -44,6 +44,7 @@ footer{font-size:12px;color:#748399;padding:15px 0}
 @media(max-width:720px){.grid{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.panel{padding:16px}header{padding:16px}}
 
 /* Agent V20 integration: preserve the original /agent workflow and features. */
+.agent-finance-summary{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0 15px}.agent-finance-summary .stat{flex:1;min-width:125px}.agent-finance-summary .stat b{display:block;font-size:20px}
 .lead-tools{display:grid;grid-template-columns:minmax(0,2fr) minmax(145px,1fr);gap:12px;margin:14px 0}.lead-tools label{margin:0}.agent-quicklinks{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0}.agent-quicklinks a{padding:10px 13px;background:#e6eef7;border-radius:10px;color:#17477d;text-decoration:none;font-weight:700;font-size:13px}@media(max-width:520px){.lead-tools{grid-template-columns:1fr}}
 .promo-filter{display:flex;align-items:end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:14px 0}.promo-filter label{flex:1;min-width:190px;margin:0}.promo-filter span{font-size:12px;color:#557087;padding-bottom:12px}.promo-card[hidden]{display:none!important}
 :root{font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:#f3f6fb}
@@ -129,8 +130,8 @@ input,select,textarea{min-height:44px}
 </div><label class="check"><input name="consent" type="checkbox" required> Pelanggan telah memberikan kebenaran untuk dihubungi mengenai kereta.</label>
 <button class="primary">Daftar lead</button></form></div>
 
-<div class="agent-quicklinks"><a href="#commissionItems">Komisen Saya</a><a href="#payoutItems">Sejarah Bayaran</a><a href="#agentPromo">Katalog Promosi</a></div><h2 style="margin-top:22px">Komisen Saya</h2><div id="commissionItems" class="items"></div>
-<h2 style="margin-top:22px">Pembayaran Saya</h2><div id="payoutItems" class="items"></div></div></section>
+<div class="agent-quicklinks"><a href="#commissionItems">Komisen Saya</a><a href="#payoutItems">Sejarah Bayaran</a><a href="#agentPromo">Katalog Promosi</a></div><h2 style="margin-top:22px">Komisen Saya</h2><div class="agent-finance-summary" id="commissionSummary" aria-live="polite"></div><div class="lead-tools"><label for="commissionStatus">Tapis status komisen<select id="commissionStatus"><option value="all">Semua status</option><option value="approved">Diluluskan</option><option value="pending">Menunggu kelulusan</option><option value="paid">Dibayar</option></select></label></div><div id="commissionItems" class="items"></div>
+<h2 style="margin-top:22px">Pembayaran Saya</h2><div class="agent-finance-summary" id="payoutSummary" aria-live="polite"></div><div id="payoutItems" class="items"></div></div></section>
 
 <section id="owner" hidden><div class="panel"><h1>Kelulusan Owner</h1>
 <p>Senarai permohonan belum diluluskan. Hanya akaun owner aktif boleh menggunakan aliran ini.</p>
@@ -385,6 +386,24 @@ function renderAgentLeads(){
 }
 $('leadSearch').addEventListener('input',renderAgentLeads);
 $('leadReadFilter').addEventListener('change',renderAgentLeads);
+let agentCommissionRecords=[],agentPayoutRecords=[];
+function renderAgentFinance(){
+ const rm=v=>new Intl.NumberFormat('ms-MY',{style:'currency',currency:'MYR'}).format(Number(v||0));
+ const total=agentCommissionRecords.reduce((sum,x)=>sum+Number(x.agreed_amount||0),0);
+ const paid=agentPayoutRecords.filter(x=>String(x.status||'').toLowerCase()==='paid'||Boolean(x.paid_at)).reduce((sum,x)=>sum+Number(x.amount||0),0);
+ const box=$('commissionSummary');box.replaceChildren();
+ const makeStat=(parent,label,value)=>{const el=document.createElement('div');el.className='stat';const title=document.createElement('span');title.textContent=label;const number=document.createElement('b');number.textContent=value;el.append(title,number);parent.append(el);};
+ makeStat(box,'Jumlah rekod komisen',String(agentCommissionRecords.length));
+ makeStat(box,'Jumlah komisen direkod',rm(total));
+ const payoutBox=$('payoutSummary');payoutBox.replaceChildren();
+ makeStat(payoutBox,'Jumlah payout direkod',String(agentPayoutRecords.length));
+ makeStat(payoutBox,'Jumlah payout dibayar',rm(paid));
+ const filter=$('commissionStatus').value;
+ const selected=agentCommissionRecords.filter(x=>filter==='all'||String(x.status||'').toLowerCase()===filter);
+ showRows('commissionItems',selected,(el,x)=>item(el,rm(x.agreed_amount),x.status));
+ showRows('payoutItems',agentPayoutRecords,(el,x)=>item(el,rm(x.amount),x.status+(x.paid_at?' · '+new Date(x.paid_at).toLocaleDateString('ms-MY'):'')));
+}
+$('commissionStatus').addEventListener('change',renderAgentFinance);
 async function loadDashboard(){
  if(!me?.email_confirmed_at||agent?.status!=='active')return;
  const [l,c,p,publicCars]=await Promise.all([
@@ -397,8 +416,7 @@ async function loadDashboard(){
  text($('countLeads'),l.data.length);text($('countCommission'),c.data.length);text($('countPayout'),p.data.length);
  agentLeadRecords=l.data;agentLeadCars=carMap;renderAgentLeads();
  const rm=v=>new Intl.NumberFormat('ms-MY',{style:'currency',currency:'MYR'}).format(Number(v||0));
- showRows('commissionItems',c.data,(el,x)=>item(el,rm(x.agreed_amount),x.status));
- showRows('payoutItems',p.data,(el,x)=>item(el,rm(x.amount),x.status+(x.paid_at?' · '+new Date(x.paid_at).toLocaleDateString('ms-MY'):'')));
+ agentCommissionRecords=c.data;agentPayoutRecords=p.data;renderAgentFinance();
 }
 async function adminRequest(data){
  const {data:session,error}=await supabase.auth.getSession();if(error||!session?.session?.access_token)throw new Error('Log masuk semula');
