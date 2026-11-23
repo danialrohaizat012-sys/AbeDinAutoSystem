@@ -69,7 +69,7 @@ export function mountAdminMenu(){
   }
   for(const section of staticSections)section.hidden=![...section.querySelectorAll('button[data-cloud-page]')].some(b=>!b.hidden);
   const candidate=isStaff
-   ?['dashboard','inventory','belanja','pemeriksaan','puspakom','sales','applications','sewa','kehadiran','reports','profil']
+   ?['kehadiran','inventory','belanja','pemeriksaan','puspakom','sales','applications','sewa','reports','profil','dashboard']
    :['dashboard','inventory','sales','reports'];
   const allowed=candidate.filter(page=>byPage.get(page)&&!byPage.get(page).hidden).slice(0,4);
   if(bottom){
