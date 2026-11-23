@@ -369,7 +369,7 @@ async function loadPublishedPromo(){
   const sentence=fillPromoCopy(entry.published,selected);
   const p=document.createElement('p');p.textContent=sentence;box.append(p);
   const b=document.createElement('button');b.className='secondary';b.textContent='Salin Ayat '+entry.slot+' + Link Kereta';
-  b.onclick=()=>copyAgentLink(sentence+'\\n'+agentCarLink(selected));box.append(b);target.append(box);
+  b.onclick=()=>copyAgentLink(sentence+'\n'+agentCarLink(selected));box.append(b);target.append(box);
  }
  if(!target.childElementCount)target.textContent='Owner belum menerbitkan ayat promosi. Lima draf tersedia untuk disemak dan diterbitkan oleh owner dalam Kelulusan Owner.';
 }
@@ -388,9 +388,9 @@ function renderCardPromoCopies(){
   const update=()=>{const entry=publishedPromoCopies.find(x=>String(x.slot)===choose.value);preview.textContent=entry?fillPromoCopy(entry.published,v):''};
   choose.onchange=update;update();
   const copy=document.createElement('button');copy.type='button';copy.className='secondary';copy.textContent='Salin Ayat + Link';
-  copy.onclick=()=>copyAgentLink(preview.textContent+'\\n'+agentCarLink(v));
+  copy.onclick=()=>copyAgentLink(preview.textContent+'\n'+agentCarLink(v));
   const share=document.createElement('a');share.className='promo-whatsapp';share.target='_blank';share.rel='noopener noreferrer';share.textContent='WhatsApp Ayat Promosi';
-  const refreshShare=()=>{share.href='https://wa.me/?text='+encodeURIComponent(preview.textContent+'\\n'+agentCarLink(v))};
+  const refreshShare=()=>{share.href='https://wa.me/?text='+encodeURIComponent(preview.textContent+'\n'+agentCarLink(v))};
   choose.addEventListener('change',refreshShare);refreshShare();
   slot.append(choose,preview,copy,share);
  }

@@ -38,7 +38,7 @@
     const message = String(promotion.whatsapp_text || DEFAULT.whatsapp_text);
     const phone = /^60\d{8,11}$/.test(String(promotion.whatsapp_number||'')) ? promotion.whatsapp_number : DEFAULT.whatsapp_number;
     const url = 'https://wa.me/' + phone + '?text=' + encodeURIComponent(
-      detail ? message + '\\nKereta: ' + location.origin + '/?car=' + encodeURIComponent(carId) : message
+      detail ? message + '\nKereta: ' + location.origin + '/?car=' + encodeURIComponent(carId) : message
     );
     const root = document.createElement('div');
     root.id = 'ada-year-end-promo';
