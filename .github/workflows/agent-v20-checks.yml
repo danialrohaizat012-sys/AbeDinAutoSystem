@@ -1,0 +1,23 @@
+name: Agent V20 safety checks
+on:
+  pull_request:
+    paths:
+      - 'app.html'
+      - 'agent-v20.html'
+      - 'js/agent-v20-data.mjs'
+      - 'tests/agent-v20-regression.test.mjs'
+      - 'supabase/migrations/20261123_agent_v20_active_read_policies.sql'
+      - '.github/workflows/agent-v20-checks.yml'
+  workflow_dispatch:
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check agent portal regression
+        run: node --test tests/agent-v20-regression.test.mjs
