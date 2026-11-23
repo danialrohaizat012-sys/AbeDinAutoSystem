@@ -1,0 +1,7 @@
+-- V115 (sudah dijalankan di Supabase):
+-- * agent_internal.notify_owners_v1 + trigger notifikasi: permohonan ejen, lead ejen, pertanyaan pembeli terus,
+--   jualan pada kereta yang ada lead ejen belum dipadankan.
+-- * sales_cancel_commission_v1: jualan dibatalkan -> komisen belum dibayar auto-batal (kos kereta dikira semula),
+--   amaran jika komisen sudah dalam payout/dibayar; lead tanpa komisen dilepaskan semula.
+-- * public.owner_lead_sale_candidates_v1(): calon padanan lead -> jualan (owner).
+-- * public.public_agent_ref_label_v1(token): kod + nama pertama ejen untuk mesej WhatsApp pelanggan.

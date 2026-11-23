@@ -133,6 +133,7 @@ export function mountAgentAdmin(host,{client,profile}={}){
  .ada-agent-owner .ag-promo-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
  .ada-agent-owner .ag-promo-slot textarea{width:100%;box-sizing:border-box;border-radius:8px;padding:8px;background:var(--ag-field);color:var(--ag-field-ink);border:1px solid var(--ag-field-border);font:inherit}
  .ada-agent-owner .ag-promo-count{display:block;text-align:right;color:var(--ag-muted);font-size:12px}
+ .ada-agent-owner .ag-muted-note{display:block;color:var(--ag-muted);font-size:12px;margin-top:4px}
  .ada-agent-owner .ag-counts{gap:10px!important}
  .ada-agent-owner .ag-sections{gap:13px!important}
  .ada-agent-owner .ag-config{gap:10px!important}
@@ -357,32 +358,46 @@ export function mountAgentAdmin(host,{client,profile}={}){
    const approved=commissions.filter(c=>c.status==='approved');
    const drafts=payouts.filter(p=>p.status==='draft'),waitHr=payouts.filter(p=>p.status==='approved');
    if(!unlinked.length&&!wonLeads.length&&!approved.length&&!drafts.length&&!waitHr.length)pk.append(node('p','','Tiada tindakan menunggu.'));
+   const {data:candRaw}=await client.rpc('owner_lead_sale_candidates_v1');
+   const cands=Array.isArray(candRaw)?candRaw:[];
+   const dShort=d=>d?new Date(d).toLocaleDateString('ms-MY',{day:'numeric',month:'short'}):'';
    for(const l of unlinked){
-    const n=line(pk,'🔗 '+(l.customer_name||'Pelanggan')+' · '+(l.customer_phone||''),agentName(l.agent_id)+' · '+(l.lead_source==='public_referral'?'Melalui link ejen':'Daftar manual ejen'));
-    const b=node('button','ag-primary','Padankan dengan jualan');b.type='button';
-    b.onclick=()=>{const sale_id=prompt('ID jualan (UUID) dalam sistem:');if(!sale_id)return;const reason=prompt('Bukti persetujuan & pengesahan padanan (min. 15 aksara):');if(!reason||reason.trim().length<15)return status('Sebab terlalu pendek (min. 15 aksara).',true);
-     act({action:'link_lead',lead_id:l.id,sale_id:sale_id.trim(),reason:reason.trim()},'Lead dipadankan dengan jualan.',b)};
-    n.append(b);
+    const mine=cands.filter(c=>c.lead_id===l.id);
+    const car=carMap.get(l.vehicle_id);const carLbl=car?[car.make,car.model,car.model_year].filter(Boolean).join(' ')+' ('+car.vehicle_id+')':'Kereta';
+    const n=line(pk,'🔗 '+(l.customer_name||'Pelanggan')+' · '+carLbl,agentName(l.agent_id)+' · '+(l.customer_phone||'')+' · '+(l.lead_source==='public_referral'?'melalui link ejen':'daftar manual ejen'));
+    if(!mine.length){n.append(node('small','ag-muted-note','Belum ada jualan untuk kereta ini. Bila jualan direkod, butang padanan akan muncul di sini.'));continue}
+    const box=node('div','ag-controls');
+    for(const c of mine){
+     const b=node('button',c.phone_match?'ag-primary':'','Padan: '+(c.customer_name||'Pelanggan')+' · '+(c.sale_status==='sold'?'Sold':'Reserved')+' · '+dShort(c.sale_date)+(c.phone_match?' ✓ telefon sepadan':' ⚠ telefon berbeza'));b.type='button';
+     b.onclick=()=>{if(!c.phone_match){alert('Telefon pelanggan jualan tidak sama dengan telefon lead. Sistem hanya benarkan padanan jika telefon sepadan — kemas kini telefon pelanggan dalam jualan dahulu jika ia orang yang sama.');return}
+      if(!confirm('Padankan lead '+(l.customer_name||'')+' ('+agentName(l.agent_id)+') dengan jualan '+(c.customer_name||'')+' untuk '+c.car+'?'))return;
+      act({action:'link_lead',lead_id:l.id,sale_id:c.sale_id,reason:'Disahkan owner: kereta & telefon pelanggan sepadan dengan lead ejen.'},'Lead dipadankan dengan jualan.',b)};
+     box.append(b);
+    }
+    n.append(box);
    }
    for(const l of wonLeads){
-    const n=line(pk,'✅ Komisen menunggu: '+(l.customer_name||''),agentName(l.agent_id)+' · Jualan '+String(l.linked_sale_id||'').slice(0,8));
-    const b=node('button','ag-primary','Luluskan komisen');b.type='button';
-    b.onclick=()=>{const amount=prompt('Amaun komisen (RM, cth 300.00):');if(!amount)return;const reason=prompt('Sebab & bukti semakan (bayaran penuh, tiada refund) — min. 20 aksara:');if(!reason||reason.trim().length<20)return status('Sebab terlalu pendek (min. 20 aksara).',true);
-     if(!confirm('Luluskan komisen RM '+amount+' untuk '+agentName(l.agent_id)+'?'))return;
-     act({action:'approve_commission',lead_id:l.id,amount:amount.trim(),reason:reason.trim(),finance_reconciled:true},'Komisen diluluskan.',b)};
+    const offer=Number(carMap.get(l.vehicle_id)?.offer?.indicative_amount||0);
+    const car=carMap.get(l.vehicle_id);const carLbl=car?[car.make,car.model,car.model_year].filter(Boolean).join(' '):'';
+    const n=line(pk,'✅ Komisen menunggu: '+(l.customer_name||'')+(carLbl?' · '+carLbl:''),agentName(l.agent_id)+(offer?' · Komisen ditetapkan RM '+offer.toLocaleString('ms-MY'):' · Komisen kereta belum ditetapkan'));
+    const b=node('button','ag-primary',offer?'Luluskan RM '+offer.toLocaleString('ms-MY'):'Luluskan komisen');b.type='button';
+    b.onclick=()=>{const amount=prompt('Amaun komisen (RM). Diisi dari tetapan kereta — ubah jika perlu:',offer?offer.toFixed(2):'');if(!amount)return;
+     if(!/^\d+(\.\d{1,2})?$/.test(amount.trim())||Number(amount)<=0)return status('Amaun tidak sah.',true);
+     if(!confirm('Sahkan: bayaran jualan sudah diterima penuh dan tiada refund.\nLuluskan komisen RM '+Number(amount).toLocaleString('ms-MY')+' untuk '+agentName(l.agent_id)+'?\nAmaun ini akan ditolak sebagai kos kereta.'))return;
+     act({action:'approve_commission',lead_id:l.id,amount:Number(amount).toFixed(2),reason:'Owner sahkan bayaran jualan penuh diterima, tiada refund. Komisen ikut tetapan kereta.',finance_reconciled:true},'Komisen diluluskan & ditolak sebagai kos kereta.',b)};
     n.append(b);
    }
    for(const c of approved){
     const n=line(pk,'💵 Komisen '+amount(c.agreed_amount)+' diluluskan',agentName(c.agent_id)+' · sedia untuk payout');
     const b=node('button','ag-primary','Sediakan payout');b.type='button';
-    b.onclick=()=>{const reason=prompt('Sebab penyediaan payout (min. 15 aksara):');if(!reason||reason.trim().length<15)return status('Sebab terlalu pendek (min. 15 aksara).',true);
+    b.onclick=()=>{const reason=prompt('Sebab penyediaan payout:','Komisen diluluskan, sedia untuk bayaran kepada ejen.');if(!reason||reason.trim().length<15)return status('Sebab terlalu pendek (min. 15 aksara).',true);
      act({action:'prepare_payout',commission_id:c.id,reason:reason.trim()},'Payout disediakan.',b)};
     n.append(b);
    }
    for(const p of drafts){
     const n=line(pk,'🧾 Payout '+amount(p.amount)+' (draf)',agentName(p.agent_id));
     const b=node('button','ag-primary','Luluskan payout');b.type='button';
-    b.onclick=()=>{const reason=prompt('Sebab kelulusan payout (min. 15 aksara):');if(!reason||reason.trim().length<15)return status('Sebab terlalu pendek (min. 15 aksara).',true);
+    b.onclick=()=>{const reason=prompt('Sebab kelulusan payout:','Owner luluskan payout komisen ejen untuk dibayar.');if(!reason||reason.trim().length<15)return status('Sebab terlalu pendek (min. 15 aksara).',true);
      act({action:'approve_payout',payout_id:p.id,reason:reason.trim()},'Payout diluluskan. Menunggu HR sahkan bayaran bank.',b)};
     n.append(b);
    }
@@ -392,7 +407,7 @@ export function mountAgentAdmin(host,{client,profile}={}){
    for(const c of commissions.slice(0,20))line(pd,'Komisen '+amount(c.agreed_amount),['Status '+c.status,agentName(c.agent_id),date(c.created_at)].join(' · '));
    for(const p of payouts.slice(0,20))line(pd,'Payout '+amount(p.amount),['Status '+p.status,agentName(p.agent_id),date(p.created_at)].join(' · '));
    const unreadLeads=agentLeads.filter(x=>!x.owner_read_at).length+directLeads.filter(x=>!x.owner_read_at).length;
-   const pendingApprove=(leads.leads||[]).length+(fin.leads||[]).filter(l=>l.status==='won'&&!new Set(commissions.map(c=>c.sale_id)).has(l.linked_sale_id)).length+commissions.filter(c=>c.status==='approved').length+payouts.filter(p=>p.status==='draft').length;
+   const pendingApprove=new Set(cands.map(c=>c.lead_id)).size+(fin.leads||[]).filter(l=>l.status==='won'&&!new Set(commissions.map(c=>c.sale_id)).has(l.linked_sale_id)).length+commissions.filter(c=>c.status==='approved').length+payouts.filter(p=>p.status==='draft').length;
    tabify({ejen:applications.length,kelulusan:pendingApprove,lead:unreadLeads,komisen:vehicles.filter(v=>!['sold','deleted','archived'].includes(String(v.status||'').toLowerCase())&&!(Number(v.offer?.indicative_amount)>0)).length});
    status('Dikemas kini.');
   }catch(e){status(e?.message||'Gagal memuat rekod ejen.',true)}
