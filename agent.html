@@ -85,7 +85,7 @@ input,select,textarea{min-height:44px}
 <div class="panel"><h1>Masuk Portal Ejen</h1><p>Gunakan akaun e-mel yang telah disahkan. Akaun ejen tidak diberikan akses kepada modul staf AbeDin Auto.</p>
 <form id="signinForm"><label>E-mel<input name="email" type="email" autocomplete="username" required></label>
 <label>Kata laluan<input name="password" type="password" autocomplete="current-password" required></label>
-<button class="primary">Log masuk</button></form></div>
+<button class="primary">Log masuk</button></form><p><a href="#" id="forgotPw">Lupa kata laluan?</a></p></div>
 <div class="panel"><h2>Cipta akaun ejen</h2><p>Sahkan e-mel dahulu sebelum menghantar permohonan. Pendaftaran tertakluk kepada tetapan Supabase Auth.</p>
 <form id="signupForm"><label>E-mel<input type="email" name="email" autocomplete="email" required></label>
 <label>Kata laluan (sekurang-kurangnya 10 aksara)<input name="password" type="password" autocomplete="new-password" minlength="10" required></label>
@@ -663,7 +663,9 @@ $('signinForm').onsubmit=async e=>{e.preventDefault();const b=e.submitter;b.disa
  try{const d=Object.fromEntries(new FormData(e.target));const {error}=await supabase.auth.signInWithPassword({email:d.email,password:d.password});if(error)throw error;await sync();}
  catch(err){fail(err);}finally{b.disabled=false;}};
 $('signupForm').onsubmit=async e=>{e.preventDefault();const b=e.submitter;b.disabled=true;
- try{const d=Object.fromEntries(new FormData(e.target));const {error}=await supabase.auth.signUp({email:d.email,password:d.password});if(error)throw error;message('Semak e-mel untuk pengesahan. Kemudian log masuk dan hantar permohonan.');}
+ try{const d=Object.fromEntries(new FormData(e.target));const {data,error}=await supabase.auth.signUp({email:d.email.trim(),password:d.password,options:{emailRedirectTo:location.origin+'/agent.html'}});if(error)throw error;
+  if(data?.user&&Array.isArray(data.user.identities)&&data.user.identities.length===0){message('E-mel ini sudah berdaftar (mungkin akaun staf atau pendaftaran lama). Sila log masuk guna kata laluan sedia ada di sebelah. Lupa kata laluan? Tekan "Lupa kata laluan?".',true);$('signinForm').elements.email.value=d.email.trim();return;}
+  message('Semak e-mel (termasuk folder Spam) dan tekan pautan pengesahan. Kemudian log masuk dan hantar permohonan.');}
  catch(err){fail(err);}finally{b.disabled=false;}};
 $('applyForm').onsubmit=async e=>{e.preventDefault();if(!me?.email_confirmed_at)return message('Sahkan e-mel dahulu',true);
  const b=e.submitter;b.disabled=true;try{const d=Object.fromEntries(new FormData(e.target));const {error}=await supabase.from('agent_applications').insert({
@@ -673,6 +675,15 @@ $('leadForm').onsubmit=async e=>{e.preventDefault();if(agent?.status!=='active')
  const b=e.submitter;b.disabled=true;try{const d=Object.fromEntries(new FormData(e.target));if(d.consent!=='on')throw new Error('Persetujuan pelanggan diperlukan');
  const {error}=await supabase.from('agent_leads').insert({agent_id:agent.id,vehicle_id:d.vehicle_id,customer_name:d.customer_name.trim(),customer_phone:d.customer_phone.trim(),consent_confirmed:true,status:'new'});if(error)throw error;e.target.reset();await loadDashboard();message('Lead berjaya disimpan.');}
  catch(err){fail(err);}finally{b.disabled=false;}};
+$('forgotPw').onclick=async e=>{e.preventDefault();
+ let email=$('signinForm').elements.email.value.trim()||prompt('Masukkan e-mel akaun anda:')||'';email=email.trim();if(!email)return;
+ try{const {error}=await supabase.auth.resetPasswordForEmail(email,{redirectTo:location.origin+'/agent.html'});if(error)throw error;
+  message('Pautan tukar kata laluan dihantar ke '+email+'. Semak inbox atau folder Spam.');}catch(err){fail(err);}};
+supabase.auth.onAuthStateChange((event)=>{if(event!=='PASSWORD_RECOVERY')return;setTimeout(async()=>{
+ const pw=prompt('Masukkan kata laluan baharu (sekurang-kurangnya 10 aksara):');if(!pw)return;
+ if(pw.length<10){message('Kata laluan mesti sekurang-kurangnya 10 aksara. Cuba tekan pautan dalam e-mel sekali lagi.',true);return;}
+ const {error}=await supabase.auth.updateUser({password:pw});if(error)return fail(error);
+ message('Kata laluan berjaya ditukar.');await sync();},0);});
 await sync();
 </script>
 </body>
