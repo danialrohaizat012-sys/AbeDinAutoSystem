@@ -1,0 +1,2 @@
+-- V120: fungsi post media sosial (V119) dibuang: jadual social_posts & app_private.social_config serta RPC berkaitan digugurkan.
+-- Edge function social-post kini stub 410. Sudah dijalankan.
