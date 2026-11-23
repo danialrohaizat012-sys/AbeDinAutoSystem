@@ -24,7 +24,7 @@ button:disabled{opacity:.55;cursor:not-allowed}.row{display:flex;flex-wrap:wrap;
 .notice{background:#eef5ff;color:#234f88;border:1px solid #d3e5fc;border-radius:11px;padding:12px;margin:12px 0;font-size:13px}
 .warn{background:#fff7e7;color:#74500c;border-color:#f1d9a8}
 .error{color:#a52237}.good{color:#126d42}
-section[hidden],.hidden{display:none!important}
+[hidden],.hidden{display:none!important}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:15px 0}
 .stat{background:#f6f9fd;border:1px solid #dce5ef;border-radius:12px;padding:14px}.stat b{display:block;font-size:23px;margin:6px 0}
 .items{display:grid;gap:9px}.item{border:1px solid #e1e8f0;border-radius:12px;padding:13px}
@@ -80,7 +80,7 @@ input,select,textarea{min-height:44px}
 </nav>
 
 <section id="account">
-<div class="grid" id="authPanels">
+<div class="grid" id="authPanels" hidden>
 <div class="panel"><h1>Masuk Portal Ejen</h1><p>Gunakan akaun e-mel yang telah disahkan. Akaun ejen tidak diberikan akses kepada modul staf AbeDin Auto.</p>
 <form id="signinForm"><label>E-mel<input name="email" type="email" autocomplete="username" required></label>
 <label>Kata laluan<input name="password" type="password" autocomplete="current-password" required></label>
@@ -278,7 +278,7 @@ async function sync(){
   me=await current();owner=false;agent=null;$('logout').hidden=!me;
   $('ownerTab').hidden=true;$('dashboardTab').hidden=true;$('authPanels').hidden=!!me;$('signedInAccount').hidden=!me;
   $('applyForm').hidden=true;$('leadPanel').hidden=true;$('agentPromo').hidden=true;
-  if(!me){shareToken='';$('applicationStatus').textContent='Log masuk dan sahkan e-mel terlebih dahulu.';$('agentStatus').textContent='Log masuk untuk melihat akaun ejen.';message('Sila log masuk atau daftar akaun ejen.');view('account');return;}
+  if(!me){$('authPanels').hidden=false;$('signedInAccount').hidden=true;shareToken='';$('applicationStatus').textContent='Log masuk dan sahkan e-mel terlebih dahulu.';$('agentStatus').textContent='Log masuk untuk melihat akaun ejen.';message('Sila log masuk atau daftar akaun ejen.');view('account');return;}
   if(!me.email_confirmed_at){message('Sila sahkan e-mel melalui pautan pengesahan yang diterima.');view('account');return;}
   $('authPanels').hidden=true;$('signedInAccount').hidden=false;
   const {data:staff,error:staffErr}=await supabase.from('profiles').select('role,enabled').eq('id',me.id).maybeSingle();
