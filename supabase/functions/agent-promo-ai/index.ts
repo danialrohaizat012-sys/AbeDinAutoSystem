@@ -15,7 +15,7 @@ const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: 
 const AGENT_DAILY_LIMIT = 40;
 
 const RULES = `Nada & gaya:
-- Santai, mesra dan MEMUKAU — macam kawan rekomen kereta, bukan iklan kaku. Bahasa Melayu Malaysia harian (boleh selit slang ringan seperti "weh", "confirm", "berbaloi gila", "jom"), tapi tetap sopan.
+- Santai, mesra dan MEMUKAU — macam kawan rekomen kereta, bukan iklan kaku. Bahasa Melayu Malaysia harian (boleh selit slang ringan seperti "weh", "confirm", "berbaloi gila", "jom"), tapi tetap sopan. Ikut arahan "Bahasa" di bawah tentang loghat negeri.
 - Mulakan dengan "hook" yang buat orang berhenti scroll (soalan, situasi harian, atau ayat pendek yang punchy).
 - Ayat pendek-pendek, ada rentak. Boleh guna 1–2 baris baru untuk penekanan.
 - Emoji yang sesuai 2–4 (contoh 🚗🔥✨💸👀), jangan berlebihan.
@@ -27,6 +27,19 @@ Peraturan wajib:
 - Maksimum 320 aksara setiap ayat.`;
 
 const STYLES = ["hook soalan yang buat orang tersenyum", "situasi harian (jem, hujan, hantar anak sekolah)", "gaya kawan bagi tip rahsia", "punchy & ringkas macam caption viral", "nada teruja 'jumpa barang baik'", "untuk anak muda first car", "untuk keluarga kecil", "gaya FOMO lembut (tanpa tipu stok)", "gaya cerita mini 2 baris"];
+const DIALECTS: Record<string, string> = {
+  "Kelantan": "contoh: 'demo' (awak), 'gapo' (apa), 'sokmo' (selalu), 'molek' (elok), 'kawe' (saya), 'tubik' (keluar)",
+  "Kedah": "contoh: 'hang' (awak), 'pi' (pergi), 'cek' (saya), 'habaq' (beritahu), 'awat' (kenapa), 'loqlaq' (main-main)",
+  "Negeri Sembilan": "contoh: 'den' (saya), 'ekau' (awak), 'apo' (apa), 'mano' (mana)",
+  "Johor": "contoh: 'ape' (apa), 'tak ke' (bukan ke), 'lekas' (cepat), 'kau ni' (mesra)",
+  "Perak": "contoh: 'teman' (saya), 'kome' (kamu), 'ape' (apa), 'menonong' (laju terus)",
+  "Pahang": "contoh: 'mike' (awak), 'kome' (kamu), 'ape' (apa), 'balun' (bantai)",
+};
+function dialectNote(): string {
+  if (Math.random() < 0.4) return "Bahasa: Bahasa Melayu Malaysia santai standard (tanpa dialek).";
+  const [d] = pick(Object.keys(DIALECTS), 1);
+  return `Bahasa: Bahasa Melayu Malaysia santai, SELITKAN sedikit loghat ${d} (2-3 perkataan sahaja, ${DIALECTS[d]}) supaya mesra dan lucu, tetapi ayat mesti masih mudah difahami seluruh Malaysia. Jangan ejek atau perlekeh mana-mana negeri.`;
+}
 const pick = <T,>(a: T[], n: number) => [...a].sort(() => Math.random() - 0.5).slice(0, n);
 
 async function aiConfig() {
@@ -80,6 +93,7 @@ Deno.serve(async (req) => {
       const prompt = `Tulis 5 TEMPLAT ayat promosi untuk kereta terpakai yang dijual oleh Abe Din Auto (Kota Bharu, Kelantan).
 Setiap templat WAJIB mengandungi tepat penanda {model}, {tahun} dan {harga} (sistem akan menggantikannya). Jangan tulis nama model sebenar.
 Gaya setiap ayat berbeza: ${styles.map((s, i) => `${i + 1}) ${s}`).join("; ")}.
+Bahasa setiap ayat: ${[0,1,2,3,4].map((i) => `${i + 1}) ${dialectNote()}`).join(" ")}
 Setiap ayat mesti terasa lain — hook, rentak dan CTA berbeza.
 ${RULES}
 Kod rawak (untuk variasi): ${crypto.randomUUID().slice(0, 8)}`;
@@ -117,6 +131,7 @@ Kod rawak (untuk variasi): ${crypto.randomUUID().slice(0, 8)}`;
       const prompt = `Tulis 1 ayat promosi untuk kereta terpakai Abe Din Auto (Kota Bharu, Kelantan) berdasarkan fakta ini SAHAJA:
 ${facts}
 Gaya: ${style}. Sebut model, tahun dan harga secara semula jadi.
+${dialectNote()}
 ${RULES}
 Kod rawak: ${crypto.randomUUID().slice(0, 8)}`;
       const [ayat] = await askClaude(key, model, prompt, 1);
