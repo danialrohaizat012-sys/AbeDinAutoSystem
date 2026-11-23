@@ -341,8 +341,7 @@ function agentCatalogueLink(){
  return u.href;
 }
 function agentCarLink(car){
- const u=new URL('/',location.origin);
- u.searchParams.set('car',car.public_vehicle_id);
+ const u=new URL('/k/'+encodeURIComponent(car.public_vehicle_id)+'/',location.origin);
  if(/^[a-f0-9]{32}$/.test(shareToken))u.searchParams.set('ref',shareToken);
  return u.href;
 }

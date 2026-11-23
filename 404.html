@@ -22,6 +22,12 @@
     location.replace('/permohonan.html'+location.search);
     return;
   }
+  var share=path.match(/\/k\/([A-Za-z0-9_-]{1,60})$/);
+  if(share){
+    qs.set('car',share[1]);
+    location.replace('/?'+qs.toString());
+    return;
+  }
   if(qs.has('car')){
     location.replace('/app.html?car='+encodeURIComponent(qs.get('car')));
     return;

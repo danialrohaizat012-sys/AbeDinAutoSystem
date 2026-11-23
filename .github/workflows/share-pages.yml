@@ -1,0 +1,62 @@
+name: Jana halaman kongsi kereta (thumbnail WhatsApp)
+
+# Jana /k/<ID>/index.html dengan tag Open Graph (gambar kereta) supaya
+# WhatsApp papar thumbnail bila link kereta dikongsi.
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - scripts/build-share-pages.mjs
+      - .github/workflows/share-pages.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: share-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      changed: ${{ steps.commit.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Jana halaman /k/<ID>/
+        run: node scripts/build-share-pages.mjs
+      - name: Commit hanya folder k/ jika berubah
+        id: commit
+        run: |
+          git add -A k
+          if git diff --cached --quiet; then echo "changed=false" >> "$GITHUB_OUTPUT"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(kongsi): kemas kini halaman kongsi kereta"
+          git pull --rebase origin main
+          git push origin HEAD:main
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    needs: build
+    if: needs.build.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: production
+    steps:
+      - name: Trigger hosting deploy hook (jika ada)
+        env:
+          DEPLOY_HOOK_URL: ${{ secrets.ABEDIN_PRODUCTION_DEPLOY_HOOK_URL }}
+        run: |
+          if [[ "$DEPLOY_HOOK_URL" == https://* ]]; then
+            curl --fail --silent --show-error --location --max-time 60 --request POST --output /dev/null "$DEPLOY_HOOK_URL"
+          else
+            echo "Tiada deploy hook; hosting deploy terus dari Git."
+          fi
