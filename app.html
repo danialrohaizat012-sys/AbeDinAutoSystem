@@ -451,7 +451,12 @@ async function verify(){
       b.hidden=!canPage(p,page);
     });
     window.adaAdminMenuRefresh?.();
+    // Staf: buka Kehadiran dahulu bila app mula dibuka (kecuali pautan terus ?page=).
+    if(!window.__adaStaffLanding){window.__adaStaffLanding=true;
+      let hasPage=false;try{hasPage=new URLSearchParams(location.search).has('page')}catch(_){}
+      if(p.role!=='owner'&&!hasPage&&current==='dashboard'&&canPage(p,'kehadiran'))current='kehadiran';}
     if(!canPage(p,current)) current='dashboard';
+    document.querySelectorAll('[data-cloud-page]').forEach(x=>x.classList.toggle('active',x.dataset.cloudPage===current));window.adaAdminMenuRefresh?.();
     await refresh();
     startNotifs();startLive();
   }catch(e){
