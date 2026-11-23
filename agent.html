@@ -74,14 +74,13 @@ input,select,textarea{min-height:44px}
 <main>
 <div id="alert" class="notice" role="status" aria-live="polite">Menyemak sesi pengguna...</div>
 <nav id="tabs">
+<button data-view="dashboard" id="dashboardTab" hidden aria-current="false">Dashboard Ejen</button>
 <button data-view="account" aria-current="page">Akaun</button>
-<button data-view="application" id="applicationTab" hidden>Permohonan</button>
-<button data-view="dashboard" id="dashboardTab" hidden>Dashboard Ejen</button>
 <button data-view="owner" id="ownerTab" hidden>Kelulusan Owner</button>
 </nav>
 
 <section id="account">
-<div class="grid">
+<div class="grid" id="authPanels">
 <div class="panel"><h1>Masuk Portal Ejen</h1><p>Gunakan akaun e-mel yang telah disahkan. Akaun ejen tidak diberikan akses kepada modul staf AbeDin Auto.</p>
 <form id="signinForm"><label>E-mel<input name="email" type="email" autocomplete="username" required></label>
 <label>Kata laluan<input name="password" type="password" autocomplete="current-password" required></label>
@@ -90,17 +89,27 @@ input,select,textarea{min-height:44px}
 <form id="signupForm"><label>E-mel<input type="email" name="email" autocomplete="email" required></label>
 <label>Kata laluan (sekurang-kurangnya 10 aksara)<input name="password" type="password" autocomplete="new-password" minlength="10" required></label>
 <button class="secondary">Daftar & sahkan e-mel</button></form></div>
-</div></section>
-
-<section id="application" hidden><div class="panel"><h1>Permohonan Ejen</h1>
-<p id="applicationStatus">Log masuk dengan e-mel yang disahkan untuk memohon.</p>
+</div>
+<div id="signedInAccount" hidden>
+<div class="panel"><h1>Profil Akaun Ejen</h1><p>Maklumat akaun, permohonan, status dan rujukan ejen anda.</p><div id="agentProfileSummary" class="items"></div></div>
+<div class="panel"><h2>Butiran Peribadi Ejen</h2><form id="agentDetailsForm">
+<div class="grid"><label>Nama penuh<input name="display_name" maxlength="160" required></label><label>No. telefon / WhatsApp<input name="phone" type="tel" maxlength="24" required></label>
+<label>Negeri<input name="state" maxlength="80"></label><label>Bandar / Daerah<input name="city" maxlength="100"></label></div>
+<label>Alamat surat-menyurat (pilihan)<textarea name="address" maxlength="400" rows="2"></textarea></label>
+<button class="primary" type="submit">Simpan Profil</button></form></div>
+<div class="panel"><h2>Tukar Kata Laluan</h2><p>Untuk keselamatan, masukkan kata laluan semasa sebelum menetapkan yang baharu.</p>
+<form id="agentPasswordForm"><label>Kata laluan semasa<input name="current_password" type="password" autocomplete="current-password" required></label>
+<label>Kata laluan baharu<input name="new_password" type="password" autocomplete="new-password" minlength="10" required></label>
+<label>Sahkan kata laluan baharu<input name="confirm_password" type="password" autocomplete="new-password" minlength="10" required></label>
+<button class="primary" type="submit">Tukar Kata Laluan</button></form></div>
+<div class="panel" id="applicationInAccount"><h2>Permohonan Ejen</h2><p id="applicationStatus">Semak status permohonan anda.</p>
 <form id="applyForm" hidden><div class="grid"><label>Nama penuh<input name="full_name" autocomplete="name" maxlength="160" required></label>
 <label>Telefon<input name="phone" type="tel" maxlength="24" required></label>
 <label>E-mel disahkan<input name="email" type="email" readonly required></label>
-<label>Negeri<select name="state" required><option value="">Pilih negeri</option>
-<option>Kelantan</option><option>Terengganu</option><option>Selangor</option><option>Kuala Lumpur</option><option>Johor</option><option>Kedah</option><option>Perak</option><option>Pahang</option><option>Melaka</option><option>Negeri Sembilan</option><option>Perlis</option><option>Pulau Pinang</option><option>Sabah</option><option>Sarawak</option><option>Putrajaya</option><option>Labuan</option></select></label></div>
+<label>Negeri<select name="state" required><option value="">Pilih negeri</option><option>Kelantan</option><option>Terengganu</option><option>Selangor</option><option>Kuala Lumpur</option><option>Johor</option><option>Kedah</option><option>Perak</option><option>Pahang</option><option>Melaka</option><option>Negeri Sembilan</option><option>Perlis</option><option>Pulau Pinang</option><option>Sabah</option><option>Sarawak</option><option>Putrajaya</option><option>Labuan</option></select></label></div>
 <label class="check"><input name="terms" type="checkbox" required> Saya mengesahkan maklumat permohonan adalah tepat dan bersetuju dihubungi tentang permohonan ejen.</label>
-<button class="primary">Hantar permohonan rasmi</button></form></div></section>
+<button class="primary">Hantar permohonan rasmi</button></form></div>
+</div></section>
 
 <section id="dashboard" hidden><div class="panel"><h1>Dashboard Ejen</h1><p class="agent-v20-note">Pengurusan ejen asal dengan keselamatan dan penambahbaikan V20. Semua fungsi katalog, lead, komisen dan pembayaran dikekalkan.</p>
 <p id="agentStatus">Maklumat ejen akan dipaparkan selepas permohonan diluluskan.</p>
@@ -165,7 +174,7 @@ let me=null,agent=null,owner=false,shareToken='';
 function message(msg,bad=false){$('alert').textContent=msg;$('alert').className='notice '+(bad?'warn error':'');}
 function view(id){
  if(id==='dashboard'&&!(me?.email_confirmed_at&&agent?.status==='active'))id='account';
- if(id==='application'&&!me?.email_confirmed_at)id='account';
+ if(id==='application')id='account';
  if(id==='owner'&&!owner)id='account';
  for(const b of document.querySelectorAll('[data-view]'))b.setAttribute('aria-current',b.dataset.view===id?'page':'false');
 for(const s of document.querySelectorAll('main section'))s.hidden=s.id!==id;
@@ -258,29 +267,61 @@ async function current(){const {data:sessionData,error:sessionError}=await supab
 async function sync(){
  try{
   me=await current();owner=false;agent=null;$('logout').hidden=!me;
-  $('ownerTab').hidden=true;$('applicationTab').hidden=true;$('dashboardTab').hidden=true;
+  $('ownerTab').hidden=true;$('dashboardTab').hidden=true;$('authPanels').hidden=!!me;$('signedInAccount').hidden=!me;
   $('applyForm').hidden=true;$('leadPanel').hidden=true;$('agentPromo').hidden=true;
   if(!me){shareToken='';$('applicationStatus').textContent='Log masuk dan sahkan e-mel terlebih dahulu.';$('agentStatus').textContent='Log masuk untuk melihat akaun ejen.';message('Sila log masuk atau daftar akaun ejen.');view('account');return;}
   if(!me.email_confirmed_at){message('Sila sahkan e-mel melalui pautan pengesahan yang diterima.');view('account');return;}
-  $('applicationTab').hidden=false;
+  $('authPanels').hidden=true;$('signedInAccount').hidden=false;
   const {data:staff,error:staffErr}=await supabase.from('profiles').select('role,enabled').eq('id',me.id).maybeSingle();
   if(staffErr)throw staffErr;owner=staff?.role==='owner'&&staff.enabled===true;
   $('ownerTab').hidden=!owner;
-  const {data:app,error:appErr}=await supabase.from('agent_applications').select('id,status,applied_at').eq('user_id',me.id).maybeSingle();
+  const {data:app,error:appErr}=await supabase.from('agent_applications').select('id,status,applied_at,full_name,phone,state').eq('user_id',me.id).maybeSingle();
   if(appErr)throw appErr;
-  const {data:profile,error:prErr}=await supabase.from('agent_profiles').select('id,agent_code,status').eq('user_id',me.id).maybeSingle();
+  const {data:profile,error:prErr}=await supabase.from('agent_profiles').select('id,agent_code,status,activated_at').eq('user_id',me.id).maybeSingle();
   if(prErr)throw prErr;agent=profile;
   $('dashboardTab').hidden=profile?.status!=='active';
   if(app){$('applicationStatus').textContent='Status permohonan: '+app.status+'. Tarikh: '+new Date(app.applied_at).toLocaleDateString('ms-MY');}
   else {$('applicationStatus').textContent='Belum ada permohonan. Sila lengkapkan borang di bawah.';$('applyForm').hidden=false;
    $('applyForm').elements.email.value=me.email||'';}
+  await loadAgentAccount(app,profile);
   if(profile?.status==='active'){$('agentStatus').textContent='ID ejen: '+profile.agent_code+' | Status: Aktif';$('leadPanel').hidden=false;await loadDashboard();await loadAgentCatalogue();}
   else {$('agentStatus').textContent=app?'Permohonan: '+app.status+'. Dashboard hanya aktif selepas kelulusan.':'Belum menjadi ejen. Hantar permohonan dahulu.';
    for(const id of ['leadItems','commissionItems','payoutItems'])$(id).replaceChildren();for(const id of ['countLeads','countCommission','countPayout'])text($(id),'0');}
   message('Log masuk sebagai '+me.email+'.');
-  view(owner?'owner':profile?.status==='active'?'dashboard':'application');
+  view(profile?.status==='active'?'dashboard':owner?'owner':'account');
  }catch(e){fail(e);}
 }
+async function loadAgentAccount(app,profile){
+ if(!me)return;
+ const {data:details,error}=await supabase.from('agent_account_details').select('display_name,phone,state,city,address').eq('user_id',me.id).maybeSingle();
+ if(error)throw error;
+ const form=$('agentDetailsForm');
+ for(const name of ['display_name','phone','state','city','address'])form.elements[name].value=details?.[name]||app?.[name==='display_name'?'full_name':name]||'';
+ const summary=$('agentProfileSummary');summary.replaceChildren();
+ for(const [label,value] of [['E-mel',me.email],['Kod Ejen',profile?.agent_code||'Belum diberikan'],['Status Ejen',profile?.status||'Belum aktif'],['Status Permohonan',app?.status||'Belum memohon'],['Tarikh Permohonan',app?.applied_at?new Date(app.applied_at).toLocaleDateString('ms-MY'):'—'],['Tarikh Aktif',profile?.activated_at?new Date(profile.activated_at).toLocaleDateString('ms-MY'):'—']]){
+  item(summary,label,String(value||'—'));
+ }
+ $('applicationInAccount').hidden=profile?.status==='active';
+}
+$('agentDetailsForm').onsubmit=async e=>{
+ e.preventDefault();if(!me)return;const b=e.submitter;b.disabled=true;
+ try{const d=Object.fromEntries(new FormData(e.target));
+  for(const k of ['display_name','phone'])if(!String(d[k]||'').trim())throw new Error('Nama dan telefon diperlukan');
+  const {error}=await supabase.from('agent_account_details').upsert({user_id:me.id,display_name:d.display_name.trim(),phone:d.phone.trim(),state:d.state.trim(),city:d.city.trim(),address:d.address.trim(),updated_at:new Date().toISOString()},{onConflict:'user_id'});
+  if(error)throw error;message('Profil ejen berjaya disimpan.');
+ }catch(err){fail(err)}finally{b.disabled=false}
+};
+$('agentPasswordForm').onsubmit=async e=>{
+ e.preventDefault();if(!me?.email)return;const b=e.submitter;b.disabled=true;
+ try{const d=Object.fromEntries(new FormData(e.target));
+  if(d.new_password!==d.confirm_password)throw new Error('Pengesahan kata laluan tidak sepadan');
+  if(d.new_password===d.current_password)throw new Error('Gunakan kata laluan baharu yang berbeza');
+  const {error:verifyError}=await supabase.auth.signInWithPassword({email:me.email,password:d.current_password});
+  if(verifyError)throw new Error('Kata laluan semasa tidak tepat');
+  const {error}=await supabase.auth.updateUser({password:d.new_password});
+  if(error)throw error;e.target.reset();message('Kata laluan berjaya ditukar.');
+ }catch(err){fail(err)}finally{b.disabled=false}
+};
 function agentCatalogueLink(){
  const u=new URL('/',location.origin);
  if(/^[a-f0-9]{32}$/.test(shareToken))u.searchParams.set('ref',shareToken);
