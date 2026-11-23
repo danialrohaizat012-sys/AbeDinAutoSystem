@@ -125,6 +125,9 @@ export function mountAgentAdmin(host,{client,profile}={}){
  .ada-agent-owner .ag-com-row input,.ada-agent-owner .ag-com-row select{min-height:38px;border-radius:8px;padding:0 8px;background:var(--ag-field);color:var(--ag-field-ink);border:1px solid var(--ag-field-border);width:100%}
  .ada-agent-owner .ag-com-on{white-space:nowrap;font-size:13px}
  @media(max-width:650px){.ada-agent-owner .ag-com-row{grid-template-columns:1fr 1fr}.ada-agent-owner .ag-com-name{grid-column:1/-1}}
+ .ada-agent-owner button.ag-danger{background:#5a2620!important;color:#ffd9d2!important;-webkit-text-fill-color:#ffd9d2!important;border:1px solid #7a3328!important}
+ html.ada-light .ada-agent-owner button.ag-danger{background:#fdecea!important;color:#9b2c1d!important;-webkit-text-fill-color:#9b2c1d!important}
+ .ada-agent-owner .ag-agent-actions{margin-top:10px}.ada-agent-owner .ag-agent-edit{margin-top:10px}
  .ada-agent-owner .ag-counts{gap:10px!important}
  .ada-agent-owner .ag-sections{gap:13px!important}
  .ada-agent-owner .ag-config{gap:10px!important}
@@ -186,7 +189,7 @@ export function mountAgentAdmin(host,{client,profile}={}){
    const pl=section(content,'Senarai Ejen ('+agents.length+')','Semua ejen berdaftar dan prestasi mereka. Tekan nama untuk butiran.');
    if(agentRes?.error)pl.append(node('p','','Gagal memuat senarai ejen: '+agentRes.error.message));
    else if(!agents.length)pl.append(node('p','','Belum ada ejen berdaftar.'));
-   const label={active:'Aktif',suspended:'Digantung',inactive:'Tidak aktif'};
+   const label={active:'Aktif',suspended:'Tidak aktif',terminated:'Ditamatkan'};
    for(const g of agents){
     const d=node('details','ag-mini'),sm=node('summary','ag-mini-head'),t=node('div','ag-mini-title');
     t.append(node('strong','',g.name||g.email||'Ejen'),node('small','',[g.agent_code||'Tiada kod',g.phone,[g.city,g.state].filter(Boolean).join(', ')].filter(Boolean).join(' · ')));
@@ -197,6 +200,28 @@ export function mountAgentAdmin(host,{client,profile}={}){
     b.append(node('p','','E-mel: '+(g.email||'—')+' · Mohon: '+date(g.applied_at)+' · Aktif sejak: '+date(g.activated_at)));
     contactControls(b,{customer_phone:g.phone,customer_name:g.name},null);
     const wa=b.querySelector('.ag-whatsapp');if(wa){wa.textContent='WhatsApp Ejen';wa.href=wa.href.split('?')[0];}
+    if(g.user_id){
+     const ctl=node('div','ag-controls ag-agent-actions');
+     const ed=node('button','','✏️ Edit');ed.type='button';
+     const form=node('form','ag-config ag-agent-edit');form.hidden=true;
+     const fld=(lab,val,type='text')=>{const l=node('label','',lab),i=node('input');i.type=type;i.value=val||'';l.append(i);form.append(l);return i};
+     const fN=fld('Nama',g.name),fP=fld('Telefon',g.phone,'tel'),fS=fld('Negeri',g.state),fC=fld('Bandar',g.city);
+     const sv=node('button','ag-primary','Simpan');sv.type='submit';const cn=node('button','','Batal');cn.type='button';form.append(sv,cn);
+     ed.onclick=()=>{form.hidden=!form.hidden};cn.onclick=()=>{form.hidden=true};
+     form.onsubmit=async e=>{e.preventDefault();sv.disabled=true;try{const {error}=await client.rpc('owner_agent_update_v1',{p_user_id:g.user_id,p_name:fN.value,p_phone:fP.value,p_state:fS.value,p_city:fC.value});if(error)throw error;status('Butiran ejen dikemas kini.');await load()}catch(err){status(err.message.includes('phone_check')?'Nombor telefon tidak sah (9–24 aksara).':err.message,true)}finally{sv.disabled=false}};
+     ctl.append(ed);
+     if(g.agent_profile_id){
+      const isAct=g.agent_status==='active';
+      const tg=node('button',isAct?'':'ag-primary',isAct?'⏸ Nyahaktif':'▶ Aktifkan');tg.type='button';
+      tg.onclick=async()=>{if(!confirm((isAct?'Nyahaktifkan':'Aktifkan semula')+' ejen '+(g.name||'')+'?'+(isAct?'\nEjen tidak boleh guna portal dan link promosi sehingga diaktifkan semula.':'')))return;tg.disabled=true;
+       try{const {error}=await client.rpc('owner_agent_set_status_v1',{p_user_id:g.user_id,p_status:isAct?'suspended':'active'});if(error)throw error;status('Status ejen dikemas kini.');await load()}catch(err){status(err.message,true);tg.disabled=false}};
+      ctl.append(tg);
+     }
+     const del=node('button','ag-danger','🗑 Padam');del.type='button';
+     del.onclick=async()=>{if(!confirm('Padam ejen '+(g.name||'')+'?\nProfil ejen, permohonan dan link promosi akan dibuang. Akaun log masuk (dan akaun staf, jika ada) tidak terjejas.'))return;del.disabled=true;
+      try{const {error}=await client.rpc('owner_agent_delete_v1',{p_user_id:g.user_id});if(error)throw error;status('Ejen dipadam.');await load()}catch(err){status(err.message,true);del.disabled=false}};
+     ctl.append(del);b.append(ctl,form);
+    }
     d.append(sm,b);pl.append(d);
    }
    const pa=section(content,'Permohonan Ejen','Owner semak maklumat sebelum meluluskan permohonan.');
