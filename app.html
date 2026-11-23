@@ -185,7 +185,24 @@ html.ada-staff-embed #ada-public-catalogue.abx-home .abx-pages{margin-top:15px!i
 @media(max-width:650px){.ada-agent-enquiry-card{font-size:14px;padding:13px}.ada-agent-enquiry-detail{min-height:52px}}
 </style>
 <script src="./js/year-end-promo.js?v=20261122-8"></script>
-</head><body><script id="ada-boot-app">
+<script>
+/* Privacy-conscious Agent V20 referral click tracking: one unique browser/day/car. */
+(function(){
+ try{
+  const p=new URLSearchParams(location.search),token=p.get('ref');
+  if(!token||!/^[a-f0-9]{32}$/.test(token))return;
+  const key='ada_agent_click_visitor_v20';
+  let visitor=sessionStorage.getItem(key);
+  if(!visitor||!/^[0-9a-f-]{36}$/i.test(visitor)){visitor=crypto.randomUUID();sessionStorage.setItem(key,visitor)}
+  const car=p.get('car');
+  const body={p_token:token,p_visitor:visitor,p_vehicle:car&&car.length<=120?car:null};
+  fetch('https://buzpdyvvoiqgbeventwm.supabase.co/rest/v1/rpc/record_agent_click_v20',{
+   method:'POST',keepalive:true,headers:{'Content-Type':'application/json','apikey':'sb_publishable_zuuNipsMpalN_38SJwXpFA_MRzQ6eZ0'},
+   body:JSON.stringify(body)
+  }).catch(()=>{});
+ }catch(_){}
+})();
+</script></head><body><script id="ada-boot-app">
 (function(){
   const activate=(id,isModule)=>{
     const source=document.getElementById(id);
