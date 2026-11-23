@@ -44,6 +44,7 @@ footer{font-size:12px;color:#748399;padding:15px 0}
 @media(max-width:720px){.grid{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.panel{padding:16px}header{padding:16px}}
 
 /* Agent V20 integration: preserve the original /agent workflow and features. */
+.promo-filter{display:flex;align-items:end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:14px 0}.promo-filter label{flex:1;min-width:190px;margin:0}.promo-filter span{font-size:12px;color:#557087;padding-bottom:12px}.promo-card[hidden]{display:none!important}
 :root{font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:#f3f6fb}
 body{color:#18283d;background:radial-gradient(ellipse 85% 360px at 50% 0,#dfeaf9 0,transparent 100%),#f3f6fb;min-height:100vh}
 header{background:linear-gradient(110deg,#102844,#194b70);box-shadow:0 8px 26px #142c4930}
@@ -116,7 +117,7 @@ input,select,textarea{min-height:44px}
 <small>Semua pautan kereta dari katalog ini akan mengekalkan kod rujukan anda. Pelanggan boleh mendaftar minat terus daripada profil kereta.</small>
 </div>
 <p id="promoSummary" aria-live="polite">Memuatkan stok...</p>
-<div id="promoCars" class="promo-grid"></div>
+<div class="promo-filter"><label for="promoSearch">Cari kereta<input id="promoSearch" type="search" placeholder="Contoh: Axia 2016, Myvi, Saga" autocomplete="off"></label><span id="promoShown" aria-live="polite"></span></div><div id="promoCars" class="promo-grid"></div><button type="button" class="secondary" id="promoMore" hidden style="display:block;margin:16px auto">Lihat Lagi Kereta</button>
 <div class="notice warn">Kod rujukan ejen disertakan pada pautan, tetapi komisen tidak diberi berdasarkan klik. Pelanggan dan jualan mesti disahkan oleh owner.</div>
 </div>
 <div id="leadPanel" hidden><h2>Daftar lead pelanggan</h2>
@@ -319,7 +320,7 @@ async function loadAgentCatalogue(){
   const label=[v.make,v.model,v.model_year].filter(Boolean).join(' ');
   const op=document.createElement('option');op.value=v.id;
   op.textContent=label+' | RM '+Number(v.display_price??v.asking_price??0).toLocaleString('ms-MY');sel.append(op);
-  const url=agentCarLink(v);const box=document.createElement('article');box.className='promo-card';
+  const url=agentCarLink(v);const box=document.createElement('article');box.className='promo-card';box.dataset.search=label.toLocaleLowerCase('ms-MY');
   if(v.image_url&&v.image_url.startsWith('https://buzpdyvvoiqgbeventwm.supabase.co/storage/v1/object/public/vehicle-images/')){
     const img=document.createElement('img');img.className='promo-photo';img.loading='lazy';img.decoding='async';img.alt=label;img.src=v.image_url;box.append(img);
   }else{const no=document.createElement('div');no.className='promo-no-photo';no.textContent='Foto belum tersedia';box.append(no);}
@@ -346,7 +347,20 @@ async function loadAgentCatalogue(){
   lead.onclick=()=>{sel.value=v.id;sel.scrollIntoView({behavior:'smooth',block:'center'});};
   actions.append(open,copy,wa,inquiryLink,lead);content.append(title,price,commissionNote,actions);box.append(content);grid.append(box);
  }
+ promoVisibleLimit=12;applyPromoFilter();
 }
+let promoVisibleLimit=12;
+function applyPromoFilter(){
+ const query=($('promoSearch')?.value||'').trim().toLocaleLowerCase('ms-MY');
+ const cards=Array.from($('promoCars').children);
+ const matches=cards.filter(card=>card.dataset.search.includes(query));
+ const visible=new Set(matches.slice(0,promoVisibleLimit));
+ for(const card of cards)card.hidden=!visible.has(card);
+ $('promoShown').textContent=matches.length+' kereta ditemui · '+visible.size+' dipaparkan';
+ $('promoMore').hidden=matches.length<=promoVisibleLimit;
+}
+$('promoSearch').addEventListener('input',()=>{promoVisibleLimit=12;applyPromoFilter()});
+$('promoMore').addEventListener('click',()=>{promoVisibleLimit+=12;applyPromoFilter()});
 $('refreshPromo').onclick=()=>loadAgentCatalogue().catch(fail);
 $('refreshMyLeads').onclick=()=>loadDashboard().catch(fail);
 async function loadDashboard(){
