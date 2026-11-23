@@ -447,6 +447,22 @@ function viewPunch() {
     return { mins, percent: scheduledMin ? Math.min(100, Math.round(mins / scheduledMin * 100)) : null };
   };
   const worked = liveWorked();
+  // Waktu wajib pulang: 8 jam bersih + sekurang-kurangnya rehat syif.
+  // Jika rehat sebenar melebihi peruntukan, waktu pulang dianjak ke depan.
+  const requiredLeave = () => {
+    if (!firstIn || !scheduledMin || sc.type !== "work") return null;
+    let restMs = 0, restAt = null;
+    for (const p of mine) {
+      const at = new Date(p.punched_at).getTime();
+      if (p.kind === "rest_start" && restAt == null) restAt = at;
+      else if (p.kind === "rest_end" && restAt != null) { restMs += Math.max(0, at-restAt); restAt = null; }
+    }
+    if (restAt != null) restMs += Math.max(0, Date.now()-restAt);
+    const breakMs = Math.max((sc.brk || 0)*60000, restMs);
+    return new Date(new Date(firstIn.punched_at).getTime()+scheduledMin*60000+breakMs);
+  };
+  const leaveTime = requiredLeave();
+
   const sumTile = (label, value) => `<div style="min-width:0;padding:12px 5px;border:1px solid var(--line,#39352d);border-radius:14px;text-align:center;background:rgba(255,255,255,.025)"><small class="mute" style="display:block;font-size:12px">${label}</small><b style="display:block;margin-top:7px;font-size:15px">${value}</b></div>`;
   const summary = `<div class="card"><div class="r" style="align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap"><h3 style="margin:0">Ringkasan Hari Ini</h3><span class="chip pri">${dayLabel(today)}</span></div>
     <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:12px">
@@ -455,6 +471,7 @@ function viewPunch() {
       ${sumTile("Keluar", last?.kind === "out" ? hm(last.punched_at) : "–")}
       ${sumTile("Jam kerja", `<span id="punch-worked">${fmtMin(worked.mins)}</span>`)}
     </div>
+    ${leaveTime ? `<div style="margin-top:12px;padding:14px;border:1px solid #d9ad36;border-radius:12px;text-align:center"><small class="mute">Waktu Wajib Pulang (cukup 8 jam kerja bersih)</small><div id="punch-required-leave" style="font-size:28px;font-weight:800;color:#e5b93b;margin:5px 0">${hm(leaveTime.toISOString())}</div><small class="mute">Rehat melebihi tempoh syif akan melanjutkan waktu wajib pulang. Semasa rehat, waktu ini dikemas kini.</small></div>` : ""}
     <div style="margin-top:12px;padding:10px 12px;border:1px solid var(--line,#39352d);border-radius:12px">
       <div class="r" style="justify-content:space-between;gap:8px"><small>Kemajuan waktu kerja</small><b id="punch-percent">${worked.percent == null ? "—" : worked.percent + "%"}</b></div>
       <div style="height:8px;border-radius:8px;background:rgba(255,255,255,.14);overflow:hidden;margin:8px 0"><div id="punch-progress" style="height:100%;width:${worked.percent || 0}%;background:#e5b93b;border-radius:8px"></div></div>
@@ -797,6 +814,21 @@ function tickClock() {
   const p=$("#punch-percent"), bar=$("#punch-progress");
   if(p) p.textContent=pct==null ? "—" : pct+"%";
   if(bar) bar.style.width=(pct||0)+"%";
+  const leaveEl=$("#punch-required-leave");
+  if (leaveEl) {
+    const first=mine.find(p=>p.kind==="in");
+    if(first && target) {
+      let restMs=0, restAt=null;
+      for(const p of mine) {
+        const at=new Date(p.punched_at).getTime();
+        if(p.kind==="rest_start" && restAt==null) restAt=at;
+        else if(p.kind==="rest_end" && restAt!=null) { restMs+=Math.max(0,at-restAt); restAt=null; }
+      }
+      if(restAt!=null) restMs+=Math.max(0,Date.now()-restAt);
+      const due=new Date(new Date(first.punched_at).getTime()+target*60000+Math.max((sc.brk||0)*60000,restMs));
+      leaveEl.textContent=hm(due.toISOString());
+    }
+  }
 }
 
 /* ---------- punch (selfie + GPS) ---------- */
