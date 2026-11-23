@@ -396,15 +396,6 @@ async function loadDashboard(){
  const carMap=new Map((!publicCars.error&&Array.isArray(publicCars.data)?publicCars.data:[]).map(v=>[v.id,v]));
  text($('countLeads'),l.data.length);text($('countCommission'),c.data.length);text($('countPayout'),p.data.length);
  agentLeadRecords=l.data;agentLeadCars=carMap;renderAgentLeads();
- /* Existing lead renderer retained below for reference only. */
- if(false)showRows('leadItems',l.data,(el,x)=>{
-   const card=document.createElement('div');
-   leadContact(card,x,carMap.get(x.vehicle_id));
-   const panel=card.querySelector('.lead-collapsed-content');
-   leadCarLink(panel,carMap.get(x.vehicle_id),x.vehicle_id);
-   leadReadButton(panel,x,'agent',loadDashboard);
-   el.append(card);
- });
  const rm=v=>new Intl.NumberFormat('ms-MY',{style:'currency',currency:'MYR'}).format(Number(v||0));
  showRows('commissionItems',c.data,(el,x)=>item(el,rm(x.agreed_amount),x.status));
  showRows('payoutItems',p.data,(el,x)=>item(el,rm(x.amount),x.status+(x.paid_at?' · '+new Date(x.paid_at).toLocaleDateString('ms-MY'):'')));
