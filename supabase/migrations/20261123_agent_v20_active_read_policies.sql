@@ -29,4 +29,14 @@ using (exists (
     and a.user_id = (select auth.uid())
     and a.status = 'active'
 ));
+drop policy if exists agent_payout_items_read_own on public.agent_payout_items;
+create policy agent_payout_items_read_own on public.agent_payout_items
+for select to authenticated
+using (exists (
+  select 1 from public.agent_payouts p
+  join public.agent_profiles a on a.id = p.agent_id
+  where p.id = agent_payout_items.payout_id
+    and a.user_id = (select auth.uid())
+    and a.status = 'active'
+));
 commit;
