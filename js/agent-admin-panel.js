@@ -41,7 +41,7 @@ function compactLead(parent,a,car,onRead,agentLead){
  if(!a.owner_read_at){const btn=node('button','ag-primary','Tandakan Sudah Baca');btn.type='button';btn.onclick=()=>onRead(a,agentLead?'agent':'direct');body.append(btn)}
  details.append(summary,body);parent.append(details);
 }
-function section(parent,title,desc){const a=node('section','ag-card');a.append(node('h3','',title),node('p','',desc));parent.append(a);return a}
+function section(parent,title,desc,tab){const a=node('section','ag-card');if(tab)a.dataset.tab=tab;a.append(node('h3','',title),node('p','ag-desc',desc));parent.append(a);return a}
 export function mountAgentAdmin(host,{client,profile}={}){
  host.replaceChildren();
  if(profile?.role!=='owner'||profile?.enabled!==true){host.append(node('p','muted','Hanya owner aktif boleh mengurus ejen.'));return}
@@ -144,16 +144,57 @@ export function mountAgentAdmin(host,{client,profile}={}){
    .ada-agent-owner .ag-stat{padding:12px!important}
    .ada-agent-owner .ag-config{gap:9px!important}
  }
+ .ada-agent-owner{font-size:14px}
+ .ada-agent-owner .ag-header{margin-bottom:12px!important}
+ .ada-agent-owner .ag-header h2{font-size:22px!important;letter-spacing:-.01em}
+ .ada-agent-owner .ag-sub{margin:2px 0 0!important;font-size:13px}
+ .ada-agent-owner button.ag-icon{width:40px;height:40px;border-radius:50%!important;font-size:18px;padding:0!important}
+ .ada-agent-owner .ag-counts{display:flex!important;flex-wrap:wrap;gap:8px!important;margin-bottom:14px}
+ .ada-agent-owner .ag-stat{flex:1 1 120px;padding:10px 14px!important;border-radius:12px!important}
+ .ada-agent-owner .ag-stat small{font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+ .ada-agent-owner .ag-stat b{display:block;font-size:22px;margin-top:2px}
+ .ada-agent-owner .ag-tabs{display:flex;gap:4px;overflow-x:auto;padding:4px;margin-bottom:14px;border-radius:12px;background:var(--ag-raised);border:1px solid var(--ag-border);position:sticky;top:0;z-index:2;scrollbar-width:none}
+ .ada-agent-owner .ag-tabs::-webkit-scrollbar{display:none}
+ .ada-agent-owner button.ag-tab{flex:1 0 auto;background:transparent!important;border:0!important;color:var(--ag-muted)!important;-webkit-text-fill-color:var(--ag-muted)!important;padding:9px 14px!important;border-radius:9px!important;font-weight:600;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:0}
+ .ada-agent-owner button.ag-tab.on{background:var(--ag-bg)!important;color:var(--ag-ink)!important;-webkit-text-fill-color:var(--ag-ink)!important;box-shadow:0 1px 3px rgba(0,0,0,.25)!important}
+ .ada-agent-owner .ag-badge{background:var(--ag-accent);color:var(--ag-accent-ink);-webkit-text-fill-color:var(--ag-accent-ink);font-size:11px;font-weight:700;border-radius:999px;min-width:18px;height:18px;line-height:18px;padding:0 5px;text-align:center}
+ .ada-agent-owner .ag-status{border-radius:10px!important;padding:8px 12px!important;margin-bottom:12px;font-size:13px}
+ .ada-agent-owner .ag-status[hidden]{display:none!important}
+ .ada-agent-owner .ag-sections{display:grid!important;grid-template-columns:1fr!important;gap:14px!important}
+ .ada-agent-owner .ag-card[hidden]{display:none!important}
+ .ada-agent-owner .ag-card{padding:16px!important;border-radius:14px!important}
+ .ada-agent-owner .ag-card h3{font-size:16px!important;margin:0 0 2px!important}
+ .ada-agent-owner .ag-desc{font-size:12.5px!important;margin:0 0 12px!important}
+ .ada-agent-owner .ag-mini{border-radius:10px!important;margin-top:6px}
+ .ada-agent-owner .ag-mini-head{padding:10px 12px!important}
+ .ada-agent-owner .ag-mini-title small{font-size:12px}
+ .ada-agent-owner .ag-read,.ada-agent-owner .ag-unread{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px}
+ .ada-agent-owner .ag-line{padding:10px 0!important}
+ .ada-agent-owner button{border-radius:9px!important}
+ .ada-agent-owner .ag-agent-actions button{padding:7px 12px!important;font-size:13px}
  `;
  const top=node('div','ag-header'),heading=node('div');
- heading.append(node('h2','','Pengurusan Ejen'),node('p','','Permohonan, lead, pembeli terus dan komisen dalam dashboard admin.'));
+ heading.append(node('h2','','Ejen'),node('p','ag-sub','Urus ejen, komisen, promosi dan kelulusan.'));
  const controls=node('div','ag-controls');
- const refresh=node('button','','↻ Muat Semula');refresh.type='button';
+ const refresh=node('button','ag-icon','↻');refresh.title='Muat semula';refresh.setAttribute('aria-label','Muat semula');refresh.type='button';
  controls.append(refresh);top.append(heading,controls);
  const msg=node('div','ag-status','Memuatkan rekod ejen...');msg.setAttribute('role','status');
- const counts=node('div','ag-counts'),content=node('div','ag-sections');
- host.append(style,top,msg,counts,content);
- function status(v,bad=false){if(disposed)return;msg.textContent=v;msg.className='ag-status'+(bad?' bad':'')}
+ const counts=node('div','ag-counts'),tabsBar=node('nav','ag-tabs'),content=node('div','ag-sections');
+ tabsBar.setAttribute('role','tablist');
+ let activeTab=(()=>{try{return localStorage.getItem('ada-agent-tab')||'ejen'}catch{return 'ejen'}})();
+ const TABS=[['ejen','Ejen'],['komisen','Komisen'],['kelulusan','Kelulusan'],['lead','Lead'],['promosi','Promosi']];
+ function tabify(badges={}){
+  tabsBar.replaceChildren();
+  for(const [id,label] of TABS){
+   const b=node('button','ag-tab'+(id===activeTab?' on':''),label);b.type='button';b.setAttribute('role','tab');b.setAttribute('aria-selected',String(id===activeTab));
+   if(badges[id])b.append(node('span','ag-badge',badges[id]));
+   b.onclick=()=>{activeTab=id;try{localStorage.setItem('ada-agent-tab',id)}catch{};tabify(badges)};
+   tabsBar.append(b);
+  }
+  for(const sec of content.children)sec.hidden=sec.dataset.tab!==activeTab;
+ }
+ host.append(style,top,counts,tabsBar,msg,content);
+ let msgTimer=0;function status(v,bad=false){if(disposed)return;msg.textContent=v;msg.className='ag-status'+(bad?' bad':'');msg.hidden=false;clearTimeout(msgTimer);if(!bad)msgTimer=setTimeout(()=>{if(!disposed)msg.hidden=true},3500)}
  async function request(action,params={}){
   const {data,error}=await client.auth.getSession();
   if(error||!data?.session?.access_token)throw Error('Sesi admin tamat. Sila log keluar dan masuk semula.');
@@ -187,9 +228,9 @@ export function mountAgentAdmin(host,{client,profile}={}){
    if(disposed)return;
    const applications=apps.applications||[],agentLeads=contacts.leads||[],directLeads=direct.inquiries||[],commissions=fin.commissions||[],payouts=fin.payouts||[];
    const vehicles=vehicleData.vehicles||[],carMap=new Map(vehicles.map(v=>[v.id,v]));
-   counts.replaceChildren(stat('Ejen aktif',agents.filter(x=>x.agent_status==='active').length),stat('Permohonan menunggu',applications.length),stat('Jumlah lead ejen',agentLeads.length),stat('Pembeli terus',directLeads.length),stat('Komisen belum dibayar',commissions.filter(c=>c.status!=='paid').length));
+   counts.replaceChildren(stat('Ejen aktif',agents.filter(x=>x.agent_status==='active').length),stat('Lead',agentLeads.length+directLeads.length),stat('Komisen belum bayar',commissions.filter(c=>c.status!=='paid').length));
    content.replaceChildren();
-   const pl=section(content,'Senarai Ejen ('+agents.length+')','Semua ejen berdaftar dan prestasi mereka. Tekan nama untuk butiran.');
+   const pl=section(content,'Senarai Ejen ('+agents.length+')','Semua ejen berdaftar dan prestasi mereka. Tekan nama untuk butiran.','ejen');
    if(agentRes?.error)pl.append(node('p','','Gagal memuat senarai ejen: '+agentRes.error.message));
    else if(!agents.length)pl.append(node('p','','Belum ada ejen berdaftar.'));
    const label={active:'Aktif',suspended:'Tidak aktif',terminated:'Ditamatkan'};
@@ -227,8 +268,8 @@ export function mountAgentAdmin(host,{client,profile}={}){
     }
     d.append(sm,b);pl.append(d);
    }
-   const pa=section(content,'Permohonan Ejen','Owner semak maklumat sebelum meluluskan permohonan.');
-   if(!applications.length)pa.append(node('p','','Tiada permohonan menunggu.'));
+   const pa=section(content,'Permohonan Ejen','Owner semak maklumat sebelum meluluskan permohonan.','ejen');
+   if(!applications.length)pa.remove();
    for(const a of applications){
     const n=line(pa,a.full_name||'Pemohon',[a.email,a.phone,a.state,date(a.applied_at)].filter(Boolean).join(' · '));
     const buttons=node('div','ag-controls'),yes=node('button','ag-primary','Luluskan'),no=node('button','','Tolak');
@@ -236,7 +277,8 @@ export function mountAgentAdmin(host,{client,profile}={}){
     no.onclick=async()=>{const reason=prompt('Sebab penolakan (wajib):');if(!reason?.trim())return;yes.disabled=true;no.disabled=true;try{await request('review',{application_id:a.id,decision:'reject',reason:reason.trim()});status('Permohonan ditolak.');}catch(e){status(e.message,true)}finally{yes.disabled=false;no.disabled=false;await load()}};
     buttons.append(yes,no);n.append(buttons);
    }
-   const pp=section(content,'Ayat Promosi Ejen (5 Pilihan)','Tulis dan terbitkan ayat yang ejen guna bila kongsi kereta. Guna {model}, {tahun}, {harga} — sistem isi automatik ikut kereta.');
+   if(applications.length)content.prepend(pa);
+   const pp=section(content,'Ayat Promosi Ejen (5 Pilihan)','Tulis dan terbitkan ayat yang ejen guna bila kongsi kereta. Guna {model}, {tahun}, {harga} — sistem isi automatik ikut kereta.','promosi');
    const aiBtn=node('button','','📋 Salin Prompt AI (5 Ayat)');aiBtn.type='button';
    aiBtn.onclick=async()=>{const t='Jana tepat 5 ayat promosi kereta terpakai AbeDin Auto dalam Bahasa Melayu. Setiap ayat maksimum 500 aksara dan wajib mengandungi {model}, {tahun}, {harga}. Gaya berlainan, menarik dan profesional. Jangan mereka-reka diskaun, kelulusan pinjaman, jaminan, keadaan kereta atau stok. Nomborkan 1 hingga 5.';try{await navigator.clipboard.writeText(t);status('Prompt AI disalin. Tampal dalam ChatGPT/Claude.')}catch{prompt('Salin prompt ini:',t)}};
    pp.append(aiBtn);
@@ -259,13 +301,13 @@ export function mountAgentAdmin(host,{client,profile}={}){
     }
     box.append(head,area,cnt,btns);pp.append(box);
    }
-   const pb=section(content,'Lead daripada Ejen','Lead masuk melalui pautan promosi atau pendaftaran manual. Owner mengesahkan jualan sebelum komisen.');
+   const pb=section(content,'Lead daripada Ejen','Lead masuk melalui pautan promosi atau pendaftaran manual. Owner mengesahkan jualan sebelum komisen.','lead');
    if(!agentLeads.length)pb.append(node('p','','Belum ada lead ejen.'));
    for(const a of agentLeads.slice(0,60))compactLead(pb,a,a.car,ownerRead,true);
-   const pc=section(content,'Pertanyaan Pembeli Terus','Lead tanpa ejen, tidak layak untuk komisen ejen.');
+   const pc=section(content,'Pertanyaan Pembeli Terus','Lead tanpa ejen, tidak layak untuk komisen ejen.','lead');
    if(!directLeads.length)pc.append(node('p','','Belum ada pertanyaan terus.'));
    for(const a of directLeads.slice(0,60))compactLead(pc,a,carMap.get(a.vehicle_id),ownerRead,false);
-   const po=section(content,'Komisen Ejen Setiap Kereta','Tetapkan amaun komisen untuk setiap kereta. Amaun ini terus dipaparkan kepada ejen di kad kereta dalam portal mereka. Dibayar hanya selepas jualan disahkan.');
+   const po=section(content,'Komisen Ejen Setiap Kereta','Tetapkan amaun komisen untuk setiap kereta. Amaun ini terus dipaparkan kepada ejen di kad kereta dalam portal mereka. Dibayar hanya selepas jualan disahkan.','komisen');
    const live=vehicles.filter(v=>!['sold','deleted','archived'].includes(String(v.status||'').toLowerCase()));
    const bulk=node('div','ag-config'),bLabel=node('label','','Isi semua kereta yang belum ada komisen (RM)'),bAmt=node('input');bAmt.type='number';bAmt.min='0';bAmt.step='50';bAmt.placeholder='cth 300';bLabel.append(bAmt);
    const bBtn=node('button','ag-primary','Guna untuk semua kosong');bBtn.type='button';bulk.append(bLabel,bBtn);po.append(bulk);
@@ -298,7 +340,7 @@ export function mountAgentAdmin(host,{client,profile}={}){
     bBtn.disabled=true;let ok=0;
     for(const x of empty){try{await saveOffer(x.v,val,x.c.value,true);x.a.value=val;x.st.textContent='✓ RM '+val.toLocaleString('ms-MY');ok++;status('Menyimpan… '+ok+'/'+empty.length)}catch(e){x.st.textContent='Gagal'}}
     bBtn.disabled=false;status(ok+' kereta dikemas kini dengan komisen RM '+val.toLocaleString('ms-MY')+'.')};
-   const pk=section(content,'Kelulusan Lead, Komisen & Payout','Padankan lead dengan jualan, luluskan komisen, sediakan dan luluskan payout. Tiada pindahan wang dibuat di sini.');
+   const pk=section(content,'Kelulusan Lead, Komisen & Payout','Padankan lead dengan jualan, luluskan komisen, sediakan dan luluskan payout. Tiada pindahan wang dibuat di sini.','kelulusan');
    const act=async(payload,okMsg,btn)=>{btn.disabled=true;try{await request(payload.action,payload);status(okMsg);await load()}catch(e){status(e.message,true);btn.disabled=false}};
    const agentName=id=>{const g=agents.find(x=>x.agent_profile_id===id);return g?(g.name||'Ejen')+' ('+(g.agent_code||'—')+')':'Ejen '+String(id||'').slice(0,8)};
    const unlinked=leads.leads||[];
@@ -337,11 +379,14 @@ export function mountAgentAdmin(host,{client,profile}={}){
     n.append(b);
    }
    for(const p of waitHr)line(pk,'⏳ Payout '+amount(p.amount)+' diluluskan',agentName(p.agent_id)+' · menunggu HR sahkan bayaran bank');
-   const pd=section(content,'Ringkasan Komisen & Payout','Bayaran kekal memerlukan kelulusan owner dan pengesahan HR yang berasingan.');
+   const pd=section(content,'Ringkasan Komisen & Payout','Bayaran kekal memerlukan kelulusan owner dan pengesahan HR yang berasingan.','kelulusan');
    if(!commissions.length&&!payouts.length)pd.append(node('p','','Belum ada komisen atau payout.'));
    for(const c of commissions.slice(0,20))line(pd,'Komisen '+amount(c.agreed_amount),['Status '+c.status,agentName(c.agent_id),date(c.created_at)].join(' · '));
    for(const p of payouts.slice(0,20))line(pd,'Payout '+amount(p.amount),['Status '+p.status,agentName(p.agent_id),date(p.created_at)].join(' · '));
-   status('Data ejen dikemas kini.');
+   const unreadLeads=agentLeads.filter(x=>!x.owner_read_at).length+directLeads.filter(x=>!x.owner_read_at).length;
+   const pendingApprove=(leads.leads||[]).length+(fin.leads||[]).filter(l=>l.status==='won'&&!new Set(commissions.map(c=>c.sale_id)).has(l.linked_sale_id)).length+commissions.filter(c=>c.status==='approved').length+payouts.filter(p=>p.status==='draft').length;
+   tabify({ejen:applications.length,kelulusan:pendingApprove,lead:unreadLeads,komisen:vehicles.filter(v=>!['sold','deleted','archived'].includes(String(v.status||'').toLowerCase())&&!(Number(v.offer?.indicative_amount)>0)).length});
+   status('Dikemas kini.');
   }catch(e){status(e?.message||'Gagal memuat rekod ejen.',true)}
   finally{loading=false;refresh.disabled=false}
  }
