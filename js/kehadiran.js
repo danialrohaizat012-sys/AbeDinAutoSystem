@@ -994,7 +994,65 @@ function parseCoord(s) {
   s = String(s || ""); const m = s.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/) || s.match(/[?&](?:q|query|ll)=(-?\d+\.\d+),\s*(-?\d+\.\d+)/) || s.match(/(-?\d{1,2}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)/);
   return m ? { lat:+m[1], lng:+m[2] } : null;
 }
-function locPreview() { const f = $("#f-loc"), c = parseCoord(f?.coord.value), box = $("#locprev"); if (!box) return; box.innerHTML = c ? `<iframe class="map" loading="lazy" src="${mapUrl(c.lat, c.lng)}" title="Pratonton lokasi"></iframe>` : ""; }
+// Peta interaktif untuk menetapkan lokasi punch staf. Koordinat disimpan melalui borang sedia ada.
+let locMap = null, locMarker = null, locMapHost = null, leafletPromise = null;
+function loadLocationLeaflet() {
+  if (window.L?.map) return Promise.resolve(window.L);
+  if (leafletPromise) return leafletPromise;
+  leafletPromise = new Promise((resolve, reject) => {
+    if (!document.querySelector('link[data-ada-leaflet]')) {
+      const css = document.createElement('link'); css.rel = 'stylesheet';
+      css.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'; css.dataset.adaLeaflet = '1';
+      document.head.append(css);
+    }
+    const script = document.createElement('script');
+    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    script.onload = () => window.L?.map ? resolve(window.L) : reject(new Error('Leaflet tidak tersedia'));
+    script.onerror = () => reject(new Error('Peta interaktif tidak dapat dimuatkan'));
+    document.head.append(script);
+  }).catch(err => { leafletPromise = null; throw err; });
+  return leafletPromise;
+}
+function locPreview() {
+  const f = $("#f-loc"), box = $("#locprev"); if (!f || !box) return;
+  const selected = parseCoord(f.elements.coord.value);
+  const valid = selected && Math.abs(selected.lat) <= 90 && Math.abs(selected.lng) <= 180;
+  const center = valid ? selected : { lat: 4.2105, lng: 101.9758 };
+  if (!box.querySelector('[data-location-map]')) {
+    if (locMap) { locMap.remove(); locMap = null; locMarker = null; }
+    box.innerHTML = '<p class="mute" style="margin:4px 0">Tekan peta atau seret pin untuk pilih lokasi. Zum dan gerakkan peta dengan jari.</p><div data-location-map style="height:310px;width:100%;border-radius:12px;overflow:hidden;background:#e6e6e6"></div><p class="mute" data-location-hint style="margin:6px 0">Pilih lokasi pada peta untuk isi koordinat secara automatik.</p>';
+  }
+  const host = box.querySelector('[data-location-map]');
+  if (locMap && locMapHost === host) {
+    if (valid) { locMarker.setLatLng([center.lat, center.lng]); locMap.setView([center.lat, center.lng], Math.max(locMap.getZoom(), 15)); }
+    return;
+  }
+  locMapHost = host;
+  loadLocationLeaflet().then(L => {
+    if (!host.isConnected || $("#locprev")?.querySelector('[data-location-map]') !== host) return;
+    if (locMap) { locMap.remove(); locMap = null; }
+    locMap = L.map(host, { scrollWheelZoom:false }).setView([center.lat, center.lng], valid ? 17 : 6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom:19, attribution:'&copy; OpenStreetMap contributors'
+    }).addTo(locMap);
+    locMarker = L.marker([center.lat, center.lng], { draggable:true, autoPan:true, opacity:valid ? 1 : 0.7 }).addTo(locMap);
+    const setCoord = point => {
+      const field = $("#f-loc")?.elements.coord; if (!field) return;
+      field.value = point.lat.toFixed(6) + ', ' + point.lng.toFixed(6);
+      locMarker.setLatLng(point); locMarker.setOpacity(1);
+      const hint = $("#locprev")?.querySelector('[data-location-hint]');
+      if (hint) hint.textContent = 'Lokasi dipilih: ' + field.value;
+    };
+    locMap.on('click', e => setCoord(e.latlng));
+    locMarker.on('dragend', () => setCoord(locMarker.getLatLng()));
+    requestAnimationFrame(() => locMap?.invalidateSize());
+  }).catch(() => {
+    if (!host.isConnected) return;
+    host.innerHTML = valid ? '<iframe class="map" loading="lazy" title="Pratonton lokasi" src="' + mapUrl(center.lat, center.lng) + '"></iframe>' : '';
+    const hint = $("#locprev")?.querySelector('[data-location-hint]');
+    if (hint) hint.textContent = 'Peta interaktif gagal dimuatkan. Masukkan koordinat secara manual atau guna GPS.';
+  });
+}
 function csv() {
   const rows = [["Staf","Cara gaji","Kadar","Hari hadir","Tidak hadir","Jam kerja","Lewat (kali)","Lewat (minit)","OT biasa (jam)","OT hari rehat (jam)","OT cuti umum (jam)","Gaji asas","Bayaran cuti umum","Potongan tidak hadir","OT (RM)","Elaun","Potongan lewat","Cuti berbayar (hari)","Bayaran cuti","Cuti tanpa gaji (hari)","Potongan cuti tanpa gaji","Potongan advance","Tuntutan","Bersih"]];
   activeStaff().forEach(s => { const { c } = staffMonth(s.id);
