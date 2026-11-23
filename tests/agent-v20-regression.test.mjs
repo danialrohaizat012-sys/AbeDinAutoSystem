@@ -52,3 +52,34 @@ test('proposed RLS requires active agent for each protected read',()=>{
   assert.match(policy,/a\.id\s*=\s*agent_(?:leads|commissions|payouts)\.agent_id/);
  }
 });
+
+test('simulated agent accounts remain scoped to their own rows',async()=>{
+ const records=[
+  {id:'lead-a',agent_id:'agent-a',created_at:'2026-11-23'},
+  {id:'lead-b',agent_id:'agent-b',created_at:'2026-11-23'}
+ ];
+ function scopedClient(userId,agentId,status='active'){
+  let table,filters=[];
+  const q={
+   select(){return q},
+   eq(k,v){filters.push([k,v]);return q},
+   order(){return q},
+   async maybeSingle(){
+    return {data:status==='active'?{id:agentId}:null,error:null};
+   },
+   async limit(){
+    const own=records.filter(row=>filters.some(([k,v])=>k==='agent_id'&&v===row.agent_id));
+    return {data:own,error:null};
+   }
+  };
+  return {
+   auth:{getUser:async()=>({data:{user:{id:userId}},error:null})},
+   from(t){table=t;filters=[];return q}
+  };
+ }
+ const a=await createV20AgentData(scopedClient('user-a','agent-a')).leads();
+ const b=await createV20AgentData(scopedClient('user-b','agent-b')).leads();
+ assert.deepEqual(a.map(x=>x.id),['lead-a']);
+ assert.deepEqual(b.map(x=>x.id),['lead-b']);
+ await assert.rejects(createV20AgentData(scopedClient('user-a','agent-a','inactive')).leads(),/Active agent required/);
+});
