@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>AbeDin Auto | Agent Network</title>
-<meta name="theme-color" content="#ffffff">
+<meta name="theme-color" content="#13243f">
 <style>
 :root{font:15px system-ui,-apple-system,Segoe UI,sans-serif;color:#15243a;background:#eff3f9}
 *{box-sizing:border-box}body{margin:0}button,input,select,textarea{font:inherit}button{cursor:pointer}
@@ -73,90 +73,18 @@ input,select,textarea{min-height:44px}
 .agent-v20-note{font-size:13px;color:#54718d;margin:0 0 14px}
 @media(max-width:720px){header{padding:15px 16px}main{padding:0 12px 36px;margin:16px auto}nav{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}nav button{padding:11px 7px;font-size:12px;min-width:0}.grid{grid-template-columns:minmax(0,1fr)}.stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.stat{padding:12px 9px;font-size:11px}.stat b{font-size:22px}.panel{padding:16px;border-radius:16px}.row>button{max-width:100%}.lead-contact-actions a{flex:1;min-width:115px}}
 @media(max-width:370px){.stats{grid-template-columns:1fr}.stat{font-size:13px}}
-
-/* ===== V125 Layout B: putih + kuning jagung, gaya app ===== */
-:root{--bg:#ffffff;--card:#ffffff;--soft:#f6f6f4;--line:#ececec;--ink:#1a1a1a;--mute:#6b6b6b;--y:#f5c400;--y2:#e0b000;--g:#128c4a;color-scheme:light}
-:root,body{background:var(--bg)!important;color:var(--ink)!important;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif}
-body{padding-bottom:110px}
-header{background:var(--bg)!important;box-shadow:none!important;border:0!important;padding:18px max(18px,calc((100% - 760px)/2)) 6px!important;display:flex;align-items:center;justify-content:space-between;gap:12px;color:var(--ink)!important}
-.hdr-greet{display:flex;flex-direction:column}.hdr-greet span{font-size:13px;color:var(--mute)}.hdr-greet b{font-size:22px;font-weight:800;letter-spacing:-.02em;color:var(--ink)}
-header #logout{width:44px;height:44px;border-radius:50%!important;padding:0!important;display:grid;place-items:center;background:#fff!important;border:1px solid var(--line)!important;color:var(--ink)!important}
-header #logout[hidden]{display:none!important}
-main{max-width:760px!important;margin:10px auto 0!important;padding:0 18px 24px!important}
-#alert{background:transparent!important;border:0!important;color:var(--mute)!important;font-size:13px!important;font-weight:500;padding:0 2px!important;margin:0 0 10px!important}
-#alert.error,#alert.warn{background:#fdecea!important;color:#9b2c1d!important;padding:10px 12px!important;border-radius:12px;font-weight:600}
-/* menu bawah terapung */
-nav#tabs{position:fixed!important;left:12px;right:12px;bottom:max(14px,env(safe-area-inset-bottom));z-index:50;max-width:520px;margin:0 auto!important;background:var(--ink)!important;border-radius:22px!important;padding:8px!important;display:flex!important;gap:4px!important;box-shadow:0 12px 30px #0000003d;width:auto!important;overflow:visible}
-nav#tabs button{flex:1 1 0;min-width:0;display:flex!important;flex-direction:column;align-items:center;gap:3px;background:transparent!important;border:0!important;color:#bdbdbd!important;border-radius:16px!important;padding:9px 2px!important;font-size:11px!important;font-weight:600!important;box-shadow:none!important}
-nav#tabs button svg{display:block}
-nav#tabs button[aria-current="page"]{background:var(--y)!important;color:var(--ink)!important;font-weight:700!important}
-nav#tabs button[hidden]{display:none!important}
-/* hero kuning */
-.hero{background:var(--y);border-radius:24px;padding:20px;display:flex;flex-direction:column;gap:4px;margin:6px 0 12px}
-.hero-lbl{font-size:12px;font-weight:600;color:#4d3d00}
-.hero b{font-size:36px;font-weight:800;letter-spacing:-.03em;line-height:1.1;color:var(--ink)}
-.hero-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-.chip-dark{background:var(--ink);color:var(--y);font-size:12px;font-weight:700;padding:6px 12px;border-radius:999px}
-.chip-light{background:#ffffff8c;color:var(--ink);font-size:12px;font-weight:600;padding:6px 12px;border-radius:999px}
-.mini3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:18px}
-.mini3 div{border:1px solid var(--line);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:2px}
-.mini3 b{font-size:20px;font-weight:800}.mini3 span{font-size:12px;color:var(--mute)}
-.strip-head{display:flex;justify-content:space-between;align-items:center;margin:0 0 10px}
-.strip-head h2{margin:0;font-size:16px;font-weight:700}
-.strip-head a{font-size:13px;font-weight:600;color:var(--mute)!important;text-decoration:none}
-.car-strip{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:6px;margin:0 -18px 18px;padding-left:18px;padding-right:18px;scrollbar-width:none}
-.car-strip::-webkit-scrollbar{display:none}
-.mini-car{flex:0 0 200px;scroll-snap-align:start;border:1px solid var(--line);border-radius:20px;overflow:hidden;display:flex;flex-direction:column;background:#fff}
-.mini-car img,.mini-ph{width:100%;height:120px;object-fit:cover;display:block;background:var(--soft)}
-.mini-ph{display:grid;place-items:center;color:var(--mute);font-size:12px}
-.mini-body{padding:12px;display:flex;flex-direction:column;gap:3px}
-.mini-body b{font-size:14px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.mini-price{font-size:15px;font-weight:800}
-.mini-com{font-size:11.5px;font-weight:700;color:#7a5f00;background:#fff4c2;border-radius:999px;padding:3px 8px;align-self:flex-start}
-.mini-share{margin-top:6px;height:44px;border:0;border-radius:12px;background:var(--ink);color:#fff;font-weight:700;font-size:13px}
-/* panel & komponen */
-.panel{background:var(--card)!important;border:1px solid var(--line)!important;border-radius:20px!important;box-shadow:none!important;color:var(--ink)}
-.dash-main{padding:18px!important}
-h1,h2,h3{color:var(--ink)}h1{font-size:22px}h2{font-size:16px;font-weight:700}
-p,.agent-v20-note,small{color:var(--mute)}
-a{color:var(--ink)}
-button.primary{background:var(--y)!important;color:var(--ink)!important;border:0!important;font-weight:800;border-radius:12px!important}
-button.primary:hover{background:var(--y2)!important}
-button.secondary{background:var(--soft)!important;color:var(--ink)!important;border:1px solid var(--line)!important;border-radius:12px!important}
-input,select,textarea{background:#fff!important;color:var(--ink)!important;border:1px solid #dedede!important;border-radius:12px!important}
-input:focus,select:focus,textarea:focus{outline:2px solid var(--y)!important;outline-offset:0;border-color:transparent!important}
-button:focus-visible,a:focus-visible{outline:2px solid var(--y)!important}
-.notice{background:var(--soft)!important;border:1px solid var(--line)!important;color:var(--ink)!important;border-radius:14px}
-.notice.warn{background:#fff8e1!important;border-color:#f3e0a0!important;color:#6b5000!important}
-.item,.lead-collapse{background:#fff!important;border-color:var(--line)!important;box-shadow:none!important;border-radius:16px!important}
-.lead-collapsed-content{border-color:var(--line)!important}
-.lead-head small,.lead-detail,.item small{color:var(--mute)!important}
-.agent-quicklinks a,.lead-contact-actions a,.lead-contact-actions a.call{background:var(--soft)!important;color:var(--ink)!important}
-.lead-contact-actions a.wa,.promo-actions .promo-whatsapp{background:var(--g)!important;color:#fff!important}
-.lead-badge{background:#fff4c2!important;color:#7a5f00!important}.lead-badge.read{background:#e3f5ea!important;color:#1f6b3a!important}
-.lead-car-link{color:#7a5f00!important}
-.promo-card{background:#fff!important;border-color:var(--line)!important;border-radius:20px!important;box-shadow:none!important}
-.promo-photo,.promo-no-photo{background:var(--soft)!important;color:var(--mute)!important}
-.promo-price{color:var(--ink)!important;font-size:17px!important;font-weight:800!important}
-.promo-commission{background:#fff4c2!important;color:#7a5f00!important;border:0!important;font-size:12.5px!important}
-.promo-commission.none{background:var(--soft)!important;color:var(--mute)!important}
-.promo-actions button,.promo-actions a{background:var(--soft)!important;color:var(--ink)!important;border-radius:10px!important}
-.promo-actions button.primary,.promo-box button.primary{background:var(--y)!important;color:var(--ink)!important}
-.terma details{background:#fff!important;border-color:var(--line)!important;border-radius:14px!important}.terma details[open] summary{color:var(--ink)}
-footer{color:#9a9a9a}
-@media(min-width:721px){.mini-car{flex-basis:220px}}
 </style>
 </head>
 <body>
-<header><div class="hdr-greet"><span id="hdrHi">Portal Ejen · Abe Din Auto</span><b id="hdrTitle">Selamat datang</b></div><button class="secondary" id="logout" hidden aria-label="Log keluar" title="Log keluar"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/></svg></button></header>
+<header><div><strong>AbeDin Auto</strong><div class="sub">Agent Network | Portal Ejen</div></div><button class="secondary" id="logout" hidden>Log keluar</button></header>
 <main>
 <div id="alert" class="notice" role="status" aria-live="polite">Menyemak sesi pengguna...</div>
 <nav id="tabs">
-<button data-view="dashboard" id="dashboardTab" hidden aria-current="false"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/></svg><span>Utama</span></button>
-<button data-view="promosi" id="promosiTab" hidden><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14l-1.5-6.5A2 2 0 0 0 15.6 9H8.4a2 2 0 0 0-1.9 1.5Z"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg><span>Katalog</span></button>
-<button data-view="account" aria-current="page"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>Akaun</span></button>
-<button data-view="terma"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/></svg><span>Terma</span></button>
-<button data-view="owner" id="ownerTab" hidden><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/></svg><span>Owner</span></button>
+<button data-view="dashboard" id="dashboardTab" hidden aria-current="false">Dashboard Ejen</button>
+<button data-view="promosi" id="promosiTab" hidden>Katalog Kereta</button>
+<button data-view="account" aria-current="page">Akaun</button>
+<button data-view="terma">Terma &amp; Syarat</button>
+<button data-view="owner" id="ownerTab" hidden>Kelulusan Owner</button>
 </nav>
 
 <section id="account">
@@ -192,18 +120,12 @@ footer{color:#9a9a9a}
 <button class="primary">Hantar permohonan rasmi</button></form></div>
 </div></section>
 
-<section id="dashboard" hidden>
-<div class="hero" role="region" aria-label="Ringkasan komisen"><span class="hero-lbl">Komisen bulan ini</span><b id="heroCom">RM 0</b>
-<div class="hero-chips"><span class="chip-dark" id="heroRank">Kedudukan —</span><span class="chip-light" id="heroCode">—</span></div></div>
-<div class="mini3"><div><b id="miniClicks">0</b><span>Klik bulan ini</span></div><div><b id="miniLeads">0</b><span>Lead</span></div><div><b id="miniSales">0</b><span>Jualan</span></div></div>
-<div class="strip-head"><h2>Kongsi kereta</h2><a href="#agentPromo" id="goAgentPromos">Semua</a></div>
-<div class="car-strip" id="dashCars"><p class="agent-v20-note">Memuatkan kereta…</p></div>
-<div class="panel dash-main">
-<p id="agentStatus" hidden>Maklumat ejen akan dipaparkan selepas permohonan diluluskan.</p>
-<div id="myRankCard" class="rank-card" hidden></div>
-<div class="stats" hidden><div class="stat">Klik hari ini<b id="countClicksToday">0</b></div><div class="stat">Klik 30 hari<b id="countClicksMonth">0</b></div><div class="stat">Lead<b id="countLeads">0</b></div>
-<div class="stat">Komisen<b id="countCommission">0</b></div>
-<div class="stat">Bayaran<b id="countPayout">0</b></div></div>
+<section id="dashboard" hidden><div class="panel"><h1>Dashboard Ejen</h1><p class="agent-v20-note">Pengurusan ejen asal dengan keselamatan dan penambahbaikan V20. Semua fungsi katalog, lead, komisen dan pembayaran dikekalkan.</p>
+<p id="agentStatus">Maklumat ejen akan dipaparkan selepas permohonan diluluskan.</p>
+<div id="myRankCard" class="rank-card" hidden></div><div class="notice" style="margin:12px 0"><strong>Katalog Kereta Ejen</strong><p style="margin:6px 0 10px">Pilih kereta dan kongsi link rujukan anda terus ke WhatsApp.</p><a href="#agentPromo" id="goAgentPromos" style="display:inline-block;background:#16689f;color:white;padding:11px 16px;border-radius:10px;text-decoration:none;font-weight:700">Buka Katalog Kereta</a></div>
+<div class="stats"><div class="stat">Klik unik (hari ini)<b id="countClicksToday">0</b></div><div class="stat">Klik unik (30 hari)<b id="countClicksMonth">0</b></div><div class="stat">Lead saya<b id="countLeads">0</b></div>
+<div class="stat">Komisen saya<b id="countCommission">0</b></div>
+<div class="stat">Penyata pembayaran<b id="countPayout">0</b></div></div>
 <div class="panel" id="agentClickPanel"><h2>Analitik Klik Promosi</h2><p class="agent-v20-note">Klik unik mengikut pelayar, hari dan kereta. Klik tidak bermaksud lead atau jualan.</p><div id="clickCarStats" class="items"></div></div><div class="row" style="margin:12px 0;justify-content:space-between"><h2 style="margin:0">Lead Saya</h2><button class="secondary" type="button" id="refreshMyLeads">Muat Semula Data</button></div>
 <div class="notice" style="margin:14px 0"><strong>Lead Saya</strong><p style="margin:5px 0 0">Nama, telefon, kereta diminati dan butang WhatsApp pelanggan dipaparkan di sini.</p></div>
 <div class="lead-tools"><label for="leadSearch">Cari lead<input id="leadSearch" type="search" placeholder="Nama pelanggan atau kereta" autocomplete="off"></label><label for="leadReadFilter">Status bacaan<select id="leadReadFilter"><option value="all">Semua lead</option><option value="unread">Belum baca</option><option value="read">Sudah baca</option></select></label></div><p id="leadFilterCount" class="agent-v20-note" aria-live="polite"></p><div id="leadItems" class="items"></div>
@@ -457,10 +379,10 @@ async function sync(){
     if(!f.state.value)f.state.value='Kelantan';staffPrefill=sb||null;}catch(_){}}}
   if(app){const ap=$('applicationInAccount'),host=ap.parentNode;host.append(ap);}
   await loadAgentAccount(app,profile);
-  if(profile?.status==='active'){$('agentStatus').textContent='ID ejen: '+profile.agent_code+' | Status: Aktif';$('heroCode').textContent=profile.agent_code;$('leadPanel').hidden=false;await loadDashboard();await loadAgentCatalogue();loadMyRank();}
+  if(profile?.status==='active'){$('agentStatus').textContent='ID ejen: '+profile.agent_code+' | Status: Aktif';$('leadPanel').hidden=false;await loadDashboard();await loadAgentCatalogue();loadMyRank();}
   else {$('agentStatus').textContent=app?'Permohonan: '+app.status+'. Dashboard hanya aktif selepas kelulusan.':'Belum menjadi ejen. Hantar permohonan dahulu.';
    for(const id of ['leadItems','commissionItems','payoutItems'])$(id).replaceChildren();for(const id of ['countLeads','countCommission','countPayout'])text($(id),'0');}
-  {const nm=($('agentDetailsForm').elements.display_name.value||app?.full_name||'').trim();message(nm?'Selamat datang, '+nm+'!':'Selamat datang! ('+me.email+')');$('hdrHi').textContent='Hai, '+(nm?nm.split(/\s+/).slice(0,2).join(' '):'Ejen');$('hdrTitle').textContent=profile?.status==='active'?'Jom jual hari ini':'Portal Ejen';}
+  {const nm=($('agentDetailsForm').elements.display_name.value||app?.full_name||'').trim();message(nm?'Selamat datang, '+nm+'!':'Selamat datang! ('+me.email+')');}
   view(profile?.status==='active'?'dashboard':owner?'owner':'account');
  }catch(e){fail(e);}
 }
@@ -535,12 +457,13 @@ async function loadOwnerPromo(){
 $('copyPromoAiPrompt').onclick=()=>copyAgentLink('Jana tepat 5 ayat promosi kereta terpakai AbeDin Auto dalam Bahasa Melayu. Setiap ayat maksimum 500 aksara dan wajib mengandungi {model}, {tahun}, {harga}. Gaya berlainan, menarik dan profesional. Jangan mereka-reka diskaun, kelulusan pinjaman, jaminan, keadaan kereta atau stok. Nomborkan 1 hingga 5.');
 $('goAgentPromos').onclick=e=>{e.preventDefault();view('promosi')}
 async function loadMyRank(){
- try{const {data,error}=await supabase.rpc('agent_my_stats_v1');if(error||!data)return;
-  const rm=n=>'RM '+Number(n||0).toLocaleString('ms-MY',{maximumFractionDigits:0});
-  $('heroCom').textContent=rm(data.commission_month);
-  $('heroRank').textContent='#'+data.rank+' daripada '+data.total;
-  $('miniClicks').textContent=String(data.clicks??0);$('miniLeads').textContent=String(data.leads??0);$('miniSales').textContent=String(data.sales??0);
- }catch(_){}
+ const card=$('myRankCard');
+ try{const {data,error}=await supabase.rpc('agent_my_stats_v1');if(error||!data){card.hidden=true;return}
+  card.replaceChildren();const rk=document.createElement('div');rk.className='rk';rk.textContent='#'+data.rank;const sm=document.createElement('small');sm.textContent='daripada '+data.total+' ejen';rk.append(sm);
+  const rs=document.createElement('div');rs.className='rs';
+  for(const [l,v] of [['Klik bulan ini',data.clicks],['Lead',data.leads],['Jualan',data.sales],['Klik→Lead',data.conversion+'%']]){const d=document.createElement('div');d.textContent=l;const b=document.createElement('b');b.textContent=String(v);d.prepend(b);rs.append(d)}
+  card.append(rk,rs);card.hidden=false;
+ }catch(_){card.hidden=true}
 }
 async function shareCarPost(v,url,ayat,btn){
  const label=[v.make,v.model,v.model_year].filter(Boolean).join(' ');
@@ -644,20 +567,6 @@ async function loadAgentCatalogue(){
   actions.append(qs,pt);content.append(title,price,commissionNote,actions,pbox);box.append(content);grid.append(box);
  }
  promoVisibleLimit=12;applyPromoFilter();
- const strip=$('dashCars');strip.replaceChildren();
- for(const v of body.vehicles.slice(0,10)){
-  if(typeof v.public_vehicle_id!=='string')continue;
-  const url=agentCarLink(v),label=[v.make,v.model,v.model_year].filter(Boolean).join(' ');
-  const a=document.createElement('article');a.className='mini-car';
-  if(v.image_url&&v.image_url.startsWith('https://buzpdyvvoiqgbeventwm.supabase.co/storage/v1/object/public/vehicle-images/')){const im=document.createElement('img');im.src=v.image_url;im.alt=label;im.loading='lazy';a.append(im)}else{const ph=document.createElement('div');ph.className='mini-ph';ph.textContent='Foto belum tersedia';a.append(ph)}
-  const b=document.createElement('div');b.className='mini-body';
-  const t=document.createElement('b');t.textContent=label;const pr=document.createElement('span');pr.className='mini-price';pr.textContent='RM '+Number(v.display_price??v.asking_price??0).toLocaleString('ms-MY');
-  b.append(t,pr);
-  if(v.indicative_commission!=null&&Number(v.indicative_commission)>0){const c=document.createElement('span');c.className='mini-com';c.textContent='Komisen RM '+Number(v.indicative_commission).toLocaleString('ms-MY');b.append(c)}
-  const btn=document.createElement('button');btn.type='button';btn.className='mini-share';btn.textContent='Kongsi';btn.onclick=()=>shareCarPost(v,url,'',btn);b.append(btn);
-  a.append(b);strip.append(a);
- }
- if(!strip.childElementCount){const p=document.createElement('p');p.className='agent-v20-note';p.textContent='Tiada kereta tersedia.';strip.append(p)}
 }
 let promoVisibleLimit=12;
 function applyPromoFilter(){
