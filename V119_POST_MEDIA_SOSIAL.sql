@@ -1,0 +1,3 @@
+-- V119 (DRAF, sudah dijalankan): app_private.social_config (token FB/IG/Threads), public.social_posts (log),
+-- owner_social_config_set_v1 / owner_social_config_status_v1, social_config_get_v1 (service_role sahaja).
+-- Edge function: social-post.
