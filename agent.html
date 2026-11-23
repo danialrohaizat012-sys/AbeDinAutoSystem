@@ -73,6 +73,25 @@ input,select,textarea{min-height:44px}
 .agent-v20-note{font-size:13px;color:#54718d;margin:0 0 14px}
 @media(max-width:720px){header{padding:15px 16px}main{padding:0 12px 36px;margin:16px auto}nav{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}nav button{padding:11px 7px;font-size:12px;min-width:0}.grid{grid-template-columns:minmax(0,1fr)}.stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.stat{padding:12px 9px;font-size:11px}.stat b{font-size:22px}.panel{padding:16px;border-radius:16px}.row>button{max-width:100%}.lead-contact-actions a{flex:1;min-width:115px}}
 @media(max-width:370px){.stats{grid-template-columns:1fr}.stat{font-size:13px}}
+
+/* V121: susun atur moden — nav & statistik boleh slide */
+nav#tabs{display:flex!important;flex-wrap:nowrap!important;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;gap:6px;padding:5px;border-radius:14px}
+nav#tabs::-webkit-scrollbar{display:none}
+nav#tabs button{flex:0 0 auto!important;scroll-snap-align:start;white-space:nowrap;padding:10px 16px!important;font-size:13.5px!important;border-radius:999px!important;min-width:0}
+.dash-panel{padding-top:16px}
+.agent-chip{display:inline-flex;align-items:center;gap:6px;margin:0 0 12px;padding:6px 12px;border-radius:999px;background:#e7f3ec;color:#1d6b45;font-weight:700;font-size:13px}
+.agent-chip::before{content:"";width:8px;height:8px;border-radius:50%;background:#2fa36b}
+.cta-card{display:flex;align-items:center;gap:12px;padding:14px 16px;margin:12px 0;border-radius:16px;background:#f2f7fd;border:1px solid #dbe7f3;text-decoration:none;color:#16335b}
+.cta-ico{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:#174f83;font-size:20px;flex:0 0 auto}
+.cta-txt{flex:1;min-width:0;display:flex;flex-direction:column}.cta-txt b{font-size:15.5px}.cta-txt small{color:#5d7186;font-size:12.5px}
+.cta-go{font-size:26px;color:#174f83}
+.stats.slide{display:flex!important;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;gap:10px;padding:2px 2px 10px;margin:12px -2px;scrollbar-width:none}
+.stats.slide::-webkit-scrollbar{display:none}
+.stats.slide .stat{flex:0 0 clamp(130px,38%,200px);scroll-snap-align:start;padding:14px!important;border-radius:16px!important}
+.stats.slide .stat span{display:block;font-size:12.5px;color:#5d7186;white-space:nowrap}
+.stats.slide .stat b{font-size:26px!important;margin:6px 0 0}
+.rank-card{border-radius:18px!important}
+@media(max-width:520px){.rank-card{grid-template-columns:1fr!important}.rank-card .rk{display:flex;align-items:baseline;gap:8px}.rank-card .rs{display:grid!important;grid-template-columns:repeat(4,1fr);gap:6px!important}.rank-card .rs b{font-size:18px!important}.rank-card .rs div{font-size:11px!important}}
 </style>
 </head>
 <body>
@@ -120,12 +139,10 @@ input,select,textarea{min-height:44px}
 <button class="primary">Hantar permohonan rasmi</button></form></div>
 </div></section>
 
-<section id="dashboard" hidden><div class="panel"><h1>Dashboard Ejen</h1><p class="agent-v20-note">Pengurusan ejen asal dengan keselamatan dan penambahbaikan V20. Semua fungsi katalog, lead, komisen dan pembayaran dikekalkan.</p>
-<p id="agentStatus">Maklumat ejen akan dipaparkan selepas permohonan diluluskan.</p>
-<div id="myRankCard" class="rank-card" hidden></div><div class="notice" style="margin:12px 0"><strong>Katalog Kereta Ejen</strong><p style="margin:6px 0 10px">Pilih kereta dan kongsi link rujukan anda terus ke WhatsApp.</p><a href="#agentPromo" id="goAgentPromos" style="display:inline-block;background:#16689f;color:white;padding:11px 16px;border-radius:10px;text-decoration:none;font-weight:700">Buka Katalog Kereta</a></div>
-<div class="stats"><div class="stat">Klik unik (hari ini)<b id="countClicksToday">0</b></div><div class="stat">Klik unik (30 hari)<b id="countClicksMonth">0</b></div><div class="stat">Lead saya<b id="countLeads">0</b></div>
-<div class="stat">Komisen saya<b id="countCommission">0</b></div>
-<div class="stat">Penyata pembayaran<b id="countPayout">0</b></div></div>
+<section id="dashboard" hidden><div class="panel dash-panel">
+<p id="agentStatus" class="agent-chip">Maklumat ejen akan dipaparkan selepas permohonan diluluskan.</p>
+<div id="myRankCard" class="rank-card" hidden></div><a href="#agentPromo" id="goAgentPromos" class="cta-card"><span class="cta-ico">🚗</span><span class="cta-txt"><b>Katalog Kereta</b><small>Pilih kereta &amp; kongsi link rujukan anda</small></span><span class="cta-go">›</span></a>
+<div class="stats slide"><div class="stat"><span>👆 Klik hari ini</span><b id="countClicksToday">0</b></div><div class="stat"><span>📈 Klik 30 hari</span><b id="countClicksMonth">0</b></div><div class="stat"><span>🔥 Lead saya</span><b id="countLeads">0</b></div><div class="stat"><span>💰 Komisen</span><b id="countCommission">0</b></div><div class="stat"><span>🧾 Pembayaran</span><b id="countPayout">0</b></div></div>
 <div class="panel" id="agentClickPanel"><h2>Analitik Klik Promosi</h2><p class="agent-v20-note">Klik unik mengikut pelayar, hari dan kereta. Klik tidak bermaksud lead atau jualan.</p><div id="clickCarStats" class="items"></div></div><div class="row" style="margin:12px 0;justify-content:space-between"><h2 style="margin:0">Lead Saya</h2><button class="secondary" type="button" id="refreshMyLeads">Muat Semula Data</button></div>
 <div class="notice" style="margin:14px 0"><strong>Lead Saya</strong><p style="margin:5px 0 0">Nama, telefon, kereta diminati dan butang WhatsApp pelanggan dipaparkan di sini.</p></div>
 <div class="lead-tools"><label for="leadSearch">Cari lead<input id="leadSearch" type="search" placeholder="Nama pelanggan atau kereta" autocomplete="off"></label><label for="leadReadFilter">Status bacaan<select id="leadReadFilter"><option value="all">Semua lead</option><option value="unread">Belum baca</option><option value="read">Sudah baca</option></select></label></div><p id="leadFilterCount" class="agent-v20-note" aria-live="polite"></p><div id="leadItems" class="items"></div>
