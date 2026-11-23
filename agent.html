@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>AbeDin Auto | Agent Network</title>
-<meta name="theme-color" content="#13243f">
+<meta name="theme-color" content="#111111">
 <style>
 :root{font:15px system-ui,-apple-system,Segoe UI,sans-serif;color:#15243a;background:#eff3f9}
 *{box-sizing:border-box}body{margin:0}button,input,select,textarea{font:inherit}button{cursor:pointer}
@@ -73,10 +73,62 @@ input,select,textarea{min-height:44px}
 .agent-v20-note{font-size:13px;color:#54718d;margin:0 0 14px}
 @media(max-width:720px){header{padding:15px 16px}main{padding:0 12px 36px;margin:16px auto}nav{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}nav button{padding:11px 7px;font-size:12px;min-width:0}.grid{grid-template-columns:minmax(0,1fr)}.stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.stat{padding:12px 9px;font-size:11px}.stat b{font-size:22px}.panel{padding:16px;border-radius:16px}.row>button{max-width:100%}.lead-contact-actions a{flex:1;min-width:115px}}
 @media(max-width:370px){.stats{grid-template-columns:1fr}.stat{font-size:13px}}
+
+/* ===== V121 Tema Abe Din Auto: kuning jagung · hitam · putih ===== */
+:root{--y:#f5c400;--y2:#e0b000;--ink:#111111;--ink2:#1c1c1c;--paper:#ffffff;--bg:#f6f5f1;--mute:#6b6b6b;--line:#e7e4da;--ysoft:#fff8d6}
+:root{background:var(--bg);color:var(--ink)}
+body{background:var(--bg)!important;color:var(--ink)}
+header{background:var(--ink)!important;box-shadow:0 2px 0 var(--y),0 10px 30px #0003!important;color:#fff}
+header .brand{display:flex;align-items:center;gap:12px}.brand-logo{height:40px;width:auto;display:block}
+header strong{font-size:18px;letter-spacing:-.02em}header .sub{color:var(--y);opacity:1;font-weight:600;letter-spacing:.04em;text-transform:uppercase;font-size:11px}
+header #logout{background:transparent!important;color:var(--y)!important;border:1.5px solid var(--y)!important;border-radius:999px;padding:9px 16px}
+main{max-width:1100px}
+#alert{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--y);color:var(--ink);font-weight:600;border-radius:12px}
+nav{background:var(--ink)!important;padding:5px!important;border-radius:14px!important;width:100%!important;display:grid!important;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:4px!important}
+nav button{background:transparent!important;color:#cfcfcf!important;border:0!important;border-radius:10px!important;padding:11px 8px!important;font-size:13px!important;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+nav button[aria-current="page"]{background:var(--y)!important;color:var(--ink)!important;box-shadow:none!important}
+nav button[hidden]{display:none!important}
+.panel{background:var(--paper)!important;border:1px solid var(--line)!important;border-radius:18px!important;box-shadow:0 6px 24px #0000000a!important}
+h1,h2,h3{color:var(--ink)}h2{font-size:18px;letter-spacing:-.01em}
+p,.agent-v20-note{color:var(--mute)}
+a{color:#9a7400}
+button.primary{background:var(--y)!important;color:var(--ink)!important;border:0!important;font-weight:800}
+button.primary:hover{background:var(--y2)!important}
+button.secondary{background:#f1efe8!important;color:var(--ink)!important;border:1px solid var(--line)!important}
+input,select,textarea{border:1px solid #d9d5c8!important;border-radius:10px!important;background:#fff}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--y)!important;outline-offset:1px;border-color:var(--y2)!important}
+button:focus-visible,a:focus-visible{outline:3px solid var(--y)!important}
+.notice{background:var(--ysoft)!important;border:1px solid #f0dc8a!important;color:#3d3200!important;border-radius:12px}
+.notice.warn{background:#fff3e0!important;border-color:#f3c98b!important;color:#6b3f00!important}
+#agentStatus{display:inline-flex;align-items:center;gap:8px;background:var(--ink);color:#fff;border-radius:999px;padding:7px 14px;font-size:13px;margin:0 0 4px}
+#agentStatus::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--y)}
+.rank-card{background:linear-gradient(135deg,#111 0%,#262626 100%)!important;border:1px solid #2e2e2e;border-radius:18px!important}
+.rank-card .rk{color:var(--y)}.rank-card .rk small{color:#bdbdbd}.rank-card .rs b{color:#fff}.rank-card .rs div{color:#bdbdbd;opacity:1}
+.stats{gap:10px!important}
+.stat{background:var(--paper)!important;border:1px solid var(--line)!important;border-radius:14px!important;position:relative;color:var(--mute);font-size:12.5px;font-weight:600}
+.stat::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:3px;background:var(--y)}
+.stat b{color:var(--ink)!important;letter-spacing:-.03em}
+#goAgentPromos{background:var(--ink)!important;color:var(--y)!important;border-radius:999px!important}
+.agent-quicklinks a,.lead-contact-actions a,.lead-contact-actions a.call{background:#f1efe8!important;color:var(--ink)!important}
+.lead-contact-actions a.wa{background:#128c4a!important;color:#fff!important}
+.lead-badge{background:var(--ysoft)!important;color:#6b5300!important}.lead-badge.read{background:#e7f4ea!important;color:#1f6b3a!important}
+.lead-car-link{color:#8a6800!important}
+.item,.lead-collapse{border-color:var(--line)!important;box-shadow:none!important}
+.promo-card{border-color:var(--line)!important;border-radius:16px!important;box-shadow:0 4px 16px #00000008;transition:transform .15s,box-shadow .15s}
+.promo-card:hover{transform:translateY(-2px);box-shadow:0 10px 24px #00000014}
+.promo-price{color:var(--ink)!important;font-size:18px!important;font-weight:800!important}
+.promo-commission{background:var(--y)!important;color:var(--ink)!important;border:0!important}
+.promo-commission.none{background:#f1efe8!important;color:var(--mute)!important}
+.promo-actions button,.promo-actions a{background:#f1efe8!important;color:var(--ink)!important}
+.promo-actions .promo-whatsapp{background:#128c4a!important;color:#fff!important}
+.promo-actions button.primary,.promo-box button.primary{background:var(--y)!important;color:var(--ink)!important}
+.terma details{border-color:var(--line)!important}.terma details[open] summary{color:#8a6800}
+footer{color:#8b8b8b}
+@media(max-width:720px){nav{grid-template-columns:repeat(2,minmax(0,1fr))!important}.brand-logo{height:34px}header strong{font-size:16px}}
 </style>
 </head>
 <body>
-<header><div><strong>AbeDin Auto</strong><div class="sub">Agent Network | Portal Ejen</div></div><button class="secondary" id="logout" hidden>Log keluar</button></header>
+<header><div class="brand"><img src="/abe-din-logo.png" alt="Abe Din Auto" class="brand-logo"><div><strong>Abe Din Auto</strong><div class="sub">Portal Ejen</div></div></div><button class="secondary" id="logout" hidden>Log keluar</button></header>
 <main>
 <div id="alert" class="notice" role="status" aria-live="polite">Menyemak sesi pengguna...</div>
 <nav id="tabs">
@@ -120,7 +172,7 @@ input,select,textarea{min-height:44px}
 <button class="primary">Hantar permohonan rasmi</button></form></div>
 </div></section>
 
-<section id="dashboard" hidden><div class="panel"><h1>Dashboard Ejen</h1><p class="agent-v20-note">Pengurusan ejen asal dengan keselamatan dan penambahbaikan V20. Semua fungsi katalog, lead, komisen dan pembayaran dikekalkan.</p>
+<section id="dashboard" hidden><div class="panel">
 <p id="agentStatus">Maklumat ejen akan dipaparkan selepas permohonan diluluskan.</p>
 <div id="myRankCard" class="rank-card" hidden></div><div class="notice" style="margin:12px 0"><strong>Katalog Kereta Ejen</strong><p style="margin:6px 0 10px">Pilih kereta dan kongsi link rujukan anda terus ke WhatsApp.</p><a href="#agentPromo" id="goAgentPromos" style="display:inline-block;background:#16689f;color:white;padding:11px 16px;border-radius:10px;text-decoration:none;font-weight:700">Buka Katalog Kereta</a></div>
 <div class="stats"><div class="stat">Klik unik (hari ini)<b id="countClicksToday">0</b></div><div class="stat">Klik unik (30 hari)<b id="countClicksMonth">0</b></div><div class="stat">Lead saya<b id="countLeads">0</b></div>
