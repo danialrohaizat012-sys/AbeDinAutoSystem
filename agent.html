@@ -35,6 +35,12 @@ button:disabled{opacity:.55;cursor:not-allowed}.row{display:flex;flex-wrap:wrap;
 .promo-photo{width:100%;aspect-ratio:16/10;object-fit:cover;display:block;background:#e8eef5}
 .promo-no-photo{display:grid;place-items:center;aspect-ratio:16/10;background:#edf3f9;color:#526984}
 .promo-body{padding:13px}.promo-title{font-size:15px;font-weight:750;line-height:1.35}
+.rank-card{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center;background:linear-gradient(135deg,#0f2d4d,#16689f);color:#fff;border-radius:16px;padding:16px 18px;margin:12px 0}
+.rank-card .rk{font-size:38px;font-weight:800;line-height:1}.rank-card .rk small{display:block;font-size:12px;font-weight:500;opacity:.8}
+.rank-card .rs{display:flex;gap:16px;flex-wrap:wrap}.rank-card .rs div{font-size:12px;opacity:.85}.rank-card .rs b{display:block;font-size:20px;opacity:1}
+.notif-count{background:#d9363e;color:#fff;border-radius:999px;font-size:12px;padding:2px 8px;vertical-align:middle}
+.notif-item{border-left:3px solid #16689f;padding:8px 12px;border-radius:8px;background:#f5f8fb;margin-bottom:6px}.notif-item.unread{border-left-color:#d9a400;background:#fffaf0}
+.notif-item strong{display:block}.notif-item small{color:#667}
 .promo-commission{display:inline-block!important;background:#fff4d6;color:#7a5200;border:1px solid #f0d58c;border-radius:999px;padding:5px 11px;font-weight:700;font-size:14px}.promo-commission.none{background:#f1f3f5;color:#667;border-color:#dde;font-weight:500}
 .promo-price{font-size:17px;font-weight:750;color:#12589f;margin:8px 0}
 .promo-actions{display:flex;flex-wrap:wrap;gap:7px}
@@ -114,7 +120,9 @@ input,select,textarea{min-height:44px}
 </div></section>
 
 <section id="dashboard" hidden><div class="panel"><h1>Dashboard Ejen</h1><p class="agent-v20-note">Pengurusan ejen asal dengan keselamatan dan penambahbaikan V20. Semua fungsi katalog, lead, komisen dan pembayaran dikekalkan.</p>
-<p id="agentStatus">Maklumat ejen akan dipaparkan selepas permohonan diluluskan.</p><div class="notice" style="margin:12px 0"><strong>Promosi Kereta Ejen</strong><p style="margin:6px 0 10px">Pilih kereta, lihat ayat promosi yang diluluskan owner dan kongsi terus ke WhatsApp.</p><a href="#agentPromo" id="goAgentPromos" style="display:inline-block;background:#16689f;color:white;padding:11px 16px;border-radius:10px;text-decoration:none;font-weight:700">Buka Katalog & Ayat Promosi</a></div>
+<p id="agentStatus">Maklumat ejen akan dipaparkan selepas permohonan diluluskan.</p>
+<div id="myRankCard" class="rank-card" hidden></div>
+<div class="panel notif-panel" id="agentNotifPanel" hidden><div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">🔔 Notifikasi <span id="notifCount" class="notif-count" hidden></span></h2><button type="button" class="secondary" id="enableAgentPush">Hidupkan notifikasi telefon</button></div><div id="agentNotifs" class="items" style="margin-top:10px"></div></div><div class="notice" style="margin:12px 0"><strong>Promosi Kereta Ejen</strong><p style="margin:6px 0 10px">Pilih kereta, lihat ayat promosi yang diluluskan owner dan kongsi terus ke WhatsApp.</p><a href="#agentPromo" id="goAgentPromos" style="display:inline-block;background:#16689f;color:white;padding:11px 16px;border-radius:10px;text-decoration:none;font-weight:700">Buka Katalog & Ayat Promosi</a></div>
 <div class="stats"><div class="stat">Klik unik (hari ini)<b id="countClicksToday">0</b></div><div class="stat">Klik unik (30 hari)<b id="countClicksMonth">0</b></div><div class="stat">Lead saya<b id="countLeads">0</b></div>
 <div class="stat">Komisen saya<b id="countCommission">0</b></div>
 <div class="stat">Penyata pembayaran<b id="countPayout">0</b></div></div>
@@ -303,7 +311,7 @@ async function sync(){
     if(!f.state.value)f.state.value='Kelantan';staffPrefill=sb||null;}catch(_){}}}
   if(app){const ap=$('applicationInAccount'),host=ap.parentNode;host.append(ap);}
   await loadAgentAccount(app,profile);
-  if(profile?.status==='active'){$('agentStatus').textContent='ID ejen: '+profile.agent_code+' | Status: Aktif';$('leadPanel').hidden=false;await loadDashboard();await loadAgentCatalogue();}
+  if(profile?.status==='active'){$('agentStatus').textContent='ID ejen: '+profile.agent_code+' | Status: Aktif';$('leadPanel').hidden=false;await loadDashboard();await loadAgentCatalogue();loadMyRank();loadAgentNotifs().catch(()=>{});}
   else {$('agentStatus').textContent=app?'Permohonan: '+app.status+'. Dashboard hanya aktif selepas kelulusan.':'Belum menjadi ejen. Hantar permohonan dahulu.';
    for(const id of ['leadItems','commissionItems','payoutItems'])$(id).replaceChildren();for(const id of ['countLeads','countCommission','countPayout'])text($(id),'0');}
   {const nm=($('agentDetailsForm').elements.display_name.value||app?.full_name||'').trim();message(nm?'Selamat datang, '+nm+'!':'Selamat datang! ('+me.email+')');}
@@ -420,6 +428,38 @@ async function loadOwnerPromo(){
 $('copyPromoAiPrompt').onclick=()=>copyAgentLink('Jana tepat 5 ayat promosi kereta terpakai AbeDin Auto dalam Bahasa Melayu. Setiap ayat maksimum 500 aksara dan wajib mengandungi {model}, {tahun}, {harga}. Gaya berlainan, menarik dan profesional. Jangan mereka-reka diskaun, kelulusan pinjaman, jaminan, keadaan kereta atau stok. Nomborkan 1 hingga 5.');
 $('goAgentPromos').onclick=e=>{e.preventDefault();view('promosi')}
 $('promoCarChoice').onchange=loadPublishedPromo;
+async function loadMyRank(){
+ const card=$('myRankCard');
+ try{const {data,error}=await supabase.rpc('agent_my_stats_v1');if(error||!data){card.hidden=true;return}
+  card.replaceChildren();const rk=document.createElement('div');rk.className='rk';rk.textContent='#'+data.rank;const sm=document.createElement('small');sm.textContent='daripada '+data.total+' ejen';rk.append(sm);
+  const rs=document.createElement('div');rs.className='rs';
+  for(const [l,v] of [['Klik bulan ini',data.clicks],['Lead',data.leads],['Jualan',data.sales],['Klik→Lead',data.conversion+'%']]){const d=document.createElement('div');d.textContent=l;const b=document.createElement('b');b.textContent=String(v);d.prepend(b);rs.append(d)}
+  card.append(rk,rs);card.hidden=false;
+ }catch(_){card.hidden=true}
+}
+async function loadAgentNotifs(){
+ const panel=$('agentNotifPanel');panel.hidden=false;
+ const {data,error}=await supabase.from('app_notifications').select('id,title,body,created_at,read_at').eq('user_id',me.id).order('created_at',{ascending:false}).limit(20);
+ const box=$('agentNotifs');box.replaceChildren();
+ if(error){box.textContent='Gagal memuat notifikasi.';return}
+ const unread=(data||[]).filter(n=>!n.read_at);const c=$('notifCount');c.hidden=!unread.length;c.textContent=String(unread.length);
+ if(!data?.length){const p=document.createElement('p');p.className='agent-v20-note';p.textContent='Belum ada notifikasi. Anda akan dimaklumkan bila lead dipadankan, komisen diluluskan dan bayaran dibuat.';box.append(p);return}
+ for(const n of data){const d=document.createElement('div');d.className='notif-item'+(n.read_at?'':' unread');const t=document.createElement('strong');t.textContent=n.title;const b=document.createElement('div');b.textContent=n.body||'';const sm=document.createElement('small');sm.textContent=new Date(n.created_at).toLocaleString('ms-MY');d.append(t,b,sm);box.append(d)}
+ if(unread.length)supabase.from('app_notifications').update({read_at:new Date().toISOString()}).in('id',unread.map(n=>n.id)).then(()=>{});
+}
+$('enableAgentPush').onclick=async()=>{
+ const b=$('enableAgentPush');
+ try{
+  if(!('serviceWorker' in navigator)||!('PushManager' in window)||!('Notification' in window))throw new Error('Telefon/pelayar ini tidak menyokong notifikasi. Di iPhone, tambah portal ke Skrin Utama (Share → Add to Home Screen) dan buka dari situ.');
+  const perm=await Notification.requestPermission();if(perm!=='granted')throw new Error('Notifikasi ditolak. Benarkan dalam Tetapan telefon.');
+  const reg=await navigator.serviceWorker.register('/service-worker.js');await navigator.serviceWorker.ready;
+  const {data:key,error:ke}=await supabase.rpc('push_public_key');if(ke||!key)throw new Error('Notifikasi belum dipasang di server.');
+  const pad='='.repeat((4-key.length%4)%4),raw=atob((key+pad).replace(/-/g,'+').replace(/_/g,'/')),arr=Uint8Array.from([...raw].map(ch=>ch.charCodeAt(0)));
+  let sub=await reg.pushManager.getSubscription();if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:arr});
+  const j=sub.toJSON();const {error}=await supabase.rpc('push_subscribe_agent_v1',{p_endpoint:j.endpoint,p_p256dh:j.keys.p256dh,p_auth:j.keys.auth,p_ua:navigator.userAgent.slice(0,200)});if(error)throw error;
+  b.textContent='✓ Notifikasi telefon aktif';b.disabled=true;message('Notifikasi telefon diaktifkan.');
+ }catch(e){fail(e)}
+};
 async function loadAgentCatalogue(){
  if(agent?.status!=='active')return;
  $('agentPromo').hidden=false;

@@ -1,0 +1,5 @@
+-- V116 (sudah dijalankan di Supabase, dengan persetujuan owner):
+-- * FK app_notifications.user_id & push_subscriptions.user_id kini ke auth.users (ejen bukan staf boleh terima notifikasi).
+-- * push_subscribe_agent_v1 untuk ejen aktif.
+-- * Trigger notifikasi ejen: lead dipadankan/menang, komisen diluluskan/dibatalkan, payout dibayar, akaun diluluskan/status.
+-- * agent_internal.agent_month_stats_v1, public.agent_my_stats_v1, public.owner_agent_leaderboard_v1 (prestasi bulan ini).

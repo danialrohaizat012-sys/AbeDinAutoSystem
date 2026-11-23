@@ -134,6 +134,15 @@ export function mountAgentAdmin(host,{client,profile}={}){
  .ada-agent-owner .ag-promo-slot textarea{width:100%;box-sizing:border-box;border-radius:8px;padding:8px;background:var(--ag-field);color:var(--ag-field-ink);border:1px solid var(--ag-field-border);font:inherit}
  .ada-agent-owner .ag-promo-count{display:block;text-align:right;color:var(--ag-muted);font-size:12px}
  .ada-agent-owner .ag-muted-note{display:block;color:var(--ag-muted);font-size:12px;margin-top:4px}
+ .ada-agent-owner .ag-lb{display:grid;gap:4px}
+ .ada-agent-owner .ag-lb-row{display:grid;grid-template-columns:34px minmax(0,1fr) repeat(4,52px);align-items:center;gap:6px;padding:8px 10px;border-radius:10px;background:var(--ag-raised);border:1px solid var(--ag-border)}
+ .ada-agent-owner .ag-lb-head{background:transparent;border:0;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ag-muted);padding:2px 10px}
+ .ada-agent-owner .ag-lb-row.top{border-color:var(--ag-accent)}
+ .ada-agent-owner .ag-lb-row.idle{opacity:.55}
+ .ada-agent-owner .ag-lb-rk{font-weight:800;text-align:center;font-size:16px}
+ .ada-agent-owner .ag-lb-name strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ada-agent-owner .ag-lb-name small{color:var(--ag-muted);font-size:11px}
+ .ada-agent-owner .ag-lb-n{text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
+ @media(max-width:500px){.ada-agent-owner .ag-lb-row{grid-template-columns:28px minmax(0,1fr) repeat(4,40px);font-size:13px}}
  .ada-agent-owner .ag-counts{gap:10px!important}
  .ada-agent-owner .ag-sections{gap:13px!important}
  .ada-agent-owner .ag-config{gap:10px!important}
@@ -232,6 +241,21 @@ export function mountAgentAdmin(host,{client,profile}={}){
    const vehicles=vehicleData.vehicles||[],carMap=new Map(vehicles.map(v=>[v.id,v]));
    counts.replaceChildren(stat('Ejen aktif',agents.filter(x=>x.agent_status==='active').length),stat('Lead',agentLeads.length+directLeads.length),stat('Komisen belum bayar',commissions.filter(c=>c.status!=='paid').length));
    content.replaceChildren();
+   const {data:lbRaw}=await client.rpc('owner_agent_leaderboard_v1');const lb=Array.isArray(lbRaw)?lbRaw:[];
+   const plb=section(content,'🏆 Prestasi Bulan Ini','Kedudukan ikut jualan, kemudian lead, kemudian klik. Kadar = lead ÷ klik.','ejen');
+   if(!lb.length)plb.append(node('p','','Tiada ejen aktif.'));
+   const tbl=node('div','ag-lb');
+   const head=node('div','ag-lb-row ag-lb-head');for(const h of ['#','Ejen','Klik','Lead','Jual','Kadar'])head.append(node('span','',h));tbl.append(head);
+   for(const x of lb){const r=node('div','ag-lb-row'+(x.rank<=3&&(x.sales||x.leads||x.clicks)?' top':''));
+    const medal=({1:'🥇',2:'🥈',3:'🥉'})[x.rank];
+    r.append(node('span','ag-lb-rk',(x.sales||x.leads||x.clicks)&&medal?medal:String(x.rank)));
+    const nm=node('span','ag-lb-name');nm.append(node('strong','',x.name||'Ejen'),node('small','',x.code||''));r.append(nm);
+    for(const v of [x.clicks,x.leads,x.sales])r.append(node('span','ag-lb-n',String(v)));
+    r.append(node('span','ag-lb-n',(x.conversion||0)+'%'));
+    if(!x.clicks&&!x.leads&&!x.sales)r.classList.add('idle');
+    tbl.append(r)}
+   plb.append(tbl);
+   const idle=lb.filter(x=>!x.clicks&&!x.leads&&!x.sales).length;if(idle)plb.append(node('small','ag-muted-note',idle+' ejen belum aktif bulan ini (tiada klik).'));
    const pl=section(content,'Senarai Ejen ('+agents.length+')','Semua ejen berdaftar dan prestasi mereka. Tekan nama untuk butiran.','ejen');
    if(agentRes?.error)pl.append(node('p','','Gagal memuat senarai ejen: '+agentRes.error.message));
    else if(!agents.length)pl.append(node('p','','Belum ada ejen berdaftar.'));
