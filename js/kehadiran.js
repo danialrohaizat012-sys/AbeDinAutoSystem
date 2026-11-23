@@ -121,6 +121,21 @@ td.who{white-space:normal;min-width:120px;font-weight:600}td.act{white-space:now
 .otin{width:76px;padding:6px 8px}
 .pd{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:10px 12px;align-self:start}
 .col{display:flex;flex-direction:column;gap:14px;min-width:0}
+.ps-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px}.ps-warn{color:#f0a35e}
+.ps-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}.ps-tools .field{flex:1 1 200px;margin:0}
+.ps-list{display:grid;gap:8px}@media (min-width:980px){.ps-list{grid-template-columns:1fr 1fr}}
+.ps-item{padding:0!important;overflow:hidden}.ps-item[hidden]{display:none}
+.ps-item>summary{list-style:none;display:flex;align-items:center;gap:12px;padding:12px;cursor:pointer}.ps-item>summary::-webkit-details-marker{display:none}
+.ps-item>form{padding:0 12px 12px}
+.ps-item.unset{border-color:#8a5a2b}
+.ps-av{flex:0 0 42px;height:42px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:15px;background:var(--line);color:var(--fg)}
+.ps-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}.ps-name{font-size:15px;line-height:1.25}
+.ps-chips{display:flex;flex-wrap:wrap;gap:5px}
+.ps-chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--mute,#9aa)}
+.ps-chip i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.ps-chip.gold{color:#d7b468;border-color:#6b5a32;font-weight:700}.ps-chip.red{color:#f08a72;border-color:#7a3328;font-weight:700}
+.ps-chev{font-size:22px;color:var(--mute,#888);transition:transform .2s}.ps-item[open] .ps-chev{transform:rotate(90deg)}
+.ps-sec{font-weight:700;font-size:13px;margin-top:6px;padding-top:10px;border-top:1px solid var(--line)}.ps-sec:first-child{border-top:0;padding-top:0;margin-top:0}
 .ap>*{min-width:0}
 `;
 
@@ -715,27 +730,48 @@ function viewTetapan() {
         <button class="sm" type="button" data-act="here">📍 Guna lokasi saya sekarang</button>
         <div id="locprev"></div>
         <button class="btn" type="submit">+ Tambah lokasi</button></form></div>
-    <div class="card full"><h3>Staf: syif, hari kerja & gaji</h3><p class="mute">Kadar OT dalam RM sejam (OT hari biasa).</p>
-      <div class="pl cols2">${staff.map(s => payForm(s)).join("") || `<p class="mute">Belum ada staf.</p>`}</div></div></div>`;
+    ${payCard(staff)}</div>`;
 }
+function payCard(staff) {
+  const unset = staff.filter(s => !S.pay[s.id]).length;
+  const sorted = [...staff].sort((a, b) => (!!S.pay[a.id] - !!S.pay[b.id]) || String(a.full_name || "").localeCompare(String(b.full_name || "")));
+  const filt = "const q=this.closest('.card').querySelector('[data-psq]').value.trim().toLowerCase(),u=this.closest('.card').querySelector('[data-psu]').checked;this.closest('.card').querySelectorAll('[data-pd]').forEach(d=>{d.hidden=(q&&!d.dataset.q.includes(q))||(u&&d.dataset.set==='1')})";
+  return `<div class="card full"><div class="ps-head"><div><h3 style="margin:0">Staf: syif, hari kerja & gaji</h3>
+    <p class="mute" style="margin:2px 0 0">${staff.length} staf${unset ? ` · <b class="ps-warn">${unset} belum ada gaji</b>` : " · semua lengkap"} · tekan nama untuk ubah</p></div></div>
+    ${staff.length > 4 ? `<div class="ps-tools"><input class="field" type="search" data-psq placeholder="Cari nama staf…" oninput="${filt}"><label class="sw"><input type="checkbox" data-psu onchange="${filt.replace(/this\.closest/g, "this.closest")}"> Belum lengkap sahaja</label></div>` : ""}
+    <div class="ps-list">${sorted.map(s => payForm(s)).join("") || `<p class="mute">Belum ada staf.</p>`}</div></div>`;
+}
+const tcase = s => String(s || "").toLowerCase().replace(/(^|\s)(\p{L})/gu, (m, a, c) => a + c.toUpperCase());
 function payForm(s) {
   const p = S.pay[s.id] || { pay_type:"daily", rate:0, ot_rate:0, late_mode:"none", late_rate:0, monthly_workdays:26, allowance:0 };
   const a = (S.astaff || {})[s.id] || {}, own = a.work_days && a.work_days.length, wd = own ? a.work_days : (S.settings.work_days || []);
   const sh = a.shift_id && shiftById(a.shift_id);
   const opt = (v, l, cur) => `<option value="${v}" ${cur === v ? "selected" : ""}>${l}</option>`;
-  return `<details class="pd" ${S.payOpen["f" + s.id] ? "open" : ""} data-pd="${esc(s.id)}"><summary>${esc(s.full_name || "Staf")} — ${sh ? esc(sh.name) : "Waktu biasa"} · ${S.pay[s.id] ? `${PAY_LABEL[p.pay_type]} ${rm(p.rate)}` : "gaji belum ditetapkan"}</summary>
+  const nm = tcase(s.full_name || "Staf"), ini = nm.split(/\s+/).filter(w => !/^(bin|binti|b|bt)$/i.test(w)).slice(0, 2).map(w => w[0]).join("");
+  const set = !!S.pay[s.id], days = [1,2,3,4,5,6,0].filter(d => wd.includes(d));
+  const LATE = { none:"", pay_rate:"Potong ikut minit", per_minute:"Potong/minit", per_late:"Potong/lewat" };
+  return `<details class="pd ps-item${set ? "" : " unset"}" ${S.payOpen["f" + s.id] ? "open" : ""} data-pd="${esc(s.id)}" data-set="${set ? 1 : 0}" data-q="${esc(nm.toLowerCase())}"><summary>
+    <span class="ps-av"${sh?.color ? ` style="background:${esc(sh.color)}33;color:${esc(sh.color)}"` : ""}>${esc(ini || "?")}</span>
+    <span class="ps-main"><b class="ps-name">${esc(nm)}</b>
+      <span class="ps-chips"><span class="ps-chip">${sh ? `<i style="background:${esc(sh.color || "#888")}"></i>${esc(sh.name)} ${String(sh.start_time).slice(0, 5)}–${String(sh.end_time).slice(0, 5)}` : "🕘 Waktu biasa"}</span>
+      <span class="ps-chip">📅 ${days.length} hari${days.length && days.length < 7 ? ` · ${days.map(d => DAYS[d].slice(0, 3)).join(" ")}` : ""}</span>
+      ${set ? `<span class="ps-chip gold">💰 ${PAY_LABEL[p.pay_type]} ${rm(p.rate)}</span>${+p.ot_rate ? `<span class="ps-chip">OT ${rm(p.ot_rate)}/j</span>` : ""}${+p.allowance ? `<span class="ps-chip">Elaun ${rm(p.allowance)}</span>` : ""}${LATE[p.late_mode] ? `<span class="ps-chip">${LATE[p.late_mode]}</span>` : ""}` : `<span class="ps-chip red">⚠ Gaji belum ditetapkan</span>`}</span></span>
+    <span class="ps-chev">›</span></summary>
     <form class="f-pay" data-staff="${esc(s.id)}" style="display:flex;flex-direction:column;gap:10px;margin-top:10px">
+      <div class="ps-sec">📅 Syif & hari kerja</div>
       <div class="g2"><div><label>Syif lalai</label><select class="field" name="shift_id"><option value="">Waktu kerja umum</option>${(S.shifts || []).filter(x => x.active || x.id === a.shift_id).map(x => opt(x.id, `${esc(x.name)} (${String(x.start_time).slice(0, 5)}–${String(x.end_time).slice(0, 5)})`, a.shift_id)).join("")}</select></div>
       <div><label class="sw" style="margin-top:22px"><input type="checkbox" name="own_days" ${own ? "checked" : ""}> Hari kerja sendiri</label></div></div>
       <div class="days">${[1,2,3,4,5,6,0].map(d => `<label><input type="checkbox" name="swd" value="${d}" ${wd.includes(d) ? "checked" : ""}> ${DAYS[d].slice(0, 3)}</label>`).join("")}</div>
+      <div class="ps-sec">💰 Gaji</div>
       <div class="g2"><div><label>Cara gaji</label><select class="field" name="pay_type">${opt("daily","Harian (RM sehari)",p.pay_type)}${opt("hourly","Sejam (RM sejam)",p.pay_type)}${opt("monthly","Bulanan (RM sebulan)",p.pay_type)}</select></div>
       <div><label>Kadar (RM)</label><input class="field" type="number" step="0.01" min="0" name="rate" value="${p.rate}"></div></div>
-      <div class="g2"><div><label>Kadar OT (RM sejam)</label><input class="field" type="number" step="0.01" min="0" name="ot_rate" value="${p.ot_rate}"></div>
+      <div class="ps-sec">⏱ OT, elaun & potongan</div>
+      <div class="g2"><div><label>Kadar OT (RM sejam, hari biasa)</label><input class="field" type="number" step="0.01" min="0" name="ot_rate" value="${p.ot_rate}"></div>
       <div><label>Elaun tetap sebulan (RM)</label><input class="field" type="number" step="0.01" min="0" name="allowance" value="${p.allowance}"></div></div>
       <div class="g2"><div><label>Potongan lewat</label><select class="field" name="late_mode">${opt("none","Tiada potongan",p.late_mode)}${opt("pay_rate","Ikut jam kerja — 8 jam sehari (seminit)",p.late_mode)}${opt("per_minute","RM setiap minit lewat",p.late_mode)}${opt("per_late","RM setiap kali lewat",p.late_mode)}</select></div>
       <div data-late-rate${p.late_mode === "pay_rate" || p.late_mode === "none" ? " hidden" : ""}><label>Kadar potongan lewat (RM)</label><input class="field" type="number" step="0.01" min="0" name="late_rate" value="${p.late_rate}"></div><p class="mute" data-late-note style="grid-column:1/-1;margin:2px 0 0;font-size:12.5px"${p.late_mode === "pay_rate" ? "" : " hidden"}>Gaji dikira maksimum 8 jam sehari — kerja lebih tidak menambah gaji. Jika jam kerja kurang daripada 8 jam (lewat masuk, balik awal atau rehat lebih), kekurangan dipotong ikut kadar gaji seminit (kadar sehari ÷ 480 minit). Contoh: RM70 sehari → RM0.1458 seminit; kurang 20 minit = RM2.92.</p></div>
       <div><label>Hari kerja sebulan (untuk potongan tidak hadir gaji bulanan)</label><input class="field" type="number" min="1" max="31" name="monthly_workdays" value="${p.monthly_workdays}"></div>
-      <button class="btn" type="submit">Simpan ${esc(s.full_name || "")}</button></form></details>`;
+      <button class="btn" type="submit">Simpan ${esc(nm)}</button></form></details>`;
 }
 
 let clockTimer = null, tickN = 0;
