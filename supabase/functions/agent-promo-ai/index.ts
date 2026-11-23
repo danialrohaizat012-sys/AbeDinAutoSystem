@@ -14,14 +14,19 @@ const CORS = {
 const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { ...CORS, "Content-Type": "application/json" } });
 const AGENT_DAILY_LIMIT = 40;
 
-const RULES = `Peraturan wajib:
-- Bahasa Melayu santai tetapi profesional, sesuai untuk WhatsApp/Facebook di Malaysia.
-- JANGAN reka diskaun, promosi, kelulusan pinjaman, jaminan, waranti, hadiah, keadaan kereta, servis atau stok yang tidak diberi.
-- JANGAN letak pautan/URL, nombor telefon atau hashtag (pautan akan disertakan sendiri).
-- Emoji dibenarkan tetapi sedikit (maksimum 2).
-- Setiap ayat maksimum 280 aksara.`;
+const RULES = `Nada & gaya:
+- Santai, mesra dan MEMUKAU — macam kawan rekomen kereta, bukan iklan kaku. Bahasa Melayu Malaysia harian (boleh selit slang ringan seperti "weh", "confirm", "berbaloi gila", "jom"), tapi tetap sopan.
+- Mulakan dengan "hook" yang buat orang berhenti scroll (soalan, situasi harian, atau ayat pendek yang punchy).
+- Ayat pendek-pendek, ada rentak. Boleh guna 1–2 baris baru untuk penekanan.
+- Emoji yang sesuai 2–4 (contoh 🚗🔥✨💸👀), jangan berlebihan.
+- Tonjolkan nilai: harga, tahun, jimat, sesuai kegunaan harian — guna fakta yang diberi sahaja.
+- Akhiri dengan ajakan (CTA) yang ringkas dan mesra untuk tekan link.
+Peraturan wajib:
+- JANGAN reka diskaun, promosi, kelulusan pinjaman, jaminan, waranti, hadiah, keadaan kereta, servis atau stok yang tidak diberi. Jangan guna perkataan "dijamin", "100% lulus", "tiada masalah".
+- JANGAN letak pautan/URL, nombor telefon atau hashtag (pautan disertakan sendiri).
+- Maksimum 320 aksara setiap ayat.`;
 
-const STYLES = ["soalan pembuka yang menarik", "nada mesra keluarga", "fokus jimat minyak & kos rendah (umum, tanpa angka palsu)", "ringkas dan terus terang", "nada bersemangat", "untuk pelajar / pekerja muda", "untuk kerja harian & ulang-alik", "gaya cerita pendek"];
+const STYLES = ["hook soalan yang buat orang tersenyum", "situasi harian (jem, hujan, hantar anak sekolah)", "gaya kawan bagi tip rahsia", "punchy & ringkas macam caption viral", "nada teruja 'jumpa barang baik'", "untuk anak muda first car", "untuk keluarga kecil", "gaya FOMO lembut (tanpa tipu stok)", "gaya cerita mini 2 baris"];
 const pick = <T,>(a: T[], n: number) => [...a].sort(() => Math.random() - 0.5).slice(0, n);
 
 async function aiConfig() {
@@ -48,7 +53,7 @@ async function askClaude(key: string, model: string, prompt: string, count: numb
   if (!r.ok) throw new Error("AI gagal: " + (out?.error?.message || r.status));
   const t = (out.content || []).find((c: any) => c.type === "tool_use");
   const list = Array.isArray(t?.input?.ayat) ? t.input.ayat : [];
-  return list.map((x: unknown) => String(x || "").replace(/https?:\/\/\S+/g, "").trim().slice(0, 500)).filter(Boolean);
+  return list.map((x: unknown) => String(x || "").replace(/https?:\/\/\S+/g, "").trim().slice(0, 600)).filter(Boolean);
 }
 
 Deno.serve(async (req) => {
@@ -75,7 +80,7 @@ Deno.serve(async (req) => {
       const prompt = `Tulis 5 TEMPLAT ayat promosi untuk kereta terpakai yang dijual oleh Abe Din Auto (Kota Bharu, Kelantan).
 Setiap templat WAJIB mengandungi tepat penanda {model}, {tahun} dan {harga} (sistem akan menggantikannya). Jangan tulis nama model sebenar.
 Gaya setiap ayat berbeza: ${styles.map((s, i) => `${i + 1}) ${s}`).join("; ")}.
-Akhiri setiap ayat dengan ajakan lembut untuk tekan pautan bagi gambar & maklumat penuh.
+Setiap ayat mesti terasa lain — hook, rentak dan CTA berbeza.
 ${RULES}
 Kod rawak (untuk variasi): ${crypto.randomUUID().slice(0, 8)}`;
       const ayat = (await askClaude(key, model, prompt, 5)).filter((x) => x.includes("{model}") && x.includes("{harga}"));
@@ -111,7 +116,7 @@ Kod rawak (untuk variasi): ${crypto.randomUUID().slice(0, 8)}`;
       const style = pick(STYLES, 1)[0];
       const prompt = `Tulis 1 ayat promosi untuk kereta terpakai Abe Din Auto (Kota Bharu, Kelantan) berdasarkan fakta ini SAHAJA:
 ${facts}
-Gaya: ${style}. Sebut model, tahun dan harga. Akhiri dengan ajakan tekan pautan untuk gambar & maklumat penuh.
+Gaya: ${style}. Sebut model, tahun dan harga secara semula jadi.
 ${RULES}
 Kod rawak: ${crypto.randomUUID().slice(0, 8)}`;
       const [ayat] = await askClaude(key, model, prompt, 1);
