@@ -72,7 +72,7 @@ export function mountVehicle360(root,{vehicle,role,sales=[],customers=[],payment
   if(isOwner){
     const purchase=Number(vehicle.purchase_cost||0);
     const repairs=Number(inspectionCosts[vehicle.id]?.kos||0);
-    const extra=Number(vehicle.cost_transfer||0)+Number(vehicle.cost_puspakom||0)+Number(vehicle.cost_transport||0);
+    const extra=Number(vehicle.cost_transfer||0)+Number(vehicle.cost_puspakom||0)+Number(vehicle.cost_transport||0)+Number(vehicle.cost_agent_commission||0);
     const completed=String(sale?.status||'').toLowerCase()==='sold';
     const paidAll=(payments||[]).filter(p=>p.sale_id===sale?.id).reduce((t,p)=>t+Number(p.amount||0),0);
     const revenue=completed?(paidAll>0?paidAll:Number(sale.agreed_price||0)):Number(vehicle.asking_price||0);

@@ -122,6 +122,7 @@ export function mountAgentAdmin(host,{client,profile}={}){
  .ada-agent-owner .ag-com-row[hidden]{display:none}
  .ada-agent-owner .ag-com-name strong{display:block}.ada-agent-owner .ag-com-name small,.ada-agent-owner .ag-com-st{color:var(--ag-muted)}
  .ada-agent-owner .ag-com-st{grid-column:1/-1;font-size:12px}
+ .ada-agent-owner .ag-com-st.loss{color:#f08a72!important;font-weight:600}
  .ada-agent-owner .ag-com-row input,.ada-agent-owner .ag-com-row select{min-height:38px;border-radius:8px;padding:0 8px;background:var(--ag-field);color:var(--ag-field-ink);border:1px solid var(--ag-field-border);width:100%}
  .ada-agent-owner .ag-com-on{white-space:nowrap;font-size:13px}
  @media(max-width:650px){.ada-agent-owner .ag-com-row{grid-template-columns:1fr 1fr}.ada-agent-owner .ag-com-name{grid-column:1/-1}}
@@ -307,7 +308,13 @@ export function mountAgentAdmin(host,{client,profile}={}){
    const pc=section(content,'Pertanyaan Pembeli Terus','Lead tanpa ejen, tidak layak untuk komisen ejen.','lead');
    if(!directLeads.length)pc.append(node('p','','Belum ada pertanyaan terus.'));
    for(const a of directLeads.slice(0,60))compactLead(pc,a,carMap.get(a.vehicle_id),ownerRead,false);
-   const po=section(content,'Komisen Ejen Setiap Kereta','Tetapkan amaun komisen untuk setiap kereta. Amaun ini terus dipaparkan kepada ejen di kad kereta dalam portal mereka. Dibayar hanya selepas jualan disahkan.','komisen');
+   const po=section(content,'Komisen Ejen Setiap Kereta','Amaun dipaparkan kepada ejen. Bila komisen diluluskan, ia automatik ditolak sebagai kos kereta dalam Jejak Kewangan & laporan untung.','komisen');
+   const costMap=new Map();
+   try{const [cv,ci]=await Promise.all([client.from('vehicles').select('id,purchase_cost,cost_transfer,cost_puspakom,cost_transport,cost_agent_commission,asking_price,promo_price'),client.from('checklist_inspections').select('vehicle_id,kos,created_at').order('created_at',{ascending:true})]);
+    const rep=new Map();for(const r of ci.data||[])rep.set(r.vehicle_id,Number(r.kos||0));
+    for(const v of cv.data||[]){const promo=Number(v.promo_price||0),ask=Number(v.asking_price||0);costMap.set(v.id,{sell:promo>0&&promo<ask?promo:ask,cost:Number(v.purchase_cost||0)+Number(v.cost_transfer||0)+Number(v.cost_puspakom||0)+Number(v.cost_transport||0)+(rep.get(v.id)||0),approved:Number(v.cost_agent_commission||0)})}}catch(_){}
+   const fmt=n=>(n<0?'−':'')+'RM '+Math.abs(Math.round(n)).toLocaleString('ms-MY');
+   function margin(v,amt){const c=costMap.get(v.id);if(!c||!c.cost)return '';const com=Math.max(Number(amt||0),c.approved);const before=c.sell-c.cost,after=before-com;return ' · Untung anggaran: '+fmt(before)+' → selepas komisen '+fmt(after)+(after<0?' ⚠️ RUGI':'')}
    const live=vehicles.filter(v=>!['sold','deleted','archived'].includes(String(v.status||'').toLowerCase()));
    const bulk=node('div','ag-config'),bLabel=node('label','','Isi semua kereta yang belum ada komisen (RM)'),bAmt=node('input');bAmt.type='number';bAmt.min='0';bAmt.step='50';bAmt.placeholder='cth 300';bLabel.append(bAmt);
    const bBtn=node('button','ag-primary','Guna untuk semua kosong');bBtn.type='button';bulk.append(bLabel,bBtn);po.append(bulk);
@@ -325,9 +332,10 @@ export function mountAgentAdmin(host,{client,profile}={}){
     const c=node('select');for(const [val,lab] of [['standard','Standard'],['premium','Premium'],['special','Khas']]){const o=node('option','',lab);o.value=val;c.append(o)}c.value=v.offer?.category||'standard';
     const onL=node('label','ag-com-on'),on=node('input');on.type='checkbox';on.checked=v.offer?v.offer.active!==false:true;onL.append(on,document.createTextNode(' Papar'));
     const b=node('button','ag-primary','Simpan');b.type='button';
-    const st=node('small','ag-com-st',v.offer?.indicative_amount>0?'✓ RM '+Number(v.offer.indicative_amount).toLocaleString('ms-MY'):'Belum ditetapkan');
+    const st=node('small','ag-com-st',(v.offer?.indicative_amount>0?'✓ RM '+Number(v.offer.indicative_amount).toLocaleString('ms-MY'):'Belum ditetapkan')+margin(v,v.offer?.indicative_amount));
+    a.addEventListener('input',()=>{st.textContent=(a.value?'RM '+Number(a.value).toLocaleString('ms-MY')+' (belum disimpan)':'Belum ditetapkan')+margin(v,a.value);st.classList.toggle('loss',/RUGI/.test(st.textContent))});if(/RUGI/.test(st.textContent))st.classList.add('loss');
     b.onclick=async()=>{if(a.value===''||Number(a.value)<0||Number(a.value)>100000){a.focus();return}b.disabled=true;
-     try{await saveOffer(v,a.value,c.value,on.checked);st.textContent='✓ Disimpan RM '+Number(a.value).toLocaleString('ms-MY')+(on.checked?'':' (disorok)');status('Komisen '+v.vehicle_id+' disimpan.')}
+     try{await saveOffer(v,a.value,c.value,on.checked);st.textContent='✓ Disimpan RM '+Number(a.value).toLocaleString('ms-MY')+(on.checked?'':' (disorok)')+margin(v,a.value);status('Komisen '+v.vehicle_id+' disimpan.')}
      catch(e){st.textContent='Gagal';status(e.message,true)}finally{b.disabled=false}};
     a.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();b.click()}});
     r.append(t,a,c,onL,b,st);list.append(r);rows.push({v,a,c,on,st});

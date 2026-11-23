@@ -1,0 +1,4 @@
+-- V114: Komisen ejen diluluskan/dibayar automatik jadi kos kereta (sudah dijalankan di Supabase).
+-- vehicles.cost_agent_commission dikemas kini oleh trigger agent_commission_vehicle_cost_v1
+-- (jumlah agent_commissions status approved/paid untuk jualan kereta tersebut).
+-- public.owner_vehicle_commissions_v1(uuid) untuk Jejak Kewangan (owner sahaja).
