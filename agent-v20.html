@@ -1,0 +1,25 @@
+<!doctype html><html lang="ms"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AbeDin Auto | Portal Ejen V20</title><style>
+:root{font-family:system-ui,-apple-system,sans-serif;color-scheme:dark}body{margin:0;background:#101419;color:#f3f5f7}main{max-width:860px;margin:auto;padding:20px}h1{font-size:1.4rem}nav{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0}button,a{border:1px solid #40525a;background:#202b32;color:#fff;border-radius:10px;padding:11px 14px;font:inherit}button[aria-selected=true]{background:#165a61;border-color:#63b8ba}button:focus-visible,a:focus-visible{outline:3px solid #a8e6df}a{display:inline-block;text-decoration:none}ul{list-style:none;padding:0}li{padding:13px;background:#1d262d;border:1px solid #34434c;border-radius:12px;margin:9px 0}li span{display:block;color:#bdc9d0;font-size:.9rem;margin-top:5px}#status{min-height:24px;color:#bde5e1}section[hidden]{display:none}</style></head><body><main>
+<a href="app.html">Kembali ke sistem</a><h1>Portal Ejen V20</h1><p>Lead, komisen dan bayaran daripada akaun ejen anda.</p>
+<nav aria-label="Menu ejen"><button data-tab="leads" aria-selected="true">Lead Saya</button><button data-tab="commissions" aria-selected="false">Komisen Saya</button><button data-tab="payouts" aria-selected="false">Sejarah Bayaran</button></nav>
+<button id="refresh">Muat Semula</button><p id="status" role="status" aria-live="polite"></p>
+<section id="leads"></section><section id="commissions" hidden></section><section id="payouts" hidden></section>
+</main><script type="module">
+import {createClient} from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+import {createV20AgentData} from './js/agent-v20-data.mjs';
+const client=createClient('https://buzpdyvvoiqgbeventwm.supabase.co','sb_publishable_zuuNipsMpalN_38SJwXpFA_MRzQ6eZ0');
+const api=createV20AgentData(client);
+const safe=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const sections=Object.fromEntries(['leads','commissions','payouts'].map(k=>[k,document.getElementById(k)]));
+let selected='leads',seq=0;
+async function load(){const ticket=++seq;document.getElementById('status').textContent='Memuatkan data…';try{
+ const records=await api[selected]();if(ticket!==seq)return;
+ const html=records.length?'<ul>'+records.map(x=>selected==='leads'
+ ?'<li><strong>'+safe(x.customer_name)+'</strong><span>'+safe(x.status)+' · '+safe(x.created_at)+'</span></li>'
+ :'<li><strong>RM '+safe(selected==='commissions'?x.agreed_amount:x.amount)+'</strong><span>'+safe(x.status)+' · '+safe(x.created_at)+'</span></li>').join('')+'</ul>':'<p>Tiada rekod.</p>';
+ sections[selected].innerHTML=html;document.getElementById('status').textContent=records.length+' rekod dipaparkan.';
+ }catch(e){if(ticket!==seq)return;sections[selected].textContent='Tidak dapat memuatkan rekod.';document.getElementById('status').textContent=e.message==='Login required'?'Sila login melalui sistem utama.':e.message==='Active agent required'?'Akaun ejen tidak aktif atau belum diluluskan.':'Ralat mendapatkan data. Sila cuba lagi.';}}
+document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{selected=b.dataset.tab;document.querySelectorAll('[data-tab]').forEach(x=>x.setAttribute('aria-selected',String(x===b)));Object.entries(sections).forEach(([k,el])=>el.hidden=k!==selected);load()}));
+document.getElementById('refresh').addEventListener('click',load);
+load();
+</script></body></html>
