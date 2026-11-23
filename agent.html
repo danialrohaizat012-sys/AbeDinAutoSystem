@@ -119,7 +119,7 @@ input,select,textarea{min-height:44px}
 <small>Semua pautan kereta dari katalog ini akan mengekalkan kod rujukan anda. Pelanggan boleh mendaftar minat terus daripada profil kereta.</small>
 </div>
 <p id="promoSummary" aria-live="polite">Memuatkan stok...</p>
-<div class="promo-filter"><label for="promoSearch">Cari kereta<input id="promoSearch" type="search" placeholder="Contoh: Axia 2016, Myvi, Saga" autocomplete="off"></label><span id="promoShown" aria-live="polite"></span></div><div id="promoCars" class="promo-grid"></div><button type="button" class="secondary" id="promoMore" hidden style="display:block;margin:16px auto">Lihat Lagi Kereta</button>
+<div class="promo-filter"><label for="promoSearch">Cari kereta<input id="promoSearch" type="search" placeholder="Contoh: Axia 2016, Myvi, Saga" autocomplete="off"></label><span id="promoShown" aria-live="polite"></span></div><div id="promoCars" class="promo-grid"></div><div class="panel"><h2>Ayat Promosi Diluluskan Owner</h2><p>Pilih kereta dalam katalog, kemudian pilih ayat promosi untuk salin bersama pautan rujukan.</p><select id="promoCarChoice" aria-label="Pilih kereta untuk ayat promosi"></select><div id="agentPromoCopies" class="items"></div></div><button type="button" class="secondary" id="promoMore" hidden style="display:block;margin:16px auto">Lihat Lagi Kereta</button>
 <div class="notice warn">Kod rujukan ejen disertakan pada pautan, tetapi komisen tidak diberi berdasarkan klik. Pelanggan dan jualan mesti disahkan oleh owner.</div>
 </div>
 <div id="leadPanel" hidden><h2>Daftar lead pelanggan</h2>
@@ -133,7 +133,7 @@ input,select,textarea{min-height:44px}
 <div class="agent-quicklinks"><a href="#commissionItems">Komisen Saya</a><a href="#payoutItems">Sejarah Bayaran</a><a href="#agentPromo">Katalog Promosi</a></div><h2 style="margin-top:22px">Komisen Saya</h2><div class="agent-finance-summary" id="commissionSummary" aria-live="polite"></div><div class="lead-tools"><label for="commissionStatus">Tapis status komisen<select id="commissionStatus"><option value="all">Semua status</option><option value="approved">Diluluskan</option><option value="pending">Menunggu kelulusan</option><option value="paid">Dibayar</option></select></label></div><div id="commissionItems" class="items"></div>
 <h2 style="margin-top:22px">Pembayaran Saya</h2><div class="agent-finance-summary" id="payoutSummary" aria-live="polite"></div><div id="payoutItems" class="items"></div></div></section>
 
-<section id="owner" hidden><div class="panel"><h1>Kelulusan Owner</h1>
+<section id="owner" hidden><div class="panel"><h2>Ayat Promosi Ejen (5 Pilihan)</h2><p>Owner sediakan dan terbitkan ayat. Gunakan {model}, {tahun}, {harga} untuk maklumat automatik. AI belum disambungkan ke backend; butang sediakan prompt untuk AI.</p><button type="button" class="secondary" id="copyPromoAiPrompt">Salin Prompt AI (5 Ayat)</button><div id="ownerPromoSlots" class="items"></div></div><div class="panel"><h1>Kelulusan Owner</h1>
 <p>Senarai permohonan belum diluluskan. Hanya akaun owner aktif boleh menggunakan aliran ini.</p>
 <div class="row"><button class="secondary" id="refreshOwner">Muat semula</button></div>
 <div id="ownerItems" class="items" style="margin-top:15px"></div></div>
@@ -169,7 +169,7 @@ function view(id){
  if(id==='owner'&&!owner)id='account';
  for(const b of document.querySelectorAll('[data-view]'))b.setAttribute('aria-current',b.dataset.view===id?'page':'false');
 for(const s of document.querySelectorAll('main section'))s.hidden=s.id!==id;
-if(id==='owner'&&owner)loadOwner();}
+if(id==='owner'&&owner){loadOwner();loadOwnerPromo().catch(fail)}}
 for(const b of document.querySelectorAll('[data-view]')) b.onclick=()=>{if(b.hidden)return;view(b.dataset.view);};
 function text(node,value){node.textContent=String(value??'');}
 function item(parent,title,subtitle){const d=document.createElement('div');d.className='item';
@@ -296,6 +296,46 @@ async function copyAgentLink(link){
  try{await navigator.clipboard.writeText(link);message('Pautan promosi berjaya disalin.');}
  catch{prompt('Salin pautan promosi kereta:',link);}
 }
+const promoSafe=x=>String(x??'');
+let promoVehicles=[];
+function fillPromoCopy(t,v){
+ const model=[v?.make,v?.model].filter(Boolean).join(' ')||'Kereta pilihan';
+ return promoSafe(t).replaceAll('{model}',model).replaceAll('{tahun}',String(v?.model_year||'—')).replaceAll('{harga}',v?.asking_price!=null?'RM '+Number(v.asking_price).toLocaleString('ms-MY'):'Hubungi kami');
+}
+async function loadPublishedPromo(){
+ const {data,error}=await supabase.from('agent_promo_copy_v20').select('slot,published').order('slot');
+ const target=$('agentPromoCopies');target.replaceChildren();
+ if(error){target.textContent='Ayat promosi belum tersedia.';return}
+ const selected=promoVehicles.find(x=>x.public_vehicle_id===$('promoCarChoice').value)||promoVehicles[0];
+ if(!selected){target.textContent='Tiada kereta tersedia.';return}
+ for(const entry of data.filter(x=>x.published)){
+  const box=document.createElement('div');box.className='item';
+  const sentence=fillPromoCopy(entry.published,selected);
+  const p=document.createElement('p');p.textContent=sentence;box.append(p);
+  const b=document.createElement('button');b.className='secondary';b.textContent='Salin Ayat '+entry.slot+' + Link Kereta';
+  b.onclick=()=>copyAgentLink(sentence+'\\n'+agentCarLink(selected));box.append(b);target.append(box);
+ }
+ if(!target.childElementCount)target.textContent='Owner belum menerbitkan ayat promosi.';
+}
+async function loadOwnerPromo(){
+ if(!owner)return;
+ const {data,error}=await supabase.from('agent_promo_copy_v20').select('slot,draft,published').order('slot');
+ const target=$('ownerPromoSlots');target.replaceChildren();
+ if(error){target.textContent='Gagal memuat ayat promosi: '+error.message;return}
+ for(const entry of data){
+  const box=document.createElement('div');box.className='item';
+  const label=document.createElement('label');label.textContent='Pilihan '+entry.slot;
+  const area=document.createElement('textarea');area.value=entry.draft||'';area.maxLength=500;area.rows=3;area.style.width='100%';label.append(area);box.append(label);
+  const info=document.createElement('p');info.textContent=entry.published?'Sudah diterbitkan':'Belum diterbitkan';box.append(info);
+  for(const publish of [false,true]){
+   const b=document.createElement('button');b.className='secondary';b.textContent=publish?'Terbitkan':'Simpan Draf';
+   b.onclick=async()=>{b.disabled=true;try{const {error}=await supabase.rpc('save_agent_promo_v20',{p_slot:entry.slot,p_draft:area.value,p_publish:publish});if(error)throw error;message(publish?'Ayat diterbitkan kepada ejen.':'Draf disimpan.');await loadOwnerPromo()}catch(e){fail(e)}finally{b.disabled=false}};
+   box.append(b);
+  }target.append(box);
+ }
+}
+$('copyPromoAiPrompt').onclick=()=>copyAgentLink('Jana tepat 5 ayat promosi kereta terpakai AbeDin Auto dalam Bahasa Melayu. Setiap ayat maksimum 500 aksara dan wajib mengandungi {model}, {tahun}, {harga}. Gaya berlainan, menarik dan profesional. Jangan mereka-reka diskaun, kelulusan pinjaman, jaminan, keadaan kereta atau stok. Nomborkan 1 hingga 5.');
+$('promoCarChoice').onchange=loadPublishedPromo;
 async function loadAgentCatalogue(){
  if(agent?.status!=='active')return;
  const {data:session,error}=await supabase.auth.getSession();
@@ -308,6 +348,9 @@ async function loadAgentCatalogue(){
  if(body.source!=='public_catalogue'||!Array.isArray(body.vehicles))throw new Error('Katalog belum tersedia. Cuba segarkan.');
  if(typeof body.share_token!=='string'||!/^[a-f0-9]{32}$/.test(body.share_token))throw new Error('Link ejen belum tersedia. Cuba lagi.');
  shareToken=body.share_token;
+ promoVehicles=body.vehicles;
+ const promoSelect=$('promoCarChoice');promoSelect.replaceChildren();for(const v of promoVehicles){const option=document.createElement('option');option.value=v.public_vehicle_id;option.textContent=[v.make,v.model,v.model_year].filter(Boolean).join(' ');promoSelect.append(option)}
+ loadPublishedPromo().catch(fail);
  $('agentPromo').hidden=false;
  const myLink=agentCatalogueLink();
  $('myAgentLink').textContent=myLink;
