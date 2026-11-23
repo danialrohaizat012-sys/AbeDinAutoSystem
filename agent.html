@@ -204,6 +204,14 @@ function leadContact(parent,lead,car){
  const name=document.createElement('strong');text(name,lead.customer_name||'Pelanggan');
  const model=document.createElement('small');text(model,carTitle);
  heading.append(name,model);
+ if(!directLead){
+  const identity=document.createElement('small');
+  identity.style.fontWeight='700';
+  const code=lead.agent_code||lead.referral_code_snapshot||'';
+  const agentName=lead.agent_name||'';
+  identity.textContent='Ejen: '+(agentName||'Nama belum tersedia')+(code?' · ID '+code:' · Kod belum tersedia');
+  heading.append(identity);
+ }
  const badges=document.createElement('div');badges.className='lead-badges';
  for(const [label,isRead] of (directLead?[[ownerRead,Boolean(lead.owner_read_at)]]:[[agentRead,Boolean(lead.agent_read_at)],[ownerRead,Boolean(lead.owner_read_at)]])){
    const badge=document.createElement('span');badge.className='lead-badge'+(isRead?' read':'');text(badge,label);badges.append(badge);
@@ -218,6 +226,7 @@ function leadContact(parent,lead,car){
    'Kereta diminati: '+formatLeadCar(car,lead.vehicle_id),
    'Status: '+(lead.status||'new'),
    'Sumber: '+(lead.lead_source==='public_direct'?'Pembeli terus':lead.lead_source==='public_referral'?'Pautan promosi ejen':'Pendaftaran ejen'),
+   ...(directLead?[]:['Nama ejen: '+(lead.agent_name||'Tidak tersedia'),'Kod ejen: '+(lead.agent_code||lead.referral_code_snapshot||'Tidak tersedia'),'ID rekod ejen: '+(lead.agent_id||'Tidak tersedia'),'Kod rujukan semasa lead: '+(lead.referral_code_snapshot||'Tidak direkodkan')]),
    'Tarikh: '+(lead.created_at?new Date(lead.created_at).toLocaleString('ms-MY'):'—')
  ]){const p=document.createElement('div');text(p,value);d.append(p);}
  parent.append(d);
