@@ -41,6 +41,7 @@ button:disabled{opacity:.55;cursor:not-allowed}.row{display:flex;flex-wrap:wrap;
 .notif-count{background:#d9363e;color:#fff;border-radius:999px;font-size:12px;padding:2px 8px;vertical-align:middle}
 .notif-item{border-left:3px solid #16689f;padding:8px 12px;border-radius:8px;background:#f5f8fb;margin-bottom:6px}.notif-item.unread{border-left-color:#d9a400;background:#fffaf0}
 .notif-item strong{display:block}.notif-item small{color:#667}
+.terma details{border:1px solid #dde4ea;border-radius:10px;padding:10px 14px;margin:8px 0;background:#fff}.terma summary{font-weight:700;cursor:pointer}.terma li{margin:6px 0;line-height:1.5}
 .promo-commission{display:inline-block!important;background:#fff4d6;color:#7a5200;border:1px solid #f0d58c;border-radius:999px;padding:5px 11px;font-weight:700;font-size:14px}.promo-commission.none{background:#f1f3f5;color:#667;border-color:#dde;font-weight:500}
 .promo-price{font-size:17px;font-weight:750;color:#12589f;margin:8px 0}
 .promo-actions{display:flex;flex-wrap:wrap;gap:7px}
@@ -84,6 +85,7 @@ input,select,textarea{min-height:44px}
 <button data-view="dashboard" id="dashboardTab" hidden aria-current="false">Dashboard Ejen</button>
 <button data-view="promosi" id="promosiTab" hidden>Ayat Promosi</button>
 <button data-view="account" aria-current="page">Akaun</button>
+<button data-view="terma">Terma &amp; Syarat</button>
 <button data-view="owner" id="ownerTab" hidden>Kelulusan Owner</button>
 </nav>
 
@@ -115,7 +117,8 @@ input,select,textarea{min-height:44px}
 <label>Telefon<input name="phone" type="tel" maxlength="24" required></label>
 <label>E-mel disahkan<input name="email" type="email" readonly required></label>
 <label>Negeri<select name="state" required><option value="">Pilih negeri</option><option>Kelantan</option><option>Terengganu</option><option>Selangor</option><option>Kuala Lumpur</option><option>Johor</option><option>Kedah</option><option>Perak</option><option>Pahang</option><option>Melaka</option><option>Negeri Sembilan</option><option>Perlis</option><option>Pulau Pinang</option><option>Sabah</option><option>Sarawak</option><option>Putrajaya</option><option>Labuan</option></select></label></div>
-<label class="check"><input name="terms" type="checkbox" required> Saya mengesahkan maklumat permohonan adalah tepat dan bersetuju dihubungi tentang permohonan ejen.</label>
+<label class="check"><input name="terms" type="checkbox" required> Saya mengesahkan maklumat permohonan adalah tepat, bersetuju dihubungi, dan telah membaca serta bersetuju dengan Terma &amp; Syarat Ejen.</label>
+<p style="margin:4px 0 10px"><a href="#" id="openTermaLink">📄 Baca Terma &amp; Syarat Ejen</a></p>
 <button class="primary">Hantar permohonan rasmi</button></form></div>
 </div></section>
 
@@ -174,6 +177,73 @@ input,select,textarea{min-height:44px}
 <div id="ownerCommissions" class="items"></div>
 <h3>Payout Ejen</h3><div id="ownerPayouts" class="items"></div></div></section>
 <footer>Portal ejen rasmi AbeDin Auto. Komisen dan bayaran sebenar hanya boleh disahkan melalui proses dalaman yang diaudit. Tiada pembayaran automatik melalui portal ini. <a href="agent-payout-verify.html" style="color:#185ca6">Pengesahan Payout HR</a>.</footer>
+<section id="terma" hidden><div class="panel terma">
+<h1>Terma &amp; Syarat Ejen</h1>
+<p class="agent-v20-note">Versi 1.0 · berkuat kuasa 23 November 2026 · ABE DIN AUTO (202603102643 (003842956-V))</p>
+<div class="notice"><strong>Ringkasan:</strong> komisen dibayar hanya untuk jualan yang selesai, dibayar penuh dan diluluskan owner. Lead mesti didaftarkan sebelum jualan, dan telefon pembeli mesti sama.</div>
+<details open><summary>1. Definisi</summary><ul>
+<li><b>Syarikat</b>: ABE DIN AUTO, 926-D Kg Kenali, Kubang Kerian, 16150 Kota Bharu, Kelantan.</li>
+<li><b>Ejen</b>: individu yang permohonannya diluluskan dan diberi Kod Ejen (contoh ADA-AG-0001).</li>
+<li><b>Portal Ejen</b>: sistem dalam talian untuk ejen berkongsi kereta, mendaftar lead dan melihat komisen.</li>
+<li><b>Link Rujukan</b>: pautan kereta atau katalog yang mengandungi kod rujukan unik ejen.</li>
+<li><b>Lead</b>: bakal pembeli yang didaftarkan oleh ejen, atau yang mendaftar minat melalui Link Rujukan ejen.</li>
+<li><b>Jualan Selesai</b>: jualan berstatus Sold, dengan bayaran penuh diterima dan disahkan Syarikat.</li>
+<li><b>Komisen</b>: amaun yang ditetapkan Syarikat untuk setiap kereta dan dipaparkan dalam Portal Ejen.</li></ul></details>
+<details><summary>2. Pelantikan &amp; status ejen</summary><ol>
+<li>Ejen dilantik selepas owner meluluskan permohonan. Syarikat berhak menolak permohonan tanpa memberi sebab.</li>
+<li>Ejen ialah rakan rujukan bebas, bukan pekerja, rakan kongsi atau wakil sah Syarikat, dan tidak layak menerima gaji, KWSP, PERKESO atau faedah pekerja melalui program ini.</li>
+<li>Staf Syarikat yang juga menjadi ejen tertakluk kepada terma ini untuk aktiviti ejen sahaja. Kontrak pekerjaan mereka tidak berubah.</li>
+<li>Ejen tidak boleh menandatangani perjanjian atau menerima bayaran, wang tempahan atau deposit bagi pihak Syarikat. Semua bayaran dibuat terus ke akaun rasmi Syarikat.</li></ol></details>
+<details><summary>3. Tanggungjawab &amp; kelakuan ejen</summary><p>Promosi mesti jujur dan guna maklumat dalam Portal Ejen sahaja. Ejen <b>dilarang</b>:</p><ul>
+<li>Menjanjikan diskaun, harga, kelulusan pinjaman, jaminan, waranti atau keadaan kereta yang tidak dinyatakan secara bertulis oleh Syarikat.</li>
+<li>Mengubah harga, atau menggunakan gambar, logo atau nama Syarikat untuk tujuan lain tanpa kebenaran.</li>
+<li>Mengaku sebagai pekerja, pengurus atau wakil sah Syarikat.</li>
+<li>Menghantar spam, mengganggu, atau berkongsi link di tempat yang melanggar peraturan platform.</li>
+<li>Menjana klik atau lead palsu, termasuk mendaftar diri sendiri, keluarga terdekat atau kenalan tanpa minat sebenar untuk membeli.</li>
+<li>Mengambil pelanggan Syarikat yang sedia ada atau mendakwa lead ejen lain.</li></ul>
+<p>Pelanggaran boleh menyebabkan komisen ditarik balik dan akaun digantung atau ditamatkan.</p></details>
+<details><summary>4. Lead, link rujukan &amp; atribusi jualan</summary><ol>
+<li>Lead sah jika didaftarkan dalam Portal Ejen, atau pembeli mendaftar minat melalui Link Rujukan ejen, <b>sebelum</b> jualan direkod.</li>
+<li>Telefon pembeli dalam jualan mesti sama dengan telefon dalam lead, dan kereta yang dibeli mesti sama dengan kereta dalam lead.</li>
+<li>Jika lebih daripada seorang ejen mendaftar pembeli yang sama untuk kereta yang sama, lead yang paling awal direkod dalam sistem diambil kira.</li>
+<li>Pembeli yang menghubungi Syarikat terus tanpa Link Rujukan atau lead berdaftar tidak layak untuk komisen ejen.</li>
+<li>Klik direkod untuk analitik sahaja. Klik tidak bermaksud lead atau jualan.</li>
+<li>Lead sah selama 60 hari dari tarikh didaftarkan. Rekod sistem Syarikat ialah rujukan muktamad.</li></ol></details>
+<details><summary>5. Komisen</summary><ol>
+<li>Komisen layak jika: lead sah; jualan berstatus Sold dan bayaran penuh diterima serta disahkan; tiada pembatalan, pemulangan atau pertikaian; dan akaun ejen aktif pada tarikh kelulusan.</li>
+<li>Amaun yang terpakai ialah amaun yang dipaparkan untuk kereta itu pada tarikh lead didaftarkan, kecuali owner bersetuju amaun lain secara bertulis.</li>
+<li>Syarikat boleh mengubah, menyorok atau menghentikan komisen sesuatu kereta pada bila-bila masa. Perubahan tidak menjejaskan lead yang didaftarkan lebih awal.</li>
+<li>Komisen hanya menjadi hak ejen selepas diluluskan owner dalam sistem. Paparan komisen dalam Portal Ejen ialah tawaran, bukan jaminan bayaran.</li>
+<li>Satu jualan hanya layak untuk satu komisen kepada satu ejen.</li></ol></details>
+<details><summary>6. Pembayaran komisen</summary><ol>
+<li>Komisen dibayar melalui pindahan bank ke akaun atas nama ejen sendiri, dalam tempoh 14 hari bekerja selepas payout diluluskan.</li>
+<li>Ejen mesti memberi nama penuh, No. Kad Pengenalan dan butiran bank yang betul. Syarikat tidak bertanggungjawab atas kelewatan akibat maklumat yang salah.</li>
+<li>Setiap payout diluluskan owner dan disahkan pegawai kewangan Syarikat sebelum pindahan dibuat. Rujukan pindahan dimaklumkan dalam Portal Ejen.</li>
+<li>Tiada bayaran tunai, pendahuluan, atau bayaran sebelum jualan selesai.</li>
+<li>Bayaran minimum satu payout ialah RM 100. Baki di bawah amaun ini dibawa ke kitaran berikutnya.</li></ol></details>
+<details><summary>7. Pembatalan, pemulangan &amp; tuntutan balik</summary><ol>
+<li>Jika jualan dibatalkan sebelum komisen dibayar, komisen itu terbatal secara automatik.</li>
+<li>Jika jualan dibatalkan, kereta dipulangkan atau bayaran dikembalikan selepas komisen dibayar, dalam tempoh 90 hari dari tarikh jualan, ejen wajib memulangkan komisen dalam tempoh 14 hari dari notis Syarikat.</li>
+<li>Syarikat boleh menolak amaun yang perlu dipulangkan daripada komisen ejen yang akan datang.</li>
+<li>Komisen yang diperoleh melalui maklumat palsu, lead palsu atau pelanggaran Seksyen 3 boleh ditarik balik pada bila-bila masa, termasuk yang telah dibayar.</li></ol></details>
+<details><summary>8. Data peribadi (PDPA)</summary><ol>
+<li>Ejen hanya boleh mendaftar lead dengan persetujuan pembeli untuk dihubungi oleh Abe Din Auto, dan mesti mematuhi Akta Perlindungan Data Peribadi 2010.</li>
+<li>Data pembeli yang didaftarkan menjadi rekod Syarikat. Ejen tidak boleh menjual, berkongsi atau menggunakannya untuk tujuan lain.</li>
+<li>Syarikat menyimpan data ejen (nama, telefon, e-mel, butiran bank, rekod klik, lead dan komisen) untuk mengurus program ejen, membuat bayaran dan mematuhi undang-undang.</li></ol></details>
+<details><summary>9. Penggantungan &amp; penamatan</summary><ol>
+<li>Syarikat boleh menggantung atau menamatkan akaun ejen pada bila-bila masa, dengan notis melalui Portal Ejen.</li>
+<li>Semasa digantung, ejen tidak boleh mengakses Portal Ejen dan Link Rujukan tidak dikira untuk lead baharu.</li>
+<li>Ejen boleh berhenti pada bila-bila masa dengan memaklumkan owner secara bertulis atau melalui WhatsApp rasmi Syarikat.</li>
+<li>Komisen yang diluluskan sebelum tarikh penamatan masih dibayar, kecuali penamatan disebabkan pelanggaran Seksyen 3. Lead yang belum menjadi jualan tidak lagi layak.</li>
+<li>Ejen yang tiada klik atau lead selama 6 bulan boleh dinyahaktifkan.</li></ol></details>
+<details><summary>10. Lain-lain</summary><ol>
+<li><b>Cukai:</b> ejen bertanggungjawab mengisytiharkan pendapatan komisen kepada LHDN.</li>
+<li><b>Pindaan:</b> Syarikat boleh meminda terma ini. Versi baharu dimaklumkan dalam Portal Ejen dan terpakai kepada lead yang didaftarkan selepas tarikh berkuat kuasa.</li>
+<li><b>Pertikaian:</b> rujuk kepada owner dalam tempoh 30 hari. Keputusan owner berdasarkan rekod sistem adalah muktamad.</li>
+<li><b>Undang-undang:</b> terma ini tertakluk kepada undang-undang Malaysia.</li></ol></details>
+<details><summary>11. Pengakuan ejen</summary><p>Dengan menandakan kotak persetujuan semasa memohon, ejen mengesahkan telah membaca dan bersetuju dengan terma ini, maklumat permohonan adalah benar, dan faham bahawa komisen hanya dibayar untuk Jualan Selesai yang diluluskan owner.</p></details>
+<p class="agent-v20-note" style="margin-top:14px">Soalan? WhatsApp Abe Din Auto: 011-5636 6925.</p>
+</div></section>
 </main>
 <script type="module">
 import {createClient} from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
@@ -192,6 +262,7 @@ function view(id){
 for(const s of document.querySelectorAll('main section'))s.hidden=s.id!==id;
 if(id==='owner'&&owner){loadOwner();loadOwnerPromo().catch(fail)}}
 $('promosiMount').append($('agentPromo'));
+$('openTermaLink').onclick=e=>{e.preventDefault();view('terma');window.scrollTo(0,0)};
 for(const b of document.querySelectorAll('[data-view]')) b.onclick=()=>{if(b.hidden)return;view(b.dataset.view);};
 function text(node,value){node.textContent=String(value??'');}
 function item(parent,title,subtitle){const d=document.createElement('div');d.className='item';
