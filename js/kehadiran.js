@@ -334,7 +334,8 @@ function computePay(days, pay, sid) {
     base = n * rate; baseNote = `${n} hari × ${rm(rate)}`;
     leavePay = paidLeave * rate; holidayPay = phDays.length * rate;
   } else if (p.pay_type === "hourly") {
-    base = regMin / 60 * rate; baseNote = `${(regMin / 60).toFixed(2)} jam × ${rm(rate)}`;
+    const regCap = p.late_mode === "pay_rate" ? days.reduce((a, d) => a + Math.min(d.regular, 480), 0) : regMin;
+    base = regCap / 60 * rate; baseNote = `${(regCap / 60).toFixed(2)} jam × ${rm(rate)}${p.late_mode === "pay_rate" ? " (maks 8 jam sehari)" : ""}`;
     leavePay = leaveMin / 60 * rate; holidayPay = phDays.reduce((a, d) => a + schedMin(d.sched), 0) / 60 * rate;
   } else {
     base = rate; absentDeduct = absent * rate / (+p.monthly_workdays || 26); unpaidDeduct = unpaidLeave * rate / (+p.monthly_workdays || 26); baseNote = "Gaji bulanan";
@@ -342,13 +343,26 @@ function computePay(days, pay, sid) {
   const or = +p.ot_rate || 0, rM = +st.ot_restday_mult || 1, pM = +st.ot_ph_mult || 1;
   const otPayBy = { normal: otBy.normal / 60 * or, rest: otBy.rest / 60 * or * rM, ph: otBy.ph / 60 * or * pM };
   const otPay = otPayBy.normal + otPayBy.rest + otPayBy.ph;
-  const lateDeduct = p.late_mode === "per_minute" ? lateMin * (+p.late_rate || 0) : p.late_mode === "per_late" ? lateCount * (+p.late_rate || 0) : 0;
+  // V110: "pay_rate" — gaji maksimum 8 jam sehari; jam kerja kurang daripada 8 jam dikira kekurangan & dipotong ikut kadar gaji seminit.
+  const FULL_MIN = 480;
+  const dayRateOf = d => p.pay_type === "daily" ? rate : p.pay_type === "monthly" ? rate / (+p.monthly_workdays || 26) : rate / 60 * FULL_MIN;
+  const perMinOf = d => dayRateOf(d) / FULL_MIN;
+  let shortMin = 0, shortDays = 0, latePayRate = 0;
+  if (p.late_mode === "pay_rate") for (const d of days) {
+    if (!d.present || d.type !== "work" || d.future || d.open || d.leave) continue;
+    let sm = Math.max(0, FULL_MIN - Math.min(d.worked, FULL_MIN));
+    if (d.lateExcused) sm = Math.max(0, sm - d.lateRaw);
+    sm = Math.round(sm); if (!sm) continue;
+    shortMin += sm; shortDays++; latePayRate += sm * perMinOf(d);
+  }
+  const latePerMin = (p.pay_type === "hourly" ? rate / 60 : p.pay_type === "monthly" ? rate / (+p.monthly_workdays || 26) / FULL_MIN : rate / FULL_MIN);
+  const lateDeduct = p.late_mode === "pay_rate" ? latePayRate : p.late_mode === "per_minute" ? lateMin * (+p.late_rate || 0) : p.late_mode === "per_late" ? lateCount * (+p.late_rate || 0) : 0;
   const allowance = +p.allowance || 0;
   const adv = sid ? advanceFor(sid) : [], advDeduct = adv.reduce((t, a) => t + a.amt, 0);
   const claims = sid ? (S.claims || []).filter(x => x.staff_id === sid && x.pay_month === S.month) : [], claimPay = claims.reduce((t, x) => t + +x.amount, 0);
   const net = claimPay + base + leavePay + holidayPay + otPay + allowance - lateDeduct - absentDeduct - unpaidDeduct - advDeduct;
   return { claims, claimPay, adv, advDeduct, paidLeave, unpaidLeave, leavePay, unpaidDeduct, holidayPay, phDays:phDays.length, presentDays, absent, workedMin, regMin,
-    otMin, otRaw, otBy, otPayBy, otPendingMin, lateMin, lateCount, lateExcusedCount, openCount, restOverCount, base, baseNote, otPay, lateDeduct, absentDeduct, allowance, net, pay:p, hasPay:!!pay };
+    otMin, otRaw, otBy, otPayBy, otPendingMin, lateMin, latePerMin, shortMin, shortDays, lateCount, lateExcusedCount, openCount, restOverCount, base, baseNote, otPay, lateDeduct, absentDeduct, allowance, net, pay:p, hasPay:!!pay };
 }
 // Cache kiraan sebulan untuk satu render
 let monthCache = {};
@@ -477,7 +491,7 @@ function payBox(c) {
     ${c.otBy.ph ? `<span>OT cuti umum <small class="mute">${(c.otBy.ph / 60).toFixed(2)} jam × ${rm(p.ot_rate)} × ${+st.ot_ph_mult}</small></span><span>${rm(c.otPayBy.ph)}</span>` : ""}
     ${c.otPendingMin && st.ot_require_approval ? `<span class="mute">OT menunggu kelulusan <small>${fmtMin(c.otPendingMin)} · belum dibayar</small></span><span class="mute">–</span>` : ""}
     ${c.allowance ? `<span>Elaun</span><span>${rm(c.allowance)}</span>` : ""}
-    ${p.late_mode !== "none" ? `<span>Potongan lewat <small class="mute">${p.late_mode === "per_minute" ? `${Math.round(c.lateMin)} min × ${rm(p.late_rate)}` : `${c.lateCount} kali × ${rm(p.late_rate)}`}${c.lateExcusedCount ? ` · ${c.lateExcusedCount} dimaafkan` : ""}</small></span><span>−${rm(c.lateDeduct)}</span>` : ""}
+    ${p.late_mode !== "none" ? `<span>Potongan lewat <small class="mute">${p.late_mode === "pay_rate" ? `kurang jam ${fmtMin(c.shortMin)} (${c.shortDays} hari) × ${rm(c.latePerMin)}/min` : p.late_mode === "per_minute" ? `${Math.round(c.lateMin)} min × ${rm(p.late_rate)}` : `${c.lateCount} kali × ${rm(p.late_rate)}`}${c.lateExcusedCount ? ` · ${c.lateExcusedCount} dimaafkan` : ""}</small></span><span>−${rm(c.lateDeduct)}</span>` : ""}
     ${c.claimPay ? `<span>Tuntutan (claim) <small class="mute">${c.claims.length} resit</small></span><span>${rm(c.claimPay)}</span>` : ""}
     ${c.adv.map(a => `<span>Potongan advance <small class="mute">ansuran ${a.n}/${a.of} · ${rm(a.total)}${a.note ? " · " + esc(a.note) : ""}</small></span><span>−${rm(a.amt)}</span>`).join("")}
     <span class="tot">Jumlah bersih</span><span class="tot">${rm(c.net)}</span></div>`;
@@ -718,8 +732,8 @@ function payForm(s) {
       <div><label>Kadar (RM)</label><input class="field" type="number" step="0.01" min="0" name="rate" value="${p.rate}"></div></div>
       <div class="g2"><div><label>Kadar OT (RM sejam)</label><input class="field" type="number" step="0.01" min="0" name="ot_rate" value="${p.ot_rate}"></div>
       <div><label>Elaun tetap sebulan (RM)</label><input class="field" type="number" step="0.01" min="0" name="allowance" value="${p.allowance}"></div></div>
-      <div class="g2"><div><label>Potongan lewat</label><select class="field" name="late_mode">${opt("none","Tiada potongan",p.late_mode)}${opt("per_minute","RM setiap minit lewat",p.late_mode)}${opt("per_late","RM setiap kali lewat",p.late_mode)}</select></div>
-      <div><label>Kadar potongan lewat (RM)</label><input class="field" type="number" step="0.01" min="0" name="late_rate" value="${p.late_rate}"></div></div>
+      <div class="g2"><div><label>Potongan lewat</label><select class="field" name="late_mode">${opt("none","Tiada potongan",p.late_mode)}${opt("pay_rate","Ikut jam kerja — 8 jam sehari (seminit)",p.late_mode)}${opt("per_minute","RM setiap minit lewat",p.late_mode)}${opt("per_late","RM setiap kali lewat",p.late_mode)}</select></div>
+      <div data-late-rate${p.late_mode === "pay_rate" || p.late_mode === "none" ? " hidden" : ""}><label>Kadar potongan lewat (RM)</label><input class="field" type="number" step="0.01" min="0" name="late_rate" value="${p.late_rate}"></div><p class="mute" data-late-note style="grid-column:1/-1;margin:2px 0 0;font-size:12.5px"${p.late_mode === "pay_rate" ? "" : " hidden"}>Gaji dikira maksimum 8 jam sehari — kerja lebih tidak menambah gaji. Jika jam kerja kurang daripada 8 jam (lewat masuk, balik awal atau rehat lebih), kekurangan dipotong ikut kadar gaji seminit (kadar sehari ÷ 480 minit). Contoh: RM70 sehari → RM0.1458 seminit; kurang 20 minit = RM2.92.</p></div>
       <div><label>Hari kerja sebulan (untuk potongan tidak hadir gaji bulanan)</label><input class="field" type="number" min="1" max="31" name="monthly_workdays" value="${p.monthly_workdays}"></div>
       <button class="btn" type="submit">Simpan ${esc(s.full_name || "")}</button></form></details>`;
 }
@@ -1023,6 +1037,7 @@ function onClick(e) {
 }
 async function onChange(e) {
   const t = e.target;
+  if (t.name === "late_mode") { const f = t.closest("form") || t.closest("details") || app; const r = f.querySelector("[data-late-rate]"), n = f.querySelector("[data-late-note]"); if (r) r.hidden = t.value === "pay_rate" || t.value === "none"; if (n) n.hidden = t.value !== "pay_rate"; return; }
   if (t.id === "month" && t.value) { S.month = t.value; S.loaded = false; render(); loadTab(); }
   else if (t.id === "day" && t.value) { S.day = t.value; S.loaded = false; render(); loadTab(); }
   else if (t.dataset.roster) {
@@ -1099,7 +1114,7 @@ export async function computeSlip(client, profile, staffId, month) {
       if (c.claimPay) lines.push(["Tuntutan (claim)", c.claims.length + " resit", c.claimPay]);
       if (c.absentDeduct) lines.push(["Potongan tidak hadir", c.absent + " hari", -c.absentDeduct]);
       if (c.unpaidDeduct) lines.push(["Potongan cuti tanpa gaji", c.unpaidLeave + " hari", -c.unpaidDeduct]);
-      if (c.lateDeduct) lines.push(["Potongan lewat", c.lateCount + " kali · " + Math.round(c.lateMin) + " min", -c.lateDeduct]);
+      if (c.lateDeduct) lines.push(c.pay.late_mode === "pay_rate" ? ["Potongan kurang jam (8 jam/hari)", c.shortDays + " hari · " + Math.round(c.shortMin) + " min × " + rm(c.latePerMin), -c.lateDeduct] : ["Potongan lewat", c.lateCount + " kali · " + Math.round(c.lateMin) + " min", -c.lateDeduct]);
       c.adv.forEach(x => lines.push(["Potongan advance", "ansuran " + x.n + "/" + x.of + (x.note ? " · " + x.note : ""), -x.amt]));
     }
     const rows = days.filter(d => d.present || (d.workday && !d.future) || d.type === "ph").map(d => ({ label: dayLabel(d.key), in: d.firstIn ? hm(d.firstIn.punched_at) : "–", out: d.lastOut ? hm(d.lastOut.punched_at) : "–", worked: d.worked ? fmtMin(d.worked) : "–",
