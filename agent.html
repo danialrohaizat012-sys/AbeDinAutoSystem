@@ -80,7 +80,7 @@ input,select,textarea{min-height:44px}
 <div id="alert" class="notice" role="status" aria-live="polite">Menyemak sesi pengguna...</div>
 <nav id="tabs">
 <button data-view="dashboard" id="dashboardTab" hidden aria-current="false">Dashboard Ejen</button>
-<button data-view="promosi" id="promosiTab" hidden>Ayat Promosi</button>
+<button data-view="promosi" id="promosiTab" hidden>Katalog Kereta</button>
 <button data-view="account" aria-current="page">Akaun</button>
 <button data-view="terma">Terma &amp; Syarat</button>
 <button data-view="owner" id="ownerTab" hidden>Kelulusan Owner</button>
@@ -121,7 +121,7 @@ input,select,textarea{min-height:44px}
 
 <section id="dashboard" hidden><div class="panel"><h1>Dashboard Ejen</h1><p class="agent-v20-note">Pengurusan ejen asal dengan keselamatan dan penambahbaikan V20. Semua fungsi katalog, lead, komisen dan pembayaran dikekalkan.</p>
 <p id="agentStatus">Maklumat ejen akan dipaparkan selepas permohonan diluluskan.</p>
-<div id="myRankCard" class="rank-card" hidden></div><div class="notice" style="margin:12px 0"><strong>Promosi Kereta Ejen</strong><p style="margin:6px 0 10px">Pilih kereta, lihat ayat promosi yang diluluskan owner dan kongsi terus ke WhatsApp.</p><a href="#agentPromo" id="goAgentPromos" style="display:inline-block;background:#16689f;color:white;padding:11px 16px;border-radius:10px;text-decoration:none;font-weight:700">Buka Katalog & Ayat Promosi</a></div>
+<div id="myRankCard" class="rank-card" hidden></div><div class="notice" style="margin:12px 0"><strong>Katalog Kereta Ejen</strong><p style="margin:6px 0 10px">Pilih kereta dan kongsi link rujukan anda terus ke WhatsApp.</p><a href="#agentPromo" id="goAgentPromos" style="display:inline-block;background:#16689f;color:white;padding:11px 16px;border-radius:10px;text-decoration:none;font-weight:700">Buka Katalog Kereta</a></div>
 <div class="stats"><div class="stat">Klik unik (hari ini)<b id="countClicksToday">0</b></div><div class="stat">Klik unik (30 hari)<b id="countClicksMonth">0</b></div><div class="stat">Lead saya<b id="countLeads">0</b></div>
 <div class="stat">Komisen saya<b id="countCommission">0</b></div>
 <div class="stat">Penyata pembayaran<b id="countPayout">0</b></div></div>
@@ -137,7 +137,7 @@ input,select,textarea{min-height:44px}
 <small>Semua pautan kereta dari katalog ini akan mengekalkan kod rujukan anda. Pelanggan boleh mendaftar minat terus daripada profil kereta.</small>
 </div>
 <p id="promoSummary" aria-live="polite">Memuatkan stok...</p>
-<div class="promo-filter"><label for="promoSearch">Cari kereta<input id="promoSearch" type="search" placeholder="Contoh: Axia 2016, Myvi, Saga" autocomplete="off"></label><span id="promoShown" aria-live="polite"></span></div><div id="promoCars" class="promo-grid"></div><div class="panel"><h2>Ayat Promosi Diluluskan Owner</h2><p>Pilih kereta dalam katalog, kemudian pilih ayat promosi untuk salin bersama pautan rujukan.</p><select id="promoCarChoice" aria-label="Pilih kereta untuk ayat promosi"></select><div id="agentPromoCopies" class="items"></div></div><button type="button" class="secondary" id="promoMore" hidden style="display:block;margin:16px auto">Lihat Lagi Kereta</button>
+<div class="promo-filter"><label for="promoSearch">Cari kereta<input id="promoSearch" type="search" placeholder="Contoh: Axia 2016, Myvi, Saga" autocomplete="off"></label><span id="promoShown" aria-live="polite"></span></div><div id="promoCars" class="promo-grid"></div><button type="button" class="secondary" id="promoMore" hidden style="display:block;margin:16px auto">Lihat Lagi Kereta</button>
 <div class="notice warn">Kod rujukan ejen disertakan pada pautan, tetapi komisen tidak diberi berdasarkan klik. Pelanggan dan jualan mesti disahkan oleh owner.</div>
 </div>
 <div id="leadPanel" hidden><h2>Daftar lead pelanggan</h2>
@@ -151,7 +151,7 @@ input,select,textarea{min-height:44px}
 <div class="agent-quicklinks"><a href="#commissionItems">Komisen Saya</a><a href="#payoutItems">Sejarah Bayaran</a><a href="#agentPromo">Katalog Promosi</a></div><h2 style="margin-top:22px">Komisen Saya</h2><div class="agent-finance-summary" id="commissionSummary" aria-live="polite"></div><div class="lead-tools"><label for="commissionStatus">Tapis status komisen<select id="commissionStatus"><option value="all">Semua status</option><option value="approved">Diluluskan</option><option value="pending">Menunggu kelulusan</option><option value="paid">Dibayar</option></select></label></div><div id="commissionItems" class="items"></div>
 <h2 style="margin-top:22px">Pembayaran Saya</h2><div class="agent-finance-summary" id="payoutSummary" aria-live="polite"></div><div id="payoutItems" class="items"></div></div></section>
 
-<section id="promosi" hidden><div class="panel"><h1>Katalog & Ayat Promosi Ejen</h1><p>Pilih kereta dan kongsi ayat promosi bersama pautan rujukan ejen. Ayat tersedia selepas owner menerbitkannya.</p><div id="promosiMount"></div></div></section>
+<section id="promosi" hidden><div class="panel"><h1>Katalog Kereta Ejen</h1><p>Pilih kereta dan kongsi link bersama kod rujukan anda.</p><div id="promosiMount"></div></div></section>
 <section id="owner" hidden><div class="panel"><h2>Ayat Promosi Ejen (5 Pilihan)</h2><p>Owner sediakan dan terbitkan ayat. Gunakan {model}, {tahun}, {harga} untuk maklumat automatik. AI belum disambungkan ke backend; butang sediakan prompt untuk AI.</p><button type="button" class="secondary" id="copyPromoAiPrompt">Salin Prompt AI (5 Ayat)</button><div id="ownerPromoSlots" class="items"></div></div><div class="panel"><h1>Kelulusan Owner</h1>
 <p>Senarai permohonan belum diluluskan. Hanya akaun owner aktif boleh menggunakan aliran ini.</p>
 <div class="row"><button class="secondary" id="refreshOwner">Muat semula</button></div>
@@ -431,49 +431,10 @@ async function copyAgentLink(link){
  catch{prompt('Salin pautan promosi kereta:',link);}
 }
 const promoSafe=x=>String(x??'');
-let promoVehicles=[];let publishedPromoCopies=[];
+let promoVehicles=[];
 function fillPromoCopy(t,v){
  const model=[v?.make,v?.model].filter(Boolean).join(' ')||'Kereta pilihan';
  return promoSafe(t).replaceAll('{model}',model).replaceAll('{tahun}',String(v?.model_year||'—')).replaceAll('{harga}',v?.asking_price!=null?'RM '+Number(v.asking_price).toLocaleString('ms-MY'):'Hubungi kami');
-}
-async function loadPublishedPromo(){
- const {data,error}=await supabase.from('agent_promo_copy_v20').select('slot,published').order('slot');
- const target=$('agentPromoCopies');target.replaceChildren();
- if(error){target.textContent='Ayat promosi tidak dapat dimuatkan. Sila cuba Segarkan Stok atau hubungi owner.';return}
- publishedPromoCopies=data.filter(x=>x.published);
- renderCardPromoCopies();
- const selected=promoVehicles.find(x=>x.public_vehicle_id===$('promoCarChoice').value)||promoVehicles[0];
- if(!selected){target.textContent='Tiada kereta tersedia.';return}
- for(const entry of publishedPromoCopies){
-  const box=document.createElement('div');box.className='item';
-  const sentence=fillPromoCopy(entry.published,selected);
-  const p=document.createElement('p');p.textContent=sentence;box.append(p);
-  const b=document.createElement('button');b.className='secondary';b.textContent='Salin Ayat '+entry.slot+' + Link Kereta';
-  b.onclick=()=>copyAgentLink(sentence+'\n'+agentCarLink(selected));box.append(b);target.append(box);
- }
- if(!target.childElementCount)target.textContent='Owner belum menerbitkan ayat promosi. Lima draf tersedia untuk disemak dan diterbitkan oleh owner dalam Kelulusan Owner.';
-}
-function renderCardPromoCopies(){
- for(const box of $('promoCars').querySelectorAll('.promo-card')){
-  const slot=box.querySelector('.card-promo-copy');
-  if(!slot)continue;
-  slot.replaceChildren();
-  const v=promoVehicles.find(x=>x.public_vehicle_id===box.dataset.publicVehicleId);
-  if(!v)continue;
-  if(!publishedPromoCopies.length){slot.textContent='Ayat promosi menunggu kelulusan owner.';continue}
-  const heading=document.createElement('strong');heading.textContent='Ayat Promosi Untuk Kereta Ini';slot.append(heading);
-  const choose=document.createElement('select');choose.setAttribute('aria-label','Pilih ayat promosi '+[v.make,v.model].filter(Boolean).join(' '));
-  for(const entry of publishedPromoCopies){const opt=document.createElement('option');opt.value=String(entry.slot);opt.textContent='Pilihan '+entry.slot;choose.append(opt)}
-  const preview=document.createElement('p');preview.style.whiteSpace='pre-wrap';
-  const update=()=>{const entry=publishedPromoCopies.find(x=>String(x.slot)===choose.value);preview.textContent=entry?fillPromoCopy(entry.published,v):''};
-  choose.onchange=update;update();
-  const copy=document.createElement('button');copy.type='button';copy.className='secondary';copy.textContent='Salin Ayat + Link';
-  copy.onclick=()=>copyAgentLink(preview.textContent+'\n'+agentCarLink(v));
-  const share=document.createElement('a');share.className='promo-whatsapp';share.target='_blank';share.rel='noopener noreferrer';share.textContent='WhatsApp Ayat Promosi';
-  const refreshShare=()=>{share.href='https://wa.me/?text='+encodeURIComponent(preview.textContent+'\n'+agentCarLink(v))};
-  choose.addEventListener('change',refreshShare);refreshShare();
-  slot.append(choose,preview,copy,share);
- }
 }
 async function loadOwnerPromo(){
  if(!owner)return;
@@ -494,7 +455,6 @@ async function loadOwnerPromo(){
 }
 $('copyPromoAiPrompt').onclick=()=>copyAgentLink('Jana tepat 5 ayat promosi kereta terpakai AbeDin Auto dalam Bahasa Melayu. Setiap ayat maksimum 500 aksara dan wajib mengandungi {model}, {tahun}, {harga}. Gaya berlainan, menarik dan profesional. Jangan mereka-reka diskaun, kelulusan pinjaman, jaminan, keadaan kereta atau stok. Nomborkan 1 hingga 5.');
 $('goAgentPromos').onclick=e=>{e.preventDefault();view('promosi')}
-$('promoCarChoice').onchange=loadPublishedPromo;
 async function loadMyRank(){
  const card=$('myRankCard');
  try{const {data,error}=await supabase.rpc('agent_my_stats_v1');if(error||!data){card.hidden=true;return}
@@ -518,8 +478,7 @@ async function loadAgentCatalogue(){
  if(typeof body.share_token!=='string'||!/^[a-f0-9]{32}$/.test(body.share_token))throw new Error('Link ejen belum tersedia. Cuba lagi.');
  shareToken=body.share_token;
  promoVehicles=body.vehicles;
- const promoSelect=$('promoCarChoice');promoSelect.replaceChildren();for(const v of promoVehicles){const option=document.createElement('option');option.value=v.public_vehicle_id;option.textContent=[v.make,v.model,v.model_year].filter(Boolean).join(' ');promoSelect.append(option)}
- loadPublishedPromo().catch(fail);
+
  $('agentPromo').hidden=false;
  const myLink=agentCatalogueLink();
  $('myAgentLink').textContent=myLink;
@@ -562,9 +521,9 @@ async function loadAgentCatalogue(){
   inquiryLink.target='_blank';inquiryLink.rel='noopener';inquiryLink.textContent='Link Daftar Minat';
   const lead=document.createElement('button');lead.type='button';lead.textContent='Daftar Lead';
   lead.onclick=()=>{sel.value=v.id;sel.scrollIntoView({behavior:'smooth',block:'center'});};
-  actions.append(open,copy,wa,inquiryLink,lead);const promoSlot=document.createElement('div');promoSlot.className='card-promo-copy';promoSlot.style.marginTop='12px';content.append(title,price,commissionNote,actions,promoSlot);box.append(content);grid.append(box);
+  actions.append(open,copy,wa,inquiryLink,lead);content.append(title,price,commissionNote,actions);box.append(content);grid.append(box);
  }
- promoVisibleLimit=12;applyPromoFilter();renderCardPromoCopies();
+ promoVisibleLimit=12;applyPromoFilter();
 }
 let promoVisibleLimit=12;
 function applyPromoFilter(){
