@@ -17,6 +17,12 @@ button{width:100%;padding:14px;border:0;border-radius:10px;background:#176ab7;co
 .notice.error{background:#fff1ed;color:#8d402d}
 a{color:#165ca7}footer{font-size:12px;color:#728398;text-align:center;margin-top:16px}
 .honey{position:absolute;left:-99999px;opacity:0;pointer-events:none}
+.car-preview{border:1px solid #cbdbea;border-radius:15px;background:#f5f9ff;padding:16px;margin:16px 0}
+.car-preview h2{margin:0 0 10px;font-size:19px;color:#173e6a}
+.car-preview dl{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0}
+.car-preview dt{font-size:12px;color:#65778b}.car-preview dd{font-weight:750;margin:4px 0 0}
+.car-preview .price{color:#176ab7;font-size:19px}
+@media(max-width:420px){.car-preview dl{grid-template-columns:1fr 1fr;gap:10px}}
 </style></head>
 <body><header><strong>AbeDin Auto</strong><small>Pertanyaan kereta AbeDin Auto</small></header>
 <main><div class="panel">
@@ -26,7 +32,7 @@ a{color:#165ca7}footer{font-size:12px;color:#728398;text-align:center;margin-top
 <div id="content" hidden>
 <input id="agentCode" name="ref" type="hidden" value="">
 <p id="refHint" hidden></p>
-<p><a id="carLink" target="_blank" rel="noopener">Lihat butiran kereta dalam katalog awam</a></p>
+<section class="car-preview" id="carPreview" aria-live="polite"><h2>Kereta pilihan anda</h2><p id="carLoading">Sedang memuatkan maklumat kereta...</p><dl id="carDetails" hidden></dl></section><p><a id="carLink" target="_blank" rel="noopener">Lihat butiran kereta dalam katalog awam</a></p>
 <form id="form">
 <label for="customerName">Nama pelanggan</label>
 <input id="customerName" name="customer_name" maxlength="160" autocomplete="name" required minlength="2">
@@ -46,6 +52,7 @@ a{color:#165ca7}footer{font-size:12px;color:#728398;text-align:center;margin-top
 const $=id=>document.getElementById(id);
 const params=new URLSearchParams(location.search);
 const ref=params.get('ref')||'',car=params.get('car')||'';
+let selectedCar=null;
 const validCar=car.length>=1&&car.length<=80&&/^[a-zA-Z0-9_-]+$/.test(car);
 const validRef=(/^ADA-AG-[0-9]{4,}$/.test(ref)&&ref.length<=30)||/^[a-f0-9]{32}$/.test(ref);
 function status(msg,bad=false){$('notice').textContent=msg;$('notice').className='notice'+(bad?' error':'');}
@@ -54,6 +61,31 @@ $('agentCode').value=validRef?ref:'';
 // Referral code is held invisibly; the server checks the actual agent record.
 const link=new URL('/',location.origin);link.searchParams.set('car',car);if(validRef)link.searchParams.set('ref',ref);$('carLink').href=link.href;
 $('content').hidden=false;
+async function loadSelectedCar(){
+ try{
+  const response=await fetch('https://buzpdyvvoiqgbeventwm.supabase.co/rest/v1/rpc/get_public_catalogue',{
+   method:'POST',headers:{'content-type':'application/json','apikey':'sb_publishable_zuuNipsMpalN_38SJwXpFA_MRzQ6eZ0'},
+   body:JSON.stringify({p_vehicle_id:car})
+  });
+  if(!response.ok)throw new Error('Maklumat kereta tidak dapat dimuatkan.');
+  const rows=await response.json();
+  const v=Array.isArray(rows)?rows.find(x=>x.vehicle_id===car):null;
+  if(!v)throw new Error('Kereta tidak ditemui dalam katalog awam. Sila semak pautan kereta.');
+  selectedCar=v;
+  const name=[v.make,v.model,v.model_year].filter(Boolean).join(' ');
+  const details=$('carDetails');details.replaceChildren();
+  const add=(label,value,cls)=>{const group=document.createElement('div');const dt=document.createElement('dt');dt.textContent=label;const dd=document.createElement('dd');dd.textContent=value;if(cls)dd.className=cls;group.append(dt,dd);details.append(group)};
+  add('Model kereta',name||'Tidak dinyatakan');
+  add('Harga',Number.isFinite(Number(v.asking_price))?'RM '+Number(v.asking_price).toLocaleString('ms-MY'):'Tidak dinyatakan','price');
+  add('Tahun',v.model_year||'Tidak dinyatakan');
+  add('Perbatuan',v.mileage_km!=null?Number(v.mileage_km).toLocaleString('ms-MY')+' km':'Tidak dinyatakan');
+  add('Status',v.status||'Tidak dinyatakan');
+  details.hidden=false;$('carLoading').hidden=true;
+ }catch(err){
+  $('carLoading').textContent=err.message||'Maklumat kereta tidak dapat dimuatkan. Sila lihat katalog.';
+ }
+}
+loadSelectedCar();
 status('Lengkapkan borang untuk menghantar pertanyaan.');
 $('form').addEventListener('submit',async e=>{
  e.preventDefault();
@@ -78,7 +110,7 @@ $('form').addEventListener('submit',async e=>{
   const waMessage='Salam AbeDin Auto, saya sudah daftar minat kereta.'
     +'\nNama: '+String(f.get('customer_name')||'').trim()
     +'\nTelefon: '+String(f.get('customer_phone')||'').trim()
-    +'\nKereta: '+car
+    +'\nKereta: '+(selectedCar?[selectedCar.make,selectedCar.model,selectedCar.model_year].filter(Boolean).join(' '):car)
     +'\nPautan kereta: '+link.href
     +(promo?'\nPromosi: Hujung Tahun 2026 (anggaran jimat RM300-RM500 kos penghantaran)':'')
     +'\nNo. rujukan lead: '+String(data.lead_id||'');
