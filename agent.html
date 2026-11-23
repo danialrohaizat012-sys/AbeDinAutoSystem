@@ -44,6 +44,7 @@ footer{font-size:12px;color:#748399;padding:15px 0}
 @media(max-width:720px){.grid{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.panel{padding:16px}header{padding:16px}}
 
 /* Agent V20 integration: preserve the original /agent workflow and features. */
+.lead-tools{display:grid;grid-template-columns:minmax(0,2fr) minmax(145px,1fr);gap:12px;margin:14px 0}.lead-tools label{margin:0}.agent-quicklinks{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0}.agent-quicklinks a{padding:10px 13px;background:#e6eef7;border-radius:10px;color:#17477d;text-decoration:none;font-weight:700;font-size:13px}@media(max-width:520px){.lead-tools{grid-template-columns:1fr}}
 .promo-filter{display:flex;align-items:end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:14px 0}.promo-filter label{flex:1;min-width:190px;margin:0}.promo-filter span{font-size:12px;color:#557087;padding-bottom:12px}.promo-card[hidden]{display:none!important}
 :root{font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:#f3f6fb}
 body{color:#18283d;background:radial-gradient(ellipse 85% 360px at 50% 0,#dfeaf9 0,transparent 100%),#f3f6fb;min-height:100vh}
@@ -107,7 +108,7 @@ input,select,textarea{min-height:44px}
 <div class="stat">Penyata pembayaran<b id="countPayout">0</b></div></div>
 <div class="row" style="margin:12px 0;justify-content:space-between"><h2 style="margin:0">Lead Saya</h2><button class="secondary" type="button" id="refreshMyLeads">Muat Semula Data</button></div>
 <div class="notice" style="margin:14px 0"><strong>Lead Saya</strong><p style="margin:5px 0 0">Nama, telefon, kereta diminati dan butang WhatsApp pelanggan dipaparkan di sini.</p></div>
-<div id="leadItems" class="items"></div>
+<div class="lead-tools"><label for="leadSearch">Cari lead<input id="leadSearch" type="search" placeholder="Nama pelanggan atau kereta" autocomplete="off"></label><label for="leadReadFilter">Status bacaan<select id="leadReadFilter"><option value="all">Semua lead</option><option value="unread">Belum baca</option><option value="read">Sudah baca</option></select></label></div><p id="leadFilterCount" class="agent-v20-note" aria-live="polite"></p><div id="leadItems" class="items"></div>
 <div id="agentPromo" hidden>
 <div class="promo-toolbar"><div><h2 style="margin:0">Stok Katalog Awam untuk Promosi</h2><p style="margin:5px 0">Pilih kereta Available, kemudian kongsi pautan khas ejen terus ke profil kereta.</p></div>
 <div class="row"><a class="secondary" href="/" target="_blank" rel="noopener" style="padding:12px;text-decoration:none;border-radius:10px;background:#e6eef7;color:#17477d;font-weight:700">Buka Katalog Awam</a><button type="button" class="secondary" id="refreshPromo">Segarkan Stok</button></div></div>
@@ -128,7 +129,7 @@ input,select,textarea{min-height:44px}
 </div><label class="check"><input name="consent" type="checkbox" required> Pelanggan telah memberikan kebenaran untuk dihubungi mengenai kereta.</label>
 <button class="primary">Daftar lead</button></form></div>
 
-<h2 style="margin-top:22px">Komisen Saya</h2><div id="commissionItems" class="items"></div>
+<div class="agent-quicklinks"><a href="#commissionItems">Komisen Saya</a><a href="#payoutItems">Sejarah Bayaran</a><a href="#agentPromo">Katalog Promosi</a></div><h2 style="margin-top:22px">Komisen Saya</h2><div id="commissionItems" class="items"></div>
 <h2 style="margin-top:22px">Pembayaran Saya</h2><div id="payoutItems" class="items"></div></div></section>
 
 <section id="owner" hidden><div class="panel"><h1>Kelulusan Owner</h1>
@@ -363,6 +364,27 @@ $('promoSearch').addEventListener('input',()=>{promoVisibleLimit=12;applyPromoFi
 $('promoMore').addEventListener('click',()=>{promoVisibleLimit+=12;applyPromoFilter()});
 $('refreshPromo').onclick=()=>loadAgentCatalogue().catch(fail);
 $('refreshMyLeads').onclick=()=>loadDashboard().catch(fail);
+let agentLeadRecords=[],agentLeadCars=new Map();
+function renderAgentLeads(){
+ const query=($('leadSearch')?.value||'').trim().toLocaleLowerCase('ms-MY');
+ const status=$('leadReadFilter')?.value||'all';
+ const filtered=agentLeadRecords.filter(x=>{
+  const car=formatLeadCar(agentLeadCars.get(x.vehicle_id),x.vehicle_id);
+  const matches=String(x.customer_name||'').toLocaleLowerCase('ms-MY').includes(query)||String(car).toLocaleLowerCase('ms-MY').includes(query);
+  return matches&&(status==='all'||(status==='read'?Boolean(x.agent_read_at):!x.agent_read_at));
+ });
+ $('leadFilterCount').textContent=filtered.length+' daripada '+agentLeadRecords.length+' lead dipaparkan';
+ showRows('leadItems',filtered,(el,x)=>{
+  const card=document.createElement('div');
+  leadContact(card,x,agentLeadCars.get(x.vehicle_id));
+  const panel=card.querySelector('.lead-collapsed-content');
+  leadCarLink(panel,agentLeadCars.get(x.vehicle_id),x.vehicle_id);
+  leadReadButton(panel,x,'agent',loadDashboard);
+  el.append(card);
+ });
+}
+$('leadSearch').addEventListener('input',renderAgentLeads);
+$('leadReadFilter').addEventListener('change',renderAgentLeads);
 async function loadDashboard(){
  if(!me?.email_confirmed_at||agent?.status!=='active')return;
  const [l,c,p,publicCars]=await Promise.all([
@@ -373,7 +395,9 @@ async function loadDashboard(){
  for(const x of [l,c,p])if(x.error)throw x.error;
  const carMap=new Map((!publicCars.error&&Array.isArray(publicCars.data)?publicCars.data:[]).map(v=>[v.id,v]));
  text($('countLeads'),l.data.length);text($('countCommission'),c.data.length);text($('countPayout'),p.data.length);
- showRows('leadItems',l.data,(el,x)=>{
+ agentLeadRecords=l.data;agentLeadCars=carMap;renderAgentLeads();
+ /* Existing lead renderer retained below for reference only. */
+ if(false)showRows('leadItems',l.data,(el,x)=>{
    const card=document.createElement('div');
    leadContact(card,x,carMap.get(x.vehicle_id));
    const panel=card.querySelector('.lead-collapsed-content');
