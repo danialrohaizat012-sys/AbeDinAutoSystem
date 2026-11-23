@@ -104,10 +104,10 @@ input,select,textarea{min-height:44px}
 
 <section id="dashboard" hidden><div class="panel"><h1>Dashboard Ejen</h1><p class="agent-v20-note">Pengurusan ejen asal dengan keselamatan dan penambahbaikan V20. Semua fungsi katalog, lead, komisen dan pembayaran dikekalkan.</p>
 <p id="agentStatus">Maklumat ejen akan dipaparkan selepas permohonan diluluskan.</p>
-<div class="stats"><div class="stat">Lead saya<b id="countLeads">0</b></div>
+<div class="stats"><div class="stat">Klik unik (hari ini)<b id="countClicksToday">0</b></div><div class="stat">Klik unik (30 hari)<b id="countClicksMonth">0</b></div><div class="stat">Lead saya<b id="countLeads">0</b></div>
 <div class="stat">Komisen saya<b id="countCommission">0</b></div>
 <div class="stat">Penyata pembayaran<b id="countPayout">0</b></div></div>
-<div class="row" style="margin:12px 0;justify-content:space-between"><h2 style="margin:0">Lead Saya</h2><button class="secondary" type="button" id="refreshMyLeads">Muat Semula Data</button></div>
+<div class="panel" id="agentClickPanel"><h2>Analitik Klik Promosi</h2><p class="agent-v20-note">Klik unik mengikut pelayar, hari dan kereta. Klik tidak bermaksud lead atau jualan.</p><div id="clickCarStats" class="items"></div></div><div class="row" style="margin:12px 0;justify-content:space-between"><h2 style="margin:0">Lead Saya</h2><button class="secondary" type="button" id="refreshMyLeads">Muat Semula Data</button></div>
 <div class="notice" style="margin:14px 0"><strong>Lead Saya</strong><p style="margin:5px 0 0">Nama, telefon, kereta diminati dan butang WhatsApp pelanggan dipaparkan di sini.</p></div>
 <div class="lead-tools"><label for="leadSearch">Cari lead<input id="leadSearch" type="search" placeholder="Nama pelanggan atau kereta" autocomplete="off"></label><label for="leadReadFilter">Status bacaan<select id="leadReadFilter"><option value="all">Semua lead</option><option value="unread">Belum baca</option><option value="read">Sudah baca</option></select></label></div><p id="leadFilterCount" class="agent-v20-note" aria-live="polite"></p><div id="leadItems" class="items"></div>
 <div id="agentPromo" hidden>
@@ -404,6 +404,17 @@ function renderAgentFinance(){
  showRows('payoutItems',agentPayoutRecords,(el,x)=>item(el,rm(x.amount),x.status+(x.paid_at?' · '+new Date(x.paid_at).toLocaleDateString('ms-MY'):'')));
 }
 $('commissionStatus').addEventListener('change',renderAgentFinance);
+async function loadAgentClickStats(){
+ const today=new Date();const cutoff=new Date(today.getTime()-29*86400000).toISOString().slice(0,10);
+ const {data,error}=await supabase.from('agent_click_events').select('public_vehicle_id,clicked_on').eq('agent_id',agent.id).gte('clicked_on',cutoff).order('clicked_on',{ascending:false}).limit(10000);
+ if(error){$('clickCarStats').textContent='Statistik klik belum tersedia.';return}
+ const localDate=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kuala_Lumpur',year:'numeric',month:'2-digit',day:'2-digit'}).format(today);
+ text($('countClicksToday'),data.filter(x=>x.clicked_on===localDate).length);text($('countClicksMonth'),data.length);
+ const counts=new Map();for(const x of data){const k=x.public_vehicle_id||'Katalog umum';counts.set(k,(counts.get(k)||0)+1)}
+ const target=$('clickCarStats');target.replaceChildren();
+ for(const [car,count] of [...counts].sort((a,b)=>b[1]-a[1]).slice(0,10)){const item=document.createElement('div');item.className='item';item.textContent=car+' · '+count+' klik unik';target.append(item)}
+ if(!counts.size)target.textContent='Belum ada klik direkodkan.';
+}
 async function loadDashboard(){
  if(!me?.email_confirmed_at||agent?.status!=='active')return;
  const [l,c,p,publicCars]=await Promise.all([
@@ -417,6 +428,7 @@ async function loadDashboard(){
  agentLeadRecords=l.data;agentLeadCars=carMap;renderAgentLeads();
  const rm=v=>new Intl.NumberFormat('ms-MY',{style:'currency',currency:'MYR'}).format(Number(v||0));
  agentCommissionRecords=c.data;agentPayoutRecords=p.data;renderAgentFinance();
+ await loadAgentClickStats();
 }
 async function adminRequest(data){
  const {data:session,error}=await supabase.auth.getSession();if(error||!session?.session?.access_token)throw new Error('Log masuk semula');
