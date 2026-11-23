@@ -465,6 +465,21 @@ async function loadMyRank(){
   card.append(rk,rs);card.hidden=false;
  }catch(_){card.hidden=true}
 }
+async function shareCarPost(v,url,ayat,btn){
+ const label=[v.make,v.model,v.model_year].filter(Boolean).join(' ');
+ const text=(ayat||(label+' | RM '+Number(v.display_price??v.asking_price??0).toLocaleString('ms-MY')))+'\n'+url;
+ try{await navigator.clipboard.writeText(text)}catch(_){}
+ if(!navigator.share){copyAgentLink(text);return message('Telefon ini tiada menu Kongsi. Ayat + link disalin — tampal dalam WhatsApp/FB/IG/Threads.')}
+ btn.disabled=true;const old=btn.textContent;btn.textContent='Menyediakan gambar…';
+ try{
+  let files=[];
+  if(v.image_url){try{const r=await fetch(v.image_url);const b=await r.blob();const f=new File([b],(v.public_vehicle_id||'kereta')+'.jpg',{type:b.type||'image/jpeg'});if(navigator.canShare?.({files:[f]}))files=[f]}catch(_){}}
+  const data=files.length?{files,text,title:label}:{text,title:label,url};
+  await navigator.share(data);
+  message(files.length?'Dikongsi. Untuk Instagram/Threads, ayat + link sudah disalin — tampal sebagai caption.':'Dikongsi.');
+ }catch(e){if(e?.name!=='AbortError')message('Ayat + link disalin. Tampal dalam app pilihan anda.')}
+ finally{btn.disabled=false;btn.textContent=old}
+}
 function buildPromoBox(box,v,url){
  const area=document.createElement('textarea');area.rows=4;area.maxLength=600;area.placeholder='Tekan "Jana Ayat AI" atau pilih ayat owner.';
  const row=document.createElement('div');row.className='row';row.style.gap='8px';row.style.flexWrap='wrap';
@@ -482,7 +497,9 @@ function buildPromoBox(box,v,url){
  cp.onclick=()=>{if(!area.value.trim())return message('Jana atau pilih ayat dahulu.',true);copyAgentLink(area.value.trim()+'\n'+url)};
  const wa=document.createElement('a');wa.className='promo-whatsapp';wa.target='_blank';wa.rel='noopener noreferrer';wa.textContent='WhatsApp Ayat';wa.href='#';
  wa.onclick=e=>{if(!area.value.trim()){e.preventDefault();return message('Jana atau pilih ayat dahulu.',true)}wa.href='https://wa.me/?text='+encodeURIComponent(area.value.trim()+'\n'+url)};
- acts.append(cp,wa);box.append(row,area,acts);
+ const sh=document.createElement('button');sh.type='button';sh.className='primary';sh.textContent='📤 Kongsi Gambar + Ayat';
+ sh.onclick=()=>shareCarPost(v,url,area.value.trim(),sh);
+ acts.append(sh,cp,wa);box.append(row,area,acts);
 }
 async function loadAgentCatalogue(){
  if(agent?.status!=='active')return;
@@ -543,10 +560,11 @@ async function loadAgentCatalogue(){
   const lead=document.createElement('button');lead.type='button';lead.textContent='Daftar Lead';
   lead.onclick=()=>{sel.value=v.id;sel.scrollIntoView({behavior:'smooth',block:'center'});};
   actions.append(open,copy,wa,inquiryLink,lead);
+  const qs=document.createElement('button');qs.type='button';qs.className='secondary';qs.textContent='📤 Kongsi';qs.onclick=()=>shareCarPost(v,url,'',qs);
   const pt=document.createElement('button');pt.type='button';pt.className='secondary promo-toggle';pt.textContent='✍️ Ayat Promosi';
   const pbox=document.createElement('div');pbox.className='promo-box';pbox.hidden=true;
   pt.onclick=()=>{pbox.hidden=!pbox.hidden;if(!pbox.hidden&&!pbox.childElementCount)buildPromoBox(pbox,v,url)};
-  actions.append(pt);content.append(title,price,commissionNote,actions,pbox);box.append(content);grid.append(box);
+  actions.append(qs,pt);content.append(title,price,commissionNote,actions,pbox);box.append(content);grid.append(box);
  }
  promoVisibleLimit=12;applyPromoFilter();
 }
