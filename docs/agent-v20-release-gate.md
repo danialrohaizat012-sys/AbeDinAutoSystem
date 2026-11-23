@@ -6,8 +6,8 @@
 - GitHub Agent V20 safety checks pass at commit 9cfaa17c.
 - Existing app regression checks pass at that commit.
 - The V20 portal uses an authenticated, read-only client and requires an active agent profile.
-- Production currently has owner-scoped SELECT policies on agent_leads, agent_commissions, agent_payouts; these do not require active status.
-- agent_payout_items also has its own SELECT policy and must be reviewed separately before declaring all payout data protected.
+- Production currently has owner-scoped SELECT policies on agent_leads, agent_commissions, agent_payouts, agent_payout_items; these do not require active status.
+- agent_payout_items has its own SELECT policy. The proposed migration now requires active agent ownership through the parent payout; this must be validated against real authenticated sessions.
 
 ## Blocking checks before merging PR #62
 1. Inspect all agent table policies and any privileged RPC used by admin/owner; confirm new policies do not break legitimate owner operations.
@@ -30,6 +30,10 @@ drop policy if exists agent_commissions_read_own on public.agent_commissions;
 create policy agent_commissions_read_own on public.agent_commissions
 for select to authenticated
 using (exists (select 1 from public.agent_profiles a where a.id=agent_commissions.agent_id and a.user_id=(select auth.uid())));
+drop policy if exists agent_payout_items_read_own on public.agent_payout_items;
+create policy agent_payout_items_read_own on public.agent_payout_items
+for select to authenticated
+using (exists (select 1 from public.agent_payouts p join public.agent_profiles a on a.id=p.agent_id where p.id=agent_payout_items.payout_id and a.user_id=(select auth.uid())));
 drop policy if exists agent_payouts_read_own on public.agent_payouts;
 create policy agent_payouts_read_own on public.agent_payouts
 for select to authenticated
