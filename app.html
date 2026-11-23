@@ -1407,6 +1407,8 @@ async function openPublicCatalogue(vehicleId=null){
   if(visibilityResult.error)console.warn('Daftar Minat visibility setting unavailable',visibilityResult.error);
   if(error){el('ada-login-box').hidden=false;msg('Catalogue gagal: '+error.message);return}
   let rows=Array.isArray(data)?data:[]; rows=applyPublicOffers(rows,await offersP);
+  // Katalog ejen (link dengan ref): hanya kereta Available dalam senarai.
+  if(agentReferralCode&&!vehicleId)rows=rows.filter(v=>String(v.status||'').toLowerCase()==='available');
   const box=document.createElement('section');box.id='ada-public-catalogue';
   const logo=new URL('assets/embedded-300045c966fa.png',location.href).href;
   const brand=`<div class="ada-public-brand">${logo?`<img src="${safe(logo)}" alt="Abe Din Auto">`:''}<div><strong>ABE DIN AUTO</strong><small>Kereta terpilih · Urusan lebih mudah</small></div></div>`;
