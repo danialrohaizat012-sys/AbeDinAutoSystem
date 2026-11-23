@@ -75,6 +75,7 @@ input,select,textarea{min-height:44px}
 <div id="alert" class="notice" role="status" aria-live="polite">Menyemak sesi pengguna...</div>
 <nav id="tabs">
 <button data-view="dashboard" id="dashboardTab" hidden aria-current="false">Dashboard Ejen</button>
+<button data-view="promosi" id="promosiTab" hidden>Ayat Promosi</button>
 <button data-view="account" aria-current="page">Akaun</button>
 <button data-view="owner" id="ownerTab" hidden>Kelulusan Owner</button>
 </nav>
@@ -142,6 +143,7 @@ input,select,textarea{min-height:44px}
 <div class="agent-quicklinks"><a href="#commissionItems">Komisen Saya</a><a href="#payoutItems">Sejarah Bayaran</a><a href="#agentPromo">Katalog Promosi</a></div><h2 style="margin-top:22px">Komisen Saya</h2><div class="agent-finance-summary" id="commissionSummary" aria-live="polite"></div><div class="lead-tools"><label for="commissionStatus">Tapis status komisen<select id="commissionStatus"><option value="all">Semua status</option><option value="approved">Diluluskan</option><option value="pending">Menunggu kelulusan</option><option value="paid">Dibayar</option></select></label></div><div id="commissionItems" class="items"></div>
 <h2 style="margin-top:22px">Pembayaran Saya</h2><div class="agent-finance-summary" id="payoutSummary" aria-live="polite"></div><div id="payoutItems" class="items"></div></div></section>
 
+<section id="promosi" hidden><div class="panel"><h1>Katalog & Ayat Promosi Ejen</h1><p>Pilih kereta dan kongsi ayat promosi bersama pautan rujukan ejen. Ayat tersedia selepas owner menerbitkannya.</p><div id="promosiMount"></div></div></section>
 <section id="owner" hidden><div class="panel"><h2>Ayat Promosi Ejen (5 Pilihan)</h2><p>Owner sediakan dan terbitkan ayat. Gunakan {model}, {tahun}, {harga} untuk maklumat automatik. AI belum disambungkan ke backend; butang sediakan prompt untuk AI.</p><button type="button" class="secondary" id="copyPromoAiPrompt">Salin Prompt AI (5 Ayat)</button><div id="ownerPromoSlots" class="items"></div></div><div class="panel"><h1>Kelulusan Owner</h1>
 <p>Senarai permohonan belum diluluskan. Hanya akaun owner aktif boleh menggunakan aliran ini.</p>
 <div class="row"><button class="secondary" id="refreshOwner">Muat semula</button></div>
@@ -176,9 +178,11 @@ function view(id){
  if(id==='dashboard'&&!(me?.email_confirmed_at&&agent?.status==='active'))id='account';
  if(id==='application')id='account';
  if(id==='owner'&&!owner)id='account';
+ if(id==='promosi'&&!(me?.email_confirmed_at&&agent?.status==='active'))id='account';
  for(const b of document.querySelectorAll('[data-view]'))b.setAttribute('aria-current',b.dataset.view===id?'page':'false');
 for(const s of document.querySelectorAll('main section'))s.hidden=s.id!==id;
 if(id==='owner'&&owner){loadOwner();loadOwnerPromo().catch(fail)}}
+$('promosiMount').append($('agentPromo'));
 for(const b of document.querySelectorAll('[data-view]')) b.onclick=()=>{if(b.hidden)return;view(b.dataset.view);};
 function text(node,value){node.textContent=String(value??'');}
 function item(parent,title,subtitle){const d=document.createElement('div');d.className='item';
@@ -276,7 +280,7 @@ async function current(){const {data:sessionData,error:sessionError}=await supab
 async function sync(){
  try{
   me=await current();owner=false;agent=null;$('logout').hidden=!me;
-  $('ownerTab').hidden=true;$('dashboardTab').hidden=true;$('authPanels').hidden=!!me;$('signedInAccount').hidden=!me;
+  $('ownerTab').hidden=true;$('dashboardTab').hidden=true;$('promosiTab').hidden=true;$('authPanels').hidden=!!me;$('signedInAccount').hidden=!me;
   $('applyForm').hidden=true;$('leadPanel').hidden=true;$('agentPromo').hidden=true;
   if(!me){$('authPanels').hidden=false;$('signedInAccount').hidden=true;shareToken='';$('applicationStatus').textContent='Log masuk dan sahkan e-mel terlebih dahulu.';$('agentStatus').textContent='Log masuk untuk melihat akaun ejen.';message('Sila log masuk atau daftar akaun ejen.');view('account');return;}
   if(!me.email_confirmed_at){message('Sila sahkan e-mel melalui pautan pengesahan yang diterima.');view('account');return;}
@@ -288,7 +292,7 @@ async function sync(){
   if(appErr)throw appErr;
   const {data:profile,error:prErr}=await supabase.from('agent_profiles').select('id,agent_code,status,activated_at').eq('user_id',me.id).maybeSingle();
   if(prErr)throw prErr;agent=profile;
-  $('dashboardTab').hidden=profile?.status!=='active';
+  $('dashboardTab').hidden=profile?.status!=='active';$('promosiTab').hidden=profile?.status!=='active';
   if(app){$('applicationStatus').textContent='Status permohonan: '+app.status+'. Tarikh: '+new Date(app.applied_at).toLocaleDateString('ms-MY');}
   else {$('applicationStatus').textContent='Belum ada permohonan. Sila lengkapkan borang di bawah.';$('applyForm').hidden=false;
    $('applyForm').elements.email.value=me.email||'';}
@@ -409,10 +413,11 @@ async function loadOwnerPromo(){
  }
 }
 $('copyPromoAiPrompt').onclick=()=>copyAgentLink('Jana tepat 5 ayat promosi kereta terpakai AbeDin Auto dalam Bahasa Melayu. Setiap ayat maksimum 500 aksara dan wajib mengandungi {model}, {tahun}, {harga}. Gaya berlainan, menarik dan profesional. Jangan mereka-reka diskaun, kelulusan pinjaman, jaminan, keadaan kereta atau stok. Nomborkan 1 hingga 5.');
-$('goAgentPromos').onclick=e=>{e.preventDefault();const panel=$('agentPromo');if(panel.hidden){message('Katalog promosi sedang dimuatkan atau belum tersedia. Tekan Segarkan Stok selepas ia muncul.',true);return}panel.scrollIntoView({behavior:'smooth',block:'start'});};
+$('goAgentPromos').onclick=e=>{e.preventDefault();view('promosi')}
 $('promoCarChoice').onchange=loadPublishedPromo;
 async function loadAgentCatalogue(){
  if(agent?.status!=='active')return;
+ $('agentPromo').hidden=false;
  const {data:session,error}=await supabase.auth.getSession();
  if(error||!session?.session?.access_token)throw new Error('Sesi pengguna tamat');
  const r=await fetch(project+'/functions/v1/agent-portal-catalog',{
