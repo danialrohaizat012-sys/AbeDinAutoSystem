@@ -39,6 +39,7 @@ button:disabled{opacity:.55;cursor:not-allowed}.row{display:flex;flex-wrap:wrap;
 .rank-card .rk{font-size:38px;font-weight:800;line-height:1}.rank-card .rk small{display:block;font-size:12px;font-weight:500;opacity:.8}
 .rank-card .rs{display:flex;gap:16px;flex-wrap:wrap}.rank-card .rs div{font-size:12px;opacity:.85}.rank-card .rs b{display:block;font-size:20px;opacity:1}
 .terma details{border:1px solid #dde4ea;border-radius:10px;padding:10px 14px;margin:8px 0;background:#fff}.terma summary{font-weight:700;cursor:pointer}.terma li{margin:6px 0;line-height:1.5}
+.promo-box{margin-top:10px;display:grid;gap:8px}.promo-box textarea{width:100%;box-sizing:border-box;border-radius:10px;border:1px solid #cfd8e0;padding:9px;font:inherit}.promo-box[hidden]{display:none}
 .promo-commission{display:inline-block!important;background:#fff4d6;color:#7a5200;border:1px solid #f0d58c;border-radius:999px;padding:5px 11px;font-weight:700;font-size:14px}.promo-commission.none{background:#f1f3f5;color:#667;border-color:#dde;font-weight:500}
 .promo-price{font-size:17px;font-weight:750;color:#12589f;margin:8px 0}
 .promo-actions{display:flex;flex-wrap:wrap;gap:7px}
@@ -431,7 +432,7 @@ async function copyAgentLink(link){
  catch{prompt('Salin pautan promosi kereta:',link);}
 }
 const promoSafe=x=>String(x??'');
-let promoVehicles=[];
+let promoVehicles=[];let ownerPromoCopies=[];
 function fillPromoCopy(t,v){
  const model=[v?.make,v?.model].filter(Boolean).join(' ')||'Kereta pilihan';
  return promoSafe(t).replaceAll('{model}',model).replaceAll('{tahun}',String(v?.model_year||'—')).replaceAll('{harga}',v?.asking_price!=null?'RM '+Number(v.asking_price).toLocaleString('ms-MY'):'Hubungi kami');
@@ -464,6 +465,25 @@ async function loadMyRank(){
   card.append(rk,rs);card.hidden=false;
  }catch(_){card.hidden=true}
 }
+function buildPromoBox(box,v,url){
+ const area=document.createElement('textarea');area.rows=4;area.maxLength=600;area.placeholder='Tekan "Jana Ayat AI" atau pilih ayat owner.';
+ const row=document.createElement('div');row.className='row';row.style.gap='8px';row.style.flexWrap='wrap';
+ const gen=document.createElement('button');gen.type='button';gen.className='primary';gen.textContent='✨ Jana Ayat AI';
+ gen.onclick=async()=>{gen.disabled=true;const old=gen.textContent;gen.textContent='AI sedang menulis…';
+  try{const {data:ss}=await supabase.auth.getSession();const r=await fetch(project+'/functions/v1/agent-promo-ai',{method:'POST',headers:{'content-type':'application/json',apikey:'sb_publishable_zuuNipsMpalN_38SJwXpFA_MRzQ6eZ0',authorization:'Bearer '+(ss?.session?.access_token||'')},body:JSON.stringify({mode:'car',vehicle_id:v.public_vehicle_id})});
+   const j=await r.json().catch(()=>({}));if(!r.ok||!j.ayat)throw new Error(j.error||'AI gagal menjana ayat.');area.value=j.ayat;gen.textContent='🔄 Jana Lagi';}
+  catch(e){fail(e);gen.textContent=old}finally{gen.disabled=false}};
+ row.append(gen);
+ if(ownerPromoCopies.length){const sel=document.createElement('select');sel.setAttribute('aria-label','Ayat owner');const o0=document.createElement('option');o0.value='';o0.textContent='Ayat owner…';sel.append(o0);
+  for(const e of ownerPromoCopies){const o=document.createElement('option');o.value=String(e.slot);o.textContent='Pilihan '+e.slot;sel.append(o)}
+  sel.onchange=()=>{const e=ownerPromoCopies.find(x=>String(x.slot)===sel.value);if(e)area.value=fillPromoCopy(e.published,v)};row.append(sel)}
+ const acts=document.createElement('div');acts.className='row';acts.style.gap='8px';
+ const cp=document.createElement('button');cp.type='button';cp.className='secondary';cp.textContent='Salin Ayat + Link';
+ cp.onclick=()=>{if(!area.value.trim())return message('Jana atau pilih ayat dahulu.',true);copyAgentLink(area.value.trim()+'\n'+url)};
+ const wa=document.createElement('a');wa.className='promo-whatsapp';wa.target='_blank';wa.rel='noopener noreferrer';wa.textContent='WhatsApp Ayat';wa.href='#';
+ wa.onclick=e=>{if(!area.value.trim()){e.preventDefault();return message('Jana atau pilih ayat dahulu.',true)}wa.href='https://wa.me/?text='+encodeURIComponent(area.value.trim()+'\n'+url)};
+ acts.append(cp,wa);box.append(row,area,acts);
+}
 async function loadAgentCatalogue(){
  if(agent?.status!=='active')return;
  $('agentPromo').hidden=false;
@@ -478,6 +498,7 @@ async function loadAgentCatalogue(){
  if(typeof body.share_token!=='string'||!/^[a-f0-9]{32}$/.test(body.share_token))throw new Error('Link ejen belum tersedia. Cuba lagi.');
  shareToken=body.share_token;
  promoVehicles=body.vehicles;
+ supabase.from('agent_promo_copy_v20').select('slot,published').order('slot').then(({data})=>{ownerPromoCopies=(data||[]).filter(x=>x.published)},()=>{});
 
  $('agentPromo').hidden=false;
  const myLink=agentCatalogueLink();
@@ -521,7 +542,11 @@ async function loadAgentCatalogue(){
   inquiryLink.target='_blank';inquiryLink.rel='noopener';inquiryLink.textContent='Link Daftar Minat';
   const lead=document.createElement('button');lead.type='button';lead.textContent='Daftar Lead';
   lead.onclick=()=>{sel.value=v.id;sel.scrollIntoView({behavior:'smooth',block:'center'});};
-  actions.append(open,copy,wa,inquiryLink,lead);content.append(title,price,commissionNote,actions);box.append(content);grid.append(box);
+  actions.append(open,copy,wa,inquiryLink,lead);
+  const pt=document.createElement('button');pt.type='button';pt.className='secondary promo-toggle';pt.textContent='✍️ Ayat Promosi';
+  const pbox=document.createElement('div');pbox.className='promo-box';pbox.hidden=true;
+  pt.onclick=()=>{pbox.hidden=!pbox.hidden;if(!pbox.hidden&&!pbox.childElementCount)buildPromoBox(pbox,v,url)};
+  actions.append(pt);content.append(title,price,commissionNote,actions,pbox);box.append(content);grid.append(box);
  }
  promoVisibleLimit=12;applyPromoFilter();
 }

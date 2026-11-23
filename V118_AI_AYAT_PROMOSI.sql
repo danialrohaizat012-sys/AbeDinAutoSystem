@@ -1,0 +1,1 @@
+-- V118: agent_ai_usage + agent_ai_take_v1 (had 40 ayat AI/hari/ejen). Edge function agent-promo-ai. Sudah dijalankan.

@@ -143,6 +143,7 @@ export function mountAgentAdmin(host,{client,profile}={}){
  .ada-agent-owner .ag-lb-name strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ada-agent-owner .ag-lb-name small{color:var(--ag-muted);font-size:11px}
  .ada-agent-owner .ag-lb-n{text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
  @media(max-width:500px){.ada-agent-owner .ag-lb-row{grid-template-columns:28px minmax(0,1fr) repeat(4,40px);font-size:13px}}
+ .ada-agent-owner .ag-ai-new{outline:2px solid var(--ag-accent)}
  .ada-agent-owner .ag-counts{gap:10px!important}
  .ada-agent-owner .ag-sections{gap:13px!important}
  .ada-agent-owner .ag-config{gap:10px!important}
@@ -304,10 +305,18 @@ export function mountAgentAdmin(host,{client,profile}={}){
     buttons.append(yes,no);n.append(buttons);
    }
    if(applications.length)content.prepend(pa);
-   const pp=section(content,'Ayat Promosi Ejen (5 Pilihan)','Tulis dan terbitkan ayat yang ejen guna bila kongsi kereta. Guna {model}, {tahun}, {harga} — sistem isi automatik ikut kereta.','promosi');
+   const pp=section(content,'Ayat Promosi Ejen (5 Pilihan)','Jana dengan AI atau tulis sendiri, kemudian terbitkan. Ejen juga boleh jana ayat AI sendiri untuk setiap kereta. Guna {model}, {tahun}, {harga}.','promosi');
    const aiBtn=node('button','','📋 Salin Prompt AI (5 Ayat)');aiBtn.type='button';
    aiBtn.onclick=async()=>{const t='Jana tepat 5 ayat promosi kereta terpakai AbeDin Auto dalam Bahasa Melayu. Setiap ayat maksimum 500 aksara dan wajib mengandungi {model}, {tahun}, {harga}. Gaya berlainan, menarik dan profesional. Jangan mereka-reka diskaun, kelulusan pinjaman, jaminan, keadaan kereta atau stok. Nomborkan 1 hingga 5.';try{await navigator.clipboard.writeText(t);status('Prompt AI disalin. Tampal dalam ChatGPT/Claude.')}catch{prompt('Salin prompt ini:',t)}};
-   pp.append(aiBtn);
+   const genBtn=node('button','ag-primary','✨ Jana 5 ayat baru dengan AI');genBtn.type='button';
+   const promoAreas=[];
+   genBtn.onclick=async()=>{genBtn.disabled=true;const old=genBtn.textContent;genBtn.textContent='AI sedang menulis…';
+    try{const {data:ss}=await client.auth.getSession();const r=await fetch('https://buzpdyvvoiqgbeventwm.supabase.co/functions/v1/agent-promo-ai',{method:'POST',headers:{'content-type':'application/json',apikey:'sb_publishable_zuuNipsMpalN_38SJwXpFA_MRzQ6eZ0',authorization:'Bearer '+(ss?.session?.access_token||'')},body:JSON.stringify({mode:'owner5'})});
+     const j=await r.json().catch(()=>({}));if(!r.ok||!Array.isArray(j.ayat))throw Error(j.error||'AI gagal menjana ayat.');
+     j.ayat.forEach((t,i)=>{const a=promoAreas[i];if(a){a.value=t;a.dispatchEvent(new Event('input'));a.classList.add('ag-ai-new')}});
+     status('5 ayat baru dijana. Semak, kemudian tekan "Terbitkan kepada ejen" pada ayat yang anda mahu.')}
+    catch(e){status(e.message,true)}finally{genBtn.disabled=false;genBtn.textContent=old}};
+   const genRow=node('div','ag-controls');genRow.append(genBtn,aiBtn);pp.append(genRow);
    const {data:promos,error:promoErr}=await client.from('agent_promo_copy_v20').select('slot,draft,published').order('slot');
    if(promoErr)pp.append(node('p','','Gagal memuat ayat promosi: '+promoErr.message));
    for(const entry of promos||[]){
@@ -315,7 +324,7 @@ export function mountAgentAdmin(host,{client,profile}={}){
     const head=node('div','ag-promo-head');head.append(node('strong','','Pilihan '+entry.slot));
     const live=entry.published&&entry.published===entry.draft;
     head.append(node('span',entry.published?(live?'ag-read':'ag-unread'):'ag-unread',entry.published?(live?'Diterbitkan':'Ada perubahan belum diterbit'):'Belum diterbitkan'));
-    const area=node('textarea');area.value=entry.draft||'';area.maxLength=500;area.rows=3;
+    const area=node('textarea');area.value=entry.draft||'';area.maxLength=500;area.rows=3;promoAreas.push(area);
     const cnt=node('small','ag-promo-count',(area.value.length)+'/500');area.oninput=()=>{cnt.textContent=area.value.length+'/500'};
     const btns=node('div','ag-controls');
     for(const publish of [false,true]){
