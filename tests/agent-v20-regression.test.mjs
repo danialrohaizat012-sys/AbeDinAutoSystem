@@ -32,3 +32,10 @@ test('main application only adds isolated agent link and check',()=>{
  assert.match(portal,/createV20AgentData/);
  assert.match(portal,/signInWithPassword/);
 });
+
+test('portal only exposes navigation after active agent lookup',()=>{
+ assert.match(portal,/from\('agent_profiles'\)\.select\('id'\)/);
+ assert.match(portal,/tabs\.hidden=!allowed/);
+ assert.match(portal,/refreshButton\.hidden=!allowed/);
+ assert.match(portal,/if\(allowed\)load\(\)/);
+});
