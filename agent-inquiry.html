@@ -19,6 +19,9 @@ a{color:#165ca7}footer{font-size:12px;color:#728398;text-align:center;margin-top
 .honey{position:absolute;left:-99999px;opacity:0;pointer-events:none}
 .car-preview{border:1px solid #cbdbea;border-radius:15px;background:#f5f9ff;padding:16px;margin:16px 0}
 .car-preview h2{margin:0 0 10px;font-size:19px;color:#173e6a}
+.car-photo{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:11px;background:#e5edf6;margin:0 0 13px}
+.car-photo-fallback{display:grid;place-items:center;aspect-ratio:16/10;background:#e5edf6;border-radius:11px;color:#62758c;margin:0 0 13px}
+.car-detail-link{display:block;text-align:center;border:1px solid #b9d3eb;background:white;border-radius:10px;padding:12px;text-decoration:none;font-weight:750;margin-top:14px}
 .car-preview dl{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0}
 .car-preview dt{font-size:12px;color:#65778b}.car-preview dd{font-weight:750;margin:4px 0 0}
 .car-preview .price{color:#176ab7;font-size:19px}
@@ -32,7 +35,7 @@ a{color:#165ca7}footer{font-size:12px;color:#728398;text-align:center;margin-top
 <div id="content" hidden>
 <input id="agentCode" name="ref" type="hidden" value="">
 <p id="refHint" hidden></p>
-<section class="car-preview" id="carPreview" aria-live="polite"><h2>Kereta pilihan anda</h2><p id="carLoading">Sedang memuatkan maklumat kereta...</p><dl id="carDetails" hidden></dl></section><p><a id="carLink" target="_blank" rel="noopener">Lihat butiran kereta dalam katalog awam</a></p>
+<section class="car-preview" id="carPreview" aria-live="polite"><h2>Kereta pilihan anda</h2><div id="carPhoto" class="car-photo-fallback">Memuatkan gambar kereta...</div><p id="carLoading">Sedang memuatkan maklumat kereta...</p><dl id="carDetails" hidden></dl><a id="carLink" class="car-detail-link" target="_blank" rel="noopener noreferrer">Lihat Gambar & Detail Penuh Kereta</a></section>
 <form id="form">
 <label for="customerName">Nama pelanggan</label>
 <input id="customerName" name="customer_name" maxlength="160" autocomplete="name" required minlength="2">
@@ -72,6 +75,16 @@ async function loadSelectedCar(){
   const v=Array.isArray(rows)?rows.find(x=>x.vehicle_id===car):null;
   if(!v)throw new Error('Kereta tidak ditemui dalam katalog awam. Sila semak pautan kereta.');
   selectedCar=v;
+  const photo=$('carPhoto');
+  const images=Array.isArray(v.images)?v.images:[];
+  const cover=images.find(i=>i&&i.is_cover&&typeof i.storage_path==='string')||images.find(i=>i&&typeof i.storage_path==='string');
+  if(cover){
+   const path=cover.storage_path.split('/').map(encodeURIComponent).join('/');
+   const img=document.createElement('img');img.className='car-photo';img.alt='Gambar kereta pilihan';img.loading='lazy';img.decoding='async';
+   img.onerror=()=>{photo.textContent='Gambar kereta tidak tersedia';photo.className='car-photo-fallback'};
+   img.src='https://buzpdyvvoiqgbeventwm.supabase.co/storage/v1/object/public/vehicle-images/'+path;
+   photo.replaceWith(img);img.id='carPhoto';
+  }else{photo.textContent='Gambar kereta belum tersedia';}
   const name=[v.make,v.model,v.model_year].filter(Boolean).join(' ');
   const details=$('carDetails');details.replaceChildren();
   const add=(label,value,cls)=>{const group=document.createElement('div');const dt=document.createElement('dt');dt.textContent=label;const dd=document.createElement('dd');dd.textContent=value;if(cls)dd.className=cls;group.append(dt,dd);details.append(group)};
