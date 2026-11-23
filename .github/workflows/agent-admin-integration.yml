@@ -10,6 +10,8 @@ on:
       - tests/agent-lead-contact.test.mjs
       - tests/agent-read-commission.test.mjs
       - tests/agent-admin-theme.test.mjs
+      - tests/catalogue-interest-toggle.test.mjs
+      - supabase/catalogue_interest_button_visibility_v1.sql
       - agent.html
       - supabase/functions/agent-portal-admin/index.ts
       - .github/workflows/agent-admin-integration.yml
@@ -29,7 +31,7 @@ jobs:
         with:
           node-version: '22'
       - name: Check Agent Network owner access and menu integration
-        run: node --test tests/agent-admin-integration.test.mjs tests/agent-lead-contact.test.mjs tests/agent-read-commission.test.mjs tests/agent-admin-theme.test.mjs
+        run: node --test tests/agent-admin-integration.test.mjs tests/agent-lead-contact.test.mjs tests/agent-read-commission.test.mjs tests/agent-admin-theme.test.mjs tests/catalogue-interest-toggle.test.mjs
       - name: Check live admin bundle after deployment
         shell: bash
         run: |
@@ -51,4 +53,7 @@ jobs:
           grep -Fq 'customer_phone,status,lead_source' /tmp/abedin-agent.html
           grep -Fq 'Tandakan Sudah Baca' /tmp/abedin-agent.html
           grep -Fq 'Komisen cadangan ejen' /tmp/abedin-agent.html
+          grep -Fq 'ada-interest-visibility-switch' /tmp/abedin-admin.html
+          grep -Fq "showInterestButton&&publicStatus(v)" /tmp/abedin-admin.html
+          echo "PASS: Owner Daftar Minat toggle and public UI condition deployed"
           echo "PASS: Agent module available on live admin hosting"
