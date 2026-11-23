@@ -141,11 +141,23 @@ export function mountAgentAdmin(host,{client,profile}={}){
  function status(v,bad=false){if(disposed)return;msg.textContent=v;msg.className='ag-status'+(bad?' bad':'')}
  async function request(action,params={}){
   const {data,error}=await client.auth.getSession();
-  if(error||!data?.session?.access_token)throw Error('Sesi admin tamat. Sila log masuk semula.');
-  const r=await fetch(API,{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+data.session.access_token},body:JSON.stringify({action,...params})});
-  const payload=await r.json().catch(()=>({}));
-  if(!r.ok)throw Error(payload.error||'Gagal memuat data ejen');
-  return payload;
+  if(error||!data?.session?.access_token)throw Error('Sesi admin tamat. Sila log keluar dan masuk semula.');
+  async function send(token){
+   const r=await fetch(API,{method:'POST',headers:{'content-type':'application/json','apikey':'sb_publishable_zuuNipsMpalN_38SJwXpFA_MRzQ6eZ0',authorization:'Bearer '+token},body:JSON.stringify({action,...params})});
+   const payload=await r.json().catch(()=>({}));
+   return {r,payload};
+  }
+  let result=await send(data.session.access_token);
+  if(result.r.status===401){
+   const refreshed=await client.auth.refreshSession();
+   if(!refreshed.error&&refreshed.data?.session?.access_token)result=await send(refreshed.data.session.access_token);
+  }
+  if(!result.r.ok){
+   if(result.r.status===401)throw Error('Sesi atau pengesahan e-mel akaun owner tidak sah. Sila log keluar, masuk semula dan pastikan e-mel telah disahkan.');
+   if(result.r.status===403)throw Error('Akaun ini belum mempunyai akses Owner aktif untuk modul ejen.');
+   throw Error(result.payload.error||'Gagal memuat data ejen');
+  }
+  return result.payload;
  }
  function stat(title,value){const a=node('div','ag-stat');a.append(node('small','',title),node('b','',value));return a}
  async function ownerRead(a,type){
