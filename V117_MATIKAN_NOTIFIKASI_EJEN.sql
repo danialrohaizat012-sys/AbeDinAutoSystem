@@ -1,0 +1,1 @@
+-- V117: notifikasi kepada ejen dimatikan (notify_agent_v1 jadi no-op). Notifikasi owner kekal. Sudah dijalankan.
