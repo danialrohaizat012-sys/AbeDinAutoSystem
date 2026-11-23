@@ -463,20 +463,39 @@ function viewPunch() {
   };
   const leaveTime = requiredLeave();
 
-  const sumTile = (label, value) => `<div style="min-width:0;padding:12px 5px;border:1px solid var(--line,#39352d);border-radius:14px;text-align:center;background:rgba(255,255,255,.025)"><small class="mute" style="display:block;font-size:12px">${label}</small><b style="display:block;margin-top:7px;font-size:15px">${value}</b></div>`;
-  const summary = `<div class="card"><div class="r" style="align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap"><h3 style="margin:0">Ringkasan Hari Ini</h3><span class="chip pri">${dayLabel(today)}</span></div>
-    <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:12px">
-      ${sumTile("Masuk", firstIn ? hm(firstIn.punched_at) : "–")}
-      ${sumTile("Rehat", onRest ? "Sedang" : restStarts.length ? restEnds.length ? fmtMin(restEnds.reduce((acc,p,i)=>acc+Math.max(0,(new Date(p.punched_at)-new Date(restStarts[i]?.punched_at || p.punched_at))/60000),0)) : "Belum tamat" : "–")}
-      ${sumTile("Keluar", last?.kind === "out" ? hm(last.punched_at) : "–")}
-      ${sumTile("Jam kerja", `<span id="punch-worked">${fmtMin(worked.mins)}</span>`)}
+  const sumTile = (label, value) => `<div style="min-width:0;padding:12px 8px;border:1px solid var(--line,#39352d);border-radius:13px;background:rgba(255,255,255,.035)"><small class="mute" style="display:block;font-size:12px">${label}</small><b style="display:block;margin-top:7px;font-size:16px">${value}</b></div>`;
+  const requiredBreak = sc.brk || 0;
+  const actualRest = (() => {
+    let total=0, started=null;
+    for(const p of mine) {
+      const at=new Date(p.punched_at).getTime();
+      if(p.kind==="rest_start" && started==null) started=at;
+      else if(p.kind==="rest_end" && started!=null) { total+=Math.max(0,at-started); started=null; }
+    }
+    if(started!=null) total+=Math.max(0,Date.now()-started);
+    return Math.floor(total/60000);
+  })();
+  const extraRest = Math.max(0,actualRest-requiredBreak);
+  const summary = `<div class="card" style="border-color:rgba(217,173,54,.25)">
+    <div class="r" style="align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap"><h3 style="margin:0">Ringkasan Hari Ini</h3><span class="chip pri">${dayLabel(today)}</span></div>
+    ${leaveTime ? `<div style="margin-top:14px;padding:17px 12px;border:1.5px solid #d9ad36;border-radius:17px;text-align:center;background:linear-gradient(145deg,rgba(217,173,54,.14),rgba(31,48,34,.18))">
+      <div style="font-size:14px;font-weight:700">◷ Waktu Wajib Pulang</div>
+      <div id="punch-required-leave" style="font-size:clamp(28px,8vw,40px);line-height:1.3;font-weight:900;color:#f1c64c;margin:6px 0">${hm(leaveTime.toISOString())}</div>
+      <small id="punch-leave-note" style="color:#d9d1b4">${extraRest ? 'Tambahan rehat '+fmtMin(extraRest)+' · waktu balik dilanjutkan' : 'Cukup '+fmtMin(scheduledMin)+' kerja bersih · rehat '+fmtMin(requiredBreak)}</small>
+    </div>` : ""}
+    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:13px">
+      ${sumTile("Punch Masuk", firstIn ? hm(firstIn.punched_at) : "–")}
+      ${sumTile("Jumlah Rehat", restStarts.length ? fmtMin(actualRest) : "0m")}
+      ${sumTile("Sasaran Kerja Bersih", scheduledMin ? fmtMin(scheduledMin) : "–")}
+      ${sumTile("Waktu Balik Asal", sc.type==="work" ? String(sc.end/60|0).padStart(2,"0")+":"+String(sc.end%60).padStart(2,"0") : "–")}
     </div>
-    ${leaveTime ? `<div style="margin-top:12px;padding:14px;border:1px solid #d9ad36;border-radius:12px;text-align:center"><small class="mute">Waktu Wajib Pulang (cukup 8 jam kerja bersih)</small><div id="punch-required-leave" style="font-size:28px;font-weight:800;color:#e5b93b;margin:5px 0">${hm(leaveTime.toISOString())}</div><small class="mute">Rehat melebihi tempoh syif akan melanjutkan waktu wajib pulang. Semasa rehat, waktu ini dikemas kini.</small></div>` : ""}
-    <div style="margin-top:12px;padding:10px 12px;border:1px solid var(--line,#39352d);border-radius:12px">
-      <div class="r" style="justify-content:space-between;gap:8px"><small>Kemajuan waktu kerja</small><b id="punch-percent">${worked.percent == null ? "—" : worked.percent + "%"}</b></div>
-      <div style="height:8px;border-radius:8px;background:rgba(255,255,255,.14);overflow:hidden;margin:8px 0"><div id="punch-progress" style="height:100%;width:${worked.percent || 0}%;background:#e5b93b;border-radius:8px"></div></div>
-      <small class="mute">Sasaran: ${scheduledMin ? fmtMin(scheduledMin) : "Tiada syif dijadualkan"} · Tidak termasuk waktu rehat</small>
-    </div></div>`;
+    <div style="margin-top:13px;padding:13px;border:1px solid var(--line,#39352d);border-radius:13px">
+      <div class="r" style="justify-content:space-between;gap:8px"><b style="font-size:14px">Kemajuan Kerja Bersih</b><b id="punch-percent">${worked.percent == null ? "—" : worked.percent + "%"}</b></div>
+      <div style="height:9px;border-radius:9px;background:rgba(255,255,255,.15);overflow:hidden;margin:9px 0"><div id="punch-progress" style="height:100%;width:${worked.percent || 0}%;background:#e5b93b;border-radius:9px"></div></div>
+      <small class="mute"><span id="punch-worked">${fmtMin(worked.mins)}</span> / ${scheduledMin ? fmtMin(scheduledMin) : "Tiada syif"} · Tidak termasuk rehat</small>
+    </div>
+    <small class="mute" style="display:block;margin-top:11px">Waktu wajib pulang dikemas kini mengikut tempoh rehat sebenar. Punch balik awal akan direkod sebagai kekurangan jam.</small>
+  </div>`;
   return `<div class="ap"><div class="col"><div class="card" style="align-items:center;text-align:center">
       <div class="mute">${dayLabel(today)} · ${esc(schedText(sc))}</div>
       <div class="clock" id="clock">--:--</div>
