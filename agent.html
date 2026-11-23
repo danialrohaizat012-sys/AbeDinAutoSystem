@@ -297,7 +297,7 @@ async function copyAgentLink(link){
  catch{prompt('Salin pautan promosi kereta:',link);}
 }
 const promoSafe=x=>String(x??'');
-let promoVehicles=[];
+let promoVehicles=[];let publishedPromoCopies=[];
 function fillPromoCopy(t,v){
  const model=[v?.make,v?.model].filter(Boolean).join(' ')||'Kereta pilihan';
  return promoSafe(t).replaceAll('{model}',model).replaceAll('{tahun}',String(v?.model_year||'—')).replaceAll('{harga}',v?.asking_price!=null?'RM '+Number(v.asking_price).toLocaleString('ms-MY'):'Hubungi kami');
@@ -306,9 +306,11 @@ async function loadPublishedPromo(){
  const {data,error}=await supabase.from('agent_promo_copy_v20').select('slot,published').order('slot');
  const target=$('agentPromoCopies');target.replaceChildren();
  if(error){target.textContent='Ayat promosi belum tersedia.';return}
+ publishedPromoCopies=data.filter(x=>x.published);
+ renderCardPromoCopies();
  const selected=promoVehicles.find(x=>x.public_vehicle_id===$('promoCarChoice').value)||promoVehicles[0];
  if(!selected){target.textContent='Tiada kereta tersedia.';return}
- for(const entry of data.filter(x=>x.published)){
+ for(const entry of publishedPromoCopies){
   const box=document.createElement('div');box.className='item';
   const sentence=fillPromoCopy(entry.published,selected);
   const p=document.createElement('p');p.textContent=sentence;box.append(p);
@@ -316,6 +318,28 @@ async function loadPublishedPromo(){
   b.onclick=()=>copyAgentLink(sentence+'\\n'+agentCarLink(selected));box.append(b);target.append(box);
  }
  if(!target.childElementCount)target.textContent='Owner belum menerbitkan ayat promosi.';
+}
+function renderCardPromoCopies(){
+ for(const box of $('promoCars').querySelectorAll('.promo-card')){
+  const slot=box.querySelector('.card-promo-copy');
+  if(!slot)continue;
+  slot.replaceChildren();
+  const v=promoVehicles.find(x=>x.public_vehicle_id===box.dataset.publicVehicleId);
+  if(!v)continue;
+  if(!publishedPromoCopies.length){slot.textContent='Ayat promosi menunggu kelulusan owner.';continue}
+  const heading=document.createElement('strong');heading.textContent='Ayat Promosi Untuk Kereta Ini';slot.append(heading);
+  const choose=document.createElement('select');choose.setAttribute('aria-label','Pilih ayat promosi '+[v.make,v.model].filter(Boolean).join(' '));
+  for(const entry of publishedPromoCopies){const opt=document.createElement('option');opt.value=String(entry.slot);opt.textContent='Pilihan '+entry.slot;choose.append(opt)}
+  const preview=document.createElement('p');preview.style.whiteSpace='pre-wrap';
+  const update=()=>{const entry=publishedPromoCopies.find(x=>String(x.slot)===choose.value);preview.textContent=entry?fillPromoCopy(entry.published,v):''};
+  choose.onchange=update;update();
+  const copy=document.createElement('button');copy.type='button';copy.className='secondary';copy.textContent='Salin Ayat + Link';
+  copy.onclick=()=>copyAgentLink(preview.textContent+'\\n'+agentCarLink(v));
+  const share=document.createElement('a');share.className='promo-whatsapp';share.target='_blank';share.rel='noopener noreferrer';share.textContent='WhatsApp Ayat Promosi';
+  const refreshShare=()=>{share.href='https://wa.me/?text='+encodeURIComponent(preview.textContent+'\\n'+agentCarLink(v))};
+  choose.addEventListener('change',refreshShare);refreshShare();
+  slot.append(choose,preview,copy,share);
+ }
 }
 async function loadOwnerPromo(){
  if(!owner)return;
@@ -365,7 +389,7 @@ async function loadAgentCatalogue(){
   const label=[v.make,v.model,v.model_year].filter(Boolean).join(' ');
   const op=document.createElement('option');op.value=v.id;
   op.textContent=label+' | RM '+Number(v.display_price??v.asking_price??0).toLocaleString('ms-MY');sel.append(op);
-  const url=agentCarLink(v);const box=document.createElement('article');box.className='promo-card';box.dataset.search=label.toLocaleLowerCase('ms-MY');
+  const url=agentCarLink(v);const box=document.createElement('article');box.className='promo-card';box.dataset.search=label.toLocaleLowerCase('ms-MY');box.dataset.publicVehicleId=v.public_vehicle_id;
   if(v.image_url&&v.image_url.startsWith('https://buzpdyvvoiqgbeventwm.supabase.co/storage/v1/object/public/vehicle-images/')){
     const img=document.createElement('img');img.className='promo-photo';img.loading='lazy';img.decoding='async';img.alt=label;img.src=v.image_url;box.append(img);
   }else{const no=document.createElement('div');no.className='promo-no-photo';no.textContent='Foto belum tersedia';box.append(no);}
@@ -390,9 +414,9 @@ async function loadAgentCatalogue(){
   inquiryLink.target='_blank';inquiryLink.rel='noopener';inquiryLink.textContent='Link Daftar Minat';
   const lead=document.createElement('button');lead.type='button';lead.textContent='Daftar Lead';
   lead.onclick=()=>{sel.value=v.id;sel.scrollIntoView({behavior:'smooth',block:'center'});};
-  actions.append(open,copy,wa,inquiryLink,lead);content.append(title,price,commissionNote,actions);box.append(content);grid.append(box);
+  actions.append(open,copy,wa,inquiryLink,lead);const promoSlot=document.createElement('div');promoSlot.className='card-promo-copy';promoSlot.style.marginTop='12px';content.append(title,price,commissionNote,actions,promoSlot);box.append(content);grid.append(box);
  }
- promoVisibleLimit=12;applyPromoFilter();
+ promoVisibleLimit=12;applyPromoFilter();renderCardPromoCopies();
 }
 let promoVisibleLimit=12;
 function applyPromoFilter(){
