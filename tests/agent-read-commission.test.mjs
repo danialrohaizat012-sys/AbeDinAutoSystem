@@ -41,12 +41,15 @@ test('admin displays agent names and per-car indicative commission settings',()=
  assert.match(sql,/revoke all on public\.agent_vehicle_commission_offers/);
  assert.match(catalog,/agent\?\.status!=="active"/);
  assert.match(catalog,/indicative_commission/);
- assert.match(agent,/Komisen cadangan ejen/);
+ assert.match(agent,/Komisen anda: RM/);
+ assert.match(agent,/Komisen belum ditetapkan oleh owner/);
 });
 test('commission changes do not trigger payout or mark commission approved',()=>{
  assert.doesNotMatch(api,/action==="confirm_payout"/);
  assert.match(api,/Indicative only/);
- assert.match(admin,/Bukan komisen diluluskan/);
+ // Simpan tetapan komisen kereta hanya commission_offer_set; kelulusan komisen ialah tindakan berasingan.
+ assert.match(admin,/request\('commission_offer_set'/);
+ assert.match(admin,/action:'approve_commission'/);
  assert.match(sql,/indicative_amount/);
 });
 test('modified agent and admin browser JS syntax valid',()=>{

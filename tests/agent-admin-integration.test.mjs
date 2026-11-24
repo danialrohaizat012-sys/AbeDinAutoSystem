@@ -13,7 +13,8 @@ test('Agent module is owner-only and cannot bypass backend authorization',()=>{
  assert.match(app,/if\(page==='agents'\)return p\.role==='owner'&&p\.enabled===true/);
  assert.match(moduleCode,/profile\?\.role!=='owner'\|\|profile\?\.enabled!==true/);
  assert.match(moduleCode,/client\.auth\.getSession\(\)/);
- assert.match(moduleCode,/authorization:'Bearer '\+data\.session\.access_token/);
+ assert.match(moduleCode,/authorization:'Bearer '\+token/);
+ assert.match(moduleCode,/send\(data\.session\.access_token\)/);
  assert.match(moduleCode,/agent-portal-admin/);
  assert.doesNotMatch(moduleCode,/SUPABASE_SERVICE_ROLE_KEY|service_role/i);
 });

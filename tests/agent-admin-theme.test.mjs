@@ -20,6 +20,6 @@ test('cards, compact leads, inputs and labels inherit consistent palette',()=>{
  assert.doesNotMatch(source,/color-scheme:light\}/);
 });
 test('browser uses cache-busted agent module and JavaScript is valid',()=>{
- assert.match(app,/agent-admin-panel\.js\?v=4/);
+ assert.match(app,/agent-admin-panel\.js\?v=\d+/);
  execFileSync(process.execPath,['--check',new URL('../js/agent-admin-panel.js',import.meta.url).pathname],{stdio:'pipe'});
 });

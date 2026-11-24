@@ -27,6 +27,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          sleep 90 # tunggu GitHub Pages siap publish commit ini
           for path in agent.html agent-payout-verify.html; do
             url="https://abedinauto.my/$path"
             echo "Checking $url"

@@ -36,6 +36,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          sleep 90 # tunggu GitHub Pages siap publish commit ini
           curl -fsSL --retry 2 --max-time 20 -H "Cache-Control: no-cache" "https://abedinauto.my/app.html?admin=1&check=$GITHUB_SHA" -o /tmp/abedin-admin.html
           grep -Fq 'data-cloud-page="agents"' /tmp/abedin-admin.html
           grep -Fq "if(page==='agents')return p.role==='owner'&&p.enabled===true" /tmp/abedin-admin.html
@@ -52,7 +53,7 @@ jobs:
           grep -Fq 'WhatsApp Pelanggan' /tmp/abedin-agent.html
           grep -Fq 'customer_phone,status,lead_source' /tmp/abedin-agent.html
           grep -Fq 'Tandakan Sudah Baca' /tmp/abedin-agent.html
-          grep -Fq 'Komisen cadangan ejen' /tmp/abedin-agent.html
+          grep -Fq 'Komisen anda: RM' /tmp/abedin-agent.html
           grep -Fq 'ada-interest-visibility-switch' /tmp/abedin-admin.html
           grep -Fq "showInterestButton&&publicStatus(v)" /tmp/abedin-admin.html
           echo "PASS: Owner Daftar Minat toggle and public UI condition deployed"

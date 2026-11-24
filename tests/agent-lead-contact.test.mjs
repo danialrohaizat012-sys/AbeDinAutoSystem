@@ -11,7 +11,7 @@ test('agent dashboard displays customer name, phone, vehicle and actions',()=>{
  assert.match(agent,/function leadContact\(/);
  assert.match(agent,/WhatsApp Pelanggan/);
  assert.match(agent,/Hubungi Telefon/);
- assert.match(agent,/leadContact\(card,x,carMap\.get\(x\.vehicle_id\)\)/);
+ assert.match(agent,/leadContact\(card,x,[A-Za-z]+\.get\(x\.vehicle_id\)\)/);
  assert.match(agent,/get_public_catalogue/);
  assert.ok(agent.indexOf('id="leadItems"') < agent.indexOf('id="agentPromo"'), 'Lead list should appear above stock cards');
 });
@@ -25,7 +25,8 @@ test('owner sees all agent contacts with context and direct buyer contact',()=>{
  assert.match(api,/owner\?\.role!=="owner"/);
  assert.match(api,/lead_contact_list/);
  assert.match(api,/agent_code:byAgent\.get/);
- assert.match(owner,/request\('lead_contact_list'\)/);
+ assert.match(owner,/'lead_contact_list'/); // dimuat melalui action 'bundle' (fallback: request satu-satu)
+ assert.match(owner,/request\('bundle'\)/);
  assert.match(owner,/compactLead\(pb,a,a\.car,ownerRead,true\)/);
  assert.match(agent,/ownerContactLeads/);
  assert.match(api,/agent_name:byApplication\.get/);

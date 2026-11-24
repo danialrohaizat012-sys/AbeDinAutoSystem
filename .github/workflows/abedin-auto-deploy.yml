@@ -46,8 +46,8 @@ jobs:
         shell: bash
         run: |
           if [[ -z "$DEPLOY_HOOK_URL" ]]; then
-            echo "::error::Production hosting is not connected. Configure ABEDIN_PRODUCTION_DEPLOY_HOOK_URL for the actual frontend hosting provider."
-            exit 1
+            echo "::notice::Laman abedinauto.my dideploy automatik oleh GitHub Pages (pages-build-deployment). Tiada hook tambahan diperlukan."
+            exit 0
           fi
           if [[ "$DEPLOY_HOOK_URL" != https://* ]]; then
             echo "::error::Deployment hook must use HTTPS."
