@@ -461,7 +461,8 @@ function viewPunch() {
   const lastOut = [...mine].reverse().find(p => p.kind === "out");
   const restStarts = mine.filter(p => p.kind === "rest_start");
   const restEnds = mine.filter(p => p.kind === "rest_end");
-  const scheduledMin = sc.type === "work" ? Math.max(0, sc.end - sc.start - (sc.brk || 0)) : 0;
+  // Sasaran kerja bersih maksimum 8 jam (gaji dikira maksimum 8 jam sehari), walaupun syif tersilap tetap rehat 0.
+  const scheduledMin = sc.type === "work" ? Math.min(480, Math.max(0, sc.end - sc.start - (sc.brk || 0))) : 0;
   const liveWorked = () => {
     let start = null, pause = null, total = 0;
     const endNow = Date.now();
