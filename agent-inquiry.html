@@ -99,6 +99,12 @@ async function loadSelectedCar(){
  }
 }
 loadSelectedCar();
+// Nama ejen untuk mesej WhatsApp supaya owner tahu lead datang dari ejen mana.
+let agentLabel='';
+const agentLabelP=validRef?fetch('https://buzpdyvvoiqgbeventwm.supabase.co/rest/v1/rpc/public_agent_ref_label_v1',{
+ method:'POST',headers:{'content-type':'application/json','apikey':'sb_publishable_zuuNipsMpalN_38SJwXpFA_MRzQ6eZ0'},
+ body:JSON.stringify({p_token:ref})
+}).then(r=>r.ok?r.json():null).then(d=>{if(d&&d.code)agentLabel=d.name?d.name+' ('+d.code+')':d.code}).catch(()=>{}):Promise.resolve();
 status('Lengkapkan borang untuk menghantar pertanyaan.');
 $('form').addEventListener('submit',async e=>{
  e.preventDefault();
@@ -120,9 +126,12 @@ $('form').addEventListener('submit',async e=>{
   form.hidden=true;
   status('Pertanyaan berjaya disimpan. Anda akan dibawa ke WhatsApp. Tekan Send untuk menghantar mesej kepada pasukan jualan.');
   const promo=params.get('promo')==='year-end-2026';
+  if(refCode)await Promise.race([agentLabelP,new Promise(r=>setTimeout(r,1500))]);
+  const agentLine=refCode?'\nEjen: '+(agentLabel||refCode):'\nEjen: Tiada (terus dari katalog)';
   const waMessage='Salam AbeDin Auto, saya sudah daftar minat kereta.'
     +'\nNama: '+String(f.get('customer_name')||'').trim()
     +'\nTelefon: '+String(f.get('customer_phone')||'').trim()
+    +agentLine
     +'\nKereta: '+(selectedCar?[selectedCar.make,selectedCar.model,selectedCar.model_year].filter(Boolean).join(' '):car)
     +'\nPautan kereta: '+link.href
     +(promo?'\nPromosi: Hujung Tahun 2026 (anggaran jimat RM300-RM500 kos penghantaran)':'')
