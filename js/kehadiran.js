@@ -4,11 +4,11 @@
 // Masa punch diambil dari server; jarak ke lokasi tag disemak semula di server.
 const CSS = `
 .settings-panel[hidden],[hidden].settings-panel{display:none!important}
-.kset{display:grid;grid-template-columns:280px minmax(0,1fr);gap:16px;align-items:start}
-.kset-side{display:flex;flex-direction:column;gap:4px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:10px;position:sticky;top:8px}
-.kset-si{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:transparent;border:0;border-radius:12px;padding:11px 12px;color:var(--fg);cursor:pointer;font:inherit}
+.kset{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start}
+.kset-side{display:flex;flex-wrap:wrap;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:8px}
+.kset-si{display:flex;align-items:center;gap:8px;width:auto;flex:0 0 auto;text-align:left;background:transparent;border:0;border-radius:11px;padding:9px 13px;color:var(--fg);cursor:pointer;font:inherit}
 .kset-si:hover{background:var(--soft)}
-.kset-si b{font-size:14px;font-weight:650;display:block}.kset-si small{display:block;font-size:11.5px;opacity:.85;margin-top:1px}
+.kset-si b{font-size:13.5px;font-weight:650;display:block;white-space:nowrap}.kset-si small{display:none}
 .kset-si .kset-sic{width:24px;height:24px;flex:none;display:grid;place-items:center;color:var(--mute)}
 .kset-si svg{width:21px;height:21px}
 .kset-si.on{background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;box-shadow:0 8px 22px rgba(124,58,237,.35)}
@@ -29,7 +29,7 @@ const CSS = `
 .kset-cic svg{width:26px;height:26px}
 .kset-ct{flex:1;min-width:0}.kset-ct b{display:block;font-size:16px;font-weight:750}.kset-ct small{display:block;color:var(--mute);font-size:12.5px;margin-top:3px;line-height:1.35}
 .kset-chev{font-size:24px;color:var(--mute);flex:none}
-@container (max-width:860px){.kset{grid-template-columns:1fr}.kset-side{flex-direction:row;overflow-x:auto;position:static;padding:6px;gap:6px;-webkit-overflow-scrolling:touch}.kset-si{width:auto;flex:none;padding:9px 12px}.kset-si small{display:none}.kset-si b{font-size:13px;white-space:nowrap}}
+@container (max-width:860px){.kset-side{flex-wrap:nowrap;overflow-x:auto;padding:6px;-webkit-overflow-scrolling:touch;scrollbar-width:none}.kset-side::-webkit-scrollbar{display:none}.kset-si{padding:9px 12px}.kset-si b{font-size:13px}}
 @container (max-width:620px){.kset-grid{grid-template-columns:1fr}.kset-main{padding:14px}.kset-h h2{font-size:19px}.kset-back{padding:7px 10px;font-size:13px}.kset-card{padding:13px}.kset-cic{width:46px;height:46px}}
 .settings-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.settings-tile{display:flex;align-items:center;gap:12px;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;cursor:pointer;min-width:0}.settings-tile:hover{border-color:var(--pri)}.settings-tile .grow{min-width:0}.settings-tile .mute{display:block}.settings-icon{color:var(--pri);font-size:22px}.settings-panel{display:flex;flex-direction:column;gap:12px;min-width:0}.settings-panel [hidden]{display:none!important}.settings-panel .loc{flex-wrap:wrap}.settings-panel .loc .grow{min-width:130px}@media(max-width:600px){.settings-nav{grid-template-columns:1fr}}
 
@@ -765,7 +765,7 @@ function viewTetapan() {
   const svg = k => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[k]}</svg>`;
   const menus = [["work","clock","Waktu Kerja","Tetapkan waktu masuk, balik dan hari bekerja.","#2f6fd6"],["shift","cal","Syif & Jadual","Syif staff dan jadual mingguan.","#0e8a9a"],["gps","pin","Lokasi Tag (GPS)","Urus lokasi, radius dan zon punch.","#c2364d"],["rest","cup","Rehat","Tetapkan tempoh rehat dan punch rehat.","#1f9d55"],["rules","shield","Peraturan Kehadiran","Tempoh bertenang lewat, GPS dan selfie.","#c47a1c"],["ot","coins","Kiraan Gaji / OT","Peraturan kerja lebih masa dan kadarnya.","#7c3aed"],["staff","users","Gaji Individu Staff","Syif, hari kerja, gaji, OT dan potongan setiap staff.","#3b5bdb"],["holiday","sliders","Lain-lain","Cuti umum dan cuti syarikat.","#6b7280"]];
   const m = S.settingsMenu, cur = menus.find(x => x[0] === m);
-  const side = `<nav class="kset-side" aria-label="Menu tetapan"><button type="button" class="kset-si${cur ? "" : " on"}" data-act="settingsmenu" data-id=""><span class="kset-sic">${svg("gear")}</span><span><b>Tetapan Kehadiran</b><small>Urus semua tetapan sistem</small></span></button>${menus.map(([id, ic, t]) => `<button type="button" class="kset-si${m === id ? " on" : ""}" data-act="settingsmenu" data-id="${id}"><span class="kset-sic">${svg(ic)}</span><span><b>${t}</b></span></button>`).join("")}</nav>`;
+  const side = `<nav class="kset-side" aria-label="Menu tetapan"><button type="button" class="kset-si${cur ? "" : " on"}" data-act="settingsmenu" data-id=""><span class="kset-sic">${svg("gear")}</span><span><b>Semua Tetapan</b><small>Urus semua tetapan sistem</small></span></button>${menus.map(([id, ic, t]) => `<button type="button" class="kset-si${m === id ? " on" : ""}" data-act="settingsmenu" data-id="${id}"><span class="kset-sic">${svg(ic)}</span><span><b>${t}</b></span></button>`).join("")}</nav>`;
   if (!cur) return `<div class="kset">${side}<section class="kset-main"><header class="kset-h"><span class="kset-hic">${svg("gear")}</span><div><h2>Tetapan Kehadiran</h2><p>Pilih menu untuk urus tetapan</p></div></header><div class="kset-grid">${menus.map(([id, ic, t, d, c]) => `<button type="button" class="kset-card" data-act="settingsmenu" data-id="${id}"><span class="kset-cic" style="--c:${c}">${svg(ic)}</span><span class="kset-ct"><b>${t}</b><small>${d}</small></span><span class="kset-chev">›</span></button>`).join("")}</div></section></div>`;
   const panel = `<div class="kset">${side}<section class="kset-main"><header class="kset-h"><span class="kset-hic" style="--c:${cur[4]}">${svg(cur[1])}</span><div><h2>${cur[2]}</h2><p>${cur[3]}</p></div><button type="button" class="kset-back" data-act="settingsmenu" data-id="">← Kembali</button></header>`;
   return panel + `<div class="ap" style="grid-template-columns:1fr">${["work","rest","rules","ot"].includes(m) ? `<form class="card" id="f-set"><div class="settings-panel" ${m==="work"?"":"hidden"}><h3>Waktu kerja umum</h3><p class="mute">Dipakai untuk staff yang tiada syif sendiri.</p>
