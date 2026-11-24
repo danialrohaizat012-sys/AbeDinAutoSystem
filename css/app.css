@@ -2610,21 +2610,21 @@ html.ada-light .ada-aiscan-t b{color:#8a6d00}html.ada-light .ada-aiscan-t small{
 html.ada-light .ada-form .vf-h small{color:#64748b}html.ada-light .ada-form .vf-sub{background:rgba(255,255,255,.6)}html.ada-light .ada-form .vf-profit.up{color:#15803d}html.ada-light .ada-form .vf-profit.down{color:#b91c1c}
 /* V122: borang kereta lebih lebar & besar di iPad/desktop */
 @media(min-width:768px){
- .ada-form:has(.vf-sec){width:min(94vw,900px)!important;max-height:min(94vh,1400px)!important;padding-left:28px!important;padding-right:28px!important}
- .ada-form:has(.vf-sec) .ada-form-head h2{font-size:26px}
- .ada-form:has(.vf-sec) .vf-sec{padding:18px 20px 8px;border-radius:18px;margin-bottom:18px}
- .ada-form:has(.vf-sec) .vf-grid,.ada-form:has(.vf-sec) .vf-sub{gap:2px 20px}
- .ada-form:has(.vf-sec) .vf-ic{width:46px;height:46px;flex-basis:46px;font-size:23px}
- .ada-form:has(.vf-sec) .vf-h b{font-size:17.5px}.ada-form:has(.vf-sec) .vf-h small{font-size:13px}
- .ada-form:has(.vf-sec) label{font-size:15px}
- .ada-form:has(.vf-sec) input,.ada-form:has(.vf-sec) select,.ada-form:has(.vf-sec) textarea{font-size:16.5px!important;min-height:52px}
- .ada-form:has(.vf-sec) textarea{min-height:90px}
- .ada-form:has(.vf-sec) .ada-aiscan{padding:18px 20px}.ada-form:has(.vf-sec) .ada-aiscan-t b{font-size:17px}.ada-form:has(.vf-sec) .ada-aiscan-t small{font-size:13.5px}
- .ada-form:has(.vf-sec) .ada-aiscan-b button{min-height:52px;font-size:16px}
- .ada-form:has(.vf-sec)>button[type=submit]{min-height:56px;font-size:17px}
+ .ada-form.ada-form-car{width:min(94vw,900px)!important;max-height:min(94vh,1400px)!important;padding-left:28px!important;padding-right:28px!important}
+ .ada-form.ada-form-car .ada-form-head h2{font-size:26px}
+ .ada-form.ada-form-car .vf-sec{padding:18px 20px 8px;border-radius:18px;margin-bottom:18px}
+ .ada-form.ada-form-car .vf-grid,.ada-form.ada-form-car .vf-sub{gap:2px 20px}
+ .ada-form.ada-form-car .vf-ic{width:46px;height:46px;flex-basis:46px;font-size:23px}
+ .ada-form.ada-form-car .vf-h b{font-size:17.5px}.ada-form.ada-form-car .vf-h small{font-size:13px}
+ .ada-form.ada-form-car label{font-size:15px}
+ .ada-form.ada-form-car input,.ada-form.ada-form-car select,.ada-form.ada-form-car textarea{font-size:16.5px!important;min-height:52px}
+ .ada-form.ada-form-car textarea{min-height:90px}
+ .ada-form.ada-form-car .ada-aiscan{padding:18px 20px}.ada-form.ada-form-car .ada-aiscan-t b{font-size:17px}.ada-form.ada-form-car .ada-aiscan-t small{font-size:13.5px}
+ .ada-form.ada-form-car .ada-aiscan-b button{min-height:52px;font-size:16px}
+ .ada-form.ada-form-car>button[type=submit]{min-height:56px;font-size:17px}
 }
 @media(min-width:1200px){
- .ada-form:has(.vf-sec){width:min(92vw,1080px)!important}
- .ada-form:has(.vf-sec) .vf-blue .vf-grid,.ada-form:has(.vf-sec) .vf-teal .vf-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .ada-form.ada-form-car{width:min(92vw,1080px)!important}
+ .ada-form.ada-form-car .vf-blue .vf-grid,.ada-form.ada-form-car .vf-teal .vf-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
 .ada-form .vf-grid>label,.ada-form .vf-sub>label{align-content:start;align-self:start}
