@@ -145,7 +145,7 @@ const KL = 8 * 3600000;
 const BUCKET = "attendance-selfies";
 
 let root, app;
-const S = { client:null, profile:null, me:null, owner:false, tab:"punch", tabSet:false, settings:null, locs:[], pay:{}, staff:[], punches:[],
+const S = { locEdit:null, client:null, profile:null, me:null, owner:false, tab:"punch", tabSet:false, settings:null, locs:[], pay:{}, staff:[], punches:[],
   shifts:[], astaff:{}, roster:{}, holidays:{}, flags:{}, requests:[], adv:[], leaves:[], claims:[],
   day:"", month:"", week:"", urls:{}, loaded:false, err:"", clockT:null, payOpen:{} };
 
@@ -719,8 +719,9 @@ const monthNameMs = m => { const [y, mo] = m.split("-").map(Number); return new 
 function viewTetapan() {
   const st = S.settings;
   const days = [1,2,3,4,5,6,0].map(d => `<label><input type="checkbox" name="wd" value="${d}" ${(st.work_days || []).includes(d) ? "checked" : ""}> ${DAYS[d]}</label>`).join("");
+  const locEdit = S.locs.find(l => l.id === S.locEdit);
   const locs = S.locs.map(l => `<div class="loc"><div class="grow"><b>${esc(l.name)}</b> ${l.active ? "" : `<span class="chip">Tidak aktif</span>`}<div class="mute">Radius ${l.radius_m} m · <a href="${gmaps(l.lat, l.lng)}" target="_blank" rel="noopener" style="color:var(--pri)">Lihat peta</a></div></div>
-    <button class="sm" data-act="loctoggle" data-id="${esc(l.id)}">${l.active ? "Matikan" : "Aktifkan"}</button><button class="sm bad" data-act="locdel" data-id="${esc(l.id)}">Padam</button></div>`).join("");
+    <button class="sm" style="color:var(--blue)" data-act="locedit" data-id="${esc(l.id)}">Edit</button><button class="sm" data-act="loctoggle" data-id="${esc(l.id)}">${l.active ? "Matikan" : "Aktifkan"}</button><button class="sm bad" data-act="locdel" data-id="${esc(l.id)}">Padam</button></div>`).join("");
   const staff = S.staff.filter(s => s.enabled !== false && s.role !== "owner");
   const used = id => staffUsing(id);
   const shifts = (S.shifts || []).map(sh => `<div class="shrow ${S.shEdit === sh.id ? "on" : ""}"><span class="sw-dot" style="background:${esc(sh.color)}"></span><div class="grow"><b>${esc(sh.name)}</b> ${sh.active ? "" : `<span class="chip">Tidak aktif</span>`}<div class="mute">${String(sh.start_time).slice(0, 5)}–${String(sh.end_time).slice(0, 5)} · rehat ${sh.break_min} min${used(sh.id) ? ` · ${used(sh.id)} staf` : ""}</div></div>
@@ -761,11 +762,12 @@ function viewTetapan() {
     <div class="card"><h3>Lokasi tag</h3><p class="mute">Staf hanya boleh punch masuk/balik dalam radius lokasi aktif (jika sekatan dihidupkan). Boleh ada lebih daripada satu lokasi.</p>
       ${locs || `<p class="mute">Belum ada lokasi.</p>`}
       <form id="f-loc" style="display:flex;flex-direction:column;gap:10px">
-        <div class="g2"><div><label>Nama lokasi</label><input class="field" name="name" placeholder="cth: Kedai Kubang Kerian" required></div><div><label>Radius (meter)</label><input class="field" type="number" name="radius_m" min="10" max="5000" value="100" required></div></div>
-        <div><label>Koordinat atau pautan Google Maps</label><input class="field" name="coord" placeholder="cth: 6.0950, 102.2800"></div>
+        ${locEdit ? `<b>Edit lokasi: ${esc(locEdit.name)}</b>` : ""}
+        <div class="g2"><div><label>Nama lokasi</label><input class="field" name="name" placeholder="cth: Kedai Kubang Kerian" value="${esc(locEdit?.name || "")}" required></div><div><label>Radius (meter)</label><input class="field" type="number" name="radius_m" min="10" max="5000" value="${esc(locEdit?.radius_m ?? 100)}" required></div></div>
+        <div><label>Koordinat atau pautan Google Maps</label><input class="field" name="coord" placeholder="cth: 6.0950, 102.2800" value="${locEdit ? esc(Number(locEdit.lat).toFixed(8) + ", " + Number(locEdit.lng).toFixed(8)) : ""}"></div>
         <button class="sm" type="button" data-act="here">📍 Guna lokasi saya sekarang</button>
         <div id="locprev"></div>
-        <button class="btn" type="submit">+ Tambah lokasi</button></form></div>
+        <button class="btn" type="submit">${locEdit ? "Simpan perubahan" : "+ Tambah lokasi"}</button>${locEdit ? `<button class="sm" type="button" data-act="loccancel">Batal</button>` : ""}</form></div>
     ${payCard(staff)}</div>`;
 }
 function payCard(staff) {
@@ -1159,11 +1161,13 @@ function onClick(e) {
     navigator.geolocation.getCurrentPosition(p => { const f = $("#f-loc"); f.coord.value = `${p.coords.latitude.toFixed(6)}, ${p.coords.longitude.toFixed(6)}`; t.disabled = false; t.textContent = `📍 Lokasi didapati (±${Math.round(p.coords.accuracy)} m)`; locPreview(); },
       () => { t.disabled = false; t.textContent = "📍 Guna lokasi saya sekarang"; toast("Lokasi tidak dapat dikesan"); }, { enableHighAccuracy:true, timeout:20000, maximumAge:0 });
   }
+  else if (a === "locedit") { S.locEdit = t.dataset.id; render(); locPreview(); $("#f-loc")?.scrollIntoView({block:"nearest",behavior:"smooth"}); }
+  else if (a === "loccancel") { S.locEdit = null; render(); }
   else if (a === "loctoggle" || a === "locdel") {
     const l = S.locs.find(x => x.id === t.dataset.id); if (!l) return;
     if (a === "locdel" && !confirm(`Padam lokasi "${l.name}"?`)) return;
     run(async () => {
-      if (a === "locdel") { const { error } = await S.client.from("attendance_locations").delete().eq("id", l.id); if (error) throw error; S.locs = S.locs.filter(x => x !== l); }
+      if (a === "locdel") { const { error } = await S.client.from("attendance_locations").delete().eq("id", l.id); if (error) throw error; S.locs = S.locs.filter(x => x !== l); if (S.locEdit === l.id) S.locEdit = null; }
       else { const { error } = await S.client.from("attendance_locations").update({ active:!l.active }).eq("id", l.id); if (error) throw error; l.active = !l.active; }
     });
   }
@@ -1210,8 +1214,12 @@ async function onSubmit(e) {
       const { data, error } = await S.client.from("attendance_settings").update(v).eq("id", 1).select().single(); if (error) throw error; S.settings = { ...S.settings, ...data }; toast("Tetapan disimpan");
     } else if (f.id === "f-loc") {
       const c = parseCoord(fd.get("coord")); if (!c) throw new Error("Masukkan koordinat atau tekan 'Guna lokasi saya sekarang'.");
-      const { data, error } = await S.client.from("attendance_locations").insert({ name:String(fd.get("name")).trim(), radius_m:+fd.get("radius_m") || 100, lat:c.lat, lng:c.lng }).select().single(); if (error) throw error;
-      S.locs.push(data); toast("Lokasi ditambah");
+      const v = { name:String(fd.get("name")).trim(), radius_m:Number(fd.get("radius_m")), lat:c.lat, lng:c.lng };
+      if (!v.name || !Number.isInteger(v.radius_m) || v.radius_m < 10 || v.radius_m > 5000 || Math.abs(c.lat)>90 || Math.abs(c.lng)>180) throw new Error("Nama, radius atau koordinat tidak sah.");
+      const editId = S.locEdit;
+      const q = S.client.from("attendance_locations");
+      const { data, error } = await (editId ? q.update(v).eq("id", editId) : q.insert(v)).select().single(); if (error) throw error;
+      if (editId) { S.locs = S.locs.map(x => x.id === editId ? data : x); S.locEdit = null; toast("Lokasi dikemas kini"); } else { S.locs.push(data); toast("Lokasi ditambah"); }
     } else if (f.id === "f-shift") {
       const v = { name:String(fd.get("name")).trim(), start_time:fd.get("start_time"), end_time:fd.get("end_time"), break_min:+fd.get("break_min") || 0, color:fd.get("color") || "#e8b10b" };
       if (tMin(v.end_time) <= tMin(v.start_time)) throw new Error("Waktu balik syif mesti selepas waktu masuk.");
