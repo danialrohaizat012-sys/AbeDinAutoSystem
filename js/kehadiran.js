@@ -3,9 +3,37 @@
 // Dimuat oleh app.html melalui import('./js/kehadiran.js'). Jadual & fungsi: V71_KEHADIRAN.sql + V79_KEHADIRAN_PRO.sql.
 // Masa punch diambil dari server; jarak ke lokasi tag disemak semula di server.
 const CSS = `
+.settings-panel[hidden],[hidden].settings-panel{display:none!important}
+.kset{display:grid;grid-template-columns:280px minmax(0,1fr);gap:16px;align-items:start}
+.kset-side{display:flex;flex-direction:column;gap:4px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:10px;position:sticky;top:8px}
+.kset-si{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:transparent;border:0;border-radius:12px;padding:11px 12px;color:var(--fg);cursor:pointer;font:inherit}
+.kset-si:hover{background:var(--soft)}
+.kset-si b{font-size:14px;font-weight:650;display:block}.kset-si small{display:block;font-size:11.5px;opacity:.85;margin-top:1px}
+.kset-si .kset-sic{width:24px;height:24px;flex:none;display:grid;place-items:center;color:var(--mute)}
+.kset-si svg{width:21px;height:21px}
+.kset-si.on{background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;box-shadow:0 8px 22px rgba(124,58,237,.35)}
+.kset-si.on .kset-sic{color:#fff}
+.kset-main{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;min-width:0}
+.kset-main>.ap{margin-top:4px}
+.kset-main .card{background:transparent;border-color:var(--line)}
+.kset-h{display:flex;align-items:center;gap:14px;padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line)}
+.kset-h h2{margin:0;font-size:22px;letter-spacing:-.02em}.kset-h p{margin:2px 0 0;color:var(--mute);font-size:13.5px}
+.kset-hic{width:44px;height:44px;flex:none;display:grid;place-items:center;border-radius:12px;color:var(--fg)}
+.kset-hic[style]{background:var(--c);color:#fff}
+.kset-hic svg{width:30px;height:30px}.kset-hic[style] svg{width:24px;height:24px}
+.kset-back{margin-left:auto;background:transparent;border:1px solid var(--line);color:var(--fg);border-radius:12px;padding:9px 14px;font:inherit;font-weight:650;cursor:pointer;white-space:nowrap}
+.kset-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.kset-card{display:flex;align-items:center;gap:14px;text-align:left;background:var(--soft);border:1px solid var(--line);border-radius:16px;padding:16px;color:var(--fg);cursor:pointer;font:inherit;min-width:0;transition:border-color .15s,transform .15s}
+.kset-card:hover{border-color:color-mix(in srgb,var(--fg) 30%,transparent);transform:translateY(-1px)}
+.kset-cic{width:52px;height:52px;flex:none;display:grid;place-items:center;border-radius:14px;background:linear-gradient(145deg,color-mix(in srgb,var(--c) 92%,#fff),var(--c));color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.2)}
+.kset-cic svg{width:26px;height:26px}
+.kset-ct{flex:1;min-width:0}.kset-ct b{display:block;font-size:16px;font-weight:750}.kset-ct small{display:block;color:var(--mute);font-size:12.5px;margin-top:3px;line-height:1.35}
+.kset-chev{font-size:24px;color:var(--mute);flex:none}
+@container (max-width:860px){.kset{grid-template-columns:1fr}.kset-side{flex-direction:row;overflow-x:auto;position:static;padding:6px;gap:6px;-webkit-overflow-scrolling:touch}.kset-si{width:auto;flex:none;padding:9px 12px}.kset-si small{display:none}.kset-si b{font-size:13px;white-space:nowrap}}
+@container (max-width:620px){.kset-grid{grid-template-columns:1fr}.kset-main{padding:14px}.kset-h h2{font-size:19px}.kset-back{padding:7px 10px;font-size:13px}.kset-card{padding:13px}.kset-cic{width:46px;height:46px}}
 .settings-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.settings-tile{display:flex;align-items:center;gap:12px;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;cursor:pointer;min-width:0}.settings-tile:hover{border-color:var(--pri)}.settings-tile .grow{min-width:0}.settings-tile .mute{display:block}.settings-icon{color:var(--pri);font-size:22px}.settings-panel{display:flex;flex-direction:column;gap:12px;min-width:0}.settings-panel [hidden]{display:none!important}.settings-panel .loc{flex-wrap:wrap}.settings-panel .loc .grow{min-width:130px}@media(max-width:600px){.settings-nav{grid-template-columns:1fr}}
 
-:host{display:block;--bg:#0a0a09;--card:#151412;--fg:#f4efe2;--mute:#a69f8c;--line:#2e2a20;--soft:#1e1c17;
+:host{display:block;container-type:inline-size;--bg:#0a0a09;--card:#151412;--fg:#f4efe2;--mute:#a69f8c;--line:#2e2a20;--soft:#1e1c17;
   --pri:#e8b10b;--pri-fg:#141000;--ok:#4ac27a;--bad:#e5534b;--warn:#f0a020;--blue:#6ea8fe;
   --f:Inter,-apple-system,"Segoe UI",system-ui,sans-serif;color-scheme:dark}
 *{box-sizing:border-box}
@@ -733,12 +761,15 @@ function viewTetapan() {
   const roster = staff.map(s => `<tr><th class="nm">${esc(s.full_name)}</th>${wk.map(k => { const r = S.roster[s.id + "|" + k], sc = schedFor(s.id, k), v = r ? (r.shift_id || "rest") : "";
     return `<td class="${sc.type}"><select data-roster="${esc(s.id)}|${k}" class="rs"><option value="" ${v === "" ? "selected" : ""}>Lalai${r ? "" : ` (${sc.type === "work" ? hhmmOf(sc.start) : sc.type === "ph" ? "CU" : "rehat"})`}</option><option value="rest" ${v === "rest" ? "selected" : ""}>Rehat</option>${act.map(x => `<option value="${esc(x.id)}" ${v === x.id ? "selected" : ""}>${esc(x.name)}</option>`).join("")}</select></td>`; }).join("")}</tr>`).join("");
   const yr = nowKey().slice(0, 4), hols = Object.values(S.holidays || {}).filter(h => h.day >= yr + "-01-01").sort((x, y) => x.day.localeCompare(y.day));
-  const menus = [["work","◷","Waktu kerja","Waktu masuk, balik, rehat dan hari bekerja"],["shift","▤","Syif & jadual","Syif staff dan jadual mingguan"],["gps","⌖","Lokasi Tag GPS","Lokasi, radius dan peta"],["rules","✓","Peraturan kehadiran","Kelewatan, punch rehat, GPS dan selfie"],["holiday","▦","Cuti umum","Cuti umum dan cuti syarikat"],["ot","RM","Gaji & OT","Peraturan dan kadar kerja lebih masa"],["staff","♙","Tetapan individu staff","Syif, hari kerja, gaji dan elaun staff"]];
-  const m = S.settingsMenu;
-  if (!menus.some(x => x[0] === m)) return `<div class="card"><h3>Tetapan kehadiran</h3><p class="mute">Pilih menu untuk mengurus tetapan.</p><div class="settings-nav">${menus.map(([id,icon,title,desc]) => `<button type="button" class="settings-tile" data-act="settingsmenu" data-id="${id}"><span class="settings-icon">${icon}</span><span class="grow"><b>${title}</b><span class="mute">${desc}</span></span><span>›</span></button>`).join("")}</div></div>`;
-  const panel = `<div class="settings-panel"><div class="r"><button class="sm" data-act="settingsmenu" data-id="">‹ Kembali</button><h3>${menus.find(x=>x[0]===m)[2]}</h3></div>`;
-  return panel + `<div class="ap" style="grid-template-columns:1fr">${["work","rules","ot"].includes(m) ? `<form class="card" id="f-set"><h3>${menus.find(x=>x[0]===m)[2]}</h3><div class="settings-panel" ${m==="work"?"":"hidden"}><h3>Waktu kerja umum</h3><p class="mute">Dipakai untuk staff yang tiada syif sendiri.</p>
-      <div class="g3"><div><label>Masuk</label><input class="field" type="time" name="work_start" value="${esc(String(st.work_start).slice(0,5))}"></div><div><label>Balik</label><input class="field" type="time" name="work_end" value="${esc(String(st.work_end).slice(0,5))}"></div><div><label>Rehat tanpa gaji (min)</label><input class="field" type="number" min="0" max="240" name="break_min" value="${+st.break_min || 0}"></div></div>
+  const IC = { clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>', pin:'<path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>', cup:'<path d="M4 8h12v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M16 9h2a3 3 0 0 1 0 6h-2M6 3v2M10 3v2"/>', shield:'<path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/>', coins:'<ellipse cx="9" cy="7" rx="6" ry="3"/><path d="M3 7v4c0 1.7 2.7 3 6 3s6-1.3 6-3V7M3 11v4c0 1.7 2.7 3 6 3 1.2 0 2.4-.2 3.3-.5"/><ellipse cx="17" cy="15" rx="4" ry="2"/><path d="M13 15v3c0 1.1 1.8 2 4 2s4-.9 4-2v-3"/>', users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/>', sliders:'<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>', gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>' };
+  const svg = k => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[k]}</svg>`;
+  const menus = [["work","clock","Waktu Kerja","Tetapkan waktu masuk, balik dan hari bekerja.","#2f6fd6"],["shift","cal","Syif & Jadual","Syif staff dan jadual mingguan.","#0e8a9a"],["gps","pin","Lokasi Tag (GPS)","Urus lokasi, radius dan zon punch.","#c2364d"],["rest","cup","Rehat","Tetapkan tempoh rehat dan punch rehat.","#1f9d55"],["rules","shield","Peraturan Kehadiran","Tempoh bertenang lewat, GPS dan selfie.","#c47a1c"],["ot","coins","Kiraan Gaji / OT","Peraturan kerja lebih masa dan kadarnya.","#7c3aed"],["staff","users","Gaji Individu Staff","Syif, hari kerja, gaji, OT dan potongan setiap staff.","#3b5bdb"],["holiday","sliders","Lain-lain","Cuti umum dan cuti syarikat.","#6b7280"]];
+  const m = S.settingsMenu, cur = menus.find(x => x[0] === m);
+  const side = `<nav class="kset-side" aria-label="Menu tetapan"><button type="button" class="kset-si${cur ? "" : " on"}" data-act="settingsmenu" data-id=""><span class="kset-sic">${svg("gear")}</span><span><b>Tetapan Kehadiran</b><small>Urus semua tetapan sistem</small></span></button>${menus.map(([id, ic, t]) => `<button type="button" class="kset-si${m === id ? " on" : ""}" data-act="settingsmenu" data-id="${id}"><span class="kset-sic">${svg(ic)}</span><span><b>${t}</b></span></button>`).join("")}</nav>`;
+  if (!cur) return `<div class="kset">${side}<section class="kset-main"><header class="kset-h"><span class="kset-hic">${svg("gear")}</span><div><h2>Tetapan Kehadiran</h2><p>Pilih menu untuk urus tetapan</p></div></header><div class="kset-grid">${menus.map(([id, ic, t, d, c]) => `<button type="button" class="kset-card" data-act="settingsmenu" data-id="${id}"><span class="kset-cic" style="--c:${c}">${svg(ic)}</span><span class="kset-ct"><b>${t}</b><small>${d}</small></span><span class="kset-chev">›</span></button>`).join("")}</div></section></div>`;
+  const panel = `<div class="kset">${side}<section class="kset-main"><header class="kset-h"><span class="kset-hic" style="--c:${cur[4]}">${svg(cur[1])}</span><div><h2>${cur[2]}</h2><p>${cur[3]}</p></div><button type="button" class="kset-back" data-act="settingsmenu" data-id="">← Kembali</button></header>`;
+  return panel + `<div class="ap" style="grid-template-columns:1fr">${["work","rest","rules","ot"].includes(m) ? `<form class="card" id="f-set"><div class="settings-panel" ${m==="work"?"":"hidden"}><h3>Waktu kerja umum</h3><p class="mute">Dipakai untuk staff yang tiada syif sendiri.</p>
+      <div class="g2"><div><label>Masuk</label><input class="field" type="time" name="work_start" value="${esc(String(st.work_start).slice(0,5))}"></div><div><label>Balik</label><input class="field" type="time" name="work_end" value="${esc(String(st.work_end).slice(0,5))}"></div></div>
       <div><label>Hari bekerja</label><div class="days">${days}</div></div>
       </div><div class="settings-panel" ${m==="rules"?"":"hidden"}><div><label>Tempoh bertenang lewat (minit)</label><input class="field" type="number" min="0" max="240" name="grace_min" value="${st.grace_min}"></div>
       </div><div class="settings-panel" ${m==="ot"?"":"hidden"}><div><label>OT dikira jika lebih (minit selepas waktu balik)</label><input class="field" type="number" min="0" max="600" name="ot_min_minutes" value="${st.ot_min_minutes}"></div>
@@ -747,7 +778,8 @@ function viewTetapan() {
       <p class="mute" style="margin:-4px 0 0">Akta Kerja 1955: OT hari biasa 1.5×, hari rehat 2×, cuti umum 3× gaji sejam. Jika kadar OT staff sudah 1.5× gaji sejam, isi 1.33 dan 2.</p>
       <label class="sw"><input type="checkbox" name="ot_offday_all" ${st.ot_offday_all ? "checked" : ""}> Kerja pada hari rehat dikira OT sepenuhnya</label>
       <label class="sw"><input type="checkbox" name="ot_require_approval" ${st.ot_require_approval ? "checked" : ""}> OT perlu kelulusan Owner sebelum dibayar</label>
-      </div><div class="settings-panel" ${m==="rules"?"":"hidden"}><label class="sw"><input type="checkbox" name="allow_rest_punch" ${st.allow_rest_punch ? "checked" : ""}> Benarkan punch rehat (mula / habis rehat)</label>
+      </div><div class="settings-panel" ${m==="rest"?"":"hidden"}><h3>Rehat</h3><div><label>Rehat tanpa gaji (minit)</label><input class="field" type="number" min="0" max="240" name="break_min" value="${+st.break_min || 0}"><p class="mute" style="margin:6px 0 0">Dipakai untuk staff waktu biasa. Rehat syif ditetapkan dalam Syif & Jadual. Jika staff tidak punch rehat dan kerja 6 jam atau lebih, rehat ditolak automatik.</p></div><label class="sw"><input type="checkbox" name="allow_rest_punch" ${st.allow_rest_punch ? "checked" : ""}> Benarkan punch rehat (mula / habis rehat)</label>
+      </div><div class="settings-panel" ${m==="rules"?"":"hidden"}>
       <label class="sw"><input type="checkbox" name="enforce_geofence" ${st.enforce_geofence ? "checked" : ""}> Sekat punch di luar kawasan lokasi tag</label>
       <label class="sw"><input type="checkbox" name="require_selfie" ${st.require_selfie ? "checked" : ""}> Wajib selfie</label>
       </div><button class="btn" type="submit">Simpan tetapan</button></form>` : ""}
@@ -774,7 +806,7 @@ function viewTetapan() {
         <button class="sm" type="button" data-act="here">📍 Guna lokasi saya sekarang</button>
         <div id="locprev"></div>
         <button class="btn" type="submit">${locEdit ? "Simpan perubahan" : "+ Tambah lokasi"}</button>${locEdit ? `<button class="sm" type="button" data-act="loccancel">Batal</button>` : ""}</form></div>
-    ` : ""}${m==="staff" ? payCard(staff) : ""}</div></div>`;
+    ` : ""}${m==="staff" ? payCard(staff) : ""}</div></section></div>`;
 }
 function payCard(staff) {
   const unset = staff.filter(s => !S.pay[s.id]).length;
