@@ -16,7 +16,7 @@ jobs:
   validate:
     name: Validate before production
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -24,6 +24,12 @@ jobs:
           node-version: '22'
       - name: Check inspection JavaScript syntax
         run: node --check --input-type=module < js/checklist.js
+      - name: Check attendance JavaScript syntax
+        run: node --check --input-type=module < js/kehadiran.js
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
       - name: Run inspection, mobile and other automated tests
         run: node --test tests/*.test.cjs
 
