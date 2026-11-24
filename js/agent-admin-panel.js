@@ -1,5 +1,7 @@
 // Native Agent Network panel; owner-only server authorization remains mandatory.
 const API='https://buzpdyvvoiqgbeventwm.supabase.co/functions/v1/agent-portal-admin';
+// Data terakhir disimpan dalam memori supaya buka semula tab Ejen terus papar (kemudian dikemas kini senyap).
+let CACHE=null;
 const date=v=>v?new Date(v).toLocaleString('ms-MY'):'—';
 const amount=v=>'RM '+Number(v||0).toLocaleString('ms-MY',{minimumFractionDigits:2});
 function node(t,c='',v){const a=document.createElement(t);if(c)a.className=c;if(v!==undefined)a.textContent=String(v);return a}
@@ -298,17 +300,40 @@ export function mountAgentAdmin(host,{client,profile}={}){
   try{await request('owner_lead_mark_read',{lead_id:a.id,lead_type:type});status('Status dibaca disimpan.');await load()}
   catch(e){status(e.message,true)}
  }
+ // Semua data diambil SERENTAK (dulu ada 4 langkah menunggu satu demi satu).
+ async function fetchAll(){
+  const bundleP=request('bundle').catch(async e=>{
+   if(!/unknown action/i.test(String(e?.message)))throw e;
+   const acts=['list','lead_list','direct_inquiry_list','finance_list','lead_contact_list','commission_vehicle_list'];
+   const r=await Promise.all(acts.map(a=>request(a)));return Object.fromEntries(acts.map((a,i)=>[a,r[i]]));
+  });
+  const [b,agentRes,lb,pr,cv,ci,cd]=await Promise.all([bundleP,client.rpc('owner_agent_list_v1'),client.rpc('owner_agent_leaderboard_v1'),
+   client.from('agent_promo_copy_v20').select('slot,draft,published').order('slot'),
+   client.from('vehicles').select('id,purchase_cost,cost_transfer,cost_puspakom,cost_transport,cost_agent_commission,asking_price,promo_price'),
+   client.from('checklist_inspections').select('vehicle_id,kos,created_at').order('created_at',{ascending:true}),
+   client.rpc('owner_lead_sale_candidates_v1')]);
+  return {apps:b.list,leads:b.lead_list,direct:b.direct_inquiry_list,fin:b.finance_list,contacts:b.lead_contact_list,vehicleData:b.commission_vehicle_list,
+   agentRes:{data:agentRes.data,error:agentRes.error},lbRaw:lb.data,promos:pr.data,promoErr:pr.error,cv:cv.data,ci:ci.data,candRaw:cd.data};
+ }
+ let rendered=false;
  async function load(){
-  if(loading||disposed)return;loading=true;refresh.disabled=true;status('Menyemak data ejen...');
+  if(loading||disposed)return;loading=true;refresh.disabled=true;
   try{
-   const [apps,leads,direct,fin,contacts,vehicleData,agentRes]=await Promise.all([request('list'),request('lead_list'),request('direct_inquiry_list'),request('finance_list'),request('lead_contact_list'),request('commission_vehicle_list'),client.rpc('owner_agent_list_v1')]);
+   if(CACHE&&!rendered){rendered=true;render(CACHE);status('Mengemas kini data…')}else status('Menyemak data ejen...');
+   const D=await fetchAll();if(disposed)return;CACHE=D;rendered=true;render(D);status('Dikemas kini.');
+  }catch(e){status(e?.message||'Gagal memuat rekod ejen.',true)}
+  finally{loading=false;refresh.disabled=false}
+ }
+ function render(D){
+  {
+   const {apps,leads,direct,fin,contacts,vehicleData,agentRes}=D;
    const agents=Array.isArray(agentRes?.data)?agentRes.data:[];
    if(disposed)return;
    const applications=apps.applications||[],agentLeads=contacts.leads||[],directLeads=direct.inquiries||[],commissions=fin.commissions||[],payouts=fin.payouts||[];
    const vehicles=vehicleData.vehicles||[],carMap=new Map(vehicles.map(v=>[v.id,v]));
    counts.replaceChildren(stat('Ejen aktif',agents.filter(x=>x.agent_status==='active').length,'👥','#d6a93c'),stat('Lead',agentLeads.length+directLeads.length,'📞','#e8892b'),stat('Komisen belum bayar',commissions.filter(c=>c.status!=='paid').length,'💰','#1f9d63'));
    content.replaceChildren();
-   const {data:lbRaw}=await client.rpc('owner_agent_leaderboard_v1');const lb=Array.isArray(lbRaw)?lbRaw:[];
+   const lbRaw=D.lbRaw;const lb=Array.isArray(lbRaw)?lbRaw:[];
    const plb=section(content,'🏆 Prestasi Bulan Ini','Kedudukan ikut jualan, kemudian lead, kemudian klik. Kadar = lead ÷ klik.','ejen');
    if(!lb.length)plb.append(node('p','','Tiada ejen aktif.'));
    const tbl=node('div','ag-lb');
@@ -415,7 +440,7 @@ export function mountAgentAdmin(host,{client,profile}={}){
      status('5 ayat baru dijana. Semak, kemudian tekan "Terbitkan kepada ejen" pada ayat yang anda mahu.')}
     catch(e){status(e.message,true)}finally{genBtn.disabled=false;genBtn.textContent=old}};
    const genRow=node('div','ag-controls');genRow.append(genBtn,aiBtn);pp.append(genRow);
-   const {data:promos,error:promoErr}=await client.from('agent_promo_copy_v20').select('slot,draft,published').order('slot');
+   const promos=D.promos,promoErr=D.promoErr;
    if(promoErr)pp.append(node('p','','Gagal memuat ayat promosi: '+promoErr.message));
    for(const entry of promos||[]){
     const box=node('div','ag-promo-slot');
@@ -442,7 +467,7 @@ export function mountAgentAdmin(host,{client,profile}={}){
    for(const a of directLeads.slice(0,60))compactLead(pc,a,carMap.get(a.vehicle_id),ownerRead,false);
    const po=section(content,'Komisen Ejen Setiap Kereta','Amaun dipaparkan kepada ejen. Bila komisen diluluskan, ia automatik ditolak sebagai kos kereta dalam Jejak Kewangan & laporan untung.','komisen');
    const costMap=new Map();
-   try{const [cv,ci]=await Promise.all([client.from('vehicles').select('id,purchase_cost,cost_transfer,cost_puspakom,cost_transport,cost_agent_commission,asking_price,promo_price'),client.from('checklist_inspections').select('vehicle_id,kos,created_at').order('created_at',{ascending:true})]);
+   try{const cv={data:D.cv},ci={data:D.ci};
     const rep=new Map();for(const r of ci.data||[])rep.set(r.vehicle_id,Number(r.kos||0));
     for(const v of cv.data||[]){const promo=Number(v.promo_price||0),ask=Number(v.asking_price||0);costMap.set(v.id,{sell:promo>0&&promo<ask?promo:ask,cost:Number(v.purchase_cost||0)+Number(v.cost_transfer||0)+Number(v.cost_puspakom||0)+Number(v.cost_transport||0)+(rep.get(v.id)||0),approved:Number(v.cost_agent_commission||0)})}}catch(_){}
    const fmt=n=>(n<0?'−':'')+'RM '+Math.abs(Math.round(n)).toLocaleString('ms-MY');
@@ -489,7 +514,7 @@ export function mountAgentAdmin(host,{client,profile}={}){
    const approved=commissions.filter(c=>c.status==='approved');
    const drafts=payouts.filter(p=>p.status==='draft'),waitHr=payouts.filter(p=>p.status==='approved');
    if(!unlinked.length&&!wonLeads.length&&!approved.length&&!drafts.length&&!waitHr.length)pk.append(node('p','','Tiada tindakan menunggu.'));
-   const {data:candRaw}=await client.rpc('owner_lead_sale_candidates_v1');
+   const candRaw=D.candRaw;
    const cands=Array.isArray(candRaw)?candRaw:[];
    const dShort=d=>d?new Date(d).toLocaleDateString('ms-MY',{day:'numeric',month:'short'}):'';
    for(const l of unlinked){
@@ -540,9 +565,7 @@ export function mountAgentAdmin(host,{client,profile}={}){
    const unreadLeads=agentLeads.filter(x=>!x.owner_read_at).length+directLeads.filter(x=>!x.owner_read_at).length;
    const pendingApprove=new Set(cands.map(c=>c.lead_id)).size+(fin.leads||[]).filter(l=>l.status==='won'&&!new Set(commissions.map(c=>c.sale_id)).has(l.linked_sale_id)).length+commissions.filter(c=>c.status==='approved').length+payouts.filter(p=>p.status==='draft').length;
    tabify({ejen:applications.length,kelulusan:pendingApprove,lead:unreadLeads,komisen:vehicles.filter(v=>!['sold','deleted','archived'].includes(String(v.status||'').toLowerCase())&&!(Number(v.offer?.indicative_amount)>0)).length});
-   status('Dikemas kini.');
-  }catch(e){status(e?.message||'Gagal memuat rekod ejen.',true)}
-  finally{loading=false;refresh.disabled=false}
+  }
  }
  refresh.onclick=()=>load();
  void load();

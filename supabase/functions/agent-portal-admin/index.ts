@@ -15,7 +15,8 @@ Deno.serve(async(req)=>{
    return res(503,{error:"Server not configured"});
  const admin=createClient(url,key,{auth:{autoRefreshToken:false,persistSession:false}});
  const {data:identity,error:authError}=await admin.auth.getUser(token);
- if(authError||!identity.user?.id||!identity.user.email_confirmed_at) return res(401,{error:"Invalid account"});
+ if(authError||!identity.user?.id) return res(401,{error:"Sesi pengesahan tidak sah. Sila log masuk semula.",code:"INVALID_SESSION"});
+ if(!identity.user.email_confirmed_at) return res(403,{error:"E-mel akaun belum disahkan.",code:"EMAIL_UNCONFIRMED"});
  const {data:owner,error:ownerErr}=await admin.from("profiles").select("role,enabled")
    .eq("id",identity.user.id).maybeSingle();
  if(ownerErr||owner?.role!=="owner"||owner?.enabled!==true) return res(403,{error:"Owner access required"});
@@ -24,6 +25,19 @@ Deno.serve(async(req)=>{
  let payload:Record<string,unknown>;
  try { payload=await req.json(); if(!payload||Array.isArray(payload)||typeof payload!=="object") throw 1;}
  catch {return res(400,{error:"Invalid JSON"});}
+ // "bundle": all read lists in ONE invocation (one auth check, one round trip).
+ if(payload.action==="bundle"){
+   const acts=["list","lead_list","direct_inquiry_list","finance_list","lead_contact_list","commission_vehicle_list"];
+   const out:Record<string,unknown>={};
+   for(const [a,r] of await Promise.all(acts.map(async a=>[a,await run({action:a})] as const))){
+     const j=await r.json().catch(()=>({}));
+     if(!r.ok) return res(r.status,j);
+     out[a]=j;
+   }
+   return res(200,out);
+ }
+ return run(payload);
+ async function run(payload:Record<string,unknown>):Promise<Response>{
  if(payload.action==="list"){
    const {data,error}=await admin.from("agent_applications")
    .select("id,full_name,phone,email,state,status,applied_at").eq("status","pending")
@@ -170,4 +184,5 @@ Deno.serve(async(req)=>{
    return res(200,{result:data});
  }
  return res(400,{error:"Unknown action"});
+ }
 });
