@@ -815,10 +815,14 @@ $('signinForm').onsubmit=async e=>{e.preventDefault();const b=e.submitter;b.disa
  try{const d=Object.fromEntries(new FormData(e.target));const {error}=await supabase.auth.signInWithPassword({email:d.email,password:d.password});if(error)throw error;await sync();}
  catch(err){fail(err);}finally{b.disabled=false;}};
 $('signupForm').onsubmit=async e=>{e.preventDefault();const b=e.submitter;b.disabled=true;
- try{const d=Object.fromEntries(new FormData(e.target));const {data,error}=await supabase.auth.signUp({email:d.email.trim(),password:d.password,options:{emailRedirectTo:location.origin+'/agent.html',data:{signup_source:'agent_portal'}}});if(error)throw /password/i.test(error.message||'')&&/(6|characters|short|weak)/i.test(error.message||'')?new Error('Kata laluan terlalu pendek. Guna sekurang-kurangnya 6 aksara.'):error;
-  if(data?.user&&Array.isArray(data.user.identities)&&data.user.identities.length===0){message('E-mel ini sudah berdaftar (mungkin akaun staff atau pendaftaran lama). Sila log masuk guna kata laluan sedia ada di sebelah. Lupa kata laluan? Tekan "Lupa kata laluan?".',true);$('signinForm').elements.email.value=d.email.trim();return;}
-  if(!data?.session){const r=await supabase.auth.signInWithPassword({email:d.email.trim(),password:d.password});if(r.error){const t='✅ Pendaftaran berjaya! Sila log masuk di sebelah dengan e-mel dan kata laluan anda.';$('signupDone').textContent=t;$('signupDone').hidden=false;message(t);$('alert').className='notice ok';$('signinForm').elements.email.value=d.email.trim();return;}}
-  e.target.reset();await sync();const t='✅ Pendaftaran berjaya! Akaun ejen anda sudah aktif dan anda telah log masuk ('+d.email.trim()+'). Sila lengkapkan butiran dan hantar permohonan ejen.';message(t);$('alert').className='notice ok';scrollTo({top:0,behavior:'smooth'});}
+ try{const d=Object.fromEntries(new FormData(e.target));const email=d.email.trim();
+  const r=await fetch(project+'/functions/v1/agent-signup',{method:'POST',headers:{'content-type':'application/json',apikey:'sb_publishable_zuuNipsMpalN_38SJwXpFA_MRzQ6eZ0'},body:JSON.stringify({email,password:d.password})});
+  const j=await r.json().catch(()=>({}));
+  if(r.status===409){message('E-mel ini sudah berdaftar. Sila log masuk guna kata laluan sedia ada di sebelah. Lupa kata laluan? Tekan "Lupa kata laluan?".',true);$('signinForm').elements.email.value=email;return;}
+  if(!r.ok)throw new Error(j.error||'Pendaftaran gagal. Cuba lagi.');
+  const s=await supabase.auth.signInWithPassword({email,password:d.password});
+  if(s.error){const t='✅ Pendaftaran berjaya! Sila log masuk di sebelah dengan e-mel dan kata laluan anda.';$('signupDone').textContent=t;$('signupDone').hidden=false;message(t);$('alert').className='notice ok';$('signinForm').elements.email.value=email;return;}
+  e.target.reset();await sync();const t='✅ Pendaftaran berjaya! Akaun ejen anda sudah aktif dan anda telah log masuk ('+email+'). Sila lengkapkan butiran dan hantar permohonan ejen.';message(t);$('alert').className='notice ok';scrollTo({top:0,behavior:'smooth'});}
  catch(err){fail(err);}finally{b.disabled=false;}};
 $('applyForm').onsubmit=async e=>{e.preventDefault();if(!me?.email_confirmed_at)return message('Sahkan e-mel dahulu',true);
  const b=e.submitter;b.disabled=true;try{const d=Object.fromEntries(new FormData(e.target));const {error}=await supabase.from('agent_applications').insert({
