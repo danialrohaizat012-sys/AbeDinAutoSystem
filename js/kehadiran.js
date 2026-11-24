@@ -463,21 +463,7 @@ function viewPunch() {
   const restEnds = mine.filter(p => p.kind === "rest_end");
   // Sasaran kerja bersih maksimum 8 jam (gaji dikira maksimum 8 jam sehari), walaupun syif tersilap tetap rehat 0.
   const scheduledMin = sc.type === "work" ? Math.min(480, Math.max(0, sc.end - sc.start - (sc.brk || 0))) : 0;
-  const liveWorked = () => {
-    let start = null, pause = null, total = 0;
-    const endNow = Date.now();
-    for (const p of mine) {
-      const time = new Date(p.punched_at).getTime();
-      if (p.kind === "in" && start == null) start = time;
-      else if (p.kind === "rest_start" && start != null && pause == null) pause = time;
-      else if (p.kind === "rest_end" && pause != null) { total += Math.max(0, pause - start); start = time; pause = null; }
-      else if (p.kind === "out" && start != null) { total += Math.max(0, (pause ?? time) - start); start = null; pause = null; }
-    }
-    if (start != null) total += Math.max(0, (pause ?? endNow) - start);
-    const mins = Math.round(total / 60000);
-    return { mins, percent: scheduledMin ? Math.min(100, Math.round(mins / scheduledMin * 100)) : null };
-  };
-  const worked = liveWorked();
+  const worked = netWorkedToday(mine, sc);
   // Waktu wajib pulang: 8 jam bersih + sekurang-kurangnya rehat syif.
   // Jika rehat sebenar melebihi peruntukan, waktu pulang dianjak ke depan.
   const requiredLeave = () => {
@@ -523,7 +509,7 @@ function viewPunch() {
     <div style="margin-top:13px;padding:13px;border:1px solid var(--line,#39352d);border-radius:13px">
       <div class="r" style="justify-content:space-between;gap:8px"><b style="font-size:14px">Kemajuan Kerja Bersih</b><b id="punch-percent">${worked.percent == null ? "—" : worked.percent + "%"}</b></div>
       <div style="height:9px;border-radius:9px;background:rgba(255,255,255,.15);overflow:hidden;margin:9px 0"><div id="punch-progress" style="height:100%;width:${worked.percent || 0}%;background:#e5b93b;border-radius:9px"></div></div>
-      <small class="mute"><span id="punch-worked">${fmtMin(worked.mins)}</span> / ${scheduledMin ? fmtMin(scheduledMin) : "Tiada syif"} · Tidak termasuk rehat</small>
+      <small class="mute"><span id="punch-worked">${fmtMin(worked.mins)}</span> / ${scheduledMin ? fmtMin(scheduledMin) : "Tiada syif"} · <span id="punch-worked-note">${workedNote(worked)}</span></small>
     </div>
     <small class="mute" style="display:block;margin-top:11px">Waktu wajib pulang dikemas kini mengikut tempoh rehat sebenar. Punch balik awal akan direkod sebagai kekurangan jam.</small>
   </div>`;
@@ -851,6 +837,29 @@ function payForm(s) {
       <button class="btn" type="submit">Simpan ${esc(nm)}</button></form></details>`;
 }
 
+/* Kerja bersih hari ini (paparan langsung), selari dengan kiraan gaji computeDays():
+   jika staff TIDAK punch rehat, rehat syif ditolak automatik. Paparan dibuat lancar:
+   kemajuan "berhenti" pada 5 jam selama tempoh rehat, kemudian sambung — jadi pada 6 jam
+   ke atas nilainya sama seperti gaji (kasar − rehat syif). Sasaran maksimum 8 jam. */
+function netWorkedToday(mine, sc, nowMs = Date.now()) {
+  let start = null, pause = null, ms = 0, restCount = 0;
+  for (const p of mine) {
+    const at = new Date(p.punched_at).getTime();
+    if (p.kind === "in" && start == null) start = at;
+    else if (p.kind === "rest_start" && start != null && pause == null) pause = at;
+    else if (p.kind === "rest_end" && pause != null) { ms += Math.max(0, pause - start); start = at; pause = null; restCount++; }
+    else if (p.kind === "out" && start != null) { ms += Math.max(0, (pause ?? at) - start); if (pause != null) restCount++; start = null; pause = null; }
+  }
+  if (start != null) ms += Math.max(0, (pause ?? nowMs) - start);
+  if (pause != null) restCount++;
+  const gross = Math.round(ms / 60000), brk = sc.type === "work" ? (sc.brk || 0) : 0;
+  const autoBreak = !restCount && brk > 0 ? Math.min(brk, Math.max(0, gross - (360 - brk))) : 0;
+  const mins = Math.max(0, gross - autoBreak);
+  const target = sc.type === "work" ? Math.min(480, Math.max(0, sc.end - sc.start - brk)) : 0;
+  return { mins, autoBreak, target, percent: target ? Math.min(100, Math.round(mins / target * 100)) : null };
+}
+const workedNote = w => w.autoBreak ? `Rehat ${fmtMin(w.autoBreak)} ditolak auto (tiada punch rehat)` : "Tidak termasuk rehat";
+
 let clockTimer = null, tickN = 0;
 function tickClock() {
   const el = $("#clock"); if (!el) return;
@@ -858,19 +867,9 @@ function tickClock() {
   el.textContent = `${String(d.getUTCHours()).padStart(2,"0")}:${String(d.getUTCMinutes()).padStart(2,"0")}`;
   const out = $("#punch-worked"); if (!out || !S.me || !S.settings) return;
   const today = nowKey(), mine = S.punches.filter(p => p.staff_id === S.me && dayKey(p.punched_at) === today);
-  let start = null, pause = null, ms = 0;
-  for (const p of mine) {
-    const at = new Date(p.punched_at).getTime();
-    if (p.kind === "in" && start == null) start = at;
-    else if (p.kind === "rest_start" && start != null && pause == null) pause = at;
-    else if (p.kind === "rest_end" && pause != null) { ms += Math.max(0,pause-start); start=at; pause=null; }
-    else if (p.kind === "out" && start != null) { ms += Math.max(0,(pause ?? at)-start); start=null; pause=null; }
-  }
-  if (start != null) ms += Math.max(0,(pause ?? Date.now())-start);
-  const mins = Math.round(ms/60000), sc=schedFor(S.me,today);
-  const target=sc.type==="work" ? Math.max(0,sc.end-sc.start-(sc.brk||0)) : 0;
-  const pct=target ? Math.min(100,Math.round(mins/target*100)) : null;
+  const sc=schedFor(S.me,today), w=netWorkedToday(mine, sc), mins=w.mins, target=w.target, pct=w.percent;
   out.textContent=fmtMin(mins);
+  const wn=$("#punch-worked-note"); if(wn) wn.textContent=workedNote(w);
   const p=$("#punch-percent"), bar=$("#punch-progress");
   if(p) p.textContent=pct==null ? "—" : pct+"%";
   if(bar) bar.style.width=(pct||0)+"%";
