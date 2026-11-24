@@ -3,6 +3,8 @@
 // Dimuat oleh app.html melalui import('./js/kehadiran.js'). Jadual & fungsi: V71_KEHADIRAN.sql + V79_KEHADIRAN_PRO.sql.
 // Masa punch diambil dari server; jarak ke lokasi tag disemak semula di server.
 const CSS = `
+.settings-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.settings-tile{display:flex;align-items:center;gap:12px;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;cursor:pointer;min-width:0}.settings-tile:hover{border-color:var(--pri)}.settings-tile .grow{min-width:0}.settings-tile .mute{display:block}.settings-icon{color:var(--pri);font-size:22px}.settings-panel{display:flex;flex-direction:column;gap:12px;min-width:0}.settings-panel [hidden]{display:none!important}.settings-panel .loc{flex-wrap:wrap}.settings-panel .loc .grow{min-width:130px}@media(max-width:600px){.settings-nav{grid-template-columns:1fr}}
+
 :host{display:block;--bg:#0a0a09;--card:#151412;--fg:#f4efe2;--mute:#a69f8c;--line:#2e2a20;--soft:#1e1c17;
   --pri:#e8b10b;--pri-fg:#141000;--ok:#4ac27a;--bad:#e5534b;--warn:#f0a020;--blue:#6ea8fe;
   --f:Inter,-apple-system,"Segoe UI",system-ui,sans-serif;color-scheme:dark}
@@ -145,7 +147,7 @@ const KL = 8 * 3600000;
 const BUCKET = "attendance-selfies";
 
 let root, app;
-const S = { locEdit:null, client:null, profile:null, me:null, owner:false, tab:"punch", tabSet:false, settings:null, locs:[], pay:{}, staff:[], punches:[],
+const S = { settingsMenu:"", locEdit:null, client:null, profile:null, me:null, owner:false, tab:"punch", tabSet:false, settings:null, locs:[], pay:{}, staff:[], punches:[],
   shifts:[], astaff:{}, roster:{}, holidays:{}, flags:{}, requests:[], adv:[], leaves:[], claims:[],
   day:"", month:"", week:"", urls:{}, loaded:false, err:"", clockT:null, payOpen:{} };
 
@@ -731,21 +733,25 @@ function viewTetapan() {
   const roster = staff.map(s => `<tr><th class="nm">${esc(s.full_name)}</th>${wk.map(k => { const r = S.roster[s.id + "|" + k], sc = schedFor(s.id, k), v = r ? (r.shift_id || "rest") : "";
     return `<td class="${sc.type}"><select data-roster="${esc(s.id)}|${k}" class="rs"><option value="" ${v === "" ? "selected" : ""}>Lalai${r ? "" : ` (${sc.type === "work" ? hhmmOf(sc.start) : sc.type === "ph" ? "CU" : "rehat"})`}</option><option value="rest" ${v === "rest" ? "selected" : ""}>Rehat</option>${act.map(x => `<option value="${esc(x.id)}" ${v === x.id ? "selected" : ""}>${esc(x.name)}</option>`).join("")}</select></td>`; }).join("")}</tr>`).join("");
   const yr = nowKey().slice(0, 4), hols = Object.values(S.holidays || {}).filter(h => h.day >= yr + "-01-01").sort((x, y) => x.day.localeCompare(y.day));
-  return `<div class="ap"><form class="card" id="f-set"><h3>Waktu kerja umum</h3><p class="mute">Dipakai untuk staf yang tiada syif sendiri.</p>
+  const menus = [["work","◷","Waktu kerja","Waktu masuk, balik, rehat dan hari bekerja"],["shift","▤","Syif & jadual","Syif staf dan jadual mingguan"],["gps","⌖","Lokasi Tag GPS","Lokasi, radius dan peta"],["rules","✓","Peraturan kehadiran","Kelewatan, punch rehat, GPS dan selfie"],["holiday","▦","Cuti umum","Cuti umum dan cuti syarikat"],["ot","RM","Gaji & OT","Peraturan dan kadar kerja lebih masa"],["staff","♙","Tetapan individu staf","Syif, hari kerja, gaji dan elaun staf"]];
+  const m = S.settingsMenu;
+  if (!menus.some(x => x[0] === m)) return `<div class="card"><h3>Tetapan kehadiran</h3><p class="mute">Pilih menu untuk mengurus tetapan.</p><div class="settings-nav">${menus.map(([id,icon,title,desc]) => `<button type="button" class="settings-tile" data-act="settingsmenu" data-id="${id}"><span class="settings-icon">${icon}</span><span class="grow"><b>${title}</b><span class="mute">${desc}</span></span><span>›</span></button>`).join("")}</div></div>`;
+  const panel = `<div class="settings-panel"><div class="r"><button class="sm" data-act="settingsmenu" data-id="">‹ Kembali</button><h3>${menus.find(x=>x[0]===m)[2]}</h3></div>`;
+  return panel + `<div class="ap" style="grid-template-columns:1fr">${["work","rules","ot"].includes(m) ? `<form class="card" id="f-set"><h3>${menus.find(x=>x[0]===m)[2]}</h3><div class="settings-panel" ${m==="work"?"":"hidden"}><h3>Waktu kerja umum</h3><p class="mute">Dipakai untuk staf yang tiada syif sendiri.</p>
       <div class="g3"><div><label>Masuk</label><input class="field" type="time" name="work_start" value="${esc(String(st.work_start).slice(0,5))}"></div><div><label>Balik</label><input class="field" type="time" name="work_end" value="${esc(String(st.work_end).slice(0,5))}"></div><div><label>Rehat tanpa gaji (min)</label><input class="field" type="number" min="0" max="240" name="break_min" value="${+st.break_min || 0}"></div></div>
       <div><label>Hari bekerja</label><div class="days">${days}</div></div>
-      <div class="g2"><div><label>Tempoh bertenang lewat (minit)</label><input class="field" type="number" min="0" max="240" name="grace_min" value="${st.grace_min}"></div>
-      <div><label>OT dikira jika lebih (minit selepas waktu balik)</label><input class="field" type="number" min="0" max="600" name="ot_min_minutes" value="${st.ot_min_minutes}"></div></div>
+      </div><div class="settings-panel" ${m==="rules"?"":"hidden"}><div><label>Tempoh bertenang lewat (minit)</label><input class="field" type="number" min="0" max="240" name="grace_min" value="${st.grace_min}"></div>
+      </div><div class="settings-panel" ${m==="ot"?"":"hidden"}><div><label>OT dikira jika lebih (minit selepas waktu balik)</label><input class="field" type="number" min="0" max="600" name="ot_min_minutes" value="${st.ot_min_minutes}"></div>
       <div class="g2"><div><label>Kadar OT hari rehat (× kadar OT)</label><input class="field" type="number" step="0.01" min="0" max="5" name="ot_restday_mult" value="${+st.ot_restday_mult}"></div>
       <div><label>Kadar OT cuti umum (× kadar OT)</label><input class="field" type="number" step="0.01" min="0" max="5" name="ot_ph_mult" value="${+st.ot_ph_mult}"></div></div>
       <p class="mute" style="margin:-4px 0 0">Akta Kerja 1955: OT hari biasa 1.5×, hari rehat 2×, cuti umum 3× gaji sejam. Jika kadar OT staf sudah 1.5× gaji sejam, isi 1.33 dan 2.</p>
       <label class="sw"><input type="checkbox" name="ot_offday_all" ${st.ot_offday_all ? "checked" : ""}> Kerja pada hari rehat dikira OT sepenuhnya</label>
       <label class="sw"><input type="checkbox" name="ot_require_approval" ${st.ot_require_approval ? "checked" : ""}> OT perlu kelulusan Owner sebelum dibayar</label>
-      <label class="sw"><input type="checkbox" name="allow_rest_punch" ${st.allow_rest_punch ? "checked" : ""}> Benarkan punch rehat (mula / habis rehat)</label>
+      </div><div class="settings-panel" ${m==="rules"?"":"hidden"}><label class="sw"><input type="checkbox" name="allow_rest_punch" ${st.allow_rest_punch ? "checked" : ""}> Benarkan punch rehat (mula / habis rehat)</label>
       <label class="sw"><input type="checkbox" name="enforce_geofence" ${st.enforce_geofence ? "checked" : ""}> Sekat punch di luar kawasan lokasi tag</label>
       <label class="sw"><input type="checkbox" name="require_selfie" ${st.require_selfie ? "checked" : ""}> Wajib selfie</label>
-      <button class="btn" type="submit">Simpan tetapan</button></form>
-    <div class="card"><h3>Syif</h3><p class="mute">Rehat syif ditolak automatik jika staf kerja 6 jam atau lebih tanpa punch rehat.</p><div class="shlist">${shifts || `<p class="mute">Belum ada syif.</p>`}</div>
+      </div><button class="btn" type="submit">Simpan tetapan</button></form>` : ""}
+    ${m==="shift" ? `<div class="card"><h3>Syif</h3><p class="mute">Rehat syif ditolak automatik jika staf kerja 6 jam atau lebih tanpa punch rehat.</p><div class="shlist">${shifts || `<p class="mute">Belum ada syif.</p>`}</div>
       <form id="f-shift" style="display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:12px">
         <b>${se ? `Edit syif: ${esc(se.name)}` : "Tambah syif baharu"}</b>
         <div class="g2"><div><label>Nama syif</label><input class="field" name="name" required placeholder="cth: Syif Pagi" value="${esc(sv.name)}"></div><div><label>Warna</label><input class="field" type="color" name="color" value="${esc(sv.color)}" style="height:42px;padding:4px"></div></div>
@@ -754,12 +760,12 @@ function viewTetapan() {
     <div class="card full"><div class="r"><h3>Jadual mingguan</h3><span class="r" style="gap:6px"><button class="sm" data-act="wk" data-n="-7">‹</button><span class="mute">${dayLabel(wk[0])} – ${dayLabel(wk[6])}</span><button class="sm" data-act="wk" data-n="7">›</button></span></div>
       <p class="mute">Ubah syif atau beri hari rehat untuk tarikh tertentu. "Lalai" ikut syif & hari kerja staf. Disimpan terus.</p>
       ${staff.length ? `<div class="tw"><table class="ros"><thead><tr><th class="nm">Staf</th>${wk.map(k => `<th class="${S.holidays[k] ? "ph" : ""}">${DAYS[dow(k)].slice(0, 3)}<br><span class="mute">${+k.slice(8)}/${+k.slice(5, 7)}</span></th>`).join("")}</tr></thead><tbody>${roster}</tbody></table></div>` : `<p class="mute">Belum ada staf.</p>`}</div>
-    <div class="card"><h3>Cuti umum & cuti syarikat</h3><p class="mute">Cuti umum dibayar. Staf yang bekerja pada hari ini dapat OT kadar cuti umum. Tarikh bertanda * tertakluk pengumuman rasmi.</p>
+    ` : ""}${m==="holiday" ? `<div class="card"><h3>Cuti umum & cuti syarikat</h3><p class="mute">Cuti umum dibayar. Staf yang bekerja pada hari ini dapat OT kadar cuti umum. Tarikh bertanda * tertakluk pengumuman rasmi.</p>
       ${hols.length ? `<div class="pl">${hols.map(h => `<div class="loc"><div class="grow"><b>${dayLabel(h.day)} ${h.day.slice(0, 4)}</b> · ${esc(h.name)} ${h.kind === "syarikat" ? `<span class="chip blue">Syarikat</span>` : ""}</div><button class="sm bad" data-act="holdel" data-day="${h.day}">Padam</button></div>`).join("")}</div>` : `<p class="mute">Tiada.</p>`}
       <form id="f-hol" style="display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:12px">
         <div class="g3"><div><label>Tarikh</label><input class="field" type="date" name="day" required></div><div><label>Nama</label><input class="field" name="name" required placeholder="cth: Cuti ganti"></div><div><label>Jenis</label><select class="field" name="kind"><option value="umum">Cuti umum</option><option value="syarikat">Cuti syarikat</option></select></div></div>
         <button class="btn" type="submit">+ Tambah cuti</button></form></div>
-    <div class="card"><h3>Lokasi tag</h3><p class="mute">Staf hanya boleh punch masuk/balik dalam radius lokasi aktif (jika sekatan dihidupkan). Boleh ada lebih daripada satu lokasi.</p>
+    ` : ""}${m==="gps" ? `<div class="card"><h3>Lokasi tag</h3><p class="mute">Staf hanya boleh punch masuk/balik dalam radius lokasi aktif (jika sekatan dihidupkan). Boleh ada lebih daripada satu lokasi.</p>
       ${locs || `<p class="mute">Belum ada lokasi.</p>`}
       <form id="f-loc" style="display:flex;flex-direction:column;gap:10px">
         ${locEdit ? `<b>Edit lokasi: ${esc(locEdit.name)}</b>` : ""}
@@ -768,7 +774,7 @@ function viewTetapan() {
         <button class="sm" type="button" data-act="here">📍 Guna lokasi saya sekarang</button>
         <div id="locprev"></div>
         <button class="btn" type="submit">${locEdit ? "Simpan perubahan" : "+ Tambah lokasi"}</button>${locEdit ? `<button class="sm" type="button" data-act="loccancel">Batal</button>` : ""}</form></div>
-    ${payCard(staff)}</div>`;
+    ` : ""}${m==="staff" ? payCard(staff) : ""}</div></div>`;
 }
 function payCard(staff) {
   const unset = staff.filter(s => !S.pay[s.id]).length;
@@ -1137,7 +1143,8 @@ function onClick(e) {
   if (t.dataset.tab) { S.tab = t.dataset.tab; S.loaded = false; render(); loadTab(); return; }
   if (t.dataset.punch) return openPunch(t.dataset.punch);
   const a = t.dataset.act, run = async (fn, ok) => { t.disabled = true; try { await fn(); if (ok) toast(ok); render(); } catch (err) { t.disabled = false; toast(errMsg(err)); } };
-  if (a === "reload") { S.settings = null; S.loaded = false; render(); loadTab(); }
+  if (a === "settingsmenu") { S.settingsMenu = t.dataset.id || ""; S.locEdit = null; S.shEdit = null; render(); }
+  else if (a === "reload") { S.settings = null; S.loaded = false; render(); loadTab(); }
   else if (a === "punch") startPunch(t.dataset.kind);
   else if (a === "rest") restPunch(t.dataset.kind, t);
   else if (a === "manual") manualPunch(t.dataset.staff);
