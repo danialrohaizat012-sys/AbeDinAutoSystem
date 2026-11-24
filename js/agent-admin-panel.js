@@ -14,8 +14,8 @@ function contactControls(row,lead,carLabel){
  const phone=phoneLink(lead.customer_phone);
  if(!phone)return;
  const buttons=node('div','ag-controls');
- const call=node('a','ag-link','Hubungi Telefon');call.href='tel:+'+phone;
- const wa=node('a','ag-link ag-whatsapp','WhatsApp Pelanggan');wa.target='_blank';wa.rel='noopener noreferrer';
+ const call=node('a','ag-link ag-c-blue','📞 Hubungi Telefon');call.href='tel:+'+phone;
+ const wa=node('a','ag-link ag-c-green','💬 WhatsApp Pelanggan');wa.target='_blank';wa.rel='noopener noreferrer';
  wa.href='https://wa.me/'+phone+'?text='+encodeURIComponent(
   'Salam '+String(lead.customer_name||'')+', saya dari AbeDin Auto. Terima kasih kerana berminat dengan '+String(carLabel||'kereta kami')+'. Boleh kami bantu?');
  buttons.append(wa,call);row.append(buttons);
@@ -46,9 +46,9 @@ function compactLead(parent,a,car,onRead,agentLead){
  summary.append(title,node('span',a.owner_read_at?'ag-read':'ag-unread',a.owner_read_at?'Sudah baca':'Belum baca'));
  const body=node('div','ag-mini-body');body.append(node('p','','Telefon: '+(a.customer_phone||'—')+' · '+a.status+' · '+date(a.created_at)));
  body.append(node('p','','Ejen '+(a.agent_read_at?'sudah baca':'belum baca')+' · Owner '+(a.owner_read_at?'sudah baca':'belum baca')));
- if(car?.vehicle_id){const link=node('a','ag-link','Lihat Kereta');const url=new URL('/',location.origin);url.searchParams.set('car',car.vehicle_id);link.href=url.href;link.target='_blank';link.rel='noopener noreferrer';body.append(link)}
+ if(car?.vehicle_id){const link=node('a','ag-link ag-c-purple','🚗 Lihat Kereta');const url=new URL('/',location.origin);url.searchParams.set('car',car.vehicle_id);link.href=url.href;link.target='_blank';link.rel='noopener noreferrer';body.append(link)}
  contactControls(body,a,model);
- if(!a.owner_read_at){const btn=node('button','ag-primary','Tandakan Sudah Baca');btn.type='button';btn.onclick=()=>onRead(a,agentLead?'agent':'direct');body.append(btn)}
+ if(!a.owner_read_at){const btn=node('button','ag-c-teal','✓ Tandakan Sudah Baca');btn.type='button';btn.onclick=()=>onRead(a,agentLead?'agent':'direct');body.append(btn)}
  details.append(summary,body);parent.append(details);
 }
 function section(parent,title,desc,tab){const a=node('section','ag-card');if(tab)a.dataset.tab=tab;a.append(node('h3','',title),node('p','ag-desc',desc));parent.append(a);return a}
@@ -107,7 +107,7 @@ export function mountAgentAdmin(host,{client,profile}={}){
  }
  .ada-agent-owner .ag-config select option{background:var(--ag-field)!important;color:var(--ag-field-ink)!important}
  .ada-agent-owner .ag-config input[type=checkbox]{accent-color:var(--ag-accent);width:20px;height:20px}
- .ada-agent-owner button:not(.ag-primary),.ada-agent-owner .ag-link:not(.ag-primary):not(.ag-whatsapp){
+ .ada-agent-owner button:not(.ag-primary):not([class*=ag-c-]):not(.ag-tab):not(.ag-chip),.ada-agent-owner .ag-link:not(.ag-primary):not(.ag-whatsapp):not([class*=ag-c-]){
    background:var(--ag-soft)!important;color:var(--ag-soft-ink)!important;
    -webkit-text-fill-color:var(--ag-soft-ink)!important;border:1px solid var(--ag-border)!important;
  }
@@ -198,21 +198,73 @@ export function mountAgentAdmin(host,{client,profile}={}){
  .ada-agent-owner .ag-line{padding:10px 0!important}
  .ada-agent-owner button{border-radius:9px!important}
  .ada-agent-owner .ag-agent-actions button{padding:7px 12px!important;font-size:13px}
+ /* ---- Warna-warni butang ---- */
+ .ada-agent-owner [class*=ag-c-]{color:#fff!important;-webkit-text-fill-color:#fff!important;border:1px solid transparent!important;font-weight:700!important;box-shadow:0 2px 6px rgba(0,0,0,.18);transition:filter .15s,transform .1s}
+ .ada-agent-owner [class*=ag-c-]:hover{filter:brightness(1.08)}.ada-agent-owner [class*=ag-c-]:active{transform:scale(.97)}
+ .ada-agent-owner [class*=ag-c-]:disabled{opacity:.55;filter:grayscale(.3)}
+ .ada-agent-owner .ag-c-gold{background:linear-gradient(135deg,#f0cf74,#d6a93c)!important;color:#1d1a10!important;-webkit-text-fill-color:#1d1a10!important}
+ .ada-agent-owner .ag-c-green{background:linear-gradient(135deg,#27b36f,#168a52)!important}
+ .ada-agent-owner .ag-c-blue{background:linear-gradient(135deg,#3b8cf0,#2166c9)!important}
+ .ada-agent-owner .ag-c-orange{background:linear-gradient(135deg,#f59e3c,#de7517)!important}
+ .ada-agent-owner .ag-c-red{background:linear-gradient(135deg,#ec5b5b,#c73636)!important}
+ .ada-agent-owner .ag-c-purple{background:linear-gradient(135deg,#9d6cf7,#7442e0)!important}
+ .ada-agent-owner .ag-c-teal{background:linear-gradient(135deg,#1fb8b0,#128a85)!important}
+ .ada-agent-owner .ag-c-gray{background:#4a565c!important}
+ html.ada-light .ada-agent-owner .ag-c-gray{background:#7b8a93!important}
+ /* ---- Tab berwarna ---- */
+ .ada-agent-owner button.ag-tab{--tc:var(--ag-accent)}
+ .ada-agent-owner button.ag-tab[data-t=ejen]{--tc:#d6a93c}.ada-agent-owner button.ag-tab[data-t=komisen]{--tc:#1f9d63}
+ .ada-agent-owner button.ag-tab[data-t=kelulusan]{--tc:#2f7de1}.ada-agent-owner button.ag-tab[data-t=lead]{--tc:#e8892b}
+ .ada-agent-owner button.ag-tab[data-t=promosi]{--tc:#8b5cf6}
+ .ada-agent-owner button.ag-tab:not(.on):hover{background:color-mix(in srgb,var(--tc) 14%,transparent)!important}
+ .ada-agent-owner button.ag-tab.on{background:var(--tc)!important;color:#fff!important;-webkit-text-fill-color:#fff!important;box-shadow:0 3px 10px color-mix(in srgb,var(--tc) 45%,transparent)!important}
+ .ada-agent-owner button.ag-tab.on .ag-badge{background:#fff;color:#1d1a10;-webkit-text-fill-color:#1d1a10}
+ .ada-agent-owner .ag-tab-ic{font-size:15px}
+ /* ---- Kad statistik ---- */
+ .ada-agent-owner .ag-stat{position:relative;overflow:hidden;display:flex;align-items:center;gap:12px}
+ .ada-agent-owner .ag-stat::before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:var(--sc)}
+ .ada-agent-owner .ag-stat-ic{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;font-size:19px;background:color-mix(in srgb,var(--sc) 20%,transparent);flex:none}
+ .ada-agent-owner .ag-stat b{color:var(--sc)!important}
+ /* ---- Ranking ringkas ---- */
+ .ada-agent-owner .ag-lb-row{padding:6px 10px!important;min-height:0}
+ .ada-agent-owner .ag-lb-row.top{background:color-mix(in srgb,var(--ag-accent) 9%,var(--ag-raised))}
+ .ada-agent-owner .ag-lb-row[hidden]{display:none!important}
+ .ada-agent-owner .ag-lb-name strong{font-size:13.5px}
+ .ada-agent-owner .ag-more{margin-top:8px;width:100%}
+ /* ---- Senarai ejen grid ---- */
+ .ada-agent-owner .ag-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+ .ada-agent-owner .ag-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 10px}
+ .ada-agent-owner .ag-toolbar input{flex:1 1 200px;min-height:38px;border-radius:9px;padding:0 12px;background:var(--ag-field);color:var(--ag-field-ink);border:1px solid var(--ag-field-border)}
+ .ada-agent-owner button.ag-chip{padding:7px 12px!important;border-radius:999px!important;font-size:12.5px;font-weight:700;background:var(--ag-raised)!important;color:var(--ag-muted)!important;-webkit-text-fill-color:var(--ag-muted)!important;border:1px solid var(--ag-border)!important}
+ .ada-agent-owner button.ag-chip.on{background:var(--cc,#d6a93c)!important;color:#fff!important;-webkit-text-fill-color:#fff!important;border-color:transparent!important}
+ .ada-agent-owner .ag-agent-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:8px;align-items:start}
+ .ada-agent-owner .ag-agent-grid .ag-mini{margin:0!important}
+ .ada-agent-owner .ag-agent-grid .ag-mini[open]{grid-column:1/-1}
+ .ada-agent-owner .ag-agent-grid .ag-mini[hidden]{display:none!important}
+ .ada-agent-owner .ag-av{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:15px;color:#fff;flex:none}
+ .ada-agent-owner .ag-who{display:flex;align-items:center;gap:10px;min-width:0}
+ .ada-agent-owner .ag-who .ag-mini-title strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13.5px}
+ .ada-agent-owner .ag-who .ag-mini-title small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .ada-agent-owner .ag-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:6px;margin:0 0 10px}
+ .ada-agent-owner .ag-kpi{padding:8px 10px;border-radius:9px;background:var(--ag-raised);border:1px solid var(--ag-border)}
+ .ada-agent-owner .ag-kpi small{display:block;font-size:11px;color:var(--ag-muted)}.ada-agent-owner .ag-kpi b{font-size:15px}
+ .ada-agent-owner form[hidden]{display:none!important}
+ .ada-agent-owner .ag-empty-q{grid-column:1/-1;text-align:center;padding:14px}
  `;
  const top=node('div','ag-header'),heading=node('div');
  heading.append(node('h2','','Ejen'),node('p','ag-sub','Urus ejen, komisen, promosi dan kelulusan.'));
  const controls=node('div','ag-controls');
- const refresh=node('button','ag-icon','↻');refresh.title='Muat semula';refresh.setAttribute('aria-label','Muat semula');refresh.type='button';
+ const refresh=node('button','ag-icon ag-c-gold','↻');refresh.title='Muat semula';refresh.setAttribute('aria-label','Muat semula');refresh.type='button';
  controls.append(refresh);top.append(heading,controls);
  const msg=node('div','ag-status','Memuatkan rekod ejen...');msg.setAttribute('role','status');
  const counts=node('div','ag-counts'),tabsBar=node('nav','ag-tabs'),content=node('div','ag-sections');
  tabsBar.setAttribute('role','tablist');
  let activeTab=(()=>{try{return localStorage.getItem('ada-agent-tab')||'ejen'}catch{return 'ejen'}})();
- const TABS=[['ejen','Ejen'],['komisen','Komisen'],['kelulusan','Kelulusan'],['lead','Lead'],['promosi','Promosi']];
+ const TABS=[['ejen','Ejen','👥'],['komisen','Komisen','💰'],['kelulusan','Kelulusan','✅'],['lead','Lead','📞'],['promosi','Promosi','📣']];
  function tabify(badges={}){
   tabsBar.replaceChildren();
-  for(const [id,label] of TABS){
-   const b=node('button','ag-tab'+(id===activeTab?' on':''),label);b.type='button';b.setAttribute('role','tab');b.setAttribute('aria-selected',String(id===activeTab));
+  for(const [id,label,ic] of TABS){
+   const b=node('button','ag-tab'+(id===activeTab?' on':''));b.type='button';b.dataset.t=id;b.append(node('span','ag-tab-ic',ic),document.createTextNode(label));b.setAttribute('role','tab');b.setAttribute('aria-selected',String(id===activeTab));
    if(badges[id])b.append(node('span','ag-badge',badges[id]));
    b.onclick=()=>{activeTab=id;try{localStorage.setItem('ada-agent-tab',id)}catch{};tabify(badges)};
    tabsBar.append(b);
@@ -241,7 +293,7 @@ export function mountAgentAdmin(host,{client,profile}={}){
   }
   return result.payload;
  }
- function stat(title,value){const a=node('div','ag-stat');a.append(node('small','',title),node('b','',value));return a}
+ function stat(title,value,ic,color){const a=node('div','ag-stat');a.style.setProperty('--sc',color);const t=node('div');t.append(node('small','',title),node('b','',value));a.append(node('div','ag-stat-ic',ic),t);return a}
  async function ownerRead(a,type){
   try{await request('owner_lead_mark_read',{lead_id:a.id,lead_type:type});status('Status dibaca disimpan.');await load()}
   catch(e){status(e.message,true)}
@@ -254,7 +306,7 @@ export function mountAgentAdmin(host,{client,profile}={}){
    if(disposed)return;
    const applications=apps.applications||[],agentLeads=contacts.leads||[],directLeads=direct.inquiries||[],commissions=fin.commissions||[],payouts=fin.payouts||[];
    const vehicles=vehicleData.vehicles||[],carMap=new Map(vehicles.map(v=>[v.id,v]));
-   counts.replaceChildren(stat('Ejen aktif',agents.filter(x=>x.agent_status==='active').length),stat('Lead',agentLeads.length+directLeads.length),stat('Komisen belum bayar',commissions.filter(c=>c.status!=='paid').length));
+   counts.replaceChildren(stat('Ejen aktif',agents.filter(x=>x.agent_status==='active').length,'👥','#d6a93c'),stat('Lead',agentLeads.length+directLeads.length,'📞','#e8892b'),stat('Komisen belum bayar',commissions.filter(c=>c.status!=='paid').length,'💰','#1f9d63'));
    content.replaceChildren();
    const {data:lbRaw}=await client.rpc('owner_agent_leaderboard_v1');const lb=Array.isArray(lbRaw)?lbRaw:[];
    const plb=section(content,'🏆 Prestasi Bulan Ini','Kedudukan ikut jualan, kemudian lead, kemudian klik. Kadar = lead ÷ klik.','ejen');
@@ -270,51 +322,70 @@ export function mountAgentAdmin(host,{client,profile}={}){
     if(!x.clicks&&!x.leads&&!x.sales)r.classList.add('idle');
     tbl.append(r)}
    plb.append(tbl);
-   const idle=lb.filter(x=>!x.clicks&&!x.leads&&!x.sales).length;if(idle)plb.append(node('small','ag-muted-note',idle+' ejen belum aktif bulan ini (tiada klik).'));
+   const lbRows=[...tbl.querySelectorAll('.ag-lb-row:not(.ag-lb-head)')],LB_TOP=5;
+   const idle=lb.filter(x=>!x.clicks&&!x.leads&&!x.sales).length;
+   if(lbRows.length>LB_TOP){
+    let open=false;const more=node('button','ag-more ag-c-gray');more.type='button';
+    const paint=()=>{lbRows.forEach((r,i)=>r.hidden=!open&&i>=LB_TOP);more.textContent=open?'▲ Tutup senarai':'▼ Tunjuk semua '+lbRows.length+' ejen'+(idle?' ('+idle+' belum aktif bulan ini)':'')};
+    more.onclick=()=>{open=!open;paint()};paint();plb.append(more);
+   }else if(idle)plb.append(node('small','ag-muted-note',idle+' ejen belum aktif bulan ini (tiada klik).'));
    const pl=section(content,'Senarai Ejen ('+agents.length+')','Semua ejen berdaftar dan prestasi mereka. Tekan nama untuk butiran.','ejen');
    if(agentRes?.error)pl.append(node('p','','Gagal memuat senarai ejen: '+agentRes.error.message));
    else if(!agents.length)pl.append(node('p','','Belum ada ejen berdaftar.'));
    const label={active:'Aktif',suspended:'Tidak aktif',terminated:'Ditamatkan'};
+   const AV=['#d6a93c','#2f7de1','#1f9d63','#8b5cf6','#e8892b','#14a3a3','#db4f9a','#d64545'];
+   const tools=node('div','ag-toolbar'),q=node('input');q.type='search';q.placeholder='🔍 Cari nama, kod atau telefon…';tools.append(q);
+   let fSt='all';const nAct=agents.filter(x=>x.agent_status==='active').length;
+   const chips=[['all','Semua ('+agents.length+')','#d6a93c'],['active','Aktif ('+nAct+')','#1f9d63'],['off','Tidak aktif ('+(agents.length-nAct)+')','#e8892b']].map(([k,lab,c])=>{const b=node('button','ag-chip'+(k===fSt?' on':''),lab);b.type='button';b.style.setProperty('--cc',c);b.dataset.k=k;tools.append(b);return b});
+   const grid=node('div','ag-agent-grid'),noHit=node('p','ag-empty-q','Tiada ejen sepadan.');noHit.hidden=true;
+   if(agents.length)pl.append(tools,grid);
+   const applyF=()=>{const s=q.value.trim().toLowerCase();let shown=0;for(const d of grid.querySelectorAll('.ag-mini')){const ok=(!s||d.dataset.q.includes(s))&&(fSt==='all'||(fSt==='active')===(d.dataset.st==='active'));d.hidden=!ok;if(ok)shown++}noHit.hidden=shown>0;chips.forEach(c=>c.classList.toggle('on',c.dataset.k===fSt))};
+   q.oninput=applyF;chips.forEach(c=>c.onclick=()=>{fSt=c.dataset.k;applyF()});
    for(const g of agents){
     const d=node('details','ag-mini'),sm=node('summary','ag-mini-head'),t=node('div','ag-mini-title');
+    d.dataset.q=[g.name,g.email,g.agent_code,g.phone,g.city,g.state].filter(Boolean).join(' ').toLowerCase();d.dataset.st=g.agent_status==='active'?'active':'off';
     t.append(node('strong','',g.name||g.email||'Ejen'),node('small','',[g.agent_code||'Tiada kod',g.phone,[g.city,g.state].filter(Boolean).join(', ')].filter(Boolean).join(' · ')));
     const act=g.agent_status==='active',st=act?'Aktif':g.application_status==='pending'?'Menunggu kelulusan':(label[g.agent_status]||g.application_status||g.agent_status);
-    sm.append(t,node('span',act?'ag-read':'ag-unread',st));
+    const nm=String(g.name||g.email||'E').trim(),av=node('div','ag-av',(nm[0]||'E').toUpperCase());av.style.background=AV[[...nm].reduce((h,c)=>h+c.charCodeAt(0),0)%AV.length];
+    const who=node('div','ag-who');who.append(av,t);
+    sm.append(who,node('span',act?'ag-read':'ag-unread',st));
     const b=node('div','ag-mini-body');
-    b.append(node('p','','Klik pautan: '+g.clicks+' (30 hari: '+g.clicks_30d+') · Lead: '+g.leads+' · Komisen: '+g.commissions+' ('+amount(g.commission_total)+') · Dibayar: '+amount(g.paid_total)));
+    const kp=node('div','ag-kpis');for(const [k,v] of [['Klik (30 hari)',g.clicks+' ('+g.clicks_30d+')'],['Lead',g.leads],['Komisen',g.commissions+' · '+amount(g.commission_total)],['Dibayar',amount(g.paid_total)]]){const c=node('div','ag-kpi');c.append(node('small','',k),node('b','',v));kp.append(c)}
+    b.append(kp);
     b.append(node('p','','E-mel: '+(g.email||'—')+' · Mohon: '+date(g.applied_at)+' · Aktif sejak: '+date(g.activated_at)));
     contactControls(b,{customer_phone:g.phone,customer_name:g.name},null);
-    const wa=b.querySelector('.ag-whatsapp');if(wa){wa.textContent='WhatsApp Ejen';wa.href=wa.href.split('?')[0];}
+    const wa=b.querySelector('a.ag-c-green');if(wa){wa.textContent='💬 WhatsApp Ejen';wa.href=wa.href.split('?')[0];}
     if(g.user_id){
      const ctl=node('div','ag-controls ag-agent-actions');
-     const ed=node('button','','✏️ Edit');ed.type='button';
+     const ed=node('button','ag-c-blue','✏️ Edit');ed.type='button';
      const form=node('form','ag-config ag-agent-edit');form.hidden=true;
      const fld=(lab,val,type='text')=>{const l=node('label','',lab),i=node('input');i.type=type;i.value=val||'';l.append(i);form.append(l);return i};
      const fN=fld('Nama',g.name),fP=fld('Telefon',g.phone,'tel'),fS=fld('Negeri',g.state),fC=fld('Bandar',g.city);
-     const sv=node('button','ag-primary','Simpan');sv.type='submit';const cn=node('button','','Batal');cn.type='button';form.append(sv,cn);
+     const sv=node('button','ag-c-green','💾 Simpan');sv.type='submit';const cn=node('button','ag-c-gray','Batal');cn.type='button';form.append(sv,cn);
      ed.onclick=()=>{form.hidden=!form.hidden};cn.onclick=()=>{form.hidden=true};
      form.onsubmit=async e=>{e.preventDefault();sv.disabled=true;try{const {error}=await client.rpc('owner_agent_update_v1',{p_user_id:g.user_id,p_name:fN.value,p_phone:fP.value,p_state:fS.value,p_city:fC.value});if(error)throw error;status('Butiran ejen dikemas kini.');await load()}catch(err){status(err.message.includes('phone_check')?'Nombor telefon tidak sah (9–24 aksara).':err.message,true)}finally{sv.disabled=false}};
      ctl.append(ed);
-     if(g.agent_status==='active'){const href=congratsLink(g.name,g.phone,g.agent_code);if(href){const tw=node('a','ag-link ag-whatsapp','🎉 WhatsApp Tahniah');tw.href=href;tw.target='_blank';tw.rel='noopener noreferrer';ctl.append(tw);}}
+     if(g.agent_status==='active'){const href=congratsLink(g.name,g.phone,g.agent_code);if(href){const tw=node('a','ag-link ag-c-green','🎉 WhatsApp Tahniah');tw.href=href;tw.target='_blank';tw.rel='noopener noreferrer';ctl.append(tw);}}
      if(g.agent_profile_id){
       const isAct=g.agent_status==='active';
-      const tg=node('button',isAct?'':'ag-primary',isAct?'⏸ Nyahaktif':'▶ Aktifkan');tg.type='button';
+      const tg=node('button',isAct?'ag-c-orange':'ag-c-green',isAct?'⏸ Nyahaktif':'▶ Aktifkan');tg.type='button';
       tg.onclick=async()=>{if(!confirm((isAct?'Nyahaktifkan':'Aktifkan semula')+' ejen '+(g.name||'')+'?'+(isAct?'\nEjen tidak boleh guna portal dan link promosi sehingga diaktifkan semula.':'')))return;tg.disabled=true;
        try{const {error}=await client.rpc('owner_agent_set_status_v1',{p_user_id:g.user_id,p_status:isAct?'suspended':'active'});if(error)throw error;status('Status ejen dikemas kini.');await load()}catch(err){status(err.message,true);tg.disabled=false}};
       ctl.append(tg);
      }
-     const del=node('button','ag-danger','🗑 Padam');del.type='button';
+     const del=node('button','ag-c-red','🗑 Padam');del.type='button';
      del.onclick=async()=>{if(!confirm('Padam ejen '+(g.name||'')+'?\nProfil ejen, permohonan dan link promosi akan dibuang. Akaun log masuk (dan akaun staff, jika ada) tidak terjejas.'))return;del.disabled=true;
       try{const {error}=await client.rpc('owner_agent_delete_v1',{p_user_id:g.user_id});if(error)throw error;status('Ejen dipadam.');await load()}catch(err){status(err.message,true);del.disabled=false}};
      ctl.append(del);b.append(ctl,form);
     }
-    d.append(sm,b);pl.append(d);
+    d.append(sm,b);grid.append(d);
    }
+   grid.append(noHit);
    const pa=section(content,'Permohonan Ejen','Owner semak maklumat sebelum meluluskan permohonan.','ejen');
    if(!applications.length)pa.remove();
    for(const a of applications){
     const n=line(pa,a.full_name||'Pemohon',[a.email,a.phone,a.state,date(a.applied_at)].filter(Boolean).join(' · '));
-    const buttons=node('div','ag-controls'),yes=node('button','ag-primary','Luluskan'),no=node('button','','Tolak');
+    const buttons=node('div','ag-controls'),yes=node('button','ag-c-green','✅ Luluskan'),no=node('button','ag-c-red','✖ Tolak');
     yes.onclick=async()=>{if(!confirm('Luluskan permohonan '+(a.full_name||'ejen')+' selepas semakan?'))return;yes.disabled=true;no.disabled=true;try{await request('review',{application_id:a.id,decision:'approve'});justApproved={email:String(a.email||'').toLowerCase(),name:a.full_name,phone:a.phone};status('Permohonan diluluskan. Tekan butang WhatsApp untuk hantar ucapan tahniah.');}catch(e){status(e.message,true)}finally{yes.disabled=false;no.disabled=false;await load()}};
     no.onclick=async()=>{const reason=prompt('Sebab penolakan (wajib):');if(!reason?.trim())return;yes.disabled=true;no.disabled=true;try{await request('review',{application_id:a.id,decision:'reject',reason:reason.trim()});status('Permohonan ditolak.');}catch(e){status(e.message,true)}finally{yes.disabled=false;no.disabled=false;await load()}};
     buttons.append(yes,no);n.append(buttons);
@@ -328,14 +399,14 @@ export function mountAgentAdmin(host,{client,profile}={}){
     const tx=node('div','ag-congrats-tx');tx.append(node('strong','',nm+' kini Ejen Rasmi AbeDin Auto'),node('small','',href?'Hantar ucapan tahniah terus ke WhatsApp ejen'+(g.agent_code?' (kod '+g.agent_code+')':'')+'.':'Nombor telefon ejen tidak sah — kemas kini telefon dahulu untuk hantar WhatsApp.'));
     box.append(tx);
     const bt=node('div','ag-congrats-bt');
-    if(href){const wa=node('a','ag-link ag-whatsapp ag-congrats-wa','💬 Hantar Tahniah WhatsApp');wa.href=href;wa.target='_blank';wa.rel='noopener noreferrer';wa.onclick=()=>{setTimeout(()=>{justApproved=null;box.remove()},400)};bt.append(wa);}
-    const x=node('button','','Tutup');x.type='button';x.onclick=()=>{justApproved=null;box.remove()};bt.append(x);
+    if(href){const wa=node('a','ag-link ag-c-green ag-congrats-wa','💬 Hantar Tahniah WhatsApp');wa.href=href;wa.target='_blank';wa.rel='noopener noreferrer';wa.onclick=()=>{setTimeout(()=>{justApproved=null;box.remove()},400)};bt.append(wa);}
+    const x=node('button','ag-c-gray','Tutup');x.type='button';x.onclick=()=>{justApproved=null;box.remove()};bt.append(x);
     box.append(bt);content.prepend(box);
    }
    const pp=section(content,'Ayat Promosi Ejen (5 Pilihan)','Jana dengan AI atau tulis sendiri, kemudian terbitkan. Ejen juga boleh jana ayat AI sendiri untuk setiap kereta. Guna {model}, {tahun}, {harga}.','promosi');
-   const aiBtn=node('button','','📋 Salin Prompt AI (5 Ayat)');aiBtn.type='button';
+   const aiBtn=node('button','ag-c-teal','📋 Salin Prompt AI (5 Ayat)');aiBtn.type='button';
    aiBtn.onclick=async()=>{const t='Jana tepat 5 ayat promosi kereta terpakai AbeDin Auto dalam Bahasa Melayu. Setiap ayat maksimum 500 aksara dan wajib mengandungi {model}, {tahun}, {harga}. Gaya berlainan, menarik dan profesional. Jangan mereka-reka diskaun, kelulusan pinjaman, jaminan, keadaan kereta atau stok. Nomborkan 1 hingga 5.';try{await navigator.clipboard.writeText(t);status('Prompt AI disalin. Tampal dalam ChatGPT/Claude.')}catch{prompt('Salin prompt ini:',t)}};
-   const genBtn=node('button','ag-primary','✨ Jana 5 ayat baru dengan AI');genBtn.type='button';
+   const genBtn=node('button','ag-c-purple','✨ Jana 5 ayat baru dengan AI');genBtn.type='button';
    const promoAreas=[];
    genBtn.onclick=async()=>{genBtn.disabled=true;const old=genBtn.textContent;genBtn.textContent='AI sedang menulis…';
     try{const {data:ss}=await client.auth.getSession();const r=await fetch('https://buzpdyvvoiqgbeventwm.supabase.co/functions/v1/agent-promo-ai',{method:'POST',headers:{'content-type':'application/json',apikey:'sb_publishable_zuuNipsMpalN_38SJwXpFA_MRzQ6eZ0',authorization:'Bearer '+(ss?.session?.access_token||'')},body:JSON.stringify({mode:'owner5'})});
@@ -355,7 +426,7 @@ export function mountAgentAdmin(host,{client,profile}={}){
     const cnt=node('small','ag-promo-count',(area.value.length)+'/500');area.oninput=()=>{cnt.textContent=area.value.length+'/500'};
     const btns=node('div','ag-controls');
     for(const publish of [false,true]){
-     const b=node('button',publish?'ag-primary':'',publish?'Terbitkan kepada ejen':'Simpan draf');b.type='button';
+     const b=node('button',publish?'ag-c-green':'ag-c-blue',publish?'🚀 Terbitkan kepada ejen':'💾 Simpan draf');b.type='button';
      b.onclick=async()=>{if(publish&&!/\{model\}|\{tahun\}|\{harga\}/.test(area.value)&&!confirm('Ayat ini tiada {model}/{tahun}/{harga}. Terbitkan juga?'))return;b.disabled=true;
       try{const {error}=await client.rpc('save_agent_promo_v20',{p_slot:entry.slot,p_draft:area.value,p_publish:publish});if(error)throw error;status(publish?'Ayat Pilihan '+entry.slot+' diterbitkan kepada ejen.':'Draf disimpan.');await load()}
       catch(e){status(e.message,true);b.disabled=false}};
@@ -378,7 +449,7 @@ export function mountAgentAdmin(host,{client,profile}={}){
    function margin(v,amt){const c=costMap.get(v.id);if(!c||!c.cost)return '';const com=Math.max(Number(amt||0),c.approved);const before=c.sell-c.cost,after=before-com;return ' · Untung anggaran: '+fmt(before)+' → selepas komisen '+fmt(after)+(after<0?' ⚠️ RUGI':'')}
    const live=vehicles.filter(v=>!['sold','deleted','archived'].includes(String(v.status||'').toLowerCase()));
    const bulk=node('div','ag-config'),bLabel=node('label','','Isi semua kereta yang belum ada komisen (RM)'),bAmt=node('input');bAmt.type='number';bAmt.min='0';bAmt.step='50';bAmt.placeholder='cth 300';bLabel.append(bAmt);
-   const bBtn=node('button','ag-primary','Guna untuk semua kosong');bBtn.type='button';bulk.append(bLabel,bBtn);po.append(bulk);
+   const bBtn=node('button','ag-c-orange','⚡ Guna untuk semua kosong');bBtn.type='button';bulk.append(bLabel,bBtn);po.append(bulk);
    const filter=node('input');filter.type='search';filter.placeholder='Cari kereta / ID…';filter.className='ag-com-search';po.append(filter);
    const list=node('div','ag-com-list');po.append(list);
    const rows=[];
@@ -392,7 +463,7 @@ export function mountAgentAdmin(host,{client,profile}={}){
     const a=node('input');a.type='number';a.min='0';a.max='100000';a.step='50';a.inputMode='decimal';a.placeholder='RM';a.value=v.offer?.indicative_amount??'';
     const c=node('select');for(const [val,lab] of [['standard','Standard'],['premium','Premium'],['special','Khas']]){const o=node('option','',lab);o.value=val;c.append(o)}c.value=v.offer?.category||'standard';
     const onL=node('label','ag-com-on'),on=node('input');on.type='checkbox';on.checked=v.offer?v.offer.active!==false:true;onL.append(on,document.createTextNode(' Papar'));
-    const b=node('button','ag-primary','Simpan');b.type='button';
+    const b=node('button','ag-c-green','💾 Simpan');b.type='button';
     const st=node('small','ag-com-st',(v.offer?.indicative_amount>0?'✓ RM '+Number(v.offer.indicative_amount).toLocaleString('ms-MY'):'Belum ditetapkan')+margin(v,v.offer?.indicative_amount));
     a.addEventListener('input',()=>{st.textContent=(a.value?'RM '+Number(a.value).toLocaleString('ms-MY')+' (belum disimpan)':'Belum ditetapkan')+margin(v,a.value);st.classList.toggle('loss',/RUGI/.test(st.textContent))});if(/RUGI/.test(st.textContent))st.classList.add('loss');
     b.onclick=async()=>{if(a.value===''||Number(a.value)<0||Number(a.value)>100000){a.focus();return}b.disabled=true;
@@ -428,7 +499,7 @@ export function mountAgentAdmin(host,{client,profile}={}){
     if(!mine.length){n.append(node('small','ag-muted-note','Belum ada jualan untuk kereta ini. Bila jualan direkod, butang padanan akan muncul di sini.'));continue}
     const box=node('div','ag-controls');
     for(const c of mine){
-     const b=node('button',c.phone_match?'ag-primary':'','Padan: '+(c.customer_name||'Pelanggan')+' · '+(c.sale_status==='sold'?'Sold':'Reserved')+' · '+dShort(c.sale_date)+(c.phone_match?' ✓ telefon sepadan':' ⚠ telefon berbeza'));b.type='button';
+     const b=node('button',c.phone_match?'ag-c-blue':'ag-c-gray','🔗 Padan: '+(c.customer_name||'Pelanggan')+' · '+(c.sale_status==='sold'?'Sold':'Reserved')+' · '+dShort(c.sale_date)+(c.phone_match?' ✓ telefon sepadan':' ⚠ telefon berbeza'));b.type='button';
      b.onclick=()=>{if(!c.phone_match){alert('Telefon pelanggan jualan tidak sama dengan telefon lead. Sistem hanya benarkan padanan jika telefon sepadan — kemas kini telefon pelanggan dalam jualan dahulu jika ia orang yang sama.');return}
       if(!confirm('Padankan lead '+(l.customer_name||'')+' ('+agentName(l.agent_id)+') dengan jualan '+(c.customer_name||'')+' untuk '+c.car+'?'))return;
       act({action:'link_lead',lead_id:l.id,sale_id:c.sale_id,reason:'Disahkan owner: kereta & telefon pelanggan sepadan dengan lead ejen.'},'Lead dipadankan dengan jualan.',b)};
@@ -440,7 +511,7 @@ export function mountAgentAdmin(host,{client,profile}={}){
     const offer=Number(carMap.get(l.vehicle_id)?.offer?.indicative_amount||0);
     const car=carMap.get(l.vehicle_id);const carLbl=car?[car.make,car.model,car.model_year].filter(Boolean).join(' '):'';
     const n=line(pk,'✅ Komisen menunggu: '+(l.customer_name||'')+(carLbl?' · '+carLbl:''),agentName(l.agent_id)+(offer?' · Komisen ditetapkan RM '+offer.toLocaleString('ms-MY'):' · Komisen kereta belum ditetapkan'));
-    const b=node('button','ag-primary',offer?'Luluskan RM '+offer.toLocaleString('ms-MY'):'Luluskan komisen');b.type='button';
+    const b=node('button','ag-c-green',offer?'✅ Luluskan RM '+offer.toLocaleString('ms-MY'):'Luluskan komisen');b.type='button';
     b.onclick=()=>{const amount=prompt('Amaun komisen (RM). Diisi dari tetapan kereta — ubah jika perlu:',offer?offer.toFixed(2):'');if(!amount)return;
      if(!/^\d+(\.\d{1,2})?$/.test(amount.trim())||Number(amount)<=0)return status('Amaun tidak sah.',true);
      if(!confirm('Sahkan: bayaran jualan sudah diterima penuh dan tiada refund.\nLuluskan komisen RM '+Number(amount).toLocaleString('ms-MY')+' untuk '+agentName(l.agent_id)+'?\nAmaun ini akan ditolak sebagai kos kereta.'))return;
@@ -449,14 +520,14 @@ export function mountAgentAdmin(host,{client,profile}={}){
    }
    for(const c of approved){
     const n=line(pk,'💵 Komisen '+amount(c.agreed_amount)+' diluluskan',agentName(c.agent_id)+' · sedia untuk payout');
-    const b=node('button','ag-primary','Sediakan payout');b.type='button';
+    const b=node('button','ag-c-blue','🧾 Sediakan payout');b.type='button';
     b.onclick=()=>{const reason=prompt('Sebab penyediaan payout:','Komisen diluluskan, sedia untuk bayaran kepada ejen.');if(!reason||reason.trim().length<15)return status('Sebab terlalu pendek (min. 15 aksara).',true);
      act({action:'prepare_payout',commission_id:c.id,reason:reason.trim()},'Payout disediakan.',b)};
     n.append(b);
    }
    for(const p of drafts){
     const n=line(pk,'🧾 Payout '+amount(p.amount)+' (draf)',agentName(p.agent_id));
-    const b=node('button','ag-primary','Luluskan payout');b.type='button';
+    const b=node('button','ag-c-green','✅ Luluskan payout');b.type='button';
     b.onclick=()=>{const reason=prompt('Sebab kelulusan payout:','Owner luluskan payout komisen ejen untuk dibayar.');if(!reason||reason.trim().length<15)return status('Sebab terlalu pendek (min. 15 aksara).',true);
      act({action:'approve_payout',payout_id:p.id,reason:reason.trim()},'Payout diluluskan. Menunggu HR sahkan bayaran bank.',b)};
     n.append(b);
