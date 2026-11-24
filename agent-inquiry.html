@@ -54,7 +54,12 @@ a{color:#165ca7}footer{font-size:12px;color:#728398;text-align:center;margin-top
 (()=>{
 const $=id=>document.getElementById(id);
 const params=new URLSearchParams(location.search);
-const ref=params.get('ref')||'',car=params.get('car')||'';
+const car=params.get('car')||'';
+// Kod ejen diingat 30 hari dalam browser pelanggan (last-click): link ejen baru menggantikan yang lama.
+const REF_KEY='ada_agent_ref',refOk=v=>(/^ADA-AG-[0-9]{4,}$/.test(v)&&v.length<=30)||/^[a-f0-9]{32}$/.test(v);
+let ref=params.get('ref')||'',refFromStorage=false;
+if(ref&&refOk(ref)){try{localStorage.setItem(REF_KEY,JSON.stringify({r:ref,t:Date.now()}))}catch(e){}}
+else if(!ref){try{const st=JSON.parse(localStorage.getItem(REF_KEY)||'null');if(st&&refOk(st.r)&&Date.now()-st.t<30*864e5){ref=st.r;refFromStorage=true}else localStorage.removeItem(REF_KEY)}catch(e){}}
 let selectedCar=null;
 const validCar=car.length>=1&&car.length<=80&&/^[a-zA-Z0-9_-]+$/.test(car);
 const validRef=(/^ADA-AG-[0-9]{4,}$/.test(ref)&&ref.length<=30)||/^[a-f0-9]{32}$/.test(ref);
@@ -111,17 +116,19 @@ $('form').addEventListener('submit',async e=>{
  const form=e.currentTarget;
  const f=new FormData(form);
  if(!form.reportValidity())return;
- const refCode=$('agentCode').value.trim();
+ let refCode=$('agentCode').value.trim();
  if(refCode&&!((/^ADA-AG-[0-9]{4,}$/.test(refCode)&&refCode.length<=30)||/^[a-f0-9]{32}$/.test(refCode))){status('Pautan rujukan tidak sah.',true);return;}
  const button=$('submit');button.disabled=true;
  try{
-  const res=await fetch('https://buzpdyvvoiqgbeventwm.supabase.co/functions/v1/agent-public-inquiry',{
+  const send=r=>fetch('https://buzpdyvvoiqgbeventwm.supabase.co/functions/v1/agent-public-inquiry',{
    method:'POST',headers:{'content-type':'application/json'},
-   body:JSON.stringify({ref:refCode,car,customer_name:String(f.get('customer_name')||'').trim(),
+   body:JSON.stringify({ref:r,car,customer_name:String(f.get('customer_name')||'').trim(),
     customer_phone:String(f.get('customer_phone')||'').trim(),consent:f.get('consent')==='on',
     company_website:String(f.get('company_website')||'')})
-  });
-  const data=await res.json();
+  }).then(async res=>({res,data:await res.json().catch(()=>({}))}));
+  let {res,data}=await send(refCode);
+  // Kod ejen tersimpan dah tak sah (cth. ejen dinyahaktif): buang dan hantar sebagai lead terus.
+  if(!res.ok&&refFromStorage&&refCode){try{localStorage.removeItem(REF_KEY)}catch(e){}refCode='';({res,data}=await send(''));}
   if(!res.ok)throw new Error(data.error||'Pertanyaan gagal dihantar.');
   form.hidden=true;
   status('Pertanyaan berjaya disimpan. Anda akan dibawa ke WhatsApp. Tekan Send untuk menghantar mesej kepada pasukan jualan.');
