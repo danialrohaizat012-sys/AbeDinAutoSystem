@@ -20,6 +20,16 @@ function contactControls(row,lead,carLabel){
   'Salam '+String(lead.customer_name||'')+', saya dari AbeDin Auto. Terima kasih kerana berminat dengan '+String(carLabel||'kereta kami')+'. Boleh kami bantu?');
  buttons.append(wa,call);row.append(buttons);
 }
+function congratsLink(name,phone,code){
+ const p=phoneLink(phone);if(!p)return null;
+ const msg=['Assalamualaikum & Tahniah '+(String(name||'').trim()||'')+'! 🎉','',
+  'Permohonan anda telah DILULUSKAN. Anda kini *Ejen Rasmi AbeDin Auto*.',
+  code?'Kod ejen anda: *'+code+'*':'',
+  '','Log masuk Portal Ejen untuk dapatkan link promosi peribadi, katalog kereta dan semak komisen anda:',
+  'https://abedinauto.my/agent.html','',
+  'Selamat datang ke pasukan AbeDin Auto. Semoga murah rezeki! 🚗🤝'].filter((x,i,a)=>x!==''||a[i-1]!=='').join('\n');
+ return 'https://wa.me/'+p+'?text='+encodeURIComponent(msg);
+}
 function leadCarLabel(lead){
  const car=lead.car;
  return car?[car.make,car.model,car.model_year].filter(Boolean).join(' ')||car.vehicle_id||'Kereta'
@@ -45,7 +55,7 @@ function section(parent,title,desc,tab){const a=node('section','ag-card');if(tab
 export function mountAgentAdmin(host,{client,profile}={}){
  host.replaceChildren();
  if(profile?.role!=='owner'||profile?.enabled!==true){host.append(node('p','muted','Hanya owner aktif boleh mengurus ejen.'));return}
- let loading=false,disposed=false;
+ let loading=false,disposed=false,justApproved=null;
  host.className='ada-agent-owner';
  const style=node('style');style.textContent='.ada-agent-owner .ag-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:15px}.ada-agent-owner h2{margin:0;font-size:24px}.ada-agent-owner h3{margin:0 0 7px;font-size:17px}.ada-agent-owner p{margin:5px 0 12px;color:#66788b;font-size:13px;line-height:1.5}.ada-agent-owner .ag-counts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:14px 0}.ada-agent-owner .ag-stat,.ada-agent-owner .ag-card{padding:16px;background:var(--card-bg,#fff);border:1px solid #d9e3ec;border-radius:14px}.ada-agent-owner .ag-stat b{display:block;font-size:25px}.ada-agent-owner .ag-stat small{color:#597188;font-size:12px}.ada-agent-owner .ag-sections{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.ada-agent-owner .ag-line{padding:12px 0;border-bottom:1px solid #e5eaf0;overflow-wrap:anywhere}.ada-agent-owner .ag-line:last-child{border:0}.ada-agent-owner .ag-line strong{display:block;font-size:14px}.ada-agent-owner .ag-line small{display:block;color:#687d90;font-size:12px;margin-top:4px}.ada-agent-owner .ag-controls{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.ada-agent-owner button,.ada-agent-owner .ag-link{padding:10px 13px;border-radius:9px;border:0;background:#e8eff7;color:#194e81;font:inherit;font-size:13px;font-weight:750;text-decoration:none;cursor:pointer}.ada-agent-owner .ag-primary{background:#1762a8!important;color:#fff!important}.ada-agent-owner .ag-whatsapp{background:#116d4a!important;color:white!important}.ada-agent-owner .ag-mini{border:1px solid #dce4ed;border-radius:10px;margin:7px 0;background:#fff}.ada-agent-owner .ag-mini-head{list-style:none;cursor:pointer;padding:12px;display:flex;justify-content:space-between;align-items:center;gap:8px}.ada-agent-owner .ag-mini-head::-webkit-details-marker{display:none}.ada-agent-owner .ag-mini-title{display:grid;gap:4px;min-width:0}.ada-agent-owner .ag-mini-title small{font-size:12px;color:#63778a}.ada-agent-owner .ag-mini-body{padding:12px;border-top:1px solid #e3e9ef}.ada-agent-owner .ag-read,.ada-agent-owner .ag-unread{white-space:nowrap;padding:5px 8px;border-radius:20px;font-size:11px}.ada-agent-owner .ag-read{background:#dcf0e3;color:#16603c}.ada-agent-owner .ag-unread{background:#fff0d6;color:#855b1b}.ada-agent-owner .ag-config{display:grid;grid-template-columns:1.5fr 1fr 1fr auto;gap:8px;align-items:end}.ada-agent-owner .ag-config label{display:grid;gap:5px;font-size:12px}.ada-agent-owner .ag-config select,.ada-agent-owner .ag-config input{border:1px solid #cdd9e4;border-radius:9px;padding:10px;max-width:100%;min-width:0}.ada-agent-owner .ag-config input[type=checkbox]{width:auto}@media(max-width:650px){.ada-agent-owner .ag-config{grid-template-columns:1fr 1fr}.ada-agent-owner .ag-config label:first-child{grid-column:1/-1}}.ada-agent-owner .ag-status{border-radius:9px;background:#eaf3fc;color:#1c527d;padding:11px;font-size:13px}.ada-agent-owner .ag-status.bad{background:#ffefe9;color:#8a422b}@media(max-width:850px){.ada-agent-owner .ag-sections{grid-template-columns:1fr}.ada-agent-owner .ag-counts{grid-template-columns:repeat(2,minmax(0,1fr))}}';
  // Match the parent system theme: dark by default, light only with html.ada-light.
@@ -106,6 +116,10 @@ export function mountAgentAdmin(host,{client,profile}={}){
    -webkit-text-fill-color:var(--ag-accent-ink)!important;border:1px solid transparent!important
  }
  .ada-agent-owner .ag-whatsapp{background:#146848!important;color:#fff!important;-webkit-text-fill-color:#fff!important}
+ .ada-agent-owner .ag-congrats{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:16px 18px;margin:0 0 16px;border-radius:16px;background:linear-gradient(135deg,#e9fbf1,#fff7e0);border:1px solid #b9e8cc;box-shadow:0 6px 18px rgba(20,104,72,.12)}
+ .ada-agent-owner .ag-congrats-ic{font-size:34px;line-height:1}
+ .ada-agent-owner .ag-congrats-tx{flex:1 1 220px;display:flex;flex-direction:column;gap:3px}.ada-agent-owner .ag-congrats-tx strong{font-size:16px;color:#0f5132}.ada-agent-owner .ag-congrats-tx small{color:#3d5a4a}
+ .ada-agent-owner .ag-congrats-bt{display:flex;gap:8px;flex-wrap:wrap}.ada-agent-owner .ag-congrats-wa{font-weight:700;padding:11px 16px!important;border-radius:12px!important}
  .ada-agent-owner .ag-status{
    background:var(--ag-status-bg)!important;color:var(--ag-status-ink)!important;
    border:1px solid var(--ag-border)!important
@@ -281,6 +295,7 @@ export function mountAgentAdmin(host,{client,profile}={}){
      ed.onclick=()=>{form.hidden=!form.hidden};cn.onclick=()=>{form.hidden=true};
      form.onsubmit=async e=>{e.preventDefault();sv.disabled=true;try{const {error}=await client.rpc('owner_agent_update_v1',{p_user_id:g.user_id,p_name:fN.value,p_phone:fP.value,p_state:fS.value,p_city:fC.value});if(error)throw error;status('Butiran ejen dikemas kini.');await load()}catch(err){status(err.message.includes('phone_check')?'Nombor telefon tidak sah (9–24 aksara).':err.message,true)}finally{sv.disabled=false}};
      ctl.append(ed);
+     if(g.agent_status==='active'){const href=congratsLink(g.name,g.phone,g.agent_code);if(href){const tw=node('a','ag-link ag-whatsapp','🎉 WhatsApp Tahniah');tw.href=href;tw.target='_blank';tw.rel='noopener noreferrer';ctl.append(tw);}}
      if(g.agent_profile_id){
       const isAct=g.agent_status==='active';
       const tg=node('button',isAct?'':'ag-primary',isAct?'⏸ Nyahaktif':'▶ Aktifkan');tg.type='button';
@@ -300,11 +315,23 @@ export function mountAgentAdmin(host,{client,profile}={}){
    for(const a of applications){
     const n=line(pa,a.full_name||'Pemohon',[a.email,a.phone,a.state,date(a.applied_at)].filter(Boolean).join(' · '));
     const buttons=node('div','ag-controls'),yes=node('button','ag-primary','Luluskan'),no=node('button','','Tolak');
-    yes.onclick=async()=>{if(!confirm('Luluskan permohonan '+(a.full_name||'ejen')+' selepas semakan?'))return;yes.disabled=true;no.disabled=true;try{await request('review',{application_id:a.id,decision:'approve'});status('Permohonan diluluskan.');}catch(e){status(e.message,true)}finally{yes.disabled=false;no.disabled=false;await load()}};
+    yes.onclick=async()=>{if(!confirm('Luluskan permohonan '+(a.full_name||'ejen')+' selepas semakan?'))return;yes.disabled=true;no.disabled=true;try{await request('review',{application_id:a.id,decision:'approve'});justApproved={email:String(a.email||'').toLowerCase(),name:a.full_name,phone:a.phone};status('Permohonan diluluskan. Tekan butang WhatsApp untuk hantar ucapan tahniah.');}catch(e){status(e.message,true)}finally{yes.disabled=false;no.disabled=false;await load()}};
     no.onclick=async()=>{const reason=prompt('Sebab penolakan (wajib):');if(!reason?.trim())return;yes.disabled=true;no.disabled=true;try{await request('review',{application_id:a.id,decision:'reject',reason:reason.trim()});status('Permohonan ditolak.');}catch(e){status(e.message,true)}finally{yes.disabled=false;no.disabled=false;await load()}};
     buttons.append(yes,no);n.append(buttons);
    }
    if(applications.length)content.prepend(pa);
+   if(justApproved){
+    const ja=justApproved,g=agents.find(x=>String(x.email||'').toLowerCase()===ja.email)||{};
+    const nm=g.name||ja.name||'Ejen',href=congratsLink(nm,g.phone||ja.phone,g.agent_code);
+    const box=node('div','ag-congrats');
+    box.append(node('div','ag-congrats-ic','🎉'));
+    const tx=node('div','ag-congrats-tx');tx.append(node('strong','',nm+' kini Ejen Rasmi AbeDin Auto'),node('small','',href?'Hantar ucapan tahniah terus ke WhatsApp ejen'+(g.agent_code?' (kod '+g.agent_code+')':'')+'.':'Nombor telefon ejen tidak sah — kemas kini telefon dahulu untuk hantar WhatsApp.'));
+    box.append(tx);
+    const bt=node('div','ag-congrats-bt');
+    if(href){const wa=node('a','ag-link ag-whatsapp ag-congrats-wa','💬 Hantar Tahniah WhatsApp');wa.href=href;wa.target='_blank';wa.rel='noopener noreferrer';wa.onclick=()=>{setTimeout(()=>{justApproved=null;box.remove()},400)};bt.append(wa);}
+    const x=node('button','','Tutup');x.type='button';x.onclick=()=>{justApproved=null;box.remove()};bt.append(x);
+    box.append(bt);content.prepend(box);
+   }
    const pp=section(content,'Ayat Promosi Ejen (5 Pilihan)','Jana dengan AI atau tulis sendiri, kemudian terbitkan. Ejen juga boleh jana ayat AI sendiri untuk setiap kereta. Guna {model}, {tahun}, {harga}.','promosi');
    const aiBtn=node('button','','📋 Salin Prompt AI (5 Ayat)');aiBtn.type='button';
    aiBtn.onclick=async()=>{const t='Jana tepat 5 ayat promosi kereta terpakai AbeDin Auto dalam Bahasa Melayu. Setiap ayat maksimum 500 aksara dan wajib mengandungi {model}, {tahun}, {harga}. Gaya berlainan, menarik dan profesional. Jangan mereka-reka diskaun, kelulusan pinjaman, jaminan, keadaan kereta atau stok. Nomborkan 1 hingga 5.';try{await navigator.clipboard.writeText(t);status('Prompt AI disalin. Tampal dalam ChatGPT/Claude.')}catch{prompt('Salin prompt ini:',t)}};

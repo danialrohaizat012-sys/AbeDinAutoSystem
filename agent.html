@@ -805,11 +805,20 @@ async function loadOwner(){if(!owner)return;
  b.onclick=async()=>{const reason=decision==='reject'?prompt('Nyatakan sebab penolakan:'):null;
  if(decision==='reject'&&!reason?.trim())return;
  if(decision==='approve'&&!confirm('Sahkan kelulusan permohonan '+a.full_name+'?'))return;
- b.disabled=true;try{await adminRequest({action:'review',application_id:a.id,decision,reason});message('Keputusan berjaya disimpan.');await loadOwner();}
+ b.disabled=true;try{await adminRequest({action:'review',application_id:a.id,decision,reason});message('Keputusan berjaya disimpan.');await loadOwner();if(decision==='approve')showCongrats(a);}
  catch(e){fail(e);}finally{b.disabled=false;}};row.append(b);}d.append(row);
  });await loadOwnerFinance();}catch(e){fail(e);}
 }
 $('refreshOwner').onclick=loadOwner;
+function showCongrats(a){
+ document.getElementById('congratsWa')?.remove();
+ let p=String(a.phone||'').replace(/\D/g,'');if(/^0[1-9]\d{7,9}$/.test(p))p='60'+p.slice(1);else if(!/^60[1-9]\d{7,9}$/.test(p))p='';
+ const box=document.createElement('div');box.id='congratsWa';box.className='notice ok';box.style.cssText='display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between';
+ const t=document.createElement('span');t.textContent='🎉 '+(a.full_name||'Ejen')+' kini Ejen Rasmi AbeDin Auto.'+(p?'':' (Nombor telefon tidak sah untuk WhatsApp)');box.append(t);
+ if(p){const msg='Assalamualaikum & Tahniah '+(a.full_name||'')+'! 🎉\n\nPermohonan anda telah DILULUSKAN. Anda kini *Ejen Rasmi AbeDin Auto*.\n\nLog masuk Portal Ejen untuk dapatkan link promosi peribadi, katalog kereta dan semak komisen anda:\nhttps://abedinauto.my/agent.html\n\nSelamat datang ke pasukan AbeDin Auto. Semoga murah rezeki! 🚗🤝';
+  const l=document.createElement('a');l.href='https://wa.me/'+p+'?text='+encodeURIComponent(msg);l.target='_blank';l.rel='noopener noreferrer';l.textContent='💬 Hantar Tahniah WhatsApp';l.className='primary';l.style.cssText='background:#146848;color:#fff;padding:10px 14px;border-radius:10px;text-decoration:none;font-weight:700';box.append(l);}
+ $('alert').after(box);scrollTo({top:0,behavior:'smooth'});
+}
 $('logout').onclick=async()=>{await supabase.auth.signOut();await sync();};
 $('signinForm').onsubmit=async e=>{e.preventDefault();const b=e.submitter;b.disabled=true;
  try{const d=Object.fromEntries(new FormData(e.target));const {error}=await supabase.auth.signInWithPassword({email:d.email,password:d.password});if(error)throw error;await sync();}
