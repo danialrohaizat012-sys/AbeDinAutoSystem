@@ -118,7 +118,7 @@ nav#tabs button{flex:0 0 auto!important;scroll-snap-align:start;white-space:nowr
 
 <section id="account">
 <div class="grid" id="authPanels" hidden>
-<div class="panel"><h1>Masuk Portal Ejen</h1><p>Gunakan akaun e-mel yang telah disahkan. Akaun ejen tidak diberikan akses kepada modul staf AbeDin Auto.</p>
+<div class="panel"><h1>Masuk Portal Ejen</h1><p>Gunakan akaun e-mel yang telah disahkan. Akaun ejen tidak diberikan akses kepada modul staff AbeDin Auto.</p>
 <form id="signinForm"><label>E-mel<input name="email" type="email" autocomplete="username" required></label>
 <label>Kata laluan<input name="password" type="password" autocomplete="current-password" required></label>
 <button class="primary">Log masuk</button></form><p><a href="#" id="forgotPw">Lupa kata laluan?</a></p></div>
@@ -216,7 +216,7 @@ nav#tabs button{flex:0 0 auto!important;scroll-snap-align:start;white-space:nowr
 <details><summary>2. Pelantikan &amp; status ejen</summary><ol>
 <li>Ejen dilantik selepas owner meluluskan permohonan. Syarikat berhak menolak permohonan tanpa memberi sebab.</li>
 <li>Ejen ialah rakan rujukan bebas, bukan pekerja, rakan kongsi atau wakil sah Syarikat, dan tidak layak menerima gaji, KWSP, PERKESO atau faedah pekerja melalui program ini.</li>
-<li>Staf Syarikat yang juga menjadi ejen tertakluk kepada terma ini untuk aktiviti ejen sahaja. Kontrak pekerjaan mereka tidak berubah.</li>
+<li>Staff Syarikat yang juga menjadi ejen tertakluk kepada terma ini untuk aktiviti ejen sahaja. Kontrak pekerjaan mereka tidak berubah.</li>
 <li>Ejen tidak boleh menandatangani perjanjian atau menerima bayaran, wang tempahan atau deposit bagi pihak Syarikat. Semua bayaran dibuat terus ke akaun rasmi Syarikat.</li></ol></details>
 <details><summary>3. Tanggungjawab &amp; kelakuan ejen</summary><p>Promosi mesti jujur dan guna maklumat dalam Portal Ejen sahaja. Ejen <b>dilarang</b>:</p><ul>
 <li>Menjanjikan diskaun, harga, kelulusan pinjaman, jaminan, waranti atau keadaan kereta yang tidak dinyatakan secara bertulis oleh Syarikat.</li>
@@ -815,7 +815,7 @@ $('signinForm').onsubmit=async e=>{e.preventDefault();const b=e.submitter;b.disa
  catch(err){fail(err);}finally{b.disabled=false;}};
 $('signupForm').onsubmit=async e=>{e.preventDefault();const b=e.submitter;b.disabled=true;
  try{const d=Object.fromEntries(new FormData(e.target));const {data,error}=await supabase.auth.signUp({email:d.email.trim(),password:d.password,options:{emailRedirectTo:location.origin+'/agent.html'}});if(error)throw error;
-  if(data?.user&&Array.isArray(data.user.identities)&&data.user.identities.length===0){message('E-mel ini sudah berdaftar (mungkin akaun staf atau pendaftaran lama). Sila log masuk guna kata laluan sedia ada di sebelah. Lupa kata laluan? Tekan "Lupa kata laluan?".',true);$('signinForm').elements.email.value=d.email.trim();return;}
+  if(data?.user&&Array.isArray(data.user.identities)&&data.user.identities.length===0){message('E-mel ini sudah berdaftar (mungkin akaun staff atau pendaftaran lama). Sila log masuk guna kata laluan sedia ada di sebelah. Lupa kata laluan? Tekan "Lupa kata laluan?".',true);$('signinForm').elements.email.value=d.email.trim();return;}
   message('Semak e-mel (termasuk folder Spam) dan tekan pautan pengesahan. Kemudian log masuk dan hantar permohonan.');}
  catch(err){fail(err);}finally{b.disabled=false;}};
 $('applyForm').onsubmit=async e=>{e.preventDefault();if(!me?.email_confirmed_at)return message('Sahkan e-mel dahulu',true);

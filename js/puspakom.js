@@ -1,7 +1,7 @@
 // Abe Din Auto – modul Puspakom (V72). Status pemeriksaan B5 / B7 untuk setiap kereta dalam inventori.
 // Dimuat oleh app.html melalui import("./js/puspakom.js"). Jadual: puspakom (lihat V72_PUSPAKOM.sql).
 // Semua kereta inventori termasuk Sold dipaparkan; Sold tanpa rekod Puspakom ditanda untuk audit.
-// Owner, Sales Advisor dan staf Operations aktif boleh edit semua rekod; padam hanya Owner. UI dalam Shadow DOM.
+// Owner, Sales Advisor dan staff Operations aktif boleh edit semua rekod; padam hanya Owner. UI dalam Shadow DOM.
 const CSS = `
 :host{display:block;--bg:#0a0a09;--card:#151412;--fg:#f4efe2;--mute:#a69f8c;--line:#2e2a20;--soft:#1e1c17;
   --y:#f5c400;--y-soft:#2e2608;--y-ink:#ffd84d;--red:#3a1513;--red-ink:#ffaaa4;--ok:#3fae6b;
@@ -347,7 +347,7 @@ function render() {
   if (S.err) { app.innerHTML = `<div class="head"><div><div class="kick">Puspakom</div><h2>Pemeriksaan Puspakom</h2></div></div><div class="empty">${esc(S.err)}</div>`; return; }
   const all = cars();
   app.innerHTML = `<div class="head"><div><div class="kick">Puspakom</div><h2>Pemeriksaan Puspakom</h2>
-      <div class="mute">${all.filter(c => c.inv).length} kereta dalam inventori · ${S.isOwner ? "Owner boleh kemas kini" : S.canEdit ? "Staf yang dibenarkan boleh buat booking & kemas kini semua rekod" : "Paparan sahaja — hanya Owner / Operations / Sales Advisor boleh kemas kini"}</div></div>
+      <div class="mute">${all.filter(c => c.inv).length} kereta dalam inventori · ${S.isOwner ? "Owner boleh kemas kini" : S.canEdit ? "Staff yang dibenarkan boleh buat booking & kemas kini semua rekod" : "Paparan sahaja — hanya Owner / Operations / Sales Advisor boleh kemas kini"}</div></div>
       <button class="btn" data-a="reload" type="button">↻ Muat semula</button></div>
     <section class="sold-audit" id="sold-audit" aria-label="Audit Puspakom kereta terjual"></section><div class="panel" id="today"></div><div class="stats" id="stats"></div><div class="locs" id="locs"></div>
     <input class="search" id="q" placeholder="Cari plat, model, ADA, lokasi atau runner…" autocomplete="off" value="${esc(S.q)}">

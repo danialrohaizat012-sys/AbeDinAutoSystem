@@ -249,7 +249,7 @@ var S={trips:[],paid:{},tab:'trip',view:'list',open:null,month:'',year:String(ne
   photoList:[],photosOn:false,pw:null,pwId:null,zoom:null,busy:false,topups:[],confirmTop:null,ownp:{},rname:'',editName:false,page:0};
 var PH=['Depan','Belakang','Kiri','Kanan','Dalam kereta','Odometer','Geran','Kerosakan','Lain-lain'];
 var q=Promise.resolve();
-function staffName(id){var v=S.staff.find(function(p){return p.id===id});return v?(v.full_name||'Staf'):id?'Staf ('+String(id).slice(0,7)+')':'Belum ditetapkan'}
+function staffName(id){var v=S.staff.find(function(p){return p.id===id});return v?(v.full_name||'Staff'):id?'Staff ('+String(id).slice(0,7)+')':'Belum ditetapkan'}
 function pendingUpah(id){return S.requests.some(function(r){return r.trip_id===id&&r.status==='pending'})}
 function requestForTrip(id){return S.requests.filter(r=>r.trip_id===id).sort((a,b)=>(b.created_at||'').localeCompare(a.created_at||''))}
 function upahStatus(r){return r.status==='pending'?'Menunggu Owner':r.status==='approved'?'Diluluskan':'Ditolak'}
@@ -417,7 +417,7 @@ function newView(){
   '<div><label for="f-to">Ke</label><input class="field" id="f-to" list="places" value="Kota Bharu"></div></div>'+
   (S.admin?'<div><label for="f-upah">Upah runner (RM)</label><input class="field" id="f-upah" type="number" inputmode="decimal" min="0" placeholder="600"></div>':'')+
   '<datalist id="places">'+PLACES.map(function(p){return '<option value="'+p+'">'}).join('')+'</datalist>'+
-  '<div><label for="f-assigned">Staf bertanggungjawab (PIC)</label><select class="field" id="f-assigned"><option value="">Belum ditetapkan</option>'+S.staff.map(function(u){return '<option value="'+esc(u.id)+'">'+esc(u.full_name||'Staf')+'</option>'}).join('')+'</select></div>'+
+  '<div><label for="f-assigned">Staff bertanggungjawab (PIC)</label><select class="field" id="f-assigned"><option value="">Belum ditetapkan</option>'+S.staff.map(function(u){return '<option value="'+esc(u.id)+'">'+esc(u.full_name||'Staff')+'</option>'}).join('')+'</select></div>'+
   (S.owner?'<label class="tick"><input type="checkbox" id="f-own"> Dibayar oleh pemilik, tidak ditolak dari baki</label>':'')+
   '<button class="btn" data-act="create">Simpan trip</button></div>';
 }
@@ -435,7 +435,7 @@ function editView(t){
   '<div><label for="e-to">Ke</label><input class="field" id="e-to" list="places" value="'+esc(t.to||'Kota Bharu')+'"></div></div>'+
   '<div><label for="e-st">Status</label><select class="field" id="e-st">'+STN(t).map(function(s,i){return '<option value="'+i+'"'+(i===st?' selected':'')+'>'+s+'</option>'}).join('')+'</select></div>'+
   '<datalist id="places">'+PLACES.map(function(p){return '<option value="'+p+'">'}).join('')+'</datalist>'+
-  '<div><label for="e-assigned">Staf bertanggungjawab</label><select class="field" id="e-assigned"><option value="">Belum ditetapkan</option>'+S.staff.map(function(p){return '<option value="'+esc(p.id)+'"'+(p.id===t.assigned_to?' selected':'')+'>'+esc(p.full_name||'Staf')+'</option>'}).join('')+'</select></div>'+
+  '<div><label for="e-assigned">Staff bertanggungjawab</label><select class="field" id="e-assigned"><option value="">Belum ditetapkan</option>'+S.staff.map(function(p){return '<option value="'+esc(p.id)+'"'+(p.id===t.assigned_to?' selected':'')+'>'+esc(p.full_name||'Staff')+'</option>'}).join('')+'</select></div>'+
   '<button class="btn" data-act="saveedit">Simpan perubahan</button></div>';
   if(ck.length){
     h+='<div class="card"><b>Check-in</b>';
@@ -526,7 +526,7 @@ function detailView(t){
     h+='</div>';
   }
 
-  h+='<div class="note">Staf bertanggungjawab: <b>'+esc(staffName(t.assigned_to))+'</b></div>';
+  h+='<div class="note">Staff bertanggungjawab: <b>'+esc(staffName(t.assigned_to))+'</b></div>';
   h+=photosCard();
   var ex=t.exp||[];
   h+='<div class="card"><b>Tuntutan belanja</b>';

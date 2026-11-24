@@ -1,4 +1,4 @@
-// Abe Din Auto – paparan & cetakan slip gaji (dikongsi oleh Profil Saya dan Profil staf Owner).
+// Abe Din Auto – paparan & cetakan slip gaji (dikongsi oleh Profil Saya dan Profil staff Owner).
 // Data dari computeSlip() dalam kehadiran.js.
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 export const rm = n => "RM" + (Math.round((+n || 0) * 100) / 100).toLocaleString("en-MY", { minimumFractionDigits: 2, maximumFractionDigits: 2 });

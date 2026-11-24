@@ -1,4 +1,4 @@
-// Abe Din Auto – Profil HR staf penuh (dibuka dari menu Staf → Profil). Hanya Owner.
+// Abe Din Auto – Profil HR staff penuh (dibuka dari menu Staff → Profil). Hanya Owner.
 // Data: staff_hr, staff_pay, staff_work_history, staff_chronology, staff_advances, staff_leaves,
 // dokumen dalam bucket peribadi "staff-docs" (lihat V73_STAFF_HR.sql).
 
@@ -86,7 +86,7 @@ const F = {
     ["children", "Bilangan anak", "num"], ["dependents", "Bilangan tanggungan", "num"], ["address", "Alamat semasa", "area"], ["mailing_address", "Alamat surat-menyurat", "area"],
     ["emergency_name", "Waris kecemasan (nama)", "text"], ["emergency_relation", "Hubungan", "list", ["Isteri", "Suami", "Ibu", "Bapa", "Adik-beradik", "Anak", "Saudara"]], ["emergency_phone", "Telefon waris", "tel"], ["emergency_phone2", "Telefon waris (2)", "tel"]],
   job: [["join_date", "Tarikh mula kerja", "date"], ["confirm_date", "Tarikh pengesahan", "date"], ["department", "Jabatan", "list", ["Pengurusan", "HR", "Jualan", "Operasi", "Servis / Bengkel", "Akaun", "Sewa Kereta"]],
-    ["position", "Jawatan", "text"], ["category", "Kategori staf", "sel", CATEGORY], ["shift", "Syif", "text"], ["work_location", "Lokasi kerja", "text"]],
+    ["position", "Jawatan", "text"], ["category", "Kategori staff", "sel", CATEGORY], ["shift", "Syif", "text"], ["work_location", "Lokasi kerja", "text"]],
   contract: [["employment_type", "Jenis pekerjaan", "sel", EMP_TYPE], ["contract_status", "Status kontrak", "sel", CONTRACT], ["probation_months", "Tempoh percubaan (bulan)", "num"], ["contract_end", "Tarikh tamat kontrak", "date"]],
   payroll: [["pay_type", "Jenis gaji", "sel", PAY, "pay"], ["rate", "Kadar gaji (RM)", "money", null, "pay"], ["allowance", "Elaun tetap sebulan (RM)", "money", null, "pay"],
     ["bank_name", "Nama bank", "list", BANKS], ["bank_account", "No. akaun bank", "text"], ["epf_no", "No. KWSP", "text"], ["socso_no", "No. PERKESO", "text"], ["sip_no", "No. SIP / EIS", "text"], ["tax_no", "No. cukai (LHDN)", "text"],
@@ -119,7 +119,7 @@ export function leaveEntitle(hr) {
     paternity: hr.paternity_days != null ? +hr.paternity_days : 7, maternity: hr.maternity_days != null ? +hr.maternity_days : 98, unpaid: hr.unpaid_days != null ? +hr.unpaid_days : null };
 }
 const REQUIRED = [["ic_no", "No. IC"], ["phone", "Telefon"], ["address", "Alamat"], ["dob", "Tarikh lahir"], ["gender", "Jantina"], ["emergency_name", "Waris kecemasan"], ["emergency_phone", "Telefon waris"],
-  ["join_date", "Tarikh mula"], ["position", "Jawatan"], ["department", "Jabatan"], ["bank_name", "Bank"], ["bank_account", "No. akaun"], ["epf_no", "No. KWSP"], ["socso_no", "No. PERKESO"], ["photo_path", "Gambar staf"], ["ic_photo_path", "Salinan IC"]];
+  ["join_date", "Tarikh mula"], ["position", "Jawatan"], ["department", "Jabatan"], ["bank_name", "Bank"], ["bank_account", "No. akaun"], ["epf_no", "No. KWSP"], ["socso_no", "No. PERKESO"], ["photo_path", "Gambar staff"], ["ic_photo_path", "Salinan IC"]];
 export function completeness(hr) { hr = hr || {}; const miss = REQUIRED.filter(([k]) => hr[k] == null || String(hr[k]).trim() === ""); return { pct: Math.round((REQUIRED.length - miss.length) / REQUIRED.length * 100), miss: miss.map(([, t]) => t) }; }
 
 async function shrink(file) {
@@ -145,7 +145,7 @@ export function mountProfile(app, ctx, staff, onBack) {
     const [hr, pay, hist, chrono, adv, lv, cl] = await Promise.all(q);
     P.claims = cl.data || [];
     const err = [hr, pay, hist, chrono, adv, lv].find(r => r.error)?.error;
-    if (err) P.err = /does not exist|schema cache/i.test(err.message) ? "Jadual profil staf belum dipasang. Jalankan V73_STAFF_HR.sql." : "Gagal memuatkan profil: " + err.message;
+    if (err) P.err = /does not exist|schema cache/i.test(err.message) ? "Jadual profil staff belum dipasang. Jalankan V73_STAFF_HR.sql." : "Gagal memuatkan profil: " + err.message;
     P.hr = hr.data || { staff_id: id, category: "staff_biasa", employment_type: "permanent", contract_status: "active", statutory_mode: "default", socso_type: "jenis1", deduct_epf: true, deduct_socso: true, deduct_sip: true, children: 0, dependents: 0, citizenship: "Malaysia", al_extra: 0, al_carry: 0 };
     P.pay = pay.data; P.hist = hist.data || []; P.chrono = chrono.data || []; P.adv = adv.data || []; P.leaves = lv.data || [];
     await signUrls(); render();
@@ -202,12 +202,12 @@ export function mountProfile(app, ctx, staff, onBack) {
         <div class="chips"><span class="chip ${active ? "c-on" : "c-warn"}">● ${active ? "Aktif" : staff.enabled ? CONTRACT[st] : "Nyahaktif"}</span><span class="chip c-blue">${esc(h.position || "Tiada jawatan")}</span>
           <span class="chip c-pur">${esc(CATEGORY[h.category] || "-")}</span><span class="chip c-role">${esc(EMP_TYPE[h.employment_type] || "-")}</span><span class="chip c-gry">${P.pay ? "Gaji " + PAY[P.pay.pay_type] : "Gaji belum ditetapkan"}</span></div>
         <div class="bar" title="Kelengkapan profil"><i style="width:${c.pct}%"></i></div><div class="note" style="margin-top:4px">Profil lengkap ${c.pct}%${c.miss.length ? " · Belum isi: " + esc(c.miss.join(", ")) : " ✓"}</div></div>
-      <div class="row" style="flex-direction:column;align-items:stretch"><button class="btn sm" data-a="back">← Senarai staf</button><button class="btn sm pri" data-a="pdf">⎙ PDF / Cetak</button></div></div>`;
+      <div class="row" style="flex-direction:column;align-items:stretch"><button class="btn sm" data-a="back">← Senarai staff</button><button class="btn sm pri" data-a="pdf">⎙ PDF / Cetak</button></div></div>`;
   }
 
   function photoBox() {
     const h = P.hr, ph = h.photo_path && P.urls[h.photo_path];
-    return `<div class="sec"><div class="row"><h4 class="grow">Gambar Staf</h4><label class="btn sm" style="margin:0;text-transform:none;letter-spacing:0;color:var(--fg)">Pilih<input type="file" accept="image/*" data-up="photo_path" hidden></label>${ph ? `<button class="btn sm bad" data-rm="photo_path">Buang</button>` : ""}</div>
+    return `<div class="sec"><div class="row"><h4 class="grow">Gambar Staff</h4><label class="btn sm" style="margin:0;text-transform:none;letter-spacing:0;color:var(--fg)">Pilih<input type="file" accept="image/*" data-up="photo_path" hidden></label>${ph ? `<button class="btn sm bad" data-rm="photo_path">Buang</button>` : ""}</div>
       <p class="note">JPG/PNG. Gambar besar dikecilkan secara automatik.</p></div>`;
   }
 
@@ -235,7 +235,7 @@ export function mountProfile(app, ctx, staff, onBack) {
   }
 
   function advView() {
-    const cur = ym(), active = P.adv.filter(a => a.status === "active"), ASTAT = { requested: ["Dimohon staf", "c-warn"], active: ["Aktif", "c-role"], done: ["Selesai", "c-on"], cancelled: ["Batal", "c-gry"], rejected: ["Ditolak", "c-gry"] };
+    const cur = ym(), active = P.adv.filter(a => a.status === "active"), ASTAT = { requested: ["Dimohon staff", "c-warn"], active: ["Aktif", "c-role"], done: ["Selesai", "c-on"], cancelled: ["Batal", "c-gry"], rejected: ["Ditolak", "c-gry"] };
     const thisMonth = active.reduce((s, a) => cur >= a.start_month && cur <= addMonths(a.start_month, a.months - 1) ? s + +a.monthly : s, 0);
     const owing = active.reduce((s, a) => { const paid = Math.max(0, Math.min(a.months, monthsBetween(a.start_month, cur))); return s + Math.max(0, +a.amount - paid * +a.monthly); }, 0);
     return `<div class="sec"><div class="row"><h4 class="grow">Advance Ansuran</h4><span class="note">Dipotong automatik dalam Kehadiran → Gaji ikut bulan.</span></div>
@@ -253,7 +253,7 @@ export function mountProfile(app, ctx, staff, onBack) {
             <div class="note">${esc(monthName(a.start_month))} – ${esc(monthName(end))} · ${a.status === "active" ? `${done}/${a.months} bulan dipotong` : ""} ${a.note ? "· " + esc(a.note) : ""}</div>
             <div class="bar"><i style="width:${a.status === "done" ? 100 : Math.round(done / a.months * 100)}%"></i></div>
             <div class="row" style="margin-top:8px">${a.review_note ? `<div class="note">Nota: ${esc(a.review_note)}</div>` : ""}${a.status === "requested" ? `<button class="btn sm pri" data-adv="active:${a.id}">Lulus</button><button class="btn sm" data-adv="rejected:${a.id}">Tolak</button>` : ""}${a.status === "active" ? `<button class="btn sm" data-adv="done:${a.id}">Tanda selesai</button><button class="btn sm" data-adv="cancelled:${a.id}">Batal</button>` : ""}<button class="btn sm bad" data-del="staff_advances:${a.id}">Padam</button></div></div>`; }).join("")
-          : `<div class="box" style="margin-top:8px">Belum ada plan advance ansuran untuk staf ini.</div>`}</div></div></div>`;
+          : `<div class="box" style="margin-top:8px">Belum ada plan advance ansuran untuk staff ini.</div>`}</div></div></div>`;
   }
   const monthsBetween = (a, b) => { const [y1, m1] = a.split("-").map(Number), [y2, m2] = b.split("-").map(Number); return (y2 - y1) * 12 + (m2 - m1) + 1; };
 
@@ -276,7 +276,7 @@ export function mountProfile(app, ctx, staff, onBack) {
   }
   async function loadSlip() {
     P.slipBusy = true; render();
-    try { const [k, sl] = await Promise.all([import("./kehadiran.js?v=8"), import("./slip.js?v=1")]); P.slipHtml = sl.slipHtml; P.printSlip = sl.printSlip; P.slip = await k.computeSlip(client, me, id, P.slipMonth); }
+    try { const [k, sl] = await Promise.all([import("./kehadiran.js?v=9"), import("./slip.js?v=2")]); P.slipHtml = sl.slipHtml; P.printSlip = sl.printSlip; P.slip = await k.computeSlip(client, me, id, P.slipMonth); }
     catch (e) { P.slip = null; say(e?.message || String(e), "err"); }
     P.slipBusy = false; render();
   }
@@ -409,12 +409,12 @@ export function mountProfile(app, ctx, staff, onBack) {
   function printPdf() {
     const h = P.hr, ph = h.photo_path && P.urls[h.photo_path], e = leaveEntitle(h);
     const kv = key => `<h3>${TITLE[key]}</h3><table>${F[key].map(f => `<tr><th>${esc(f[1].replace(/ \(.*\)$/, ""))}</th><td>${esc(show(f))}</td></tr>`).join("")}</table>`;
-    const html = `<!doctype html><html><head><meta charset="utf-8"><title>Profil Staf - ${esc(staff.full_name)}</title><style>
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>Profil Staff - ${esc(staff.full_name)}</title><style>
       body{font:12px/1.45 -apple-system,Segoe UI,Arial,sans-serif;color:#111;margin:24px}h1{font-size:18px;margin:0}h3{font-size:13px;margin:16px 0 6px;border-bottom:2px solid #c99a06;padding-bottom:3px}
       table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:5px 7px;text-align:left;vertical-align:top}th{background:#f6f3ea;width:38%;font-weight:600}
       .top{display:flex;gap:14px;align-items:center;border-bottom:3px solid #111;padding-bottom:10px}.top img{width:80px;height:80px;border-radius:8px;object-fit:cover}.m{color:#555}
       .two{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}@media print{body{margin:10mm}}</style></head><body>
-      <div class="top">${ph ? `<img src="${esc(ph)}">` : ""}<div><div class="m">ABE DIN AUTO · PROFIL STAF</div><h1>${esc((staff.full_name || "").toUpperCase())}</h1>
+      <div class="top">${ph ? `<img src="${esc(ph)}">` : ""}<div><div class="m">ABE DIN AUTO · PROFIL STAFF</div><h1>${esc((staff.full_name || "").toUpperCase())}</h1>
       <div class="m">IC: ${esc(h.ic_no || "-")} · Staff ID: ${esc(h.staff_code || "-")} · ${esc(h.position || "")} · ${esc(CATEGORY[h.category] || "")} · ${esc(EMP_TYPE[h.employment_type] || "")}</div></div></div>
       <div class="two"><div>${kv("personal")}</div><div>${kv("job")}${kv("contract")}${kv("payroll")}</div></div>
       <h3>Cuti ${new Date().getFullYear()}</h3><table><tr><th>Tahunan (kuota dalaman)</th><td>${h.al_days == null ? "Belum ditetapkan" : e.annual + " hari"}</td></tr><tr><th>Sakit (MC)</th><td>${e.mc} hari</td></tr><tr><th>Hospitalisasi</th><td>${e.hosp} hari</td></tr></table>

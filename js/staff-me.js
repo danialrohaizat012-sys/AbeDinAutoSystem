@@ -1,9 +1,9 @@
-// Abe Din Auto – "Profil Saya": layan diri untuk setiap staf yang log masuk.
+// Abe Din Auto – "Profil Saya": layan diri untuk setiap staff yang log masuk.
 // Ringkasan, mohon cuti, slip gaji, tuntutan (claim) dengan resit, mohon advance, kemas kini maklumat sendiri.
 // Data & kebenaran: V73_STAFF_HR.sql + V74_STAFF_SELF_SERVICE.sql. Slip gaji dikira oleh computeSlip() (kehadiran.js).
-import { CSS } from "./staff.js?v=13";
-import { PROFILE_CSS, CATEGORY, EMP_TYPE, LEAVE, CLAIM, leaveEntitle } from "./staff-profile.js?v=8";
-import { slipHtml, printSlip, rm, monthName } from "./slip.js?v=1";
+import { CSS } from "./staff.js?v=14";
+import { PROFILE_CSS, CATEGORY, EMP_TYPE, LEAVE, CLAIM, leaveEntitle } from "./staff-profile.js?v=9";
+import { slipHtml, printSlip, rm, monthName } from "./slip.js?v=2";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const KL = 8 * 3600000;
@@ -58,7 +58,7 @@ export function mountStaffMe(host, ctx) {
   }
   async function loadSlip() {
     S.slipBusy = true; S.slipErr = ""; render();
-    try { const m = await import("./kehadiran.js?v=8"); S.slip = await m.computeSlip(client, me, uid, S.month); }
+    try { const m = await import("./kehadiran.js?v=9"); S.slip = await m.computeSlip(client, me, uid, S.month); }
     catch (e) { S.slipErr = e?.message || String(e); S.slip = null; }
     S.slipBusy = false; render();
   }

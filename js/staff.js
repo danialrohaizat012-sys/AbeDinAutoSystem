@@ -1,8 +1,8 @@
-// Abe Din Auto – Urus Staf (menu Staf). Hanya Owner.
+// Abe Din Auto – Urus Staff (menu Staff). Hanya Owner.
 // Cipta akaun log masuk baharu melalui Supabase Auth (klien sementara, sesi Owner tidak terjejas),
 // kemudian aktifkan profil melalui RPC staff_save. Senarai melalui RPC staff_list (lihat V66_STAFF_MIGRATION.sql).
 // UI dalam Shadow DOM supaya tidak bercampur dengan CSS sistem sedia ada.
-import { mountProfile, PROFILE_CSS, CATEGORY, EMP_TYPE, CONTRACT, completeness, LEAVE, CLAIM } from "./staff-profile.js?v=9";
+import { mountProfile, PROFILE_CSS, CATEGORY, EMP_TYPE, CONTRACT, completeness, LEAVE, CLAIM } from "./staff-profile.js?v=10";
 export const CSS = `
 :host{display:block;--card:#151412;--fg:#f4efe2;--mute:#a69f8c;--line:#2e2a20;--soft:#1e1c17;--pri:#e8b10b;--pri-fg:#141000;
   --ok:#3fae6b;--bad:#e0473f;--f:Inter,-apple-system,"Segoe UI",system-ui,sans-serif;color-scheme:dark}
@@ -65,8 +65,8 @@ const FULL_CSS = CSS + PROFILE_CSS + `.inbox{border-color:#5a4a14}.inbox .it{dis
 const rmx = n => "RM" + Number(n || 0).toLocaleString("en-MY", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const dmyx = s => { if (!s) return "-"; const [y, m, d] = String(s).slice(0, 10).split("-"); return `${d}/${m}/${y}`; };
 const KLx = 8 * 3600000, ymx = () => new Date(Date.now() + KLx).toISOString().slice(0, 7);
-const ROLES = { operations: "Operations (staf)", sales_advisor: "Sales Advisor", owner: "Owner" };
-const ROLE_HINT = { operations: "Lalai: semua menu kecuali Jualan, Pelanggan dan Laporan. Boleh ubah di bawah.", sales_advisor: "Lalai: semua menu kecuali Runner. Boleh ubah di bawah.", owner: "Akses penuh termasuk sahkan pemeriksaan, modal dan urus staf." };
+const ROLES = { operations: "Operations (staff)", sales_advisor: "Sales Advisor", owner: "Owner" };
+const ROLE_HINT = { operations: "Lalai: semua menu kecuali Jualan, Pelanggan dan Laporan. Boleh ubah di bawah.", sales_advisor: "Lalai: semua menu kecuali Runner. Boleh ubah di bawah.", owner: "Akses penuh termasuk sahkan pemeriksaan, modal dan urus staff." };
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const fmt = s => { if (!s) return "belum pernah"; const d = new Date(s); return isNaN(d) ? "-" : d.toLocaleString("ms-MY", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }); };
 const MENUS = [["inventory","Inventori"],["suppliers","Pembekal"],["pemeriksaan","Pemeriksaan"],["kehadiran","Kehadiran"],["puspakom","Puspakom"],["runner","Runner"],["belanja","Perbelanjaan"],["sales","Jualan"],["customers","Pelanggan"],["applications","Permohonan"],["sewa","Sewa"],["reports","Laporan"]];
@@ -87,8 +87,8 @@ export function mountStaff(host, ctx) {
     if (error) {
       S.rows = [];
       S.err = /staff_list|function/i.test(error.message) && /not find|does not exist|schema cache/i.test(error.message)
-        ? "Fungsi staf belum dipasang. Jalankan V66_STAFF_MIGRATION.sql dalam Supabase SQL Editor."
-        : "Gagal memuatkan staf: " + error.message;
+        ? "Fungsi staff belum dipasang. Jalankan V66_STAFF_MIGRATION.sql dalam Supabase SQL Editor."
+        : "Gagal memuatkan staff: " + error.message;
     } else { S.rows = data || []; S.err = ""; }
     const hr = await client.from("staff_hr").select("staff_id,staff_code,ic_no,phone,address,dob,gender,emergency_name,emergency_phone,join_date,position,department,category,employment_type,contract_status,bank_name,bank_account,epf_no,socso_no,photo_path,ic_photo_path");
     S.hr = {}; (hr.data || []).forEach(h => S.hr[h.staff_id] = h);
@@ -114,29 +114,29 @@ export function mountStaff(host, ctx) {
     const catBar = all && all.length ? `<div class="tool"><input class="field" id="q" placeholder="🔍 Cari nama, IC, Staff ID, jawatan…" value="${esc(S.q)}"></div><div class="cats"><span class="cat ${S.cat === "all" ? "on" : ""}" data-cat="all">Semua<i>${all.length}</i></span>${Object.entries(CATEGORY).filter(([k]) => counts[k]).map(([k, t]) => `<span class="cat ${S.cat === k ? "on" : ""}" data-cat="${k}">${t}<i>${counts[k]}</i></span>`).join("")}</div>` : "";
     const nIn = S.inbox.leaves.length + S.inbox.claims.length + S.inbox.adv.length, act = (all || []).filter(u => u.enabled).length;
     const low = (all || []).filter(u => u.enabled && completeness(S.hr[u.id]).pct < 80).length;
-    app.innerHTML = `${S.mode ? "" : `<div class="stats"><div class="stat"><small>Jumlah staf</small><b>${all ? all.length : "–"}</b></div><div class="stat g"><small>Aktif</small><b>${all ? act : "–"}</b></div>
+    app.innerHTML = `${S.mode ? "" : `<div class="stats"><div class="stat"><small>Jumlah staff</small><b>${all ? all.length : "–"}</b></div><div class="stat g"><small>Aktif</small><b>${all ? act : "–"}</b></div>
         <div class="stat ${nIn ? "y" : ""}"><small>Menunggu kelulusan</small><b>${nIn}</b></div><div class="stat ${low ? "r" : ""}"><small>Profil belum lengkap</small><b>${all ? low : "–"}</b></div></div>`}
       ${S.err ? `<p class="msg err">${esc(S.err)}</p>` : ""}
       ${S.mode ? formView() : ""}
       ${S.share ? `<div class="share" id="share">${esc(S.share)}</div><div class="row"><button class="btn sm" data-a="copy">Salin untuk WhatsApp</button><button class="btn sm" data-a="hide">Tutup</button></div>` : ""}
       <p class="msg ${S.msgCls}" id="msg">${esc(S.msg)}</p>
       ${S.mode ? "" : inboxView()}
-      ${S.mode ? "" : `<div class="row" style="margin-top:4px"><div class="grow"><div class="kick">PASUKAN</div><h3>Senarai staf</h3></div><button class="btn pri" data-a="new">+ Tambah staf</button></div>${catBar}`}
-      <div class="grid">${rows === null ? `<div class="empty">Memuatkan…</div>` : (globalThis.adaPg?globalThis.adaPg.rows("st-acc",rows,render):rows).map(item).join("") || `<div class="empty">Tiada staf ditemui.</div>`}</div>${rows?(globalThis.adaPg?globalThis.adaPg.nav("st-acc",rows.length):""):""}
-      ${S.mode ? "" : `<p class="mute">Setiap staf log masuk dengan emel dan kata laluan sendiri di <b>abedinauto.my/admin</b>.</p>`}`;
+      ${S.mode ? "" : `<div class="row" style="margin-top:4px"><div class="grow"><div class="kick">PASUKAN</div><h3>Senarai staff</h3></div><button class="btn pri" data-a="new">+ Tambah staff</button></div>${catBar}`}
+      <div class="grid">${rows === null ? `<div class="empty">Memuatkan…</div>` : (globalThis.adaPg?globalThis.adaPg.rows("st-acc",rows,render):rows).map(item).join("") || `<div class="empty">Tiada staff ditemui.</div>`}</div>${rows?(globalThis.adaPg?globalThis.adaPg.nav("st-acc",rows.length):""):""}
+      ${S.mode ? "" : `<p class="mute">Setiap staff log masuk dengan emel dan kata laluan sendiri di <b>abedinauto.my/admin</b>.</p>`}`;
     bind();
   }
 
   function inboxView() {
     const I = S.inbox, n = I.leaves.length + I.claims.length + I.adv.length; if (!n) return "";
-    const nm = id => esc((S.rows || []).find(r => r.id === id)?.full_name || "Staf");
+    const nm = id => esc((S.rows || []).find(r => r.id === id)?.full_name || "Staff");
     const link = p => p && S.urls[p] ? ` · <a href="${esc(S.urls[p])}" target="_blank" style="color:var(--pri)">${/\.pdf$/i.test(p) ? "PDF" : "Lampiran"}</a>` : "";
     const btns = (t, id) => `<button class="btn sm pri" data-ok="${t}:${id}">Lulus</button><button class="btn sm" data-no="${t}:${id}">Tolak</button>`;
     return `<div class="sec inbox"><div class="row"><h4 class="grow">Menunggu kelulusan<span class="badge">${n}</span></h4></div><div class="list" style="margin-top:8px">
       ${(globalThis.adaPg?globalThis.adaPg.rows("st-leave",I.leaves,render):I.leaves).map(l => `<div class="it"><div class="grow"><b>${nm(l.staff_id)}</b> · ${LEAVE[l.kind]} ${+l.days} hari<div class="mute">${dmyx(l.date_from)}${l.date_to !== l.date_from ? " – " + dmyx(l.date_to) : ""}${l.reason ? " · " + esc(l.reason) : ""}${link(l.attachment_path)}</div></div>${btns("staff_leaves", l.id)}</div>`).join("")}${(globalThis.adaPg?globalThis.adaPg.nav("st-leave",I.leaves.length):"")}
       ${(globalThis.adaPg?globalThis.adaPg.rows("st-claim",I.claims,render):I.claims).map(c => `<div class="it"><div class="grow"><b>${nm(c.staff_id)}</b> · Tuntutan ${esc(CLAIM[c.category])} <b>${rmx(c.amount)}</b><div class="mute">${dmyx(c.claim_date)} · ${esc(c.description)}${c.receipt_path ? link(c.receipt_path) : " · tiada resit"}</div></div>${btns("staff_claims", c.id)}</div>`).join("")}${(globalThis.adaPg?globalThis.adaPg.nav("st-claim",I.claims.length):"")}
       ${I.adv.map(a => `<div class="it"><div class="grow"><b>${nm(a.staff_id)}</b> · Advance <b>${rmx(a.amount)}</b> / ${a.months} bulan<div class="mute">Mula potong ${esc(a.start_month)} · ${rmx(a.monthly)} sebulan${a.note ? " · " + esc(a.note) : ""}</div></div>${btns("staff_advances", a.id)}</div>`).join("")}
-      </div><p class="mute" style="margin-top:6px">Tuntutan yang diluluskan di sini dibayar bersama gaji bulan ${esc(ymx())}. Untuk pilih bulan lain, buka Profil staf.</p></div>`;
+      </div><p class="mute" style="margin-top:6px">Tuntutan yang diluluskan di sini dibayar bersama gaji bulan ${esc(ymx())}. Untuk pilih bulan lain, buka Profil staff.</p></div>`;
   }
   async function decide(btn, ok) {
     const [t, id] = (ok ? btn.dataset.ok : btn.dataset.no).split(":");
@@ -167,8 +167,8 @@ export function mountStaff(host, ctx) {
   function formView() {
     const e = S.edit || {}, isNew = S.mode === "new", link = S.mode === "link";
     return `<form class="form" id="f">
-      <div class="full"><b>${isNew ? "Tambah staf baharu" : link ? "Sambung akaun sedia ada" : "Edit staf"}</b>
-        <p class="mute">${isNew ? "Akaun log masuk dicipta terus. Beri emel dan kata laluan ini kepada staf." : link ? "Untuk akaun yang sudah dicipta dalam Supabase Auth atau sudah daftar sendiri." : ""}</p></div>
+      <div class="full"><b>${isNew ? "Tambah staff baharu" : link ? "Sambung akaun sedia ada" : "Edit staff"}</b>
+        <p class="mute">${isNew ? "Akaun log masuk dicipta terus. Beri emel dan kata laluan ini kepada staff." : link ? "Untuk akaun yang sudah dicipta dalam Supabase Auth atau sudah daftar sendiri." : ""}</p></div>
       <div><label>Nama penuh</label><input class="field" name="nama" required value="${esc(e.full_name || "")}"></div>
       <div><label>Emel</label><input class="field" name="email" type="email" required ${S.mode === "edit" ? "readonly" : ""} value="${esc(e.email || "")}" autocomplete="off"></div>
       ${isNew ? `<div><label>Kata laluan (min 8 aksara)</label><input class="field" name="pw" type="text" minlength="8" required autocomplete="new-password" value="${esc(genPw())}"></div>` : ""}
@@ -185,7 +185,7 @@ export function mountStaff(host, ctx) {
     return `<label>Menu yang boleh dibuka</label><div class="perms">${MENUS.map(([k, t]) => {
       const lock = k === "runner" && role !== "operations";
       return `<label class="sw"><span>${t}</span><input type="checkbox" name="perm_${k}" ${canPage(cur, k) && !lock ? "checked" : ""} ${lock ? "disabled title=\"Runner hanya untuk peranan Operations\"" : ""}></label>`; }).join("")}</div>
-      <p class="mute" style="margin-top:6px">Dashboard dan Tetapan sentiasa boleh dibuka. Menu yang ditutup disorok daripada staf ini.</p>`;
+      <p class="mute" style="margin-top:6px">Dashboard dan Tetapan sentiasa boleh dibuka. Menu yang ditutup disorok daripada staff ini.</p>`;
   }
   function readPerms(form, role) {
     if (role === "owner") return {};
@@ -241,7 +241,7 @@ export function mountStaff(host, ctx) {
         const r = await client.rpc("staff_save", { p_email: email, p_full_name: nama, p_role: role, p_enabled: true, p_permissions: perms });
         if (r.error) throw r.error;
         S.share = `Akaun Abe Din Auto anda:\nPautan: https://abedinauto.my/admin\nEmel: ${email}\nKata laluan: ${pw}\n${needConfirm ? "\nSila sahkan emel anda dahulu (semak inbox/spam) sebelum log masuk.\n" : ""}Tukar kata laluan selepas log masuk pertama jika perlu.`;
-        S.mode = null; say(`Akaun ${nama} dicipta${needConfirm ? ". Staf perlu sahkan emel dahulu (Supabase hantar emel pengesahan)." : " dan diaktifkan."}`, "ok");
+        S.mode = null; say(`Akaun ${nama} dicipta${needConfirm ? ". Staff perlu sahkan emel dahulu (Supabase hantar emel pengesahan)." : " dan diaktifkan."}`, "ok");
       } else {
         const enabled = S.mode === "edit" ? !!S.edit.enabled : true;
         const r = await client.rpc("staff_save", { p_email: email, p_full_name: nama, p_role: role, p_enabled: enabled, p_permissions: perms });

@@ -1,4 +1,4 @@
-// Abe Din Auto – Pendaftaran Staf (menu Staf, bahagian bawah; Owner sahaja). Kotak lipat: terbuka sendiri bila ada permohonan baharu.
+// Abe Din Auto – Pendaftaran Staff (menu Staff, bahagian bawah; Owner sahaja). Kotak lipat: terbuka sendiri bila ada permohonan baharu.
 // Link pendaftaran (buka/tutup, tukar kod) dan senarai permohonan untuk diluluskan. Lihat V74_DAFTAR_STAF.sql.
 const CSS = `
 :host{display:block;--card:#151412;--fg:#f4efe2;--mute:#a69f8c;--line:#2e2a20;--soft:#1e1c17;--pri:#e8b10b;--pri-fg:#141000;
@@ -41,7 +41,7 @@ button,input,select{font:inherit;color:inherit}
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const fmt = s => s ? new Date(s).toLocaleString("ms-MY", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "-";
 const fmtD = s => s ? new Date(s + "T00:00:00").toLocaleDateString("ms-MY", { day: "numeric", month: "short", year: "numeric" }) : "-";
-const ROLES = { operations: "Operations (staf)", sales_advisor: "Sales Advisor", owner: "Owner" };
+const ROLES = { operations: "Operations (staff)", sales_advisor: "Sales Advisor", owner: "Owner" };
 const BASE = "https://abedinauto.my/daftar-staf.html?k=";
 
 export function mountStaffReg(host, ctx) {
@@ -66,7 +66,7 @@ export function mountStaffReg(host, ctx) {
     render();
   }
   const url = () => S.link ? BASE + S.link.token : "";
-  const waText = () => `Assalamualaikum. Sila daftar sebagai staf Abe Din Auto melalui link ini:\n${url()}\n\nIsi maklumat dan cipta kata laluan sendiri. Akaun boleh digunakan selepas diluluskan.`;
+  const waText = () => `Assalamualaikum. Sila daftar sebagai staff Abe Din Auto melalui link ini:\n${url()}\n\nIsi maklumat dan cipta kata laluan sendiri. Akaun boleh digunakan selepas diluluskan.`;
 
   function card(x) {
     const ini = (x.full_name || "?").trim().split(/\s+/).slice(0, 2).map(w => w[0]).join("").toUpperCase();
@@ -89,11 +89,11 @@ export function mountStaffReg(host, ctx) {
     if (S.open === null && S.loaded) S.open = pend.length > 0;   // buka sendiri bila ada permohonan baharu
     app.classList.toggle("open", !!S.open);
     const sub = S.link ? (S.link.enabled ? "Link pendaftaran dibuka" : "Link pendaftaran ditutup") : "Memuatkan…";
-    app.innerHTML = `<div class="hd" data-act="fold"><span class="ico">＋</span><div class="t"><b>Pendaftaran staf baharu ${pend.length ? `<span class="chip c-new">${pend.length} menunggu</span>` : ""}</b><span>${sub} · ${S.rows.length - pend.length} selesai</span></div>
+    app.innerHTML = `<div class="hd" data-act="fold"><span class="ico">＋</span><div class="t"><b>Pendaftaran staff baharu ${pend.length ? `<span class="chip c-new">${pend.length} menunggu</span>` : ""}</b><span>${sub} · ${S.rows.length - pend.length} selesai</span></div>
         ${S.link ? `<span class="chip ${S.link.enabled ? "c-on" : "c-off"}">${S.link.enabled ? "Dibuka" : "Ditutup"}</span>` : ""}<span class="car">▾</span></div>
       <div class="bd">
       ${S.err ? `<p class="msg err">${esc(S.err)}</p>` : ""}
-      ${S.link ? `<p class="mute">Hantar link ini kepada staf baharu. Mereka cipta akaun dan isi maklumat sendiri; maklumat masuk ke Profil HR selepas anda luluskan.</p>
+      ${S.link ? `<p class="mute">Hantar link ini kepada staff baharu. Mereka cipta akaun dan isi maklumat sendiri; maklumat masuk ke Profil HR selepas anda luluskan.</p>
       ${S.link.enabled ? `<div class="lbox"><code>${esc(url())}</code><button class="btn pri" data-act="copy">Salin</button></div>` : ""}
       <div class="acts">${S.link.enabled ? `<a class="btn wa" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(waText())}">Kongsi WhatsApp</a><a class="btn" target="_blank" rel="noopener" href="${esc(url())}">Buka</a>` : ""}
         <span class="sep"></span><button class="btn ghost" data-act="toggle">${S.link.enabled ? "Tutup link" : "Buka link"}</button><button class="btn ghost" data-act="newtoken">Tukar kod</button></div>` : ""}

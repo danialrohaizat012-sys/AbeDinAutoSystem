@@ -1,4 +1,4 @@
-// Abe Din Auto – tema Terang untuk modul dalam Shadow DOM (Staf, Kehadiran, Profil, Perbelanjaan, Pemeriksaan, Runner, dll).
+// Abe Din Auto – tema Terang untuk modul dalam Shadow DOM (Staff, Kehadiran, Profil, Perbelanjaan, Pemeriksaan, Runner, dll).
 // Modul ditulis dengan warna gelap. Bila <html> ada kelas "ada-light", setiap <style> dalam shadow root ditukar:
 //  - permukaan gelap  -> cerah (hue sama, jadi warna lencana kekal)
 //  - teks cerah        -> gelap

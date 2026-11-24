@@ -289,7 +289,7 @@ export function mountAgentAdmin(host,{client,profile}={}){
       ctl.append(tg);
      }
      const del=node('button','ag-danger','🗑 Padam');del.type='button';
-     del.onclick=async()=>{if(!confirm('Padam ejen '+(g.name||'')+'?\nProfil ejen, permohonan dan link promosi akan dibuang. Akaun log masuk (dan akaun staf, jika ada) tidak terjejas.'))return;del.disabled=true;
+     del.onclick=async()=>{if(!confirm('Padam ejen '+(g.name||'')+'?\nProfil ejen, permohonan dan link promosi akan dibuang. Akaun log masuk (dan akaun staff, jika ada) tidak terjejas.'))return;del.disabled=true;
       try{const {error}=await client.rpc('owner_agent_delete_v1',{p_user_id:g.user_id});if(error)throw error;status('Ejen dipadam.');await load()}catch(err){status(err.message,true);del.disabled=false}};
      ctl.append(del);b.append(ctl,form);
     }

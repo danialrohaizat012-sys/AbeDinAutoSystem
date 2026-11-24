@@ -413,7 +413,7 @@ export function mountSewa(host, ctx) {
       <div class="tabs">${['semua', ...Object.keys(STATUS)].map(k => `<button class="tab" data-f="${k}" aria-pressed="${S.filter === k}">${k === 'semua' ? 'Semua' : STATUS[k]}<i>${counts[k]}</i></button>`).join('')}
       <button class="tab" data-a="kalendar" aria-pressed="false">📅 Kalendar</button>
       <button class="tab" data-a="stok" aria-pressed="false">🚗 Stok Kereta<i>${S.kereta.length}</i></button>
-      ${owner ? `<button class="tab" data-a="terma" aria-pressed="false">⚙ Tetapan</button>${ctx.manageStaff ? '<button class="tab" data-a="staf" aria-pressed="false">👤 Staf</button>' : ''}` : ''}</div>
+      ${owner ? `<button class="tab" data-a="terma" aria-pressed="false">⚙ Tetapan</button>${ctx.manageStaff ? '<button class="tab" data-a="staf" aria-pressed="false">👤 Staff</button>' : ''}` : ''}</div>
       <div class="row"><input id="q" placeholder="Cari nama, no rujukan, telefon, model…" value="${esc(S.q)}" style="flex:1;min-width:200px"><button class="btn" data-a="refresh">Refresh</button></div>
       ${S.error ? `<div class="card" style="border-color:#5a2a26;color:var(--bad)">${esc(S.error)}</div>` : ''}
       <div class="list">${!S.loaded ? '<div class="empty">Memuatkan…</div>' : (globalThis.adaPg?globalThis.adaPg.rows('sewa',rows,render):rows).map(r => `
@@ -439,7 +439,7 @@ export function mountSewa(host, ctx) {
       ${bayaranCard(r)}
       ${hantarCard(r)}
       <section class="card"><h3>Status</h3><div class="stbar">${Object.keys(STATUS).map(k => `<button class="btn sm" data-st="${k}" aria-pressed="${r.status === k}">${STATUS[k]}</button>`).join('')}</div>
-        <label class="mute" style="display:block;margin:12px 0 6px">Nota staf (tidak dilihat pelanggan)</label>
+        <label class="mute" style="display:block;margin:12px 0 6px">Nota staff (tidak dilihat pelanggan)</label>
         <textarea id="nota" maxlength="2000" placeholder="cth: deposit RM200 diterima, no plat kereta, dll.">${esc(r.nota_staf || '')}</textarea>
         <div class="row" style="margin-top:8px;align-items:center"><button class="btn sm" data-a="nota">Simpan nota</button><span class="msg" id="st-msg">${esc(S.msg)}</span></div></section>
       <section class="card"><h3>Maklumat Peribadi</h3>${kv([
@@ -691,14 +691,14 @@ export function mountSewa(host, ctx) {
 
   function stafView() {
     const rows = S.staf;
-    return `<button class="back" data-a="back">← Senarai Sewa</button><h2>Staf</h2>
-      <p class="mute">Staf daftar sendiri di halaman admin (pautan "Daftar akaun staf"). Akaun baharu tidak aktif sehingga anda tekan <b>Aktifkan</b>.</p>
+    return `<button class="back" data-a="back">← Senarai Sewa</button><h2>Staff</h2>
+      <p class="mute">Staff daftar sendiri di halaman admin (pautan "Daftar akaun staff"). Akaun baharu tidak aktif sehingga anda tekan <b>Aktifkan</b>.</p>
       <div class="list">${rows === null ? '<div class="empty">Memuatkan…</div>' : rows.map(u => `<div class="item" style="cursor:default">
         <div><b>${esc(u.full_name || '(tiada nama)')}</b><br><span class="mute">${esc(u.email || '')}</span></div>
-        <span class="chip ${u.enabled ? 'st-selesai' : 'st-baru'}">${u.enabled ? (u.role === 'owner' ? 'Owner' : 'Staf aktif') : 'Belum aktif'}</span>
+        <span class="chip ${u.enabled ? 'st-selesai' : 'st-baru'}">${u.enabled ? (u.role === 'owner' ? 'Owner' : 'Staff aktif') : 'Belum aktif'}</span>
         ${u.id === ctx.profile.id ? '<span class="sub">Akaun anda</span>' : `<div class="sub row" style="margin-top:6px">
           <button class="btn sm${u.enabled ? ' danger' : ' pri'}" data-a="staf-on" data-uid="${esc(u.id)}" data-v="${u.enabled ? '0' : '1'}">${u.enabled ? 'Nyahaktif' : 'Aktifkan'}</button>
-          <button class="btn sm" data-a="staf-role" data-uid="${esc(u.id)}" data-v="${u.role === 'owner' ? 'staf' : 'owner'}">${u.role === 'owner' ? 'Jadikan Staf' : 'Jadikan Owner'}</button></div>`}
+          <button class="btn sm" data-a="staf-role" data-uid="${esc(u.id)}" data-v="${u.role === 'owner' ? 'staf' : 'owner'}">${u.role === 'owner' ? 'Jadikan Staff' : 'Jadikan Owner'}</button></div>`}
       </div>`).join('') || '<div class="empty">Tiada akaun.</div>'}</div><p class="msg" id="s-msg">${esc(S.msg)}</p>`;
   }
 
@@ -761,7 +761,7 @@ export function mountSewa(host, ctx) {
   }
 
   function bayaranCard(r) {
-    const nama = ctx.profile?.full_name || 'Staf';
+    const nama = ctx.profile?.full_name || 'Staff';
     const sel = id => `<select id="${id}" style="width:auto;min-width:150px;padding:8px 10px">${KAEDAH.map(k => `<option>${k}</option>`).join('')}</select>`;
     const resitIn = k => `<label class="btn sm" style="cursor:pointer" title="Pilihan">📎 <span id="rs-${k}-n">Lampir resit (pilihan)</span><input type="file" id="rs-${k}" accept="image/*,application/pdf" hidden></label>`;
     const lihat = (path, label = 'Lihat resit') => path ? (S.urls[path] ? `<a class="btn sm" href="${esc(S.urls[path])}" target="_blank" rel="noopener">🧾 ${label}</a>` : `<span class="mute">🧾 ${label} (memuatkan…)</span>`) : '';
@@ -839,7 +839,7 @@ export function mountSewa(host, ctx) {
         rental_risk_status:app.querySelector('#v-rental_risk_status').value,
         notes:app.querySelector('#v-notes').value.trim(), reviewed_by:(await client.auth.getUser()).data.user?.id,
         reviewed_at:new Date().toISOString()};
-      if (!payload.reviewed_by) { m.textContent='Sesi staf tidak sah. Log masuk semula.'; return; }
+      if (!payload.reviewed_by) { m.textContent='Sesi staff tidak sah. Log masuk semula.'; return; }
       m.textContent='Menyimpan…'; t.disabled=true;
       const {data,error}=await client.from('sewa_customer_verifications').upsert(payload,{onConflict:'agreement_id'}).select().single();
       t.disabled=false;
@@ -849,7 +849,7 @@ export function mountSewa(host, ctx) {
       return;
     }
     if ((a === 'pay' || a === 'pay-undo') && r) {
-      const k = t.dataset.k, nama = ctx.profile?.full_name || 'Staf', now = new Date().toISOString();
+      const k = t.dataset.k, nama = ctx.profile?.full_name || 'Staff', now = new Date().toISOString();
       const kaedah = app.querySelector('#kd-' + k)?.value || null;
       const labels = { deposit: 'Deposit diterima', penuh: 'Bayaran penuh diterima', pulang: 'Deposit dipulangkan' };
       const fail = app.querySelector('#rs-' + k)?.files?.[0] || null;
@@ -982,7 +982,7 @@ export function mountSewa(host, ctx) {
       S.staf = data || []; S.msg = error ? 'Gagal muat: ' + error.message : ''; if (S.view === 'staf') render();
     } else if (a === 'staf-on' || a === 'staf-role') {
       const uid = t.dataset.uid, patch = a === 'staf-on' ? { enabled: t.dataset.v === '1' } : { role: t.dataset.v };
-      if (a === 'staf-role' && t.dataset.v === 'owner' && !confirm('Jadikan akaun ini Owner? Owner boleh ubah semua data, harga dan staf.')) return;
+      if (a === 'staf-role' && t.dataset.v === 'owner' && !confirm('Jadikan akaun ini Owner? Owner boleh ubah semua data, harga dan staff.')) return;
       const { data, error } = await client.from('profiles').update(patch).eq('id', uid).select('id,email,full_name,role,enabled,created_at').single();
       if (error) { S.msg = 'Gagal: ' + error.message; render(); return; }
       S.staf = S.staf.map(x => x.id === uid ? data : x); S.msg = 'Dikemas kini.'; render();

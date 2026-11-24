@@ -59,19 +59,19 @@ button{max-width:100%;overflow-wrap:anywhere}
   <form class="login" id="login" hidden>
     <div class="brand"><img src="abedin-car-rental-logo.webp" alt="Abedin Car Rental"></div>
     <h1 id="h1">Admin Sewa</h1>
-    <p id="sub">Log masuk dengan akaun staf Abedin Car Rental.</p>
+    <p id="sub">Log masuk dengan akaun staff Abedin Car Rental.</p>
     <div id="w-nama" hidden><label for="nama">Nama penuh</label><input id="nama" autocomplete="name" maxlength="120"></div>
     <label for="email">Email</label><input id="email" type="email" autocomplete="username" required>
     <label for="pw">Kata laluan</label><input id="pw" type="password" autocomplete="current-password" required>
     <button class="pri" type="submit" id="go">Log masuk</button>
     <div class="msg" id="msg"></div>
-    <p style="margin:14px 0 0;text-align:center"><button type="button" id="mode" style="background:none;border:0;color:#d8ad57;padding:4px">Daftar akaun staf baharu</button></p>
+    <p style="margin:14px 0 0;text-align:center"><button type="button" id="mode" style="background:none;border:0;color:#d8ad57;padding:4px">Daftar akaun staff baharu</button></p>
   </form>
   <div id="host"></div>
 </div>
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import { mountSewa } from './js/sewa.js?v=25ak';
+import { mountSewa } from './js/sewa.js?v=26ak';
 const client = createClient('https://abqrgiebeoyzowvxeggj.supabase.co', 'sb_publishable_ofappLwL3Q_OZzlmlcbNqQ_y5y-fC3B',
   { auth: { persistSession: true, autoRefreshToken: true, storageKey: 'acr-sewa-admin' } });
 const $ = id => document.getElementById(id);
@@ -80,11 +80,11 @@ let daftar = false;
 $('mode').onclick = () => {
   daftar = !daftar; say('');
   $('w-nama').hidden = !daftar; $('nama').required = daftar;
-  $('h1').textContent = daftar ? 'Daftar Akaun Staf' : 'Admin Sewa';
-  $('sub').textContent = daftar ? 'Selepas daftar, Owner perlu aktifkan akaun anda.' : 'Log masuk dengan akaun staf Abedin Car Rental.';
+  $('h1').textContent = daftar ? 'Daftar Akaun Staff' : 'Admin Sewa';
+  $('sub').textContent = daftar ? 'Selepas daftar, Owner perlu aktifkan akaun anda.' : 'Log masuk dengan akaun staff Abedin Car Rental.';
   $('go').textContent = daftar ? 'Daftar' : 'Log masuk';
   $('pw').autocomplete = daftar ? 'new-password' : 'current-password';
-  $('mode').textContent = daftar ? 'Sudah ada akaun? Log masuk' : 'Daftar akaun staf baharu';
+  $('mode').textContent = daftar ? 'Sudah ada akaun? Log masuk' : 'Daftar akaun staff baharu';
 };
 
 async function start() {
@@ -93,7 +93,7 @@ async function start() {
   const { data: profile, error } = await client.from('profiles').select('id,full_name,role,enabled').eq('id', session.user.id).maybeSingle();
   if (error || !profile || profile.enabled !== true) {
     await client.auth.signOut(); $('login').hidden = false;
-    say(error ? 'Gagal semak akaun: ' + error.message : 'Akaun anda belum diaktifkan. Minta Owner aktifkan di Admin → 👤 Staf.'); return;
+    say(error ? 'Gagal semak akaun: ' + error.message : 'Akaun anda belum diaktifkan. Minta Owner aktifkan di Admin → 👤 Staff.'); return;
   }
   $('login').hidden = true; $('top').hidden = false;
   $('who').textContent = `${profile.full_name || session.user.email} · ${profile.role}`;

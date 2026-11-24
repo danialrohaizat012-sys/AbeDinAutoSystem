@@ -1,8 +1,8 @@
 // Abe Din Auto – Perbelanjaan (V91): snap resit -> AI baca -> semak -> sahkan -> failkan automatik.
 // Data & kebenaran: V91_PERBELANJAAN.sql. AI: Edge Function "scan-receipt".
-// Semua staf aktif boleh snap (draf, nampak resit sendiri sahaja). Owner nampak semua, sahkan/tolak, laporan & eksport.
+// Semua staff aktif boleh snap (draf, nampak resit sendiri sahaja). Owner nampak semua, sahkan/tolak, laporan & eksport.
 // Gambar disimpan dalam bucket peribadi staff-docs: <uid>/resit/<YYYY-MM>/<masa>.jpg
-import { CSS } from "./staff.js?v=16";
+import { CSS } from "./staff.js?v=17";
 
 // [label, jenis]. Jenis: inventori = kos melekat pada kereta stok; pembelian = belanja operasi harian; overhead = bil tetap setiap bulan.
 export const CATS = {
@@ -165,7 +165,7 @@ export function mountBelanja(host, ctx) {
     }
   }
 
-  // Semakan berganda terus dari pangkalan data (semua bulan, semua staf yang boleh dilihat)
+  // Semakan berganda terus dari pangkalan data (semua bulan, semua staff yang boleh dilihat)
   const sameVendor = (a, b) => !a || !b || normPlate(a).slice(0, 6) === normPlate(b).slice(0, 6);
   function dupOf(x) { return (S.dups[x.id] || []).filter(o => S.rows.find(r => r.id === o.id)?.status !== "ditolak"); }
   async function checkDup(x) {
@@ -219,7 +219,7 @@ export function mountBelanja(host, ctx) {
     return `<div class="card rc">${u && !pdf ? `<img src="${esc(u)}" data-zoom="${esc(u)}" alt="resit" loading="lazy">` : `<a class="ph" ${u ? `href="${esc(u)}" target="_blank"` : ""}>${pdf ? "📄" : "🧾"}</a>`}
       <div class="grow"><b>${esc(x.vendor || "(tiada nama kedai)")}</b>
       <small>${JENIS_ICO[x.jenis] || ""} ${dmy(x.receipt_date)} · ${esc(catLabel(x.category))}${x.vehicle_id ? " · 🚗 " + esc(vName(x.vehicle_id)) : ""}</small>
-      <small>${ST[x.status] ? `<span class="chip ${ST[x.status][1]}">${ST[x.status][0]}</span>` : ""}${x.paid_by === "staf" ? '<span class="chip c-blue">Tuntutan staf</span>' : ""}${owner && S.names[x.created_by] ? esc(S.names[x.created_by]) : ""}</small>
+      <small>${ST[x.status] ? `<span class="chip ${ST[x.status][1]}">${ST[x.status][0]}</span>` : ""}${x.paid_by === "staf" ? '<span class="chip c-blue">Tuntutan staff</span>' : ""}${owner && S.names[x.created_by] ? esc(S.names[x.created_by]) : ""}</small>
       ${dateIssue(x) ? `<small style="color:#ffaaa4">⚠️ ${esc(dateIssue(x))}</small>` : ""}${S.dups[x.id]?.length ? `<small style="color:#ffaaa4">⚠️ Mungkin berganda</small>` : ""}
       ${x.status === "ditolak" && x.review_note ? `<small style="color:#ffaaa4">Sebab: ${esc(x.review_note)}</small>` : ""}</div>
       <div style="text-align:right"><div class="amt">${rm(x.amount)}</div>${(owner || x.status === "draf") ? `<button class="btn sm" data-edit="${x.id}" style="margin-top:6px">${x.status === "draf" ? "Semak" : "Buka"}</button>` : ""}</div></div>`;
@@ -257,7 +257,7 @@ export function mountBelanja(host, ctx) {
       ${jn === "inventori" && !x.vehicle_id && x.status === "draf" ? `<div class="warn" id="novh">Kos inventori patut dikaitkan dengan kereta — pilih kereta di atas.</div>` : ""}
       ${items.length ? `<details><summary class="mute" style="cursor:pointer">Senarai item (${items.length})</summary><table class="tbl">${items.map(i => `<tr><td>${esc(i.name)}</td><td class="r">${i.qty ?? ""}</td><td class="r">${i.price != null ? rm(i.price) : ""}</td></tr>`).join("")}</table></details>` : ""}
       ${owner && x.status === "draf" && (x.paid_by === "staf") ? `<div><label>Bulan gaji untuk bayar balik tuntutan</label><input class="field" type="month" id="paym" value="${esc(S.payMonth)}"></div>` : ""}
-      ${x.claim_id ? `<div class="info">Tuntutan staf telah dicipta & masuk kiraan gaji.</div>` : ""}
+      ${x.claim_id ? `<div class="info">Tuntutan staff telah dicipta & masuk kiraan gaji.</div>` : ""}
       <div class="row">
         ${!lock ? `<button class="btn ${owner ? "" : "pri"}" type="submit">Simpan</button>` : ""}
         ${owner && x.status === "draf" ? `<button class="btn pri" type="button" data-verify="${x.id}">✓ Simpan & Sahkan</button><button class="btn bad" type="button" data-reject="${x.id}">Tolak</button>` : ""}
@@ -282,7 +282,7 @@ export function mountBelanja(host, ctx) {
       <div class="filters">${monthSel("month")}
       <select class="field" data-f="status"><option value="">Semua status</option>${Object.entries(ST).map(([k, v]) => `<option value="${k}" ${k === S.f.status ? "selected" : ""}>${v[0]}</option>`).join("")}</select>
       <select class="field" data-f="cat"><option value="">Semua kategori</option>${Object.entries(CATS).filter(([, c]) => !S.f.jenis || c[1] === S.f.jenis).map(([k, c]) => `<option value="${k}" ${k === S.f.cat ? "selected" : ""}>${c[0]}</option>`).join("")}</select>
-      <input class="field" data-f="q" placeholder="Cari kedai, plat, staf…" value="${esc(S.f.q)}"></div>
+      <input class="field" data-f="q" placeholder="Cari kedai, plat, staff…" value="${esc(S.f.q)}"></div>
       <div class="row"><span class="mute grow">${L.length} resit</span><b>${rm(tot)}</b></div>
       <div class="list">${(globalThis.adaPg?globalThis.adaPg.rows("blj",L,render):L).map(card).join("") || '<div class="empty">Tiada resit untuk tapisan ini.</div>'}</div>${(globalThis.adaPg?globalThis.adaPg.nav("blj",L.length):"")}`;
   }
@@ -298,7 +298,7 @@ export function mountBelanja(host, ctx) {
     return `<div class="filters">${monthSel()}</div>
       <div class="stats"><div class="stat"><small>Jumlah disahkan</small><b>${rm(total)}</b></div><div class="stat"><small>Bil. resit</small><b>${L.length}</b></div>
       <div class="stat"><small>Kos kereta</small><b>${rm(sum(L.filter(x => x.vehicle_id)))}</b></div><div class="stat"><small>Belum disemak</small><b>${pending.length} · ${rm(sum(pending))}</b></div>
-      <div class="stat"><small>SST dibayar</small><b>${rm(L.reduce((s, x) => s + +x.tax_amount, 0))}</b></div><div class="stat"><small>Tuntutan staf</small><b>${rm(sum(L.filter(x => x.paid_by === "staf")))}</b></div></div>
+      <div class="stat"><small>SST dibayar</small><b>${rm(L.reduce((s, x) => s + +x.tax_amount, 0))}</b></div><div class="stat"><small>Tuntutan staff</small><b>${rm(sum(L.filter(x => x.paid_by === "staf")))}</b></div></div>
       <div class="stats">${Object.entries(JENIS).map(([k, t]) => `<div class="stat"><small>${JENIS_ICO[k]} ${t}</small><b>${rm(sum(jen(k)))}</b><small>${jen(k).length} resit · ${total ? Math.round(sum(jen(k)) / total * 100) : 0}%</small></div>`).join("")}</div>
       ${S.f.rmonth !== "all" ? overheadCheck(L) : ""}
       ${Object.entries(JENIS).map(([k, t]) => { const J = jen(k), m = {}; J.forEach(x => m[x.category] = (m[x.category] || 0) + +x.amount); const rows = Object.entries(m).sort((a, b) => b[1] - a[1]), jt = sum(J);
@@ -446,10 +446,10 @@ export function mountBelanja(host, ctx) {
     return true;
   }
   async function exportCsv(L, asBlob) {
-    const head = ["Tarikh", "Kedai", "No Resit", "Kategori", "Jenis", "Bahagian", "Kereta", "Cara Bayar", "Dibayar Oleh", "Staf", "SST", "Jumlah", "Catatan", "Nama Fail"];
+    const head = ["Tarikh", "Kedai", "No Resit", "Kategori", "Jenis", "Bahagian", "Kereta", "Cara Bayar", "Dibayar Oleh", "Staff", "SST", "Jumlah", "Catatan", "Nama Fail"];
     const q = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
     const lines = [head.map(q).join(",")].concat(L.map(x => [dmy(x.receipt_date), x.vendor, x.receipt_no, catLabel(x.category), JENIS[x.jenis] || "", UNIT[x.unit], vName(x.vehicle_id), PAY[x.payment_method],
-      x.paid_by === "staf" ? "Staf (tuntutan)" : "Syarikat", S.names[x.created_by] || "", (+x.tax_amount).toFixed(2), (+x.amount).toFixed(2), x.notes, fileName(x)].map(q).join(",")));
+      x.paid_by === "staf" ? "Staff (tuntutan)" : "Syarikat", S.names[x.created_by] || "", (+x.tax_amount).toFixed(2), (+x.amount).toFixed(2), x.notes, fileName(x)].map(q).join(",")));
     lines.push(["", "", "", "", "", "", "", "", "", "JUMLAH", L.reduce((s, x) => s + +x.tax_amount, 0).toFixed(2), L.reduce((s, x) => s + +x.amount, 0).toFixed(2), "", ""].map(q).join(","));
     const blob = new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
     if (asBlob) return blob; download(blob, `Perbelanjaan-AbeDinAuto-${S.f.rmonth}.csv`);
@@ -515,7 +515,7 @@ export function mountBelanja(host, ctx) {
       const r = await client.rpc("expense_verify", { p_id: x.id, p_pay_month: x.paid_by === "staf" ? S.payMonth : null });
       if (r.error) { b.disabled = false; return say("Gagal sahkan: " + r.error.message, "err"); }
       const next = S.rows.find(o => o.status === "draf" && o.id !== x.id);
-      await load(); S.editId = next?.id || null; say(x.paid_by === "staf" ? "Disahkan & tuntutan staf dicipta." : "Resit disahkan.", "ok"); render(); return;
+      await load(); S.editId = next?.id || null; say(x.paid_by === "staf" ? "Disahkan & tuntutan staff dicipta." : "Resit disahkan.", "ok"); render(); return;
     }
     if (b.dataset.reject) {
       const why = prompt("Sebab tolak resit ini?"); if (why == null) return;

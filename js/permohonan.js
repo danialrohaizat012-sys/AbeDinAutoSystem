@@ -1,4 +1,4 @@
-// Abe Din Auto – modul Permohonan: staf salin / kongsi link borang permohonan.html kepada pelanggan.
+// Abe Din Auto – modul Permohonan: staff salin / kongsi link borang permohonan.html kepada pelanggan.
 // Borang tidak menyimpan data: bila pelanggan tekan Hantar, maklumat dibuka terus dalam WhatsApp Abe Din
 // (nombor dari Tetapan > WhatsApp Abe Din). Dimuat oleh app.html melalui import('./js/permohonan.js').
 const CSS = `
@@ -200,7 +200,7 @@ function render() {
         <div class="hint">Biarkan kosong untuk pilih kenalan dalam WhatsApp.</div>
       </div>
     </div>
-    <details class="pm-how"><summary>Cara ia berfungsi</summary><ol><li>Staf kongsi link borang.</li><li>Pelanggan isi maklumat pemohon, pekerjaan, waris dan kereta.</li><li>Permohonan disimpan dalam sistem dan muncul di senarai atas.</li></ol></details>
+    <details class="pm-how"><summary>Cara ia berfungsi</summary><ol><li>Staff kongsi link borang.</li><li>Pelanggan isi maklumat pemohon, pekerjaan, waris dan kereta.</li><li>Permohonan disimpan dalam sistem dan muncul di senarai atas.</li></ol></details>
   </section>`;
 }
 
@@ -299,7 +299,7 @@ async function loadApplications(){
    .select('id,created_at,applicant_name,applicant_phone,applicant_email,car_interest,details,status,read_at,read_by')
    .is('deleted_at',null).order('created_at',{ascending:false}).limit(300);
  if(!app?.contains(target))return;
- if(error){target.textContent='Rekod tidak dapat dimuatkan: '+(error.message||'Semak akses staf.');return;}
+ if(error){target.textContent='Rekod tidak dapat dimuatkan: '+(error.message||'Semak akses staff.');return;}
  applications=data||[];
  if(editingId&&!getRecord(editingId))editingId=null;
  if(expandedId&&!getRecord(expandedId))expandedId=null;

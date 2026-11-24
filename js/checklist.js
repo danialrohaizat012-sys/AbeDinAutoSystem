@@ -817,7 +817,7 @@ function viewJejak(){
   const opts=[["","Semua tindakan"],["cipta","Dicipta"],["edit","Dikemas kini"],["hantar","Dihantar"],["sahkan","Disahkan"],["pulangkan","Dipulangkan"],["barang_siap","Barang siap"],["padam","Dipadam"]];
   return `<div class="card"><div class="row"><h3>Jejak transaksi pemeriksaan</h3><span class="grow"></span><small class="mute" id="jcount"></small></div>
     <p class="mute">Setiap cipta, edit, hantar, sahkan, pulangkan, tanda barang siap dan padam direkod automatik oleh pangkalan data. Jejak tidak boleh diubah atau dipadam.</p>
-    <div class="jbar"><input class="field" id="jq" placeholder="Cari plat, nama staf atau perubahan…" value="${esc(TRAIL.q)}">
+    <div class="jbar"><input class="field" id="jq" placeholder="Cari plat, nama staff atau perubahan…" value="${esc(TRAIL.q)}">
       <select class="field" id="jact">${opts.map(([k,l])=>`<option value="${k}" ${TRAIL.act===k?"selected":""}>${l}</option>`).join("")}</select></div>
     <div id="jlist">${trailHtml(TRAIL.all?jejakFiltered():null,true)}</div></div>`;
 }
@@ -836,8 +836,8 @@ function viewDetail(){
   const r=S.rows.find(x=>x.id===S.id);
   if(!r) return `<div class="empty">Rekod tidak dijumpai.</div>`;
   const c=counts(r), s=STATUS[r.status]||STATUS.draf;
-  // Semua staf yang diberi akses Pemeriksaan boleh edit rekod bersama, termasuk yang dihantar oleh staf lain.
-  // Rekod disahkan Owner kekal terkunci untuk staf biasa (selaras dengan checklist_guard pada database).
+  // Semua staff yang diberi akses Pemeriksaan boleh edit rekod bersama, termasuk yang dihantar oleh staff lain.
+  // Rekod disahkan Owner kekal terkunci untuk staff biasa (selaras dengan checklist_guard pada database).
   const canEdit = isOwner() || r.status!=="lulus";
   return `<button class="back" data-go="senarai">← Rekod</button>
   <div class="card">
