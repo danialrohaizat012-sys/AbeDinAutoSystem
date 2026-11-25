@@ -84,6 +84,16 @@ table{font-size:12.5px}th,td{padding:6px 5px}
 .p .meta{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
 .p .meta .r{justify-content:flex-start;gap:6px}
 .staff{display:flex;flex-direction:column;gap:10px}
+.card.hday{display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 18px;text-align:left}.hday-l{flex:1 1 180px}.hday-l h3{margin:0}
+.hday-m{display:flex;gap:10px;flex-wrap:wrap}.hday-m>div{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:8px 14px;min-width:140px}.hday-m small{display:block;color:var(--mute);font-size:11.5px}.hday-m b{font-size:18px}.hday-m b.neg,.neg{color:#f87171}
+.hday-r{display:flex;align-items:center;gap:6px}.hday-r .field{max-width:170px;margin:0}
+.hcard{gap:12px}.hhead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.hname h3{margin:0 0 2px}.hhead .chip{flex:0 0 auto}
+.hstats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}.hs{background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:6px 3px;text-align:center;min-width:0}.hs small{display:block;font-size:11px;color:var(--mute);white-space:nowrap}.hs b{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}.hs b i{font-style:normal;font-size:10px;margin-left:2px;opacity:.75}.hs.bad{border-color:rgba(248,113,113,.45);background:rgba(248,113,113,.09)}.hs.bad b{color:#f87171}.hs.blue b{color:#60a5fa}
+.hpay{border-radius:12px;padding:10px 14px;display:flex;flex-direction:column;gap:2px;border:1px solid var(--line)}.hpay small{font-size:11.5px;color:var(--mute)}.hpay b{font-size:22px;letter-spacing:-.02em}.hpay span{font-size:12.5px}.hpay em{font-style:normal;color:#f87171;font-weight:700}.hpay .hn{color:var(--mute);font-size:11.5px}
+.hpay.none{background:var(--soft)}.hpay.none b{color:var(--mute)}.hpay.ok{background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.35)}.hpay.ok b{color:#4ade80}.hpay.cut{background:rgba(248,113,113,.07);border-color:rgba(248,113,113,.35)}.hpay.cut b{color:#fbbf24}.hpay.wait{background:rgba(96,165,250,.08);border-color:rgba(96,165,250,.35)}.hpay.wait b{color:#93c5fd}
+.hpunch summary{cursor:pointer;font-weight:700;font-size:13px;color:var(--mute);padding:2px 0}.hpunch[open] summary{margin-bottom:8px}
+.hact{display:flex;gap:8px;flex-wrap:wrap}
+
 .num{font-variant-numeric:tabular-nums;font-weight:700}
 table{width:100%;border-collapse:collapse;font-size:13.5px}
 th,td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
@@ -409,6 +419,30 @@ function computePay(days, pay, sid) {
   return { claims, claimPay, adv, advDeduct, paidLeave, unpaidLeave, leavePay, unpaidDeduct, holidayPay, phDays:phDays.length, presentDays, absent, workedMin, regMin,
     otMin, otRaw, otBy, otPayBy, otPendingMin, lateMin, latePerMin, shortMin, shortDays, lateCount, lateExcusedCount, openCount, restOverCount, base, baseNote, otPay, lateDeduct, absentDeduct, allowance, net, pay:p, hasPay:!!pay };
 }
+// V123: gaji sebenar satu hari (asas + OT − potongan lewat/kurang jam), selari dengan computePay.
+function dayPay(d, sid) {
+  const pay = S.pay[sid]; if (!pay) return null;
+  const st = S.settings, p = pay, rate = +p.rate || 0, FULL = 480, wd = +p.monthly_workdays || 26;
+  const res = { base:0, ot:0, ded:0, net:0, short:0, notes:[], pending:false, leave:!!d.leave };
+  if (d.future && !d.present) { res.pending = true; return res; }
+  if (d.present && d.open) res.pending = true;
+  const dayRate = p.pay_type === "daily" ? rate : p.pay_type === "monthly" ? rate / wd : rate / 60 * FULL;
+  if (p.pay_type === "daily") { if (d.present && (d.type === "work" || (d.type === "rest" && !st.ot_offday_all))) { res.base = rate; res.notes.push(`Gaji harian ${rm(rate)}`); } else if (d.type === "ph" && d.sched.normallyWork) { res.base = rate; res.notes.push("Cuti umum berbayar"); } }
+  else if (p.pay_type === "hourly") { const m = p.late_mode === "pay_rate" ? Math.min(d.regular, FULL) : d.regular; res.base = m / 60 * rate; res.notes.push(`${(m / 60).toFixed(2)} jam × ${rm(rate)}`); }
+  else { if (d.workday && (d.present || (d.leave && d.leave.kind !== "unpaid"))) { res.base = dayRate; res.notes.push(`Gaji bulanan ÷ ${wd} hari`); } else if (d.workday && !d.present) res.notes.push("Tidak hadir — tiada gaji"); }
+  if (!d.present && d.leave && p.pay_type !== "monthly" && d.leave.kind !== "unpaid" && d.workday) { res.base = p.pay_type === "daily" ? rate * d.leave.w : schedMin(d.sched) * d.leave.w / 60 * rate; res.notes.push("Cuti berbayar"); }
+  const or = +p.ot_rate || 0, mult = d.otKind === "rest" ? +st.ot_restday_mult || 1 : d.otKind === "ph" ? +st.ot_ph_mult || 1 : 1;
+  res.ot = d.otPaid / 60 * or * mult; if (res.ot) res.notes.push(`OT ${fmtMin(d.otPaid)}`);
+  if (d.otStatus === "pending" && !d.otPaid && d.ot) res.notes.push(`OT ${fmtMin(d.ot)} menunggu kelulusan`);
+  if (p.late_mode === "pay_rate") {
+    if (d.present && d.type === "work" && !d.future && !d.open && !d.leave) { let sm = Math.max(0, FULL - Math.min(d.worked, FULL)); if (d.lateExcused) sm = Math.max(0, sm - d.lateRaw); sm = Math.round(sm); res.short = sm; res.ded = sm * dayRate / FULL; if (sm) res.notes.push(`Kurang ${fmtMin(sm)} daripada 8 jam`); }
+  } else if (p.late_mode === "per_minute") { res.ded = d.late * (+p.late_rate || 0); if (d.late) res.notes.push(`Lewat ${fmtMin(d.late)} × ${rm(p.late_rate)}`); }
+  else if (p.late_mode === "per_late") { res.ded = d.late > 0 ? +p.late_rate || 0 : 0; if (d.late) res.notes.push("Potongan lewat"); }
+  res.net = res.base + res.ot - res.ded;
+  res.absent = !d.present && d.workday && !d.leave && !d.future;
+  if (res.absent && !res.notes.length) res.notes.push("Tidak hadir — tiada gaji");
+  return res;
+}
 // Cache kiraan sebulan untuk satu render
 let monthCache = {};
 function staffMonth(sid) {
@@ -537,11 +571,11 @@ function dayChips(d) {
 function dayTable(days, sid, opts = {}) {
   const rows = days.filter(d => d.present || (d.workday && !d.future) || d.type === "ph" || (opts.all && !d.future));
   if (!rows.length) return `<p class="mute">Tiada rekod.</p>`;
-  return `<div class="tw"><table><thead><tr><th>Hari</th><th>Masuk</th><th>Rehat</th><th>Balik</th><th class="n">Jam</th><th>Catatan</th>${S.owner || opts.claim ? "<th></th>" : ""}</tr></thead><tbody>${rows.map(d => {
+  return `<div class="tw"><table><thead><tr><th>Hari</th><th>Masuk</th><th>Rehat</th><th>Balik</th><th class="n">Jam</th>${S.owner ? `<th class="n">Gaji hari</th>` : ""}<th>Catatan</th>${S.owner || opts.claim ? "<th></th>" : ""}</tr></thead><tbody>${rows.map(d => {
     const fi = d.firstIn, lo = d.lastOut;
     const act = S.owner ? `<td><button class="sm" data-act="day" data-staff="${esc(sid)}" data-day="${d.key}">✎</button></td>`
       : opts.claim ? `<td>${(d.open && d.key < nowKey()) || (!d.present && d.workday && !d.leave && !d.future) ? `<button class="sm" data-act="req" data-day="${d.key}">Tuntut punch</button>` : ""}</td>` : "";
-    return `<tr><td>${dayLabel(d.key)}${d.sched.type === "work" && d.sched.shiftId ? `<div class="mute" style="font-size:11.5px">${esc(d.sched.name)}</div>` : ""}</td><td>${fi ? hm(fi.punched_at) : "–"}</td><td>${d.rest ? fmtMin(d.rest) : d.autoBreak ? `<span class="mute">${d.autoBreak}m auto</span>` : "–"}</td><td>${lo ? hm(lo.punched_at) : "–"}</td><td class="n">${d.worked ? fmtMin(d.worked) : "–"}</td><td class="wrap">${dayChips(d)}</td>${act}</tr>`;
+    return `<tr><td>${dayLabel(d.key)}${d.sched.type === "work" && d.sched.shiftId ? `<div class="mute" style="font-size:11.5px">${esc(d.sched.name)}</div>` : ""}</td><td>${fi ? hm(fi.punched_at) : "–"}</td><td>${d.rest ? fmtMin(d.rest) : d.autoBreak ? `<span class="mute">${d.autoBreak}m auto</span>` : "–"}</td><td>${lo ? hm(lo.punched_at) : "–"}</td><td class="n">${d.worked ? fmtMin(d.worked) : "–"}</td>${S.owner ? (() => { const dp = dayPay(d, sid); return `<td class="n">${!dp ? "–" : `<b>${rm(dp.net)}</b>${dp.ded ? `<div class="neg" style="font-size:11.5px">−${rm(dp.ded)}</div>` : ""}${dp.ot ? `<div class="mute" style="font-size:11.5px">OT +${rm(dp.ot)}</div>` : ""}`}</td>`; })() : ""}<td class="wrap">${dayChips(d)}</td>${act}</tr>`;
   }).join("")}</tbody></table></div>`;
 }
 function payBox(c) {
@@ -618,13 +652,25 @@ function viewToday() {
   const k = S.day, list = activeStaff();
   const cards = list.map(s => {
     const x = boardStatus(s, k), [lab, cls] = BOARD[x.st];
-    return `<div class="card staff"><div class="r"><div><h3>${esc(s.full_name || "Staff")}</h3><span class="mute">${esc(schedText(x.sc))}</span></div><span class="r" style="gap:6px"><span class="chip ${cls}">${lab}</span>${x.d.late ? `<span class="chip bad">Lewat ${fmtMin(x.d.late)}</span>` : ""}${x.d.ot ? `<span class="chip blue">OT ${fmtMin(x.d.ot)}</span>` : ""}${x.d.worked ? `<span class="chip">${fmtMin(x.d.worked)}</span>` : ""}</span></div>
-      ${x.ps.length ? `<div class="pl">${x.ps.map(p => punchRow(p, false)).join("")}</div>` : ""}
-      <div class="r" style="justify-content:flex-start"><button class="sm go" data-act="day" data-staff="${esc(s.id)}" data-day="${k}">✎ Edit hari</button><button class="sm" data-act="manual" data-staff="${esc(s.id)}">+ Punch manual</button></div></div>`;
+    const d = x.d, dp = dayPay(d, s.id), fi = d.firstIn, lo = d.lastOut;
+    const tHm = x => esc(hm(x)).replace(/\s?(AM|PM|PG|PTG|ptg|pg)$/i, '<i>$1</i>');
+    const stat = (l, v, c = "") => `<div class="hs ${c}"><small>${l}</small><b>${v}</b></div>`;
+    const payTile = !dp ? `<div class="hpay none"><small>Gaji hari ini</small><b>–</b><span>Tetapan gaji belum dibuat</span></div>`
+      : `<div class="hpay ${dp.absent || (!d.present && !dp.net) ? "none" : dp.pending ? "wait" : dp.ded > 0 ? "cut" : "ok"}"><small>${dp.pending ? "Gaji setakat ini" : "Gaji sebenar hari ini"}</small><b>${rm(dp.net)}</b>
+        <span>${dp.base ? `Asas ${rm(dp.base)}` : "Asas RM0.00"}${dp.ot ? ` · OT +${rm(dp.ot)}` : ""}${dp.ded ? ` · <em>Potongan −${rm(dp.ded)}</em>` : ""}</span>
+        ${dp.notes.length ? `<span class="hn">${dp.notes.map(esc).join(" · ")}${dp.pending && d.present ? " · dikira muktamad selepas punch balik" : ""}</span>` : ""}</div>`;
+    return `<div class="card staff hcard"><div class="hhead"><div class="hname"><h3>${esc(s.full_name || "Staff")}</h3><span class="mute">${esc(schedText(x.sc))}</span></div><span class="chip ${cls}">${lab}</span></div>
+      <div class="hstats">${stat("Masuk", fi ? tHm(fi.punched_at) : "–", d.late ? "bad" : "")}${stat("Balik", lo && !d.open ? tHm(lo.punched_at) : "–")}${stat("Jam kerja", d.worked ? fmtMin(d.worked) : "–")}${stat("Lewat", d.late ? fmtMin(d.late) : d.lateExcused ? "Dimaafkan" : "–", d.late ? "bad" : "")}${stat("OT", d.ot ? fmtMin(d.ot) : "–", d.ot ? "blue" : "")}</div>
+      ${S.owner ? payTile : ""}
+      ${x.ps.length ? `<details class="hpunch"><summary>Rekod punch (${x.ps.length})${d.outside ? ` <span class="chip bad">Ada luar kawasan</span>` : ""}</summary><div class="pl cols2">${x.ps.map(p => punchRow(p, false)).join("")}</div></details>` : ""}
+      <div class="hact"><button class="sm go" data-act="day" data-staff="${esc(s.id)}" data-day="${k}">✎ Edit hari</button><button class="sm" data-act="manual" data-staff="${esc(s.id)}">+ Punch manual</button></div></div>`;
   }).join("");
   const present = list.filter(s => S.punches.some(p => p.staff_id === s.id && dayKey(p.punched_at) === k)).length;
-  return `<div class="card"><div class="r"><div><h3>${dayLabel(k)}</h3><span class="mute">${present}/${list.length} staff hadir${S.holidays[k] ? ` · ${esc(S.holidays[k].name)}` : ""}</span></div>
-      <span class="r" style="gap:6px"><button class="sm" data-act="dayshift" data-n="-1">‹</button><input type="date" class="field" id="day" value="${esc(k)}" style="max-width:170px"><button class="sm" data-act="dayshift" data-n="1">›</button></span></div></div>
+  const totPay = S.owner ? list.reduce((t, s) => { const dp = dayPay(boardStatus(s, k).d, s.id); return t + (dp ? dp.net : 0); }, 0) : 0;
+  const totDed = S.owner ? list.reduce((t, s) => { const dp = dayPay(boardStatus(s, k).d, s.id); return t + (dp ? dp.ded : 0); }, 0) : 0;
+  return `<div class="card hday"><div class="hday-l"><h3>${dayLabel(k)}</h3><span class="mute">${present}/${list.length} staff hadir${S.holidays[k] ? ` · ${esc(S.holidays[k].name)}` : ""}</span></div>
+      ${S.owner ? `<div class="hday-m"><div><small>Jumlah gaji hari ini</small><b>${rm(totPay)}</b></div><div><small>Jumlah potongan</small><b class="${totDed ? "neg" : ""}">${totDed ? "−" + rm(totDed) : rm(0)}</b></div></div>` : ""}
+      <div class="hday-r"><button class="sm" data-act="dayshift" data-n="-1">‹</button><input type="date" class="field" id="day" value="${esc(k)}"><button class="sm" data-act="dayshift" data-n="1">›</button></div></div>
     <div class="ap">${cards || `<div class="card full"><p class="mute">Belum ada staff. Tambah staff di menu Staff.</p></div>`}</div>`;
 }
 
