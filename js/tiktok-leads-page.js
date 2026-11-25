@@ -14,6 +14,13 @@ const fmtShort = (d) => new Date(d).toLocaleDateString('ms-MY', { timeZone: 'Asi
 const fmtTime = (d) => new Date(d).toLocaleString('ms-MY', { timeZone: 'Asia/Kuala_Lumpur' });
 
 let me = null, staff = [], page = 0, busy = false, counts = {};
+const staffName = (id) => {
+  const p = staff.find((x) => x.id === id);
+  if (!p) return id ? 'Staff terdahulu' : 'Belum diambil';
+  if (p.role === 'owner' && me.role !== 'owner') return 'Belum diambil';
+  return p.id === me.id ? (p.full_name || 'Anda') + ' (anda)' : (p.full_name || 'Staff');
+};
+const unclaimed = (id) => { if (!id) return true; const p = staff.find((x) => x.id === id); return !p || p.role === 'owner'; };
 let tab = 'new', queue = '';
 let sort = (() => { try { return localStorage.getItem('tt_sort') || 'new'; } catch (_) { return 'new'; } })();
 $('sort').value = sort;
@@ -116,16 +123,24 @@ function leadCard(r) {
       const { data, error } = await client.from('tiktok_leads').update({ status: s.value }).eq('id', r.id).select('id,status').single();
       if (error) throw error;
       $('status').textContent = 'Status disimpan';
+      claim();
       afterStatus(a, r, data.status);
     } catch (e) { s.value = prev; s.dataset.v = prev; $('status').textContent = 'Gagal: ' + e.message; }
     finally { s.disabled = false; }
   };
   a.append(h, p, s, mk('p', 'meta', 'Masuk ' + fmtDate(r.created_at)));
 
-  const ownerLabel = mk('p', 'owner', 'Staff: ' + (staff.find((x) => x.id === r.assigned_to)?.full_name || 'Belum ditetapkan / tidak aktif'));
-  // Sales advisor nampak semua lead; label staff hanya untuk lead yang diagih kepadanya
-  if (me.role === 'owner') a.append(ownerLabel);
-  else if (r.assigned_to === me.id) { ownerLabel.textContent = 'Diagih kepada anda'; a.append(ownerLabel); }
+  const ownerLabel = mk('p', 'owner');
+  const paintOwner = () => { ownerLabel.textContent = 'Staff: ' + staffName(r.assigned_to); ownerLabel.classList.toggle('mine', r.assigned_to === me.id); };
+  paintOwner();
+  a.append(ownerLabel);
+  // Sales advisor yang hubungi lead automatik jadi staff lead itu (jika belum diambil)
+  const claim = async () => {
+    if (me.role !== 'sales_advisor' || r.assigned_to === me.id || !unclaimed(r.assigned_to)) return;
+    const { data, error } = await client.from('tiktok_leads').update({ assigned_to: me.id }).eq('id', r.id).select('id,assigned_to').single();
+    if (!error && data) { r.assigned_to = data.assigned_to; paintOwner(); }
+  };
+  a.addEventListener('click', (e) => { if (e.target.closest('.wa')) claim(); });
   if (me.role === 'owner') {
     const ass = mk('select', 'assign');
     ass.setAttribute('aria-label', 'Agih pelanggan kepada staff');
@@ -139,7 +154,7 @@ function leadCard(r) {
         const { data, error } = await client.from('tiktok_leads').update({ assigned_to: ass.value }).eq('id', r.id).select('id,assigned_to').single();
         if (error) throw error;
         r.assigned_to = data.assigned_to;
-        ownerLabel.textContent = 'Staff: ' + (staff.find((x) => x.id === r.assigned_to)?.full_name || 'Tidak aktif');
+        paintOwner();
         $('status').textContent = 'Agihan disimpan';
       } catch (e) { sync(); $('status').textContent = 'Agihan gagal: ' + e.message; }
       finally { ass.disabled = false; }
@@ -254,10 +269,9 @@ async function start() {
     const { data: prof, error: pe } = await client.from('profiles').select('id,full_name,role,enabled').eq('id', auth.user.id).single();
     if (pe || !prof?.enabled || !['owner', 'sales_advisor'].includes(prof.role)) throw Error('Akses tidak dibenarkan');
     me = prof; staff = [me];
+    const { data: team } = await client.rpc('tiktok_staff_names');
+    if (Array.isArray(team) && team.length) staff = team;
     if (me.role === 'owner') {
-      const { data: team, error: te } = await client.from('profiles').select('id,full_name,role,enabled').in('role', ['owner', 'sales_advisor']).eq('enabled', true).order('full_name');
-      if (te) throw te;
-      staff = team;
       for (const id of ['open-wa', 'open-staff', 'm-open-wa', 'm-open-staff', 'm-import', 'side-import', 'tools-wrap']) $(id).hidden = false;
     }
     await WA.init(client, me, { onSent: loadCounts, onConfig: () => load() });
