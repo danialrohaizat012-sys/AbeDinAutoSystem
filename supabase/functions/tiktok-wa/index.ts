@@ -34,7 +34,8 @@ Gaya:
 - Setiap ayat MESTI berbeza: pembuka, susunan, perkataan dan soalan penutup lain-lain. Jangan ulang frasa yang sama.
 Larangan:
 - JANGAN letak pautan/URL, nombor telefon, hashtag, harga, diskaun, promosi, jaminan kelulusan atau janji yang tidak diberi.
-- JANGAN guna huruf besar semua atau nada jualan desakan.`;
+- JANGAN guna huruf besar semua atau nada jualan desakan.
+- JANGAN campur perkataan Bahasa Inggeris (contoh salah: "through", "interested", "form"). Guna Bahasa Melayu sepenuhnya.`;
 
 async function aiConfig() {
   let key = Deno.env.get("ANTHROPIC_API_KEY") || "", model = Deno.env.get("ANTHROPIC_MODEL") || "";
@@ -153,7 +154,8 @@ Deno.serve(async (req) => {
       const tpl = tpls[Math.floor(Math.random() * tpls.length)];
       const text = fill(tpl.body, lead.name);
       const chatId = lead.phone.slice(1) + "@c.us";
-      const headers: Record<string, string> = { "content-type": "application/json", accept: "application/json" };
+      // ngrok-skip-browser-warning: elak halaman amaran ngrok percuma; header lain diabaikan oleh WAHA
+      const headers: Record<string, string> = { "content-type": "application/json", accept: "application/json", "ngrok-skip-browser-warning": "1", "user-agent": "AbeDinAuto-TikTokLead/1" };
       if (cfg.api_key) headers["X-Api-Key"] = cfg.api_key;
       const call = (path: string, payload: unknown) =>
         fetch(cfg.base_url + path, { method: "POST", headers, body: JSON.stringify(payload), signal: AbortSignal.timeout(20000) });
@@ -166,7 +168,14 @@ Deno.serve(async (req) => {
         await call("/api/stopTyping", { session: cfg.session, chatId }).catch(() => null);
         const r = await call("/api/sendText", { session: cfg.session, chatId, text });
         ok = r.ok;
-        if (!ok) err = `WAHA ${r.status}: ${(await r.text()).slice(0, 200)}`;
+        if (!ok) {
+          const raw = (await r.text()).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 160);
+          const hint = r.status === 401 || r.status === 403 ? " Semak kunci API WAHA."
+            : r.status === 404 ? " Semak URL WAHA dan nama session."
+            : r.status === 405 ? " URL WAHA salah — guna URL server WAHA anda sendiri, bukan laman lain."
+            : r.status >= 500 ? " Server WAHA atau session ada masalah (pastikan session WORKING)." : "";
+          err = `WAHA ${r.status}: ${raw}.${hint}`;
+        }
       } catch (e) {
         err = "Tidak dapat sambung ke WAHA: " + String((e as Error)?.message || e).slice(0, 200);
       }
