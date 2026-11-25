@@ -170,9 +170,8 @@ function renderToolsCount() { if (!queueBusy && waha) setStatusLine(`WAHA hari i
 
 // ---------- Panel owner: ayat AI + tetapan WAHA ----------
 function renderPanel() {
-  const panel = $('wa-panel'); if (!panel) return;
-  panel.hidden = false;
-  const body = $('wa-panel-body'); body.replaceChildren();
+  const body = $('wa-panel-body'); if (!body) return;
+  body.replaceChildren();
 
   const tplCard = mk('div', 'wa-card');
   const h = mk('h3', null, 'Ayat WhatsApp rawak');
@@ -200,7 +199,7 @@ function renderPanel() {
   if (tpls.length) tplCard.append(list);
 
   const f = mk('form', 'wa-card');
-  f.append(mk('h3', null, 'Tetapan WAHA'), mk('p', 'wa-note', 'URL WAHA mesti boleh dicapai dari internet (contoh melalui Cloudflare Tunnel). Kunci API disimpan di server dan tidak dipaparkan semula.'));
+  f.append(mk('h3', null, 'Tetapan WAHA'), mk('p', 'wa-note', 'URL WAHA mesti boleh dicapai dari internet (contoh melalui ngrok atau Cloudflare Tunnel). Kunci API disimpan di server dan tidak dipaparkan semula.'));
   const field = (label, input) => { const l = mk('label', null, label); l.append(input); f.append(l); return input; };
   const inp = (type, val, ph) => { const i = document.createElement('input'); i.type = type; i.value = val ?? ''; if (ph) i.placeholder = ph; return i; };
   const url = field('URL WAHA', inp('url', waha?.base_url, 'https://waha.contoh.com'));
