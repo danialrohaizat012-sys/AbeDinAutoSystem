@@ -28,6 +28,7 @@ const KL = 8 * 3600000;
 const todayK = () => new Date(Date.now() + KL).toISOString().slice(0, 10);
 const ymNow = () => todayK().slice(0, 7);
 const rm = n => "RM" + Number(n || 0).toLocaleString("en-MY", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const dtm = s => { if (!s) return ""; const d = new Date(s); if (isNaN(d)) return ""; const o = { timeZone: "Asia/Kuala_Lumpur" }; return d.toLocaleDateString("en-GB", { ...o, day: "2-digit", month: "2-digit", year: "numeric" }) + ", " + d.toLocaleTimeString("en-US", { ...o, hour: "numeric", minute: "2-digit", hour12: true }); };
 const dmy = s => { if (!s) return "-"; const [y, m, d] = String(s).slice(0, 10).split("-"); return `${d}/${m}/${y}`; };
 const MONTHS = ["Jan", "Feb", "Mac", "Apr", "Mei", "Jun", "Jul", "Ogo", "Sep", "Okt", "Nov", "Dis"];
 const monthName = ym => { const [y, m] = ym.split("-"); return `${MONTHS[+m - 1]} ${y}`; };
@@ -220,6 +221,7 @@ export function mountBelanja(host, ctx) {
       <div class="grow"><b>${esc(x.vendor || "(tiada nama kedai)")}</b>
       <small>${JENIS_ICO[x.jenis] || ""} ${dmy(x.receipt_date)} · ${esc(catLabel(x.category))}${x.vehicle_id ? " · 🚗 " + esc(vName(x.vehicle_id)) : ""}</small>
       <small>${ST[x.status] ? `<span class="chip ${ST[x.status][1]}">${ST[x.status][0]}</span>` : ""}${x.paid_by === "staf" ? '<span class="chip c-blue">Tuntutan staff</span>' : ""}${owner && S.names[x.created_by] ? esc(S.names[x.created_by]) : ""}</small>
+      <small class="tm">🕒 Dimasukkan ${esc(dtm(x.created_at))}${x.verified_at ? ` · ✅ Disahkan ${esc(dtm(x.verified_at))}` : ""}</small>
       ${dateIssue(x) ? `<small style="color:#ffaaa4">⚠️ ${esc(dateIssue(x))}</small>` : ""}${S.dups[x.id]?.length ? `<small style="color:#ffaaa4">⚠️ Mungkin berganda</small>` : ""}
       ${x.status === "ditolak" && x.review_note ? `<small style="color:#ffaaa4">Sebab: ${esc(x.review_note)}</small>` : ""}</div>
       <div style="text-align:right"><div class="amt">${rm(x.amount)}</div>${(owner || x.status === "draf") ? `<button class="btn sm" data-edit="${x.id}" style="margin-top:6px">${x.status === "draf" ? "Semak" : "Buka"}</button>` : ""}</div></div>`;
