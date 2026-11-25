@@ -75,7 +75,7 @@ export function mountBelanja(host, ctx) {
   const app = root.getElementById("app");
   const TABS = owner ? [["snap", "📷 Snap Resit"], ["list", "Senarai"], ["ana", "📊 Analisa"], ["report", "Laporan"], ["export", "Eksport"], ["ai", "Tetapan AI"]] : [["snap", "📷 Snap Resit"], ["list", "Resit Saya"]];
   const S = { dups: {}, tab: "snap", rows: [], names: {}, urls: {}, err: "", msg: "", cls: "", queue: [], editId: null, ai: null,
-    f: { month: "recent", rmonth: ymNow(), cat: "", status: "", q: "", unit: "", jenis: "" }, prev: [], payMonth: ymNow(), busy: false };
+    f: { month: "recent", rmonth: ymNow(), cat: "", status: "", q: "", unit: "", jenis: "" }, prev: [], payMonth: ymNow(), busy: false, insp: {} };
 
   const say = (t, c) => { S.msg = t; S.cls = c || ""; const m = app.querySelector("#bmsg"); if (m) { m.textContent = t; m.className = "msg " + (c || ""); } };
   const vName = id => { const v = vehicles.find(x => x.id === id); return v ? `${v.make || ""} ${v.model || ""} · ${v.plate || "-"}`.trim() : ""; };
@@ -225,7 +225,34 @@ export function mountBelanja(host, ctx) {
       <div style="text-align:right"><div class="amt">${rm(x.amount)}</div>${(owner || x.status === "draf") ? `<button class="btn sm" data-edit="${x.id}" style="margin-top:6px">${x.status === "draf" ? "Semak" : "Buka"}</button>` : ""}</div></div>`;
   }
 
+  // V124: pautan resit → barang dalam Pemeriksaan (kos kereta sama)
+  function inspOpts(x) {
+    const I = S.insp[x.vehicle_id], cur = x.insp_mode === "part" || (x.inspection_part_id && !String(x.inspection_part_id).startsWith("exp-")) ? "part:" + x.inspection_part_id : (x.insp_mode || "auto");
+    const used = new Set(S.rows.filter(r => r.id !== x.id && r.status !== "ditolak" && r.inspection_part_id).map(r => r.inspection_part_id));
+    const parts = (I?.parts || []).filter(p => p.id && !String(p.id).startsWith("exp-") && (!used.has(p.id) || "part:" + p.id === cur));
+    const tot = p => (+p.qty || 1) * (+p.harga || 0) + (+p.upah || 0);
+    return `<option value="auto" ${cur === "auto" || cur === "new" ? "selected" : ""}>➕ Tambah sebagai barang baru dalam Pemeriksaan</option>`
+      + (parts.length ? `<optgroup label="Atau ganti barang sedia ada (barang yang sama sahaja)">${parts.map(p => `<option value="part:${esc(p.id)}" ${cur === "part:" + p.id ? "selected" : ""}>${esc(p.nama || "Barang")} — anggaran ${rm(tot(p))}</option>`).join("")}</optgroup>` : "")
+      + `<option value="none" ${cur === "none" ? "selected" : ""}>🚫 Jangan masukkan ke Pemeriksaan</option>`;
+  }
+  function inspHint(x) {
+    if (!x.vehicle_id) return "";
+    const I = S.insp[x.vehicle_id];
+    if (I === undefined) return "Memuatkan senarai barang pemeriksaan…";
+    const p = x.inspection_id && I && x.inspection_part_id ? (I.parts || []).find(q => q.id === x.inspection_part_id) : null;
+    if (p) return `✅ Sudah dimasukkan ke Pemeriksaan: <b>${esc(p.nama || "")}</b> = ${rm((+p.qty || 1) * (+p.harga || 0) + (+p.upah || 0))}. Kos pemeriksaan kereta: ${rm(I.kos)}.`;
+    return I ? `Kos pemeriksaan sekarang: ${rm(I.kos)}. Selepas simpan, resit ini ditambah sebagai barang baru. Pilih barang sedia ada hanya jika resit ini untuk barang yang sama — harganya akan ditukar kepada jumlah resit.` : "Kereta ini belum ada rekod pemeriksaan — rekod baru akan dicipta automatik.";
+  }
+  async function loadInsp(vid, force) {
+    if (!vid || (!force && S.insp[vid] !== undefined)) return;
+    const r = await client.from("checklist_inspections").select("id,kos,status,data,updated_at").eq("vehicle_id", vid).order("updated_at", { ascending: false }).limit(50);
+    const rows = r.data || [], c = rows.find(x => x.status === "lulus") || rows[0];
+    S.insp[vid] = c ? { id: c.id, kos: +c.kos || 0, parts: c.data?.parts || [] } : null;
+    const f = app.querySelector("#ed"), x = S.rows.find(q => q.id === S.editId);
+    if (f && x && f.elements.vehicle_id?.value === vid) { const sel = f.elements.insp_link, v = sel?.value; const tmp = { ...x, vehicle_id: vid }; if (sel) { sel.innerHTML = inspOpts(tmp); if ([...sel.options].some(o => o.value === v)) sel.value = v; } const h = app.querySelector("#insphint"); if (h) h.innerHTML = inspHint(tmp); }
+  }
   function editor(x) {
+    if (x?.vehicle_id && S.insp[x.vehicle_id] === undefined) setTimeout(() => loadInsp(x.vehicle_id), 0);
     if (!x) return "";
     const lock = x.status !== "draf" && !owner, u = S.urls[x.image_path], pdf = /\.pdf$/i.test(x.image_path || "");
     const dups = dupOf(x), dis = lock ? "disabled" : "";
@@ -248,6 +275,7 @@ export function mountBelanja(host, ctx) {
         <div><label>Kategori</label><select class="field" name="category" ${dis}>${catOpts}</select></div>
         <div><label>Bahagian</label><select class="field" name="unit" ${dis}>${opt(UNIT, x.unit)}</select></div>
         <div class="full"><label>Kereta (untuk kira kos & untung per unit)</label><select class="field" name="vehicle_id" ${dis}>${vOpts}</select></div>
+        <div class="full inspbox" ${x.vehicle_id ? "" : "hidden"}><label>🔧 Masuk ke kos Pemeriksaan kereta ini</label><select class="field" name="insp_link" ${dis}>${inspOpts(x)}</select><small class="mute" id="insphint">${inspHint(x)}</small></div>
         <div><label>Cara bayar</label><select class="field" name="payment_method" ${dis}>${opt(PAY, x.payment_method)}</select></div>
         <div><label>Siapa bayar?</label><select class="field" name="paid_by" ${dis}><option value="syarikat" ${x.paid_by === "syarikat" ? "selected" : ""}>Duit syarikat</option><option value="staf" ${x.paid_by === "staf" ? "selected" : ""}>Saya bayar dulu (tuntut)</option></select></div>
         <div><label>No. resit</label><input class="field" name="receipt_no" value="${esc(x.receipt_no || "")}" ${dis}></div>
@@ -435,14 +463,17 @@ export function mountBelanja(host, ctx) {
     const f = app.querySelector("#ed"); if (!f) return null; const g = n => f.elements[n]?.value;
     return { vendor: g("vendor")?.trim() || null, receipt_date: g("receipt_date"), amount: Math.max(0, Number(g("amount")) || 0),
       category: g("category"), jenis: g("jenis"), unit: g("unit"), vehicle_id: g("vehicle_id") || null, payment_method: g("payment_method"),
-      paid_by: g("paid_by"), receipt_no: g("receipt_no")?.trim() || null, tax_amount: Math.max(0, Number(g("tax_amount")) || 0), notes: g("notes")?.trim() || null };
+      paid_by: g("paid_by"), receipt_no: g("receipt_no")?.trim() || null, tax_amount: Math.max(0, Number(g("tax_amount")) || 0), notes: g("notes")?.trim() || null,
+      ...(() => { const v = g("insp_link") || "auto"; return v.startsWith("part:") ? { insp_mode: "part", inspection_part_id: v.slice(5) } : { insp_mode: v }; })() };
   }
   async function save(id, quiet) {
     const p = formData(); if (!p) return true;
     if (!p.receipt_date) { say("Isi tarikh resit.", "err"); return false; }
     const r = await client.from("expenses").update(p).eq("id", id).select().single();
     if (r.error) { say("Gagal simpan: " + r.error.message, "err"); return false; }
-    S.rows = S.rows.map(x => x.id === id ? r.data : x); localDups(); await checkDup(r.data); if (!quiet) { S.editId = null; say("Resit disimpan.", "ok"); render(); }
+    S.rows = S.rows.map(x => x.id === id ? r.data : x); localDups(); await checkDup(r.data);
+    if (r.data.vehicle_id) { delete S.insp[r.data.vehicle_id]; loadInsp(r.data.vehicle_id); }
+    if (!quiet) { S.editId = null; say(r.data.inspection_id ? "Resit disimpan & kos dimasukkan ke Pemeriksaan kereta." : "Resit disimpan.", "ok"); render(); }
     return true;
   }
   async function exportCsv(L, asBlob) {
@@ -478,6 +509,7 @@ export function mountBelanja(host, ctx) {
     if (t.id === "paym") S.payMonth = t.value;
     if (t.id === "adraf") { A.draf = t.checked; loadAna(); }
     if (t.name === "vehicle_id" && t.value) { const u = app.querySelector("[name=unit]"); if (u && u.value === "umum") u.value = "jualan"; }
+    if (t.name === "vehicle_id") { const b = app.querySelector(".inspbox"); if (b) b.hidden = !t.value; if (t.value) { const sel = app.querySelector("[name=insp_link]"); if (sel) sel.value = "auto"; const h = app.querySelector("#insphint"); if (h) h.textContent = "Memuatkan senarai barang pemeriksaan…"; loadInsp(t.value, true); } }
   });
   app.addEventListener("input", e => { if (e.target.dataset.f === "q") { S.f.q = e.target.value; clearTimeout(S.qt); S.qt = setTimeout(() => { const pos = e.target.selectionStart; render(); const n = app.querySelector("[data-f=q]"); n?.focus(); try { n.setSelectionRange(pos, pos); } catch (_) {} }, 250); } });
   app.addEventListener("submit", async e => {
