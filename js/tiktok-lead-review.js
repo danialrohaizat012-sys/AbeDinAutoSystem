@@ -9,12 +9,12 @@ function review(records){
  const valid=!!phone&&name.length>0&&name.length<=200;
  const duplicate=valid&&seen.has(phone);
  if(valid)seen.add(phone);
- return {row:i+1,name,rawPhone,phone,city:String(r.city??"").trim(),date:String(r.date??"").trim(),valid,duplicate};
+ return {row:i+1,name,rawPhone,phone,city:String(r.city??"").trim(),date:String(r.date??"").trim(),state:String(r.state??"").trim(),gender:String(r.gender??"").trim(),occupation:String(r.occupation??"").trim(),valid,duplicate};
  });
 }
 function update(records,index,changes){
  if(!Number.isInteger(index)||index<0||index>=records.length)throw Error("Rekod tidak dijumpai");
- return review(records.map((r,i)=>i===index?{...r,...Object.fromEntries(Object.entries(changes).filter(([k])=>["name","rawPhone","city","date"].includes(k)))}:r));
+ return review(records.map((r,i)=>i===index?{...r,...Object.fromEntries(Object.entries(changes).filter(([k])=>["name","rawPhone","city","date","state","gender","occupation"].includes(k)))}:r));
 }
 root.AdaTikTokReview={review,update};
 })(globalThis);
