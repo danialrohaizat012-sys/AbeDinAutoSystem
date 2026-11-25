@@ -40,7 +40,7 @@ create policy audit_owner_read on public.tiktok_sale_link_audit for select to au
 create schema if not exists tiktok_private;
 revoke all on schema tiktok_private from public,anon,authenticated;
 create function tiktok_private.audit_sale_link() returns trigger
-language plpgsql security definer set search_path='' as $
+language plpgsql security definer set search_path='' as $$
 begin
  if TG_OP='INSERT' then
  insert into public.tiktok_sale_link_audit(sale_id,lead_id,action,actor_id) values(new.sale_id,new.lead_id,'linked',auth.uid());
@@ -50,7 +50,7 @@ begin
  return old;
  end if;
 end;
-$;
+$$;
 revoke all on function tiktok_private.audit_sale_link() from public,anon,authenticated;
 create trigger audit_tiktok_sale_link after insert or delete on public.tiktok_sale_links for each row execute function tiktok_private.audit_sale_link();
 commit;
