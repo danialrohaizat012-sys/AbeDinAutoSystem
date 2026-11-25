@@ -16,48 +16,36 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const STYLES = [
-  "sapaan mesra macam kenal lama", "ringkas dan terus ke tujuan", "tanya soalan mudah tentang kereta idaman",
-  "ucap terima kasih dulu, kemudian tanya", "nada santai macam jiran sekampung", "tawar bantu cari kereta ikut bajet",
-  "tanya bila masa sesuai untuk berbual", "sebut King Axia secara bersahaja", "gaya staff yang prihatin",
-  "tanya kereta jenis apa yang dicari",
+  "mula dengan salam (Assalamualaikum)", "mula dengan ucap terima kasih kerana isi borang", "mesra dan ringkas",
+  "profesional tetapi santai", "fokus tanya bajet bulanan", "fokus tanya model kereta yang dicari",
+  "tanya kereta untuk kegunaan apa (kerja, keluarga, harian)", "tawar bantu cari kereta ikut bajet",
+  "tanya bila masa sesuai untuk berbual", "sebut King Axia secara bersahaja",
 ];
 const pick = <T,>(a: T[], n: number) => [...a].sort(() => Math.random() - 0.5).slice(0, n);
 
-const RULES = `Konteks: Pelanggan ini SENDIRI mengisi borang minat di TikTok Abe Din Auto (kedai kereta terpakai, Kubang Kerian, Kota Bharu, Kelantan; dikenali sebagai "King Axia"). Ini mesej WhatsApp PERTAMA daripada staff Abe Din Auto untuk menyusul.
+const RULES = `Konteks: Pelanggan ini SENDIRI mengisi borang minat di TikTok Abe Din Auto (kedai kereta terpakai di Kubang Kerian, Kota Bharu, Kelantan; dikenali sebagai "King Axia"). Ini mesej WhatsApp PERTAMA daripada staff Abe Din Auto untuk menyusul.
+Setiap ayat WAJIB ada:
+- Salam (contoh: "Assalamualaikum") ATAU ucapan terima kasih kerana isi borang di TikTok.
+- Perkenalkan diri dari Abe Din Auto, Kubang Kerian.
+- Soalan susulan tentang keperluan pelanggan, contohnya: kereta apa yang dicari, bajet bulanan, bayaran pendahuluan, untuk kegunaan apa, atau bila sesuai berbual. Pilih 1–2 soalan sahaja.
 Gaya:
-- Bahasa Melayu MALAYSIA santai dan sopan, macam orang Malaysia sebenar menaip di WhatsApp. Ikut arahan "Bahasa" di bawah untuk loghat negeri.
-- Pendek: 1–3 ayat, maksimum 280 aksara.
+- Bahasa Melayu Malaysia BAKU (standard) yang sopan dan mesra, macam staff kedai menaip di WhatsApp. TIADA loghat atau dialek negeri.
+- Pendek: 2–4 ayat, maksimum 350 aksara.
 - WAJIB ada penanda {nama} tepat sekali (sistem gantikan dengan nama pelanggan).
-- Sebut bahawa mereka isi borang / berminat melalui TikTok supaya mereka ingat.
-- Akhiri dengan soalan ringan supaya pelanggan mudah balas.
 - Emoji 0–2 sahaja, ada ayat tanpa emoji langsung.
 - Setiap ayat MESTI berbeza: pembuka, susunan, perkataan dan soalan penutup lain-lain. Jangan ulang frasa yang sama.
 Larangan:
-- JANGAN letak pautan/URL, nombor telefon, hashtag, harga, diskaun, promosi, jaminan kelulusan atau janji yang tidak diberi.
+- JANGAN letak pautan/URL lain selain www.abedinauto.my (ikut arahan "Pautan" di bawah). JANGAN letak nombor telefon atau hashtag.
+- JANGAN reka harga, diskaun, promosi, jaminan kelulusan atau janji yang tidak diberi.
 - JANGAN guna huruf besar semua atau nada jualan desakan.
-- JANGAN campur perkataan Bahasa Inggeris (contoh salah: "through", "interested", "form"). Guna Bahasa Melayu sepenuhnya.
-- JANGAN guna Bahasa Indonesia langsung. Contoh perkataan DILARANG: nggak, gak, banget, aja, gimana, udah, dong, sih, kok, mobil, lho, deh, kayak, pengen, mau, tuh, bapak/ibu (sebagai sapaan), silakan. Guna perkataan Malaysia: tak, sangat/sungguh, je, macam mana, dah, kereta, nak.
-- Loghat hanya diselit 1–3 perkataan sahaja; ayat mesti masih mudah difahami orang seluruh Malaysia. Jangan ejek atau perlekeh mana-mana negeri.`;
+- JANGAN campur perkataan Bahasa Inggeris (contoh salah: "through", "interested", "form").
+- JANGAN guna Bahasa Indonesia langsung. Contoh perkataan DILARANG: nggak, gak, banget, aja, gimana, udah, dong, sih, kok, mobil, lho, deh, kayak, pengen, mau, tuh, bapak/ibu (sebagai sapaan), silakan. Guna perkataan Malaysia: tak/tidak, sangat, sahaja, bagaimana, sudah, kereta, nak/ingin.`;
 
-// Loghat negeri Malaysia untuk variasi (diselit sedikit sahaja)
-const DIALECTS: Record<string, string> = {
-  "Kelantan": "demo (awak), kawe (saya), gapo (apa), molek (elok), sokmo (selalu), nok (nak), dok (sedang/tidak)",
-  "Terengganu": "mung (awak), kite (kita), mende (apa), gok (juga), dok (sedang), ning (ini), ganu (Terengganu)",
-  "Kedah": "hang (awak), cek (saya), pa (apa), habaq (beritahu), awat (kenapa), satgi (nanti), pi (pergi)",
-  "Negeri Sembilan": "ekau (awak), den (saya), apo (apa), mano (mana), bona (betul), tak eh (tak ke)",
-  "Pahang": "mike (awak), kome (kamu), ape (apa), gamaknye (agaknya), ceghoh (cepat)",
-  "Perak": "teman (saya), kome (kamu), ape (apa), menonong (laju terus), cer (cuba)",
-};
-function languagePlan(count: number): string {
-  const names = Object.keys(DIALECTS).sort(() => Math.random() - 0.5);
-  const standard = Math.round(count * 0.4);
-  const rest = count - standard;
-  const lines = [`- ${standard} ayat: Bahasa Melayu Malaysia santai standard (tanpa loghat).`];
-  names.forEach((d, i) => {
-    const n = Math.floor(rest / names.length) + (i < rest % names.length ? 1 : 0);
-    if (n > 0) lines.push(`- ${n} ayat: selit sedikit loghat ${d} (${DIALECTS[d]}).`);
-  });
-  return "Bahasa (agihan ayat, susun secara bercampur):\n" + lines.join("\n");
+// Sesetengah ayat sertakan pautan katalog supaya pelanggan boleh semak kereta sendiri
+const SITE = "www.abedinauto.my";
+function linkPlan(count: number): string {
+  const withLink = Math.max(1, Math.round(count * 0.3));
+  return `Pautan: tepat ${withLink} daripada ${count} ayat (bercampur, bukan berturut-turut) mesti ajak pelanggan semak kereta sendiri di ${SITE} (tulis tepat begitu, tanpa https). Ayat lain TANPA sebarang pautan.`;
 }
 const INDO = /\b(nggak|ngga|gak|enggak|banget|aja|gimana|udah|dong|sih|kok|mobil|lho|deh|kayak|pengen|mau|tuh|silakan)\b/i;
 
@@ -88,10 +76,11 @@ async function askClaude(key: string, model: string, prompt: string, count: numb
 }
 
 function cleanTemplate(s: string): string | null {
-  let t = s.replace(/https?:\/\/\S+|www\.\S+/gi, "").replace(/#\w+/g, "").replace(/\{\s*nama\s*\}/gi, "{nama}").trim();
+  let t = s.replace(/(https?:\/\/)?(www\.)?abedinauto\.my\/?/gi, "\u0000").replace(/https?:\/\/\S+|www\.\S+/gi, "").replace(/\u0000/g, SITE).replace(/#\w+/g, "").replace(/\{\s*nama\s*\}/gi, "{nama}").trim();
   if ((t.match(/\{nama\}/g) || []).length !== 1) return null;
   if (/\d{7,}/.test(t.replace(/\s|-/g, ""))) return null; // nombor telefon
-  if (t.length < 10 || t.length > 400) return null;
+  if (t.length < 10 || t.length > 450) return null;
+  if (/\b[a-z0-9-]+\.(com|my|ly|net|org|co|link|me)\b/i.test(t.replaceAll(SITE, ""))) return null; // pautan lain
   if (INDO.test(t) || /\b(through|interested|form|car|thanks|thank you)\b/i.test(t)) return null; // Indonesia / Inggeris
   return t;
 }
@@ -130,7 +119,7 @@ Deno.serve(async (req) => {
       const batches = Math.ceil(want / 25), per = Math.ceil(want / batches) + 4; // lebih sikit, ada yang ditapis
       const results = await Promise.all(Array.from({ length: batches }, (_, b) => {
         const styles = pick(STYLES, 5);
-        const prompt = `Tulis ${per} ayat WhatsApp berbeza untuk menyusul lead TikTok.\nCampurkan gaya ini: ${styles.join("; ")}.\n${RULES}\n${languagePlan(per)}\nKod rawak (variasi): ${crypto.randomUUID().slice(0, 8)}-${b}`;
+        const prompt = `Tulis ${per} ayat WhatsApp berbeza untuk menyusul lead TikTok.\nCampurkan gaya ini: ${styles.join("; ")}.\n${RULES}\n${linkPlan(per)}\nKod rawak (variasi): ${crypto.randomUUID().slice(0, 8)}-${b}`;
         return askClaude(key, model, prompt, per).catch(() => [] as string[]);
       }));
       const seen = new Set<string>(), list: string[] = [];
