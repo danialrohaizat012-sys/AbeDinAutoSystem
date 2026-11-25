@@ -17,7 +17,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const STYLES = [
   "mula dengan salam (Assalamualaikum)", "mula dengan ucap terima kasih kerana isi borang", "mesra dan ringkas",
-  "profesional tetapi santai", "fokus tanya bajet bulanan", "fokus tanya model kereta yang dicari",
+  "santai macam kawan bersembang", "fokus tanya bajet bulanan", "fokus tanya model kereta yang dicari",
   "tanya kereta untuk kegunaan apa (kerja, keluarga, harian)", "tawar bantu cari kereta ikut bajet",
   "tanya bila masa sesuai untuk berbual", "sebut King Axia secara bersahaja",
 ];
@@ -29,17 +29,17 @@ Setiap ayat WAJIB ada:
 - Perkenalkan diri dari Abe Din Auto, Kubang Kerian.
 - Soalan susulan tentang keperluan pelanggan, contohnya: kereta apa yang dicari, bajet bulanan, bayaran pendahuluan, untuk kegunaan apa, atau bila sesuai berbual. Pilih 1–2 soalan sahaja.
 Gaya:
-- Bahasa Melayu Malaysia BAKU (standard) yang sopan dan mesra, macam staff kedai menaip di WhatsApp. TIADA loghat atau dialek negeri.
+- Bahasa Melayu Malaysia SANTAI dan mesra, macam staff kedai bersembang di WhatsApp. Jangan terlalu formal atau kaku; boleh guna perkataan harian Malaysia seperti "nak", "tak", "je", "boleh", "jom", "ye". Tetap sopan. TIADA loghat atau dialek negeri.
 - Pendek: 2–4 ayat, maksimum 350 aksara.
 - WAJIB ada penanda {nama} tepat sekali (sistem gantikan dengan nama pelanggan).
-- Emoji 0–2 sahaja, ada ayat tanpa emoji langsung.
+- Setiap ayat ada 1–3 emoji yang menarik dan sesuai dengan maksud ayat (contoh: 👋 😊 🙏 🚗 🚘 ✨ 🔥 💰 📲 👍 🤝), letak di tempat yang semula jadi. Jangan berlebihan dan jangan ulang emoji yang sama dalam satu ayat.
 - Setiap ayat MESTI berbeza: pembuka, susunan, perkataan dan soalan penutup lain-lain. Jangan ulang frasa yang sama.
 Larangan:
 - JANGAN letak pautan/URL lain selain www.abedinauto.my (ikut arahan "Pautan" di bawah). JANGAN letak nombor telefon atau hashtag.
 - JANGAN reka harga, diskaun, promosi, jaminan kelulusan atau janji yang tidak diberi.
 - JANGAN guna huruf besar semua atau nada jualan desakan.
 - JANGAN campur perkataan Bahasa Inggeris (contoh salah: "through", "interested", "form").
-- JANGAN guna Bahasa Indonesia langsung. Contoh perkataan DILARANG: nggak, gak, banget, aja, gimana, udah, dong, sih, kok, mobil, lho, deh, kayak, pengen, mau, tuh, bapak/ibu (sebagai sapaan), silakan. Guna perkataan Malaysia: tak/tidak, sangat, sahaja, bagaimana, sudah, kereta, nak/ingin.`;
+- JANGAN guna Bahasa Indonesia langsung. Contoh perkataan DILARANG: nggak, gak, banget, aja, gimana, udah, dong, sih, kok, mobil, lho, deh, kayak, pengen, mau, tuh, bapak/ibu (sebagai sapaan), silakan. Guna perkataan Malaysia: tak, sangat, je, macam mana, dah, kereta, nak.`;
 
 // Sesetengah ayat sertakan pautan katalog supaya pelanggan boleh semak kereta sendiri
 const SITE = "www.abedinauto.my";
