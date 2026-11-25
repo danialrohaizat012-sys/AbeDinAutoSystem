@@ -17,7 +17,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const STYLES = [
   "sapaan mesra macam kenal lama", "ringkas dan terus ke tujuan", "tanya soalan mudah tentang kereta idaman",
-  "ucap terima kasih dulu, kemudian tanya", "nada santai loghat Kelantan ringan", "tawar bantu cari kereta ikut bajet",
+  "ucap terima kasih dulu, kemudian tanya", "nada santai macam jiran sekampung", "tawar bantu cari kereta ikut bajet",
   "tanya bila masa sesuai untuk berbual", "sebut King Axia secara bersahaja", "gaya staff yang prihatin",
   "tanya kereta jenis apa yang dicari",
 ];
@@ -25,7 +25,7 @@ const pick = <T,>(a: T[], n: number) => [...a].sort(() => Math.random() - 0.5).s
 
 const RULES = `Konteks: Pelanggan ini SENDIRI mengisi borang minat di TikTok Abe Din Auto (kedai kereta terpakai, Kubang Kerian, Kota Bharu, Kelantan; dikenali sebagai "King Axia"). Ini mesej WhatsApp PERTAMA daripada staff Abe Din Auto untuk menyusul.
 Gaya:
-- Bahasa Melayu Malaysia santai dan sopan, macam manusia sebenar menaip di WhatsApp. Boleh selit sedikit loghat Kelantan (contoh: demo, gapo, kawe, molek) dalam sesetengah ayat sahaja.
+- Bahasa Melayu MALAYSIA santai dan sopan, macam orang Malaysia sebenar menaip di WhatsApp. Ikut arahan "Bahasa" di bawah untuk loghat negeri.
 - Pendek: 1–3 ayat, maksimum 280 aksara.
 - WAJIB ada penanda {nama} tepat sekali (sistem gantikan dengan nama pelanggan).
 - Sebut bahawa mereka isi borang / berminat melalui TikTok supaya mereka ingat.
@@ -35,7 +35,31 @@ Gaya:
 Larangan:
 - JANGAN letak pautan/URL, nombor telefon, hashtag, harga, diskaun, promosi, jaminan kelulusan atau janji yang tidak diberi.
 - JANGAN guna huruf besar semua atau nada jualan desakan.
-- JANGAN campur perkataan Bahasa Inggeris (contoh salah: "through", "interested", "form"). Guna Bahasa Melayu sepenuhnya.`;
+- JANGAN campur perkataan Bahasa Inggeris (contoh salah: "through", "interested", "form"). Guna Bahasa Melayu sepenuhnya.
+- JANGAN guna Bahasa Indonesia langsung. Contoh perkataan DILARANG: nggak, gak, banget, aja, gimana, udah, dong, sih, kok, mobil, lho, deh, kayak, pengen, mau, tuh, bapak/ibu (sebagai sapaan), silakan. Guna perkataan Malaysia: tak, sangat/sungguh, je, macam mana, dah, kereta, nak.
+- Loghat hanya diselit 1–3 perkataan sahaja; ayat mesti masih mudah difahami orang seluruh Malaysia. Jangan ejek atau perlekeh mana-mana negeri.`;
+
+// Loghat negeri Malaysia untuk variasi (diselit sedikit sahaja)
+const DIALECTS: Record<string, string> = {
+  "Kelantan": "demo (awak), kawe (saya), gapo (apa), molek (elok), sokmo (selalu), nok (nak), dok (sedang/tidak)",
+  "Terengganu": "mung (awak), kite (kita), mende (apa), gok (juga), dok (sedang), ning (ini), ganu (Terengganu)",
+  "Kedah": "hang (awak), cek (saya), pa (apa), habaq (beritahu), awat (kenapa), satgi (nanti), pi (pergi)",
+  "Negeri Sembilan": "ekau (awak), den (saya), apo (apa), mano (mana), bona (betul), tak eh (tak ke)",
+  "Pahang": "mike (awak), kome (kamu), ape (apa), gamaknye (agaknya), ceghoh (cepat)",
+  "Perak": "teman (saya), kome (kamu), ape (apa), menonong (laju terus), cer (cuba)",
+};
+function languagePlan(count: number): string {
+  const names = Object.keys(DIALECTS).sort(() => Math.random() - 0.5);
+  const standard = Math.round(count * 0.4);
+  const rest = count - standard;
+  const lines = [`- ${standard} ayat: Bahasa Melayu Malaysia santai standard (tanpa loghat).`];
+  names.forEach((d, i) => {
+    const n = Math.floor(rest / names.length) + (i < rest % names.length ? 1 : 0);
+    if (n > 0) lines.push(`- ${n} ayat: selit sedikit loghat ${d} (${DIALECTS[d]}).`);
+  });
+  return "Bahasa (agihan ayat, susun secara bercampur):\n" + lines.join("\n");
+}
+const INDO = /\b(nggak|ngga|gak|enggak|banget|aja|gimana|udah|dong|sih|kok|mobil|lho|deh|kayak|pengen|mau|tuh|silakan)\b/i;
 
 async function aiConfig() {
   let key = Deno.env.get("ANTHROPIC_API_KEY") || "", model = Deno.env.get("ANTHROPIC_MODEL") || "";
@@ -68,6 +92,7 @@ function cleanTemplate(s: string): string | null {
   if ((t.match(/\{nama\}/g) || []).length !== 1) return null;
   if (/\d{7,}/.test(t.replace(/\s|-/g, ""))) return null; // nombor telefon
   if (t.length < 10 || t.length > 400) return null;
+  if (INDO.test(t) || /\b(through|interested|form|car|thanks|thank you)\b/i.test(t)) return null; // Indonesia / Inggeris
   return t;
 }
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z{}]/g, "");
@@ -102,10 +127,10 @@ Deno.serve(async (req) => {
       const want = Math.min(Math.max(Number(body.count) || 50, 10), 60);
       const { key, model } = await aiConfig();
       if (!key) return json({ error: "AI belum disambung. Masukkan kunci API dalam Perbelanjaan → Tetapan AI." }, 503);
-      const batches = Math.ceil(want / 25), per = Math.ceil(want / batches);
+      const batches = Math.ceil(want / 25), per = Math.ceil(want / batches) + 4; // lebih sikit, ada yang ditapis
       const results = await Promise.all(Array.from({ length: batches }, (_, b) => {
         const styles = pick(STYLES, 5);
-        const prompt = `Tulis ${per} ayat WhatsApp berbeza untuk menyusul lead TikTok.\nCampurkan gaya ini: ${styles.join("; ")}.\n${RULES}\nKod rawak (variasi): ${crypto.randomUUID().slice(0, 8)}-${b}`;
+        const prompt = `Tulis ${per} ayat WhatsApp berbeza untuk menyusul lead TikTok.\nCampurkan gaya ini: ${styles.join("; ")}.\n${RULES}\n${languagePlan(per)}\nKod rawak (variasi): ${crypto.randomUUID().slice(0, 8)}-${b}`;
         return askClaude(key, model, prompt, per).catch(() => [] as string[]);
       }));
       const seen = new Set<string>(), list: string[] = [];
