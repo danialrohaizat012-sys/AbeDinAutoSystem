@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ms"><head><meta charset="utf-8"/><script src="js/shadow-theme.js?v=3"></script><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta content="#111214" name="theme-color"/><link rel="manifest" href="manifest.webmanifest">
+<html lang="ms"><head><meta charset="utf-8"/><script src="js/shadow-theme.js?v=3"></script><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"><meta content="#111214" name="theme-color"/><link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1611,7 +1611,7 @@ async function openPublicCatalogue(vehicleId=null){
       if(list.length<=PAGE_SIZE){pagination.innerHTML=''}else{pagination.innerHTML=`<button data-page="${currentPage-1}" ${currentPage===1?'disabled':''}>← Sebelum</button>${Array.from({length:totalPages},(_,i)=>i+1).map(n=>`<button class="${n===currentPage?'is-active':''}" data-page="${n}">${n}</button>`).join('')}<button data-page="${currentPage+1}" ${currentPage===totalPages?'disabled':''}>Seterusnya →</button>`;pagination.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>{const n=Number(b.dataset.page);if(n<1||n>totalPages||n===currentPage)return;currentPage=n;renderCards();box.querySelector('#abx-stok').scrollIntoView({behavior:'smooth',block:'start'})})}
     };
     const syncModels=(render=true)=>{const mk=makeSel.value,valid=[...new Set(rows.filter(v=>!mk||catMakeKey(v.make)===catMakeKey(mk)).map(v=>catNorm(v.model)).filter(Boolean))].sort((a,b)=>a.localeCompare(b)),old=modelSel.value;modelSel.innerHTML='<option value="">Semua Model</option>'+valid.map(x=>opt(x,x)).join('');if(valid.includes(old))modelSel.value=old;if(render)renderCards(true)};
-    const goStock=()=>box.querySelector('#abx-stok').scrollIntoView({behavior:'smooth',block:'start'});
+    const goStock=()=>{const t=box.querySelector('#abx-stok');if(!t)return;try{document.activeElement&&document.activeElement.blur&&document.activeElement.blur()}catch(_){}/* scroll this window only: scrollIntoView inside the staff iframe also scrolls the parent admin page on iOS and exposes its dark background */const sc=document.scrollingElement||document.documentElement;const y=t.getBoundingClientRect().top+(window.pageYOffset||sc.scrollTop||0)-8;window.scrollTo({top:Math.max(0,y),behavior:'smooth'})};
     box.querySelector('#abx-search-form').addEventListener('submit',e=>{e.preventDefault();renderCards(true);goStock()});
     search.addEventListener('input',()=>renderCards(true));
     makeSel.addEventListener('change',()=>{box.querySelectorAll('[data-cat-brand]').forEach(b=>b.classList.toggle('is-active',catMakeKey(b.dataset.catBrand)===catMakeKey(makeSel.value)));syncModels()});
