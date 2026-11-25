@@ -160,9 +160,81 @@ main{max-width:1480px;padding:0 18px 40px}
  #list{grid-template-columns:1fr}
  #wa-tools .btn{width:100%}
 }
+
+/* ===== V2.1 telefon: lebih kompak ===== */
+@media (max-width:899px){
+ body{font-size:14px}
+ main{padding:0 12px 32px}
+ .top{margin:0 -12px;padding:calc(8px + env(safe-area-inset-top)) 12px 8px;gap:8px}
+ .top img{width:32px;height:32px;border-radius:8px}
+ .top h1{font-size:16.5px}.top small{font-size:9.5px}
+ .icon-btn{width:36px;height:36px;border-radius:10px}
+ .icon-btn svg{width:16px;height:16px}
+ .shell{padding-top:10px}
+ .side{gap:6px;margin-bottom:10px}
+ .nav{gap:5px;margin:0 -12px;padding:0 12px}
+ .nav button,.nav a{min-height:32px;padding:0 11px;font-size:12.5px;gap:6px}
+ .nav .dot{width:7px;height:7px}
+ .nav .n{font-size:11px;padding:1px 6px}
+ #queues button,#tools button,#tools a{min-height:28px;font-size:11.5px;padding:0 10px;background:transparent}
+ #queues button.on{background:var(--card)}
+ #tools a.primary{background:var(--y)}
+ .bar{gap:6px;margin-bottom:8px}
+ .bar h2{font-size:17px}.bar h2 small{font-size:12px}
+ .searchrow{flex:1 1 0;min-width:0;gap:6px}
+ .searchrow input{min-height:38px;padding:8px 11px;font-size:14px;border-radius:10px}
+ .searchrow button{min-height:38px;width:40px;padding:0;border-radius:10px}
+ .sortbox{flex:0 0 auto}
+ .sortbox select{min-height:38px;width:128px;font-size:12.5px;padding:0 26px 0 32px;border-radius:10px;background-position:right 8px center;background-size:13px}
+ .sortbox svg{left:10px;width:15px;height:15px}
+ #wa-tools{gap:6px;margin-bottom:8px;flex-wrap:nowrap}
+ #wa-tools .btn{width:auto;flex:1;min-height:34px;font-size:12.5px;border-radius:10px;padding:0 10px}
+ #wa-tools .wa-note{font-size:11.5px;white-space:nowrap}
+ #status{font-size:12px;margin:0 0 6px}
+ #list{gap:8px}
+ .lead{padding:11px 12px;gap:5px 8px;border-radius:12px}
+ .lead>strong{font-size:15px}
+ .lead>.info{font-size:12.5px}
+ .lead>.meta{font-size:11px;margin-top:-3px}
+ .lead>.status{min-height:28px;font-size:12px;padding:2px 26px 2px 10px;background-position:right 8px center;background-size:12px}
+ .lead>.assign,.lead>.wa{min-height:36px;font-size:13.5px;border-radius:10px;margin-top:2px}
+ .lead>.assign{padding:6px 30px 6px 10px}
+ .lead>.wa{padding:0 14px}.lead>.wa::before{width:15px;height:15px}
+ .lead>.wa-status{margin:0;gap:4px}
+ .wa-chip{font-size:11px;padding:2px 8px;gap:5px}.wa-chip::before{width:6px;height:6px}
+ .lead>.waha{min-height:34px;font-size:13px;border-radius:10px}
+ .lead>details{margin-top:2px}
+ .lead>details>summary{padding:7px 0 4px;font-size:13px}
+ .lead details input,.lead details textarea{min-height:38px;font-size:14px;padding:8px 10px}
+ .lead details button{min-height:38px;font-size:13.5px}
+ .wa-box{padding:8px 10px;gap:6px}.wa-preview,.wa-sent{font-size:13px;padding:8px 10px}
+ .wa-row .btn{min-height:34px;font-size:12.5px;padding:0 8px}
+ .pager button{min-height:36px;font-size:13px}
+ .panel{padding:12px}.panel-head h2{font-size:17px}
+ #wa-panel-body{grid-template-columns:1fr}
+}
+
+.side{grid-template-columns:minmax(0,1fr)}.side>div{min-width:0}
+@media (max-width:899px){
+ .mobile-only{display:inline-grid}
+ .tools-wrap{display:none}
+ .top .ttl{min-width:0}.top .ttl h1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .lead{grid-template-columns:minmax(0,1fr) auto}
+ .lead>.wa-status{grid-column:1;align-self:center}
+ .lead>.waha{grid-column:2;min-height:30px;font-size:12.5px;padding:0 12px;border-radius:999px}
+ .lead:not(:has(.waha))>.wa-status{grid-column:1/-1}
+ .lead>.wa-box{grid-column:1/-1}
+ .lead>.meta{display:none}
+ .lead>.info .when{opacity:.8}
+ .lead>details{border-top:0;margin-top:0;display:inline-block}
+ .lead>details.edit{grid-column:1}.lead>details:not(.edit){grid-column:2}
+ .lead>details[open]{grid-column:1/-1}
+ .lead>details>summary{padding:6px 0 0;font-size:12.5px}
+ .lead>details:not(.edit)>summary{justify-content:flex-end}
+}
 </style><script>try{if(localStorage.getItem("ada_theme")==="light")document.documentElement.classList.add("ada-light")}catch(_){}</script>
 <main>
-<header class="top"><a class="icon-btn" href="/app.html?admin=1" aria-label="Kembali ke dashboard"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></a><img src="abe-din-logo.png" alt="Abe Din Auto"><div class="ttl"><small>ABE DIN AUTO</small><h1>TikTok Lead</h1></div><button id="refresh" class="icon-btn" aria-label="Muat semula"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/></svg></button></header>
+<header class="top"><a class="icon-btn" href="/app.html?admin=1" aria-label="Kembali ke dashboard"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></a><img src="abe-din-logo.png" alt="Abe Din Auto"><div class="ttl"><small>ABE DIN AUTO</small><h1>TikTok Lead</h1></div><a class="icon-btn mobile-only" href="tiktok-import-preview.html" aria-label="Import pelanggan"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></a><button type="button" id="m-open-wa" class="icon-btn mobile-only" hidden aria-label="Mesej WhatsApp &amp; WAHA"><svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z"/></svg></button><button type="button" id="m-open-staff" class="icon-btn mobile-only" hidden aria-label="Prestasi Sale Advisor"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg></button><button id="refresh" class="icon-btn" aria-label="Muat semula"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/></svg></button></header>
 <div class="shell">
 <aside class="side" aria-label="Menu TikTok Lead">
  <div><h4>Lead</h4><nav class="nav" id="tabs">
@@ -181,7 +253,7 @@ main{max-width:1480px;padding:0 18px 40px}
   <button type="button" data-queue="upcoming"><span class="lbl">Akan datang</span><span class="n" data-count="upcoming">0</span></button>
   <button type="button" data-queue="unscheduled"><span class="lbl">Belum dijadualkan</span></button>
  </nav></div>
- <div><h4>Alat</h4><nav class="nav" id="tools">
+ <div class="tools-wrap"><h4>Alat</h4><nav class="nav" id="tools">
   <a class="btn primary" href="tiktok-import-preview.html"><span class="lbl">+ Import pelanggan</span></a>
   <button type="button" id="open-wa" hidden><span class="lbl">Mesej WhatsApp &amp; WAHA</span></button>
   <button type="button" id="open-staff" hidden><span class="lbl">Prestasi Sale Advisor</span></button>
@@ -191,7 +263,7 @@ main{max-width:1480px;padding:0 18px 40px}
  <div id="view-list">
   <div class="bar"><h2 id="view-title">Baharu<small id="view-sub"></small></h2>
    <div class="searchrow"><input id="search" type="search" placeholder="Cari nama atau telefon" maxlength="100" aria-label="Cari pelanggan"><button id="apply" class="primary" aria-label="Cari"><svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button></div>
-   <div class="sortbox"><svg viewBox="0 0 24 24"><path d="M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4"/></svg><select id="sort" aria-label="Susunan"><option value="new">Terbaharu dulu</option><option value="old">Terlama dulu</option><option value="az">Nama A–Z</option><option value="za">Nama Z–A</option></select></div>
+   <div class="sortbox"><svg viewBox="0 0 24 24"><path d="M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4"/></svg><select id="sort" aria-label="Susunan"><option value="new">Terbaharu</option><option value="old">Terlama</option><option value="az">Nama A–Z</option><option value="za">Nama Z–A</option></select></div>
   </div>
   <div id="wa-tools"></div>
   <p id="status" role="status"></p>
@@ -203,5 +275,5 @@ main{max-width:1480px;padding:0 18px 40px}
 </section>
 </div>
 </main>
-<script type="module" src="js/tiktok-leads-page.js?v=1"></script>
+<script type="module" src="js/tiktok-leads-page.js?v=2"></script>
 </html>

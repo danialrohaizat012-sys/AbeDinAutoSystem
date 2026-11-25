@@ -10,6 +10,7 @@ const TAB_TITLE = { ...STATES, all: 'Semua lead' };
 const QUEUE_TITLE = { today: 'Follow up hari ini', overdue: 'Tertunggak', never: 'Belum ada catatan', upcoming: 'Akan datang', unscheduled: 'Belum dijadualkan' };
 const PAGE = 48;
 const fmtDate = (d) => new Date(d).toLocaleDateString('ms-MY', { timeZone: 'Asia/Kuala_Lumpur', day: 'numeric', month: 'short', year: 'numeric' });
+const fmtShort = (d) => new Date(d).toLocaleDateString('ms-MY', { timeZone: 'Asia/Kuala_Lumpur', day: 'numeric', month: 'short' });
 const fmtTime = (d) => new Date(d).toLocaleString('ms-MY', { timeZone: 'Asia/Kuala_Lumpur' });
 
 let me = null, staff = [], page = 0, busy = false, counts = {};
@@ -43,8 +44,8 @@ $('queues').addEventListener('click', (e) => {
   const b = e.target.closest('[data-queue]'); if (!b) return;
   queue = b.dataset.queue; page = 0; setOn('queues', 'data-queue', queue); setTitle(); showView('list'); load();
 });
-$('open-wa').onclick = () => showView('wa');
-$('open-staff').onclick = () => { showView('staff'); loadStaffReport(); };
+$('open-wa').onclick = $('m-open-wa').onclick = () => showView('wa');
+$('open-staff').onclick = $('m-open-staff').onclick = () => { showView('staff'); loadStaffReport(); };
 for (const b of document.querySelectorAll('[data-back]')) b.onclick = () => showView('list');
 $('sort').onchange = () => { sort = $('sort').value; try { localStorage.setItem('tt_sort', sort); } catch (_) {} page = 0; load(); };
 $('apply').onclick = () => { page = 0; load(); };
@@ -103,7 +104,7 @@ function afterStatus(card, r, v) {
 
 function leadCard(r) {
   const a = mk('article', 'lead'), h = mk('strong', null, r.name), p = mk('p', 'info'), s = mk('select', 'status');
-  const info = () => { p.textContent = [r.phone, r.city, r.state, r.occupation].filter(Boolean).join(' · '); };
+  const info = () => { p.textContent = [r.phone, r.city, r.state, r.occupation].filter(Boolean).join(' · '); if (matchMedia('(max-width:899px)').matches) p.append(mk('span', 'when', ' · ' + fmtShort(r.created_at))); };
   info();
   s.setAttribute('aria-label', 'Status follow up');
   for (const [v, t] of Object.entries(STATES)) { const o = mk('option', null, t); o.value = v; s.append(o); }
@@ -255,7 +256,7 @@ async function start() {
       const { data: team, error: te } = await client.from('profiles').select('id,full_name,role,enabled').in('role', ['owner', 'sales_advisor']).eq('enabled', true).order('full_name');
       if (te) throw te;
       staff = team;
-      $('open-wa').hidden = false; $('open-staff').hidden = false;
+      for (const id of ['open-wa', 'open-staff', 'm-open-wa', 'm-open-staff']) $(id).hidden = false;
     }
     await WA.init(client, me, { onSent: loadCounts, onConfig: () => load() });
     setTitle(); setOn('tabs', 'data-tab', tab);
