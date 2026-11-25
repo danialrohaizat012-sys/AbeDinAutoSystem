@@ -128,6 +128,7 @@ html.ada-staff-embed #ada-public-catalogue .abx-quick input{font-size:16px!impor
 }
 /* Hide the fixed admin bottom bar while the keyboard/picker is open so it doesn't ride up over the form. */
 html.ada-kb-open #ada-cloud-gate .cloud-bottom{display:none!important}
+html.ada-kb-open,html.ada-kb-open body,html.ada-kb-open #ada-cloud-gate{background:#f2f5f7!important}
 /* iOS Safari zooms inputs below 16px, shifting the fixed-height catalogue viewport. */
 html.ada-public-route #ada-cat-search,
 html.ada-public-route .ada-cat-search input{font-size:16px!important;line-height:1.4!important;min-height:44px!important;max-width:100%!important;min-width:0!important;-webkit-text-size-adjust:100%}
@@ -1755,5 +1756,5 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
 
 
 
-<script id="ada-kb-open-toggle">(()=>{const isField=t=>t&&t.matches&&t.matches('input:not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]),select,textarea');const roots=()=>{const r=[document.documentElement];try{if(window.parent!==window&&window.parent.document)r.push(window.parent.document.documentElement)}catch(e){}return r};let t;document.addEventListener('focusin',e=>{if(!isField(e.target))return;clearTimeout(t);roots().forEach(h=>h.classList.add('ada-kb-open'))});document.addEventListener('focusout',()=>{clearTimeout(t);t=setTimeout(()=>{if(!isField(document.activeElement))roots().forEach(h=>h.classList.remove('ada-kb-open'))},120)})})();</script>
+<script id="ada-kb-open-toggle">(()=>{const isField=t=>t&&t.matches&&t.matches('input:not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]),select,textarea');const roots=()=>{const r=[document.documentElement];try{if(window.parent!==window&&window.parent.document)r.push(window.parent.document.documentElement)}catch(e){}return r};let t;document.addEventListener('focusin',e=>{if(!isField(e.target))return;clearTimeout(t);roots().forEach(h=>h.classList.add('ada-kb-open'))});const vv=window.visualViewport;if(vv&&window.parent===window){let was=false;const chk=()=>{const open=(window.innerHeight-vv.height)>150;if(open)document.documentElement.classList.add('ada-kb-open');else if(was)document.documentElement.classList.remove('ada-kb-open');was=open};vv.addEventListener('resize',chk)};document.addEventListener('focusout',()=>{clearTimeout(t);t=setTimeout(()=>{if(!isField(document.activeElement))roots().forEach(h=>h.classList.remove('ada-kb-open'))},120)})})();</script>
 </body></html>
