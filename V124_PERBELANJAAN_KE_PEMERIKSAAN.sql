@@ -113,7 +113,7 @@ begin
     return new;
   end if;
 
-  select id, plate, make, model into v_veh from vehicles where id = new.vehicle_id;
+  select id, plate, make, model, model_year, mileage_km into v_veh from vehicles where id = new.vehicle_id;
   if not found then return new; end if;
 
   -- Pemeriksaan sasaran: kekalkan yang sedia dipautkan (kereta sama), jika tidak pilih yang lulus / terkini.
@@ -131,6 +131,7 @@ begin
     insert into checklist_inspections (vehicle_id, plate, car, status, kos, data)
     values (new.vehicle_id::text, coalesce(v_veh.plate, ''), trim(coalesce(v_veh.make, '') || ' ' || coalesce(v_veh.model, '')), 'draf', 0,
             jsonb_build_object('plat', coalesce(v_veh.plate, ''), 'jenis', trim(coalesce(v_veh.make, '') || ' ' || coalesce(v_veh.model, '')),
+                               'tahun', coalesce(v_veh.model_year::text, ''), 'mileage', coalesce(nullif(v_veh.mileage_km, 0)::text, ''),
                                'tarikh', to_char(current_date, 'YYYY-MM-DD'), 'catatan', 'Rekod kos dicipta automatik daripada Perbelanjaan.',
                                'items', '{}'::jsonb, 'parts', '[]'::jsonb))
     returning id into v_insp;
@@ -190,3 +191,11 @@ create trigger exp_insp_sync_trg before insert or update on public.expenses
 drop trigger if exists exp_insp_unsync_trg on public.expenses;
 create trigger exp_insp_unsync_trg after delete on public.expenses
   for each row execute function public.exp_insp_sync();
+
+-- V124c: rekod pemeriksaan automatik ambil tahun & mileage daripada inventori
+select set_config('ada.exp_sync', '1', true);
+update public.checklist_inspections ci set data = ci.data
+  || jsonb_build_object('tahun', coalesce(nullif(ci.data->>'tahun',''), v.model_year::text, ''),
+                        'mileage', coalesce(nullif(ci.data->>'mileage',''), nullif(v.mileage_km,0)::text, ''))
+from public.vehicles v where v.id::text = ci.vehicle_id
+  and (coalesce(ci.data->>'tahun','') = '' or coalesce(ci.data->>'mileage','') = '');

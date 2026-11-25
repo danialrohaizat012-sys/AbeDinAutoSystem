@@ -1050,6 +1050,7 @@ function openForCar(vid){
 function openForm(id){
   const r=S.rows.find(x=>x.id===id); if(!r) return toast("Rekod tidak dijumpai");
   S.form=JSON.parse(JSON.stringify(r)); S.form.items=S.form.items||{}; S.form.akhir=S.form.akhir||{}; S.form.parts=S.form.parts||[];
+  { const v=S.form.vehicle_id&&vehById(S.form.vehicle_id); if(v){ if(!String(S.form.tahun||"").trim()&&v.model_year)S.form.tahun=String(v.model_year); if(!String(S.form.mileage||"").trim()&&v.mileage_km)S.form.mileage=String(v.mileage_km); if(!String(S.form.jenis||"").trim())S.form.jenis=carName(v); if(!String(S.form.plat||"").trim())S.form.plat=v.plate||""; } }
   S.dirty=false; S.view="form"; render();
 }
 function renderForm(){
