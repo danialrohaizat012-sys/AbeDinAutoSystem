@@ -3,7 +3,7 @@ create function public.tiktok_staff_performance()
 returns table(staff_id uuid,staff_name text,total bigint,contacted bigint,interested bigint,closed bigint,overdue bigint)
 language sql stable security invoker set search_path=''
 as $$
-select l.assigned_to,coalesce(p.full_name::text,'Belum ditetapkan / staf terdahulu'),count(*),
+select l.assigned_to,coalesce(p.full_name::text,'Belum ditetapkan / staff terdahulu'),count(*),
 count(*) filter(where l.status in ('contacted','interested','closed','not_interested')),
 count(*) filter(where l.status='interested'),
 count(*) filter(where l.status='closed'),
