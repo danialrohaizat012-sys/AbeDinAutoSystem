@@ -37,7 +37,8 @@ async function loadWaha() {
   const { data, error } = await client.rpc('waha_config_status');
   waha = error ? null : data;
 }
-const wahaReady = () => !!(waha && waha.enabled && (me.role !== 'owner' || waha.base_url));
+// WAHA untuk owner sahaja; sales advisor hantar secara manual
+const wahaReady = () => !!(me?.role === 'owner' && waha && waha.enabled && waha.base_url);
 
 export async function init(c, profile, h = {}) {
   client = c; me = profile; hooks = h;

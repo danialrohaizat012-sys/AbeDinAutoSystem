@@ -1,6 +1,6 @@
 // TikTok Lead – halaman utama (V2: susun atur iPad/PC, menu ikut status, susunan)
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import * as WA from './tiktok-wa.js?v=3';
+import * as WA from './tiktok-wa.js?v=4';
 
 const client = createClient('https://buzpdyvvoiqgbeventwm.supabase.co', 'sb_publishable_zuuNipsMpalN_38SJwXpFA_MRzQ6eZ0');
 const $ = (id) => document.getElementById(id);
@@ -123,7 +123,9 @@ function leadCard(r) {
   a.append(h, p, s, mk('p', 'meta', 'Masuk ' + fmtDate(r.created_at)));
 
   const ownerLabel = mk('p', 'owner', 'Staff: ' + (staff.find((x) => x.id === r.assigned_to)?.full_name || 'Belum ditetapkan / tidak aktif'));
-  a.append(ownerLabel);
+  // Sales advisor nampak semua lead; label staff hanya untuk lead yang diagih kepadanya
+  if (me.role === 'owner') a.append(ownerLabel);
+  else if (r.assigned_to === me.id) { ownerLabel.textContent = 'Diagih kepada anda'; a.append(ownerLabel); }
   if (me.role === 'owner') {
     const ass = mk('select', 'assign');
     ass.setAttribute('aria-label', 'Agih pelanggan kepada staff');
@@ -256,7 +258,7 @@ async function start() {
       const { data: team, error: te } = await client.from('profiles').select('id,full_name,role,enabled').in('role', ['owner', 'sales_advisor']).eq('enabled', true).order('full_name');
       if (te) throw te;
       staff = team;
-      for (const id of ['open-wa', 'open-staff', 'm-open-wa', 'm-open-staff']) $(id).hidden = false;
+      for (const id of ['open-wa', 'open-staff', 'm-open-wa', 'm-open-staff', 'm-import', 'side-import', 'tools-wrap']) $(id).hidden = false;
     }
     await WA.init(client, me, { onSent: loadCounts, onConfig: () => load() });
     setTitle(); setOn('tabs', 'data-tab', tab);

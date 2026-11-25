@@ -59,6 +59,6 @@ el('clear').onclick=()=>{generation++;records=[];el('file').value='';el('image')
 import {createClient} from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 const client=createClient('https://buzpdyvvoiqgbeventwm.supabase.co','sb_publishable_zuuNipsMpalN_38SJwXpFA_MRzQ6eZ0');
 const button=document.getElementById('save'),msg=document.getElementById('save-status');
-try{const {data,error}=await client.auth.getUser();if(error||!data?.user)throw Error('Log masuk melalui dashboard dahulu.');
+try{const {data,error}=await client.auth.getUser();if(error||!data?.user)throw Error('Log masuk melalui dashboard dahulu.');const {data:prof}=await client.from('profiles').select('role,enabled').eq('id',data.user.id).single();if(!prof?.enabled||prof.role!=='owner'){for(const x of document.querySelectorAll('main input,main textarea,main button'))x.disabled=true;throw Error('Import pelanggan hanya untuk owner.');}
 button.disabled=false;button.onclick=async()=>{button.disabled=true;try{if(ocrBusy)throw Error('Tunggu OCR selesai dahulu');const snapshot=records.filter(r=>r.valid&&!r.duplicate);if(!snapshot.length)throw Error('Tiada rekod sah');const result=await AdaTikTokStorage.save(client,snapshot);msg.textContent=result.inserted+' disimpan · '+result.skipped+' dilangkau';}catch(e){msg.textContent='Import gagal: '+e.message;}finally{button.disabled=false;}};}catch(e){msg.textContent=e.message;}
 </script></html>

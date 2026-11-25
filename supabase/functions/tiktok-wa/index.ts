@@ -1,6 +1,6 @@
 // Abe Din Auto – Edge Function tiktok-wa (V128)
 //  - action "generate": owner jana ayat WhatsApp rawak (AI) untuk lead TikTok, setiap ayat ada {nama}
-//  - action "send"    : owner / sales advisor hantar satu mesej kepada lead melalui WAHA
+//  - action "send"    : owner sahaja hantar satu mesej kepada lead melalui WAHA
 //    Had: WAHA mesti aktif, had harian, jarak minimum antara mesej, sekali sehari setiap lead.
 // Kunci AI: app_private.ai_config (sama seperti agent-promo-ai). Kunci WAHA: app_private.waha_config.
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -124,6 +124,7 @@ Deno.serve(async (req) => {
 
     // ---------- Hantar melalui WAHA ----------
     if (body.action === "send") {
+      if (role !== "owner") return json({ error: "Hanya owner boleh hantar melalui WAHA. Sales advisor guna butang WhatsApp." }, 403);
       const leadId = String(body.lead_id || ""), tplId = String(body.template_id || "");
       if (!UUID.test(leadId)) return json({ error: "Lead tidak sah." }, 400);
       const { data: cfg } = await admin.rpc("waha_config_get");
