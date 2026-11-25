@@ -1,0 +1,19 @@
+name: TikTok Lead Tests
+on:
+  push:
+    paths:
+      - 'js/tiktok-lead-*.js'
+      - 'tests/tiktok-lead-*.test.cjs'
+      - '.github/workflows/tiktok-lead-tests.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/tiktok-lead-import.test.cjs tests/tiktok-lead-storage.test.cjs
