@@ -1,7 +1,54 @@
-<!doctype html><html lang="ms"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Import TikTok</title><style>body{font:15px system-ui;background:#101419;color:#eee;margin:0}main{max-width:720px;margin:auto;padding:16px}section,article{background:#20262e;border-radius:12px;padding:14px;margin:12px 0}input,textarea,button{font:inherit;box-sizing:border-box;max-width:100%;padding:8px}label{display:block;margin:8px 0}article input,textarea{width:100%}small{color:#b9c2cc}</style><main><h1>Import TikTok Lead</h1><small>Pratonton setempat. Penyimpanan memerlukan akaun staff dan database yang telah diaktifkan.</small><section><label for="file">Fail CSV</label><input id="file" type="file" accept=".csv,text/csv"><label for="image">Screenshot pelanggan (JPEG/PNG, maksimum 10 gambar)</label><input id="image" type="file" multiple accept="image/jpeg,image/png"><button id="ocr">Baca gambar</button><p id="ocr-status" role="status"></p><label for="paste">Atau tampal teks screenshot (Live Text iPhone)</label><textarea id="paste" rows="5"></textarea><button id="read">Baca teks</button> <button id="clear">Kosongkan</button><p id="status" role="status"></p></section><div id="rows"></div><section><button id="save" disabled>Sahkan import</button><p id="save-status" role="status"></p></section></main><script src="js/tiktok-lead-import.js"></script><script src="js/tiktok-lead-storage.js"></script><script src="js/tiktok-lead-review.js"></script><script src="js/tiktok-lead-screenshot-text.js"></script><script>
+<!doctype html><html lang="ms"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Import TikTok</title><style>
+:root{--bg:#0b0b0c;--card:#161618;--card2:#1e1e21;--line:#2a2a2e;--tx:#f5f5f4;--mut:#9b9ba3;--y:#fbd748;--yk:#111;--wa:#25d366;--red:#ff6b5e;--rad:14px;color-scheme:dark}
+html.ada-light{--bg:#f5f5f6;--card:#fff;--card2:#f0f0f2;--line:#e3e3e7;--tx:#111;--mut:#686870;color-scheme:light}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+main{max-width:760px;margin:auto;padding:0 14px 40px}
+.top{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;margin:0 -14px 14px;padding:calc(10px + env(safe-area-inset-top)) 14px 10px;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.top img{width:38px;height:38px;border-radius:10px;object-fit:contain;background:#000}
+.top .ttl{flex:1;min-width:0}.top small{display:block;font-size:10.5px;letter-spacing:.14em;font-weight:700;color:var(--y)}
+.top h1{margin:0;font-size:19px;line-height:1.15;letter-spacing:-.01em}
+.icon-btn{width:40px;height:40px;display:inline-grid;place-items:center;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--tx);cursor:pointer;padding:0;flex:none}
+.icon-btn svg,.btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.btn,button{font:inherit;font-weight:600;font-size:14px;min-height:42px;padding:0 16px;border-radius:12px;border:1px solid var(--line);background:var(--card2);color:var(--tx);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;transition:transform .08s,filter .15s}
+button:active,.btn:active,.icon-btn:active{transform:scale(.97)}
+button:disabled{opacity:.5;cursor:default}
+.btn.primary,button.primary{background:var(--y);color:var(--yk);border-color:var(--y)}
+.btn.ghost{background:transparent}
+input,select,textarea{font:inherit;font-size:15px;color:var(--tx);background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-height:42px;width:100%;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--y);box-shadow:0 0 0 3px color-mix(in srgb,var(--y) 25%,transparent)}
+select{appearance:none;-webkit-appearance:none;padding-right:34px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239b9ba3' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;background-size:15px}
+small,.mut{color:var(--mut)}
+p{overflow-wrap:anywhere}
+[role=status]:empty{display:none}
+details>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px;padding:10px 0}
+details>summary::-webkit-details-marker{display:none}
+details>summary::before{content:"";width:7px;height:7px;border-right:2px solid var(--mut);border-bottom:2px solid var(--mut);transform:rotate(-45deg);transition:transform .15s;margin:0 4px}
+details[open]>summary::before{transform:rotate(45deg)}
+
+.intro{margin:-4px 0 12px;font-size:13px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--rad);padding:14px;margin:0 0 12px}
+.card h2{margin:0 0 2px;font-size:15px}.card .mut{margin:0 0 10px;font-size:12.5px}
+input[type=file]{padding:6px;min-height:0;font-size:13px;color:var(--mut)}
+input[type=file]::file-selector-button{font:inherit;font-weight:600;font-size:13px;border:0;border-radius:9px;background:var(--y);color:var(--yk);padding:8px 12px;margin-right:10px;cursor:pointer}
+.row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}.row>*{flex:1}
+textarea{min-height:110px;resize:vertical}
+#status{font-weight:600;margin:10px 0 0}
+#ocr-status{font-size:13px;color:var(--mut);margin:8px 0 0}
+#rows article{background:var(--card);border:1px solid var(--line);border-radius:var(--rad);padding:12px 14px;margin:0 0 10px;display:grid;grid-template-columns:1fr 1fr;gap:4px 10px}
+#rows article>p{grid-column:1/-1;margin:0 0 4px;justify-self:start;font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;background:color-mix(in srgb,var(--wa) 16%,var(--card));color:#1fb85a}
+#rows article>p.dup{background:var(--card2);color:var(--mut)}
+#rows article>p.bad{background:color-mix(in srgb,var(--red) 16%,var(--card));color:var(--red)}
+#rows label{font-size:12px;font-weight:600;color:var(--mut);margin:0}
+#rows label input{margin-top:3px;min-height:38px;padding:8px 10px;font-size:14px}
+#rows label:first-of-type{grid-column:1/-1}
+.savebar{position:sticky;bottom:0;margin:0 -14px;padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line)}
+.savebar button{width:100%;min-height:48px;font-size:15px}
+#save-status{font-size:13px;margin:6px 0 0;text-align:center}
+</style><script>try{if(localStorage.getItem("ada_theme")==="light")document.documentElement.classList.add("ada-light")}catch(_){}</script><main><header class="top"><a class="icon-btn" href="tiktok-leads.html" aria-label="Kembali ke TikTok Lead"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></a><img src="abe-din-logo.png" alt="Abe Din Auto"><div class="ttl"><small>ABE DIN AUTO</small><h1>Import TikTok Lead</h1></div></header><p class="intro mut">Semak setiap rekod sebelum simpan. Hanya rekod sah dan unik akan disimpan.</p><section class="card"><h2>Fail CSV</h2><p class="mut">Muat turun lead dari TikTok, kemudian pilih fail di sini.</p><input id="file" type="file" accept=".csv,text/csv" aria-label="Fail CSV"></section><section class="card"><h2>Screenshot pelanggan</h2><p class="mut">JPEG atau PNG, maksimum 10 gambar.</p><input id="image" type="file" multiple accept="image/jpeg,image/png" aria-label="Screenshot pelanggan"><div class="row"><button id="ocr" class="primary">Baca gambar</button></div><p id="ocr-status" role="status"></p></section><section class="card"><h2>Tampal teks</h2><p class="mut">Salin teks screenshot guna Live Text iPhone, kemudian tampal.</p><textarea id="paste" rows="5" aria-label="Teks screenshot"></textarea><div class="row"><button id="read" class="primary">Baca teks</button><button id="clear">Kosongkan</button></div><p id="status" role="status"></p></section><div id="rows"></div><div class="savebar"><button id="save" class="primary" disabled>Sahkan import</button><p id="save-status" role="status"></p></div></main><script src="js/tiktok-lead-import.js"></script><script src="js/tiktok-lead-storage.js"></script><script src="js/tiktok-lead-review.js"></script><script src="js/tiktok-lead-screenshot-text.js"></script><script>
 const el=id=>document.getElementById(id);let records=[],generation=0,ocrBusy=false;
 function summary(){el('status').textContent=records.length+' rekod · '+records.filter(r=>r.valid&&!r.duplicate).length+' sah dan unik';}
-function render(){el('rows').replaceChildren();summary();records.forEach((r,i)=>{const a=document.createElement('article'),s=document.createElement('p');s.textContent=r.duplicate?'Pendua':r.valid?'Sah':'Perlu semakan';a.append(s);for(const [k,title] of Object.entries({name:'Nama',rawPhone:'Telefon',city:'Bandar',state:'Negeri',gender:'Jantina',occupation:'Pekerjaan',date:'Tarikh'})){const l=document.createElement('label'),input=document.createElement('input');l.textContent=title;input.value=r[k]||'';input.addEventListener('change',()=>{records=AdaTikTokReview.update(records,i,{[k]:input.value});render();});l.append(input);a.append(l);}el('rows').append(a);});}
+function render(){el('rows').replaceChildren();summary();records.forEach((r,i)=>{const a=document.createElement('article'),s=document.createElement('p');s.textContent=r.duplicate?'Pendua':r.valid?'Sah':'Perlu semakan';s.className=r.duplicate?'dup':r.valid?'ok':'bad';a.append(s);for(const [k,title] of Object.entries({name:'Nama',rawPhone:'Telefon',city:'Bandar',state:'Negeri',gender:'Jantina',occupation:'Pekerjaan',date:'Tarikh'})){const l=document.createElement('label'),input=document.createElement('input');l.textContent=title;input.value=r[k]||'';input.addEventListener('change',()=>{records=AdaTikTokReview.update(records,i,{[k]:input.value});render();});l.append(input);a.append(l);}el('rows').append(a);});}
 function load(data){records=AdaTikTokReview.review(data);render();}
 function fail(e){records=[];render();el('status').textContent=e.message;}
 el('file').onchange=async()=>{const g=++generation,f=el('file').files[0];if(!f)return;try{if(f.size>5000000)throw Error('Maksimum 5 MB');const t=await f.text();if(g===generation)load(AdaTikTokImport.preview(t));}catch(e){if(g===generation)fail(e);}};
