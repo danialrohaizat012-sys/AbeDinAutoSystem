@@ -128,6 +128,8 @@ html.ada-staff-embed #ada-public-catalogue .abx-quick input{font-size:16px!impor
 }
 /* Hide the fixed admin bottom bar while the keyboard/picker is open so it doesn't ride up over the form. */
 html.ada-kb-open #ada-cloud-gate .cloud-bottom{display:none!important}
+/* Menu bawah hanya untuk sistem owner/staff — jangan papar di Katalog Umum (laluan awam atau iframe staff). */
+html.ada-public-route #ada-cloud-gate .cloud-bottom,html.ada-staff-embed #ada-cloud-gate .cloud-bottom{display:none!important}
 html.ada-kb-open,html.ada-kb-open body,html.ada-kb-open #ada-cloud-gate{background:#f2f5f7!important}
 /* iOS Safari zooms inputs below 16px, shifting the fixed-height catalogue viewport. */
 html.ada-public-route #ada-cat-search,
