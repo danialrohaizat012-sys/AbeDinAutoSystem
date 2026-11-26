@@ -214,7 +214,9 @@ function toast(m) { const t = document.createElement("div"); t.className = "toas
 function errMsg(e) { const m = e?.message || String(e); return /attendance_|relation .* does not exist|schema cache/i.test(m) ? "Pangkalan data kehadiran belum dipasang (V71)." : m; }
 function sheet(html) { const o = document.createElement("div"); o.className = "ov"; o.innerHTML = `<div class="sheet">${html}</div>`; o.addEventListener("click", e => { if (e.target === o) closeSheet(o); }); root.appendChild(o); document.documentElement.classList.add("ada-sheet-open"); return o; }
 function closeSheet(o) { o?.__cleanup?.(); o?.remove(); if (!root.querySelector(".ov")) document.documentElement.classList.remove("ada-sheet-open"); }
-function nearest(lat, lng) { let best = null; for (const l of S.locs.filter(x => x.active)) { const d = distM(lat, lng, l.lat, l.lng); if (!best || d < best.d) best = { ...l, d }; } return best; }
+const individualLocations = sid => S.astaff?.[sid]?.allowed_location_ids ?? null;
+function allowedLocations(sid=S.me){const ids=individualLocations(sid);return S.locs.filter(l=>l.active&&(ids===null||ids.includes(l.id)));}
+function nearest(lat,lng){let best=null;for(const l of allowedLocations()){const d=distM(lat,lng,l.lat,l.lng),inside=d<=l.radius_m;if(!best||(inside&&!best.inside)||(inside===best.inside&&d<best.d))best={...l,d,inside};}return best;}
 
 /* ---------- data ---------- */
 const optional = async q => { const r = await q; return r.error ? [] : (r.data || []); };   // jadual V73+ mungkin belum dipasang
@@ -487,7 +489,7 @@ function viewPunch() {
     : working ? `<span class="chip ok">● Sedang bekerja sejak ${hm(firstIn?.punched_at || last.punched_at)}</span>` : `<span class="chip blue">Sudah punch balik ${hm(last.punched_at)}</span>`;
   const lateM = firstIn && sc.type === "work" ? minOfDay(firstIn.punched_at) - sc.start : 0;
   const late = lateM > (st.grace_min || 0) ? `<span class="chip bad">Lewat ${fmtMin(lateM)}</span>` : "";
-  const noLoc = !S.locs.some(l => l.active);
+  const noLoc = !allowedLocations().length;
   const btns = onRest ? `<button class="btn" data-act="rest" data-kind="rest_end">☕ Habis rehat</button>`
     : working ? `<button class="btn out" data-act="punch" data-kind="out">📸 Punch Balik</button>${st.allow_rest_punch ? `<button class="btn alt" data-act="rest" data-kind="rest_start">☕ Mula rehat</button>` : ""}`
     : `<button class="btn" data-act="punch" data-kind="in">📸 Punch Masuk</button>`;
@@ -554,7 +556,7 @@ function viewPunch() {
       <div style="display:flex;flex-direction:column;gap:8px;width:100%">${btns}</div>
       <div class="mute">Punch masuk/balik perlu selfie dan GPS. Punch rehat hanya GPS. Masa ikut jam server.</div>
     </div>
-    ${noLoc ? `<div class="notice">${S.owner ? "Belum ada lokasi tag. Tambah di tab Tetapan supaya punch disemak ikut kawasan." : "Owner belum menetapkan lokasi kerja."}</div>` : ""}
+    ${noLoc ? `<div class="notice">${individualLocations(S.me)!==null ? "Tiada lokasi individu aktif. Hubungi Owner." : S.owner ? "Belum ada lokasi tag. Tambah di tab Tetapan supaya punch disemak ikut kawasan." : "Owner belum menetapkan lokasi kerja."}</div>` : `<div class="mute" style="font-size:12px">📍 Lokasi punch: ${allowedLocations().map(l=>esc(l.name)+" ("+esc(l.radius_m)+" m)").join(" · ")}${!st.enforce_geofence?" · Sekatan GPS tidak aktif":""}</div>`}
     ${summary}</div>
     <div class="col"><div class="card"><h3>Punch saya hari ini</h3>${mine.length ? `<div class="pl">${[...mine].reverse().map(p => punchRow(p, false)).join("")}</div>` : `<p class="mute">Tiada punch lagi hari ini.</p>`}</div></div></div>`;
 }
@@ -796,7 +798,7 @@ function viewTetapan() {
   const yr = nowKey().slice(0, 4), hols = Object.values(S.holidays || {}).filter(h => h.day >= yr + "-01-01").sort((x, y) => x.day.localeCompare(y.day));
   const IC = { clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>', pin:'<path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>', cup:'<path d="M4 8h12v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M16 9h2a3 3 0 0 1 0 6h-2M6 3v2M10 3v2"/>', shield:'<path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/>', coins:'<ellipse cx="9" cy="7" rx="6" ry="3"/><path d="M3 7v4c0 1.7 2.7 3 6 3s6-1.3 6-3V7M3 11v4c0 1.7 2.7 3 6 3 1.2 0 2.4-.2 3.3-.5"/><ellipse cx="17" cy="15" rx="4" ry="2"/><path d="M13 15v3c0 1.1 1.8 2 4 2s4-.9 4-2v-3"/>', users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/>', sliders:'<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>', gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>' };
   const svg = k => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[k]}</svg>`;
-  const menus = [["work","clock","Waktu Kerja","Tetapkan waktu masuk, balik dan hari bekerja.","#2f6fd6"],["shift","cal","Syif & Jadual","Syif staff dan jadual mingguan.","#0e8a9a"],["gps","pin","Lokasi Tag (GPS)","Urus lokasi, radius dan zon punch.","#c2364d"],["rest","cup","Rehat","Tetapkan tempoh rehat dan punch rehat.","#1f9d55"],["rules","shield","Peraturan Kehadiran","Tempoh bertenang lewat, GPS dan selfie.","#c47a1c"],["ot","coins","Kiraan Gaji / OT","Peraturan kerja lebih masa dan kadarnya.","#7c3aed"],["staff","users","Gaji Individu Staff","Syif, hari kerja, gaji, OT dan potongan setiap staff.","#3b5bdb"],["holiday","sliders","Lain-lain","Cuti umum dan cuti syarikat.","#6b7280"]];
+  const menus = [["work","clock","Waktu Kerja","Tetapkan waktu masuk, balik dan hari bekerja.","#2f6fd6"],["shift","cal","Syif & Jadual","Syif staff dan jadual mingguan.","#0e8a9a"],["gps","pin","Lokasi Tag (GPS)","Urus lokasi, radius dan zon punch.","#c2364d"],["staffgps","users","Lokasi Punch Individu","Tetapkan lokasi dibenarkan untuk setiap staf.","#2469a0"],["rest","cup","Rehat","Tetapkan tempoh rehat dan punch rehat.","#1f9d55"],["rules","shield","Peraturan Kehadiran","Tempoh bertenang lewat, GPS dan selfie.","#c47a1c"],["ot","coins","Kiraan Gaji / OT","Peraturan kerja lebih masa dan kadarnya.","#7c3aed"],["staff","users","Gaji Individu Staff","Syif, hari kerja, gaji, OT dan potongan setiap staff.","#3b5bdb"],["holiday","sliders","Lain-lain","Cuti umum dan cuti syarikat.","#6b7280"]];
   const m = S.settingsMenu, cur = menus.find(x => x[0] === m);
   const side = `<nav class="kset-side" aria-label="Menu tetapan"><button type="button" class="kset-si${cur ? "" : " on"}" data-act="settingsmenu" data-id=""><span class="kset-sic">${svg("gear")}</span><span><b>Semua Tetapan</b><small>Urus semua tetapan sistem</small></span></button>${menus.map(([id, ic, t]) => `<button type="button" class="kset-si${m === id ? " on" : ""}" data-act="settingsmenu" data-id="${id}"><span class="kset-sic">${svg(ic)}</span><span><b>${t}</b></span></button>`).join("")}</nav>`;
   if (!cur) return `<div class="kset">${side}<section class="kset-main"><header class="kset-h"><span class="kset-hic">${svg("gear")}</span><div><h2>Tetapan Kehadiran</h2><p>Pilih menu untuk urus tetapan</p></div></header><div class="kset-grid">${menus.map(([id, ic, t, d, c]) => `<button type="button" class="kset-card" data-act="settingsmenu" data-id="${id}"><span class="kset-cic" style="--c:${c}">${svg(ic)}</span><span class="kset-ct"><b>${t}</b><small>${d}</small></span><span class="kset-chev">›</span></button>`).join("")}</div></section></div>`;
@@ -839,7 +841,14 @@ function viewTetapan() {
         <button class="sm" type="button" data-act="here">📍 Guna lokasi saya sekarang</button>
         <div id="locprev"></div>
         <button class="btn" type="submit">${locEdit ? "Simpan perubahan" : "+ Tambah lokasi"}</button>${locEdit ? `<button class="sm" type="button" data-act="loccancel">Batal</button>` : ""}</form></div>
-    ` : ""}${m==="staff" ? payCard(staff) : ""}</div></section></div>`;
+    ` : ""}${m==="staffgps" ? staffLocationCard(staff) : ""}${m==="staff" ? payCard(staff) : ""}</div></section></div>`;
+}
+function staffLocationCard(staff){
+  const active=S.locs.filter(l=>l.active);
+  return `<div class="card"><h3>Lokasi Punch Individu</h3><p class="mute">Owner sahaja boleh memilih lokasi. Lalai menggunakan semua lokasi aktif. Sekatan punch masuk/balik mengikut tetapan Peraturan Kehadiran.</p>${!S.settings.enforce_geofence?`<div class="notice">Sekatan GPS dimatikan. Hidupkan di Peraturan Kehadiran untuk menguatkuasakan pilihan lokasi.</div>`:""}${!active.length?`<div class="notice">Tambah lokasi aktif di menu Lokasi Tag (GPS) dahulu.</div>`:""}<div class="ps-list">${staff.map(s=>{
+    const ids=individualLocations(s.id),names=ids===null?"Semua lokasi aktif":ids.map(id=>S.locs.find(l=>l.id===id)?.name||"Lokasi dipadam").join(", ");
+    return `<details class="pd" style="min-width:0"><summary style="cursor:pointer"><b>${esc(s.full_name)}</b><div class="mute" style="font-size:12px;overflow-wrap:anywhere">${ids===null?"Lalai":"Individu"} · ${esc(names)}</div></summary><form class="f-staffgps" data-staff="${esc(s.id)}" style="display:grid;gap:8px;margin-top:10px"><label>Kaedah<select class="field" name="mode"><option value="global"${ids===null?" selected":""}>Semua lokasi aktif (lalai)</option><option value="individual"${ids!==null?" selected":""}>Lokasi terpilih sahaja</option></select></label><div class="mute">Pilih satu atau lebih lokasi untuk kaedah individu:</div>${active.map(l=>`<label class="sw" style="align-items:flex-start"><input type="checkbox" name="locid" value="${esc(l.id)}"${ids?.includes(l.id)?" checked":""}> <span>${esc(l.name)} · ${esc(l.radius_m)} m</span></label>`).join("")}<button type="submit" class="btn">Simpan lokasi staf</button></form></details>`;
+  }).join("")||'<p class="mute">Tiada staf aktif.</p>'}</div></div>`;
 }
 function payCard(staff) {
   const unset = staff.filter(s => !S.pay[s.id]).length;
@@ -951,7 +960,7 @@ async function startPunch(kind) {
     const g = q("#gps"); if (!g) return;
     if (!pos) return;
     const n = nearest(pos.lat, pos.lng), acc = Math.round(pos.acc);
-    if (!n) { g.className = "gps"; g.innerHTML = `📍 Lokasi didapati (ketepatan ±${acc} m). Tiada lokasi tag ditetapkan.`; return; }
+    if (!n) { const blocked=individualLocations(S.me)!==null&&st.enforce_geofence;g.className = "gps"+(blocked?" bad":"");g.textContent=blocked?"Tiada lokasi individu aktif. Hubungi Owner.":`📍 Lokasi didapati (ketepatan ±${acc} m). Tiada lokasi tag ditetapkan.`; return; }
     const inside = n.d <= n.radius_m; g.className = "gps " + (inside ? "ok" : "bad");
     g.innerHTML = inside ? `✓ Dalam kawasan <b>${esc(n.name)}</b> · ${Math.round(n.d)} m (±${acc} m)` : `✗ Anda ${Math.round(n.d)} m dari <b>${esc(n.name)}</b> (had ${n.radius_m} m, ketepatan ±${acc} m)${st.enforce_geofence ? ". Punch akan ditolak — pergi ke lokasi kerja." : ". Punch tetap direkod sebagai luar kawasan."}`;
   };
@@ -984,6 +993,7 @@ async function startPunch(kind) {
   async function submit() {
     const b = q("#send"); if (!pos) { toast("Tunggu lokasi GPS dikesan dahulu"); return; }
     const n = nearest(pos.lat, pos.lng);
+    if(st.enforce_geofence&&individualLocations(S.me)!==null&&!n){toast("Tiada lokasi individu aktif. Hubungi Owner.");return;}
     if (st.enforce_geofence && n && n.d > n.radius_m) { toast(`Anda di luar kawasan (${Math.round(n.d)} m)`); return; }
     b.disabled = true; b.textContent = "Menghantar…";
     try {
@@ -1305,6 +1315,16 @@ async function onSubmit(e) {
       const q = S.client.from("attendance_locations");
       const { data, error } = await (editId ? q.update(v).eq("id", editId) : q.insert(v)).select().single(); if (error) throw error;
       if (editId) { S.locs = S.locs.map(x => x.id === editId ? data : x); S.locEdit = null; toast("Lokasi dikemas kini"); } else { S.locs.push(data); toast("Lokasi ditambah"); }
+    } else if (f.classList.contains("f-staffgps")) {
+      if(!S.owner)throw new Error("Hanya Owner boleh menetapkan lokasi.");
+      const sid=f.dataset.staff;
+      if(!S.staff.some(s=>s.id===sid&&s.enabled!==false&&s.role!=="owner"))throw new Error("Staf tidak sah.");
+      const ids=fd.get("mode")==="individual"?[...new Set(fd.getAll("locid"))]:null;
+      if(ids!==null&&(!ids.length||ids.some(id=>!S.locs.some(l=>l.id===id&&l.active))))throw new Error("Pilih sekurang-kurangnya satu lokasi aktif.");
+      const patch={allowed_location_ids:ids,updated_at:new Date().toISOString()};
+      const q=S.client.from("attendance_staff");
+      const {data,error}=await (S.astaff[sid]?q.update(patch).eq("staff_id",sid):q.insert({staff_id:sid,...patch})).select().single();
+      if(error)throw error;S.astaff[sid]=data;toast("Lokasi staf disimpan");
     } else if (f.id === "f-shift") {
       const v = { name:String(fd.get("name")).trim(), start_time:fd.get("start_time"), end_time:fd.get("end_time"), break_min:+fd.get("break_min") || 0, color:fd.get("color") || "#e8b10b" };
       if (tMin(v.end_time) <= tMin(v.start_time)) throw new Error("Waktu balik syif mesti selepas waktu masuk.");
