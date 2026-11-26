@@ -190,7 +190,7 @@ function leadCard(r) {
     } catch (e) { $('status').textContent = 'Gagal: ' + e.message; }
     finally { eb.disabled = false; }
   };
-  a.append(ed);
+  if (me.role === 'owner') a.append(ed); // V130: edit maklumat lead untuk Owner sahaja
 
   // Sejarah follow up
   const details = mk('details'), history = mk('div'), note = mk('textarea'), due = mk('input'), save = mk('button', null, 'Simpan catatan');
