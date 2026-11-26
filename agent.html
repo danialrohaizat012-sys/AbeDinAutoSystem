@@ -306,7 +306,8 @@ function view(id){
  if(id==='owner'&&!owner)id='account';
  if(id==='promosi'&&!(me?.email_confirmed_at&&agent?.status==='active'))id='account';
  for(const b of document.querySelectorAll('[data-view]'))b.setAttribute('aria-current',b.dataset.view===id?'page':'false');
-for(const s of document.querySelectorAll('main section'))s.hidden=s.id!==id;
+// Only switch top-level portal views; nested profile sections must stay visible.
+for(const s of document.querySelectorAll('main > section'))s.hidden=s.id!==id;
 if(id==='owner'&&owner){loadOwner();loadOwnerPromo().catch(fail)}}
 $('promosiMount').append($('agentPromo'));
 $('openTermaLink').onclick=e=>{e.preventDefault();view('terma');window.scrollTo(0,0)};
