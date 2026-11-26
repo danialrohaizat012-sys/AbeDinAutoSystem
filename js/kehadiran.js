@@ -215,7 +215,8 @@ function errMsg(e) { const m = e?.message || String(e); return /attendance_|rela
 function sheet(html) { const o = document.createElement("div"); o.className = "ov"; o.innerHTML = `<div class="sheet">${html}</div>`; o.addEventListener("click", e => { if (e.target === o) closeSheet(o); }); root.appendChild(o); document.documentElement.classList.add("ada-sheet-open"); return o; }
 function closeSheet(o) { o?.__cleanup?.(); o?.remove(); if (!root.querySelector(".ov")) document.documentElement.classList.remove("ada-sheet-open"); }
 const individualLocations = sid => S.astaff?.[sid]?.allowed_location_ids ?? null;
-function allowedLocations(sid=S.me){const ids=individualLocations(sid);return S.locs.filter(l=>l.active&&(ids===null||ids.includes(l.id)));}
+const anywhereAllowed = (sid=S.me) => S.astaff?.[sid]?.allow_punch_anywhere===true;
+function allowedLocations(sid=S.me){if(anywhereAllowed(sid))return [];const ids=individualLocations(sid);return S.locs.filter(l=>l.active&&(ids===null||ids.includes(l.id)));}
 function nearest(lat,lng){let best=null;for(const l of allowedLocations()){const d=distM(lat,lng,l.lat,l.lng),inside=d<=l.radius_m;if(!best||(inside&&!best.inside)||(inside===best.inside&&d<best.d))best={...l,d,inside};}return best;}
 
 /* ---------- data ---------- */
@@ -474,7 +475,7 @@ function render() {
   tickClock();
 }
 function punchRow(p, showName) {
-  const loc = p.inside == null ? (p.manual ? `<span class="chip blue">Manual</span>` : `<span class="chip">Tiada lokasi tag</span>`)
+  const loc = p.inside == null ? (p.manual ? `<span class="chip blue">Manual</span>` : p.location_name==="Bebas lokasi"?`<span class="chip blue">Bebas lokasi · GPS direkod</span>`:`<span class="chip">Tiada lokasi tag</span>`)
     : p.inside ? `<span class="chip ok">✓ ${esc(p.location_name || "Lokasi")} · ${p.distance_m}m</span>` : `<span class="chip bad">✗ Luar kawasan · ${p.distance_m}m</span>`;
   const kc = p.kind === "in" ? "pri" : p.kind === "out" ? "" : "pur";
   return `<button class="p" data-punch="${esc(p.id)}">${p.photo_path ? `<img data-ph="${esc(p.photo_path)}" src="${esc(S.urls[p.photo_path] || "")}" alt="">` : `<span class="noimg">${p.manual ? "✎" : p.kind.startsWith("rest") ? "☕" : "?"}</span>`}
@@ -556,7 +557,7 @@ function viewPunch() {
       <div style="display:flex;flex-direction:column;gap:8px;width:100%">${btns}</div>
       <div class="mute">Punch masuk/balik perlu selfie dan GPS. Punch rehat hanya GPS. Masa ikut jam server.</div>
     </div>
-    ${noLoc ? `<div class="notice">${individualLocations(S.me)!==null ? "Tiada lokasi individu aktif. Hubungi Owner." : S.owner ? "Belum ada lokasi tag. Tambah di tab Tetapan supaya punch disemak ikut kawasan." : "Owner belum menetapkan lokasi kerja."}</div>` : `<div class="mute" style="font-size:12px">📍 Lokasi punch: ${allowedLocations().map(l=>esc(l.name)+" ("+esc(l.radius_m)+" m)").join(" · ")}${!st.enforce_geofence?" · Sekatan GPS tidak aktif":""}</div>`}
+    ${anywhereAllowed()?`<div class="mute" style="font-size:12px">📍 Bebas lokasi · GPS tetap direkod ketika punch.</div>`:noLoc ? `<div class="notice">${individualLocations(S.me)!==null ? "Tiada lokasi individu aktif. Hubungi Owner." : S.owner ? "Belum ada lokasi tag. Tambah di tab Tetapan supaya punch disemak ikut kawasan." : "Owner belum menetapkan lokasi kerja."}</div>` : `<div class="mute" style="font-size:12px">📍 Lokasi punch: ${allowedLocations().map(l=>esc(l.name)+" ("+esc(l.radius_m)+" m)").join(" · ")}${!st.enforce_geofence?" · Sekatan GPS tidak aktif":""}</div>`}
     ${summary}</div>
     <div class="col"><div class="card"><h3>Punch saya hari ini</h3>${mine.length ? `<div class="pl">${[...mine].reverse().map(p => punchRow(p, false)).join("")}</div>` : `<p class="mute">Tiada punch lagi hari ini.</p>`}</div></div></div>`;
 }
@@ -846,8 +847,8 @@ function viewTetapan() {
 function staffLocationCard(staff){
   const active=S.locs.filter(l=>l.active);
   return `<div class="card"><h3>Lokasi Punch Individu</h3><p class="mute">Owner sahaja boleh memilih lokasi. Lalai menggunakan semua lokasi aktif. Sekatan punch masuk/balik mengikut tetapan Peraturan Kehadiran.</p>${!S.settings.enforce_geofence?`<div class="notice">Sekatan GPS dimatikan. Hidupkan di Peraturan Kehadiran untuk menguatkuasakan pilihan lokasi.</div>`:""}${!active.length?`<div class="notice">Tambah lokasi aktif di menu Lokasi Tag (GPS) dahulu.</div>`:""}<div class="ps-list">${staff.map(s=>{
-    const ids=individualLocations(s.id),names=ids===null?"Semua lokasi aktif":ids.map(id=>S.locs.find(l=>l.id===id)?.name||"Lokasi dipadam").join(", ");
-    return `<details class="pd" style="min-width:0"><summary style="cursor:pointer"><b>${esc(s.full_name)}</b><div class="mute" style="font-size:12px;overflow-wrap:anywhere">${ids===null?"Lalai":"Individu"} · ${esc(names)}</div></summary><form class="f-staffgps" data-staff="${esc(s.id)}" style="display:grid;gap:8px;margin-top:10px"><label>Kaedah<select class="field" name="mode"><option value="global"${ids===null?" selected":""}>Semua lokasi aktif (lalai)</option><option value="individual"${ids!==null?" selected":""}>Lokasi terpilih sahaja</option></select></label><div class="mute">Pilih satu atau lebih lokasi untuk kaedah individu:</div>${active.map(l=>`<label class="sw" style="align-items:flex-start"><input type="checkbox" name="locid" value="${esc(l.id)}"${ids?.includes(l.id)?" checked":""}> <span>${esc(l.name)} · ${esc(l.radius_m)} m</span></label>`).join("")}<button type="submit" class="btn">Simpan lokasi staf</button></form></details>`;
+    const ids=individualLocations(s.id),anywhere=anywhereAllowed(s.id),names=anywhere?"Di mana-mana (GPS direkod)":ids===null?"Semua lokasi aktif":ids.map(id=>S.locs.find(l=>l.id===id)?.name||"Lokasi dipadam").join(", ");
+    return `<details class="pd" style="min-width:0"><summary style="cursor:pointer"><b>${esc(s.full_name)}</b><div class="mute" style="font-size:12px;overflow-wrap:anywhere">${anywhere?"Bebas lokasi":ids===null?"Lalai":"Individu"} · ${esc(names)}</div></summary><form class="f-staffgps" data-staff="${esc(s.id)}" style="display:grid;gap:8px;margin-top:10px"><label>Kaedah<select class="field" name="mode"><option value="global"${!anywhere&&ids===null?" selected":""}>Semua lokasi aktif (lalai)</option><option value="individual"${!anywhere&&ids!==null?" selected":""}>Lokasi terpilih sahaja</option><option value="anywhere"${anywhere?" selected":""}>Bebas lokasi (di mana-mana)</option></select></label><div class="mute">Pilih satu atau lebih lokasi untuk kaedah individu:</div>${active.map(l=>`<label class="sw" style="align-items:flex-start"><input type="checkbox" name="locid" value="${esc(l.id)}"${ids?.includes(l.id)?" checked":""}> <span>${esc(l.name)} · ${esc(l.radius_m)} m</span></label>`).join("")}<button type="submit" class="btn">Simpan lokasi staf</button></form></details>`;
   }).join("")||'<p class="mute">Tiada staf aktif.</p>'}</div></div>`;
 }
 function payCard(staff) {
@@ -960,6 +961,7 @@ async function startPunch(kind) {
     const g = q("#gps"); if (!g) return;
     if (!pos) return;
     const n = nearest(pos.lat, pos.lng), acc = Math.round(pos.acc);
+    if(anywhereAllowed()){g.className="gps ok";g.textContent=`✓ Bebas lokasi · GPS direkod (±${acc} m).`;return;}
     if (!n) { const blocked=individualLocations(S.me)!==null&&st.enforce_geofence;g.className = "gps"+(blocked?" bad":"");g.textContent=blocked?"Tiada lokasi individu aktif. Hubungi Owner.":`📍 Lokasi didapati (ketepatan ±${acc} m). Tiada lokasi tag ditetapkan.`; return; }
     const inside = n.d <= n.radius_m; g.className = "gps " + (inside ? "ok" : "bad");
     g.innerHTML = inside ? `✓ Dalam kawasan <b>${esc(n.name)}</b> · ${Math.round(n.d)} m (±${acc} m)` : `✗ Anda ${Math.round(n.d)} m dari <b>${esc(n.name)}</b> (had ${n.radius_m} m, ketepatan ±${acc} m)${st.enforce_geofence ? ". Punch akan ditolak — pergi ke lokasi kerja." : ". Punch tetap direkod sebagai luar kawasan."}`;
@@ -1319,9 +1321,11 @@ async function onSubmit(e) {
       if(!S.owner)throw new Error("Hanya Owner boleh menetapkan lokasi.");
       const sid=f.dataset.staff;
       if(!S.staff.some(s=>s.id===sid&&s.enabled!==false&&s.role!=="owner"))throw new Error("Staf tidak sah.");
-      const ids=fd.get("mode")==="individual"?[...new Set(fd.getAll("locid"))]:null;
+      const mode=fd.get("mode");
+      if(!["global","individual","anywhere"].includes(mode))throw new Error("Kaedah lokasi tidak sah.");
+      const ids=mode==="individual"?[...new Set(fd.getAll("locid"))]:null;
       if(ids!==null&&(!ids.length||ids.some(id=>!S.locs.some(l=>l.id===id&&l.active))))throw new Error("Pilih sekurang-kurangnya satu lokasi aktif.");
-      const patch={allowed_location_ids:ids,updated_at:new Date().toISOString()};
+      const patch={allowed_location_ids:ids,allow_punch_anywhere:mode==="anywhere",updated_at:new Date().toISOString()};
       const q=S.client.from("attendance_staff");
       const {data,error}=await (S.astaff[sid]?q.update(patch).eq("staff_id",sid):q.insert({staff_id:sid,...patch})).select().single();
       if(error)throw error;S.astaff[sid]=data;toast("Lokasi staf disimpan");
