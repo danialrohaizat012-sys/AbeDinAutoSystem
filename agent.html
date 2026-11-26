@@ -114,6 +114,12 @@ nav#tabs button{flex:0 0 auto!important;scroll-snap-align:start;white-space:nowr
 #agentDetailsForm[data-locked="true"] input,#agentDetailsForm[data-locked="true"] textarea{background:#f0f4f8;border-color:#e0e7ef;color:#263b51}
 #agentDetailsForm button[type="submit"]{width:100%}
 #agentProfileLockNote{margin:0 0 12px}
+#agentDetailsForm .profile-read-value{display:none}
+#agentDetailsForm[data-locked="true"] input,#agentDetailsForm[data-locked="true"] textarea{display:none}
+#agentDetailsForm[data-locked="true"] .profile-read-value{display:block;padding:9px 10px;border:1px solid #e0e7ef;border-radius:8px;background:#f0f4f8;color:#263b51;font-size:14px;font-weight:600;white-space:pre-wrap;overflow-wrap:anywhere;min-height:38px}
+#agentProfileOwnerContact{display:flex;align-items:center;justify-content:center;gap:9px;background:#167647;color:#fff;text-decoration:none;font-weight:750;font-size:14px;border-radius:10px;padding:12px;margin:0 0 14px;flex-wrap:wrap}
+#agentProfileOwnerContact small{font-size:12px;color:inherit;font-weight:500}
+#agentProfileOwnerContact:focus-visible{outline:3px solid #174f83;outline-offset:3px}
 @media(max-width:520px){#signedInAccount .panel{padding:14px;margin-bottom:12px}#agentDetailsForm .grid,#agentProfileSummary{grid-template-columns:1fr}#agentDetailsForm .profile-section{padding:11px}#agentDetailsForm input,#agentDetailsForm textarea{font-size:16px}}
 </style>
 </head>
@@ -142,7 +148,7 @@ nav#tabs button{flex:0 0 auto!important;scroll-snap-align:start;white-space:nowr
 </div>
 <div id="signedInAccount" hidden>
 <div class="panel"><h1>Profil Akaun Ejen</h1><p>Maklumat akaun, permohonan, status dan rujukan ejen anda.</p><div id="agentProfileSummary" class="items"></div></div>
-<div class="panel"><h2>Butiran Peribadi Ejen</h2><div id="agentProfileLockNote" class="notice" role="status">Memuatkan profil…</div><form id="agentDetailsForm" hidden><section class="profile-section"><h3>Maklumat peribadi</h3>
+<div class="panel"><h2>Butiran Peribadi Ejen</h2><div id="agentProfileLockNote" class="notice" role="status">Memuatkan profil…</div><a id="agentProfileOwnerContact" href="https://wa.me/601156366925?text=Salam%20Owner%20AbeDin%20Auto%2C%20saya%20ingin%20mendapatkan%20bantuan%20untuk%20profil%20ejen%20saya." target="_blank" rel="noopener noreferrer" aria-label="WhatsApp Owner AbeDin Auto 01156366925">WhatsApp Owner <small>011-5636 6925</small></a><form id="agentDetailsForm" hidden><section class="profile-section"><h3>Maklumat peribadi</h3>
 <div class="grid"><label>Nama penuh<input name="display_name" maxlength="160" required></label><label>No. telefon / WhatsApp<input name="phone" type="tel" maxlength="24" required></label>
 <label>Negeri<input name="state" maxlength="80"></label><label>Bandar / Daerah<input name="city" maxlength="100"></label></div>
 <label>Alamat surat-menyurat (pilihan)<textarea name="address" maxlength="400" rows="2"></textarea></label>
@@ -434,11 +440,17 @@ let agentAccountContext=null;
 function setAgentProfileLocked(locked){
  const form=$('agentDetailsForm'),note=$('agentProfileLockNote');
  form.dataset.locked=String(locked);
- for(const field of form.querySelectorAll('input,textarea'))field.readOnly=locked;
+ for(const field of form.querySelectorAll('input,textarea')){
+  field.readOnly=locked;
+  let display=field.parentElement.querySelector('.profile-read-value');
+  if(!display){display=document.createElement('span');display.className='profile-read-value';field.insertAdjacentElement('afterend',display);}
+  display.textContent=locked?(field.value.trim()||'Belum diisi'):'';
+  display.hidden=!locked;
+ }
  form.querySelector('button[type="submit"]').hidden=locked;
  note.className=locked?'notice ok':'notice warn';
- note.textContent=locked?'Profil telah dikunci. Hubungi Owner jika maklumat perlu dibetulkan.':'Semak semua butiran. Selepas simpan, profil hanya boleh dibuka semula oleh Owner.';
- if(locked){const n=form.elements.bank_account_no;n.value=n.value?'•••• '+n.value.replace(/\D/g,'').slice(-4):'';}
+ note.textContent=locked?'Profil telah dikunci. Semua butiran masih boleh dilihat tetapi tidak boleh diedit. Tekan WhatsApp Owner untuk pembetulan.':'Semak semua butiran. Selepas simpan, profil hanya boleh dibuka semula oleh Owner.';
+
  form.hidden=false;
 }
 async function loadAgentAccount(app,profile){
@@ -452,7 +464,7 @@ async function loadAgentAccount(app,profile){
  if(error){$('agentProfileLockNote').textContent='Profil gagal dimuatkan. Muat semula halaman.';throw error;}
  if(me?.id!==accountId)return;
  agentAccountContext={app,profile};
- for(const name of ['display_name','phone','state','city','address'])form.elements[name].value=details?.[name]||app?.[name==='display_name'?'full_name':name]||(name==='display_name'?staffPrefill?.full_name:name==='phone'?staffPrefill?.phone:'')||'';
+ for(const name of ['display_name','phone','state','city','address'])form.elements[name].value=details?.profile_locked===true?(details[name]||''):(details?.[name]||app?.[name==='display_name'?'full_name':name]||(name==='display_name'?staffPrefill?.full_name:name==='phone'?staffPrefill?.phone:'')||'');
  for(const name of ['bank_name','bank_account_no','bank_account_holder'])form.elements[name].value=details?.[name]||'';
  setAgentProfileLocked(details?.profile_locked===true);
  const summary=$('agentProfileSummary');summary.replaceChildren();
