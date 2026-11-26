@@ -179,6 +179,55 @@ nav#tabs button{flex:0 0 auto!important;scroll-snap-align:start;white-space:nowr
 #leadPanel>h2{font-size:19px;color:#142d57;letter-spacing:-.02em}
 #leadPanel>.notice{font-size:12px;padding:10px 12px}
 @media(max-width:360px){#myLeadSection .lead-tools{grid-template-columns:1fr}#myLeadSection .lead-head strong{font-size:15px}}
+/* Compact account view: keep all personal and bank data readable. */
+#signedInAccount .panel{padding:14px;border-radius:14px;margin-bottom:10px}
+#signedInAccount .account-summary-panel{background:linear-gradient(135deg,#153b63,#20577d);color:#fff;border:0;padding:15px}
+#signedInAccount .account-summary-panel h1{font-size:12px;font-weight:650;letter-spacing:.02em;color:#d4e4f5;margin:0 0 10px}
+#agentProfileHero{display:flex;align-items:center;gap:10px;margin-bottom:12px;min-width:0}
+#agentProfileHero .profile-avatar{flex:0 0 40px;height:40px;border-radius:12px;background:#ffffff24;display:grid;place-items:center;font-size:16px;font-weight:800}
+#agentProfileHero .profile-hero-text{flex:1;min-width:0;display:grid;gap:3px}
+#agentProfileHero strong{font-size:19px;line-height:1.2;overflow-wrap:anywhere}
+#agentProfileHero small{color:#cde0f3;font-size:12px;overflow-wrap:anywhere}
+#agentProfileHero .profile-status{background:#f4e7ce;color:#74500c}
+#agentProfileHero .profile-status.active{background:#dff4e7;color:#16633e}
+#agentProfileHero .profile-status.inactive{background:#fee5e5;color:#9c2b35}
+#signedInAccount .profile-status{display:inline-block;font-size:11px;font-weight:750;padding:4px 7px;border-radius:7px;line-height:1.3}
+#agentProfileSummary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 12px;border-top:1px solid #ffffff30;padding-top:9px}
+#agentProfileSummary .profile-mini{min-width:0;display:grid;gap:2px;padding:3px 0}
+#agentProfileSummary .profile-mini.wide{grid-column:1/-1}
+#agentProfileSummary .profile-mini small{font-size:11px;color:#cde0f3;line-height:1.3}
+#agentProfileSummary .profile-mini b{font-size:13px;color:#fff;line-height:1.4;overflow-wrap:anywhere;font-weight:650}
+#agentProfileSummary .profile-status{justify-self:start;background:#e6efff;color:#174f83}
+#agentProfileSummary .profile-status.pending{background:#fff0d7;color:#83520e}
+#agentProfileSummary .profile-status.inactive{background:#fee5e5;color:#9c2b35}
+#signedInAccount h2{font-size:16px;margin:0 0 10px}
+#agentProfileLockNote{font-size:12px;line-height:1.45;margin:0 0 9px;padding:9px 10px}
+#agentProfileOwnerContact{padding:10px;margin:8px 0 0;font-size:13px;min-height:42px}
+#agentDetailsForm .profile-section{padding:0;border:1px solid #dce5ef;background:#fff;border-radius:11px;margin:0 0 8px;overflow:hidden}
+#signedInAccount .profile-section>summary,#agentPasswordPanel>summary{display:flex;align-items:center;gap:8px;cursor:pointer;list-style:none;font-weight:750;font-size:14px;padding:10px;color:#153b63}
+#signedInAccount .profile-section>summary::-webkit-details-marker,#agentPasswordPanel>summary::-webkit-details-marker{display:none}
+#signedInAccount .profile-section>summary::after,#agentPasswordPanel>summary::after{content:'+';margin-left:auto;color:#61758a;font-size:18px;line-height:1}
+#signedInAccount .profile-section[open]>summary::after,#agentPasswordPanel[open]>summary::after{content:'−'}
+#signedInAccount .profile-icon{display:grid;place-items:center;width:26px;height:26px;border-radius:7px;background:#e5efff;color:#1756a0;flex:0 0 auto}
+#signedInAccount .profile-icon.bank{background:#fff1cf;color:#876012}
+#signedInAccount .profile-icon.password{background:#e8edf4;color:#53677e}
+#agentDetailsForm .profile-section-body{padding:0 10px 10px}
+#agentDetailsForm .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px}
+#agentDetailsForm .grid .profile-wide{grid-column:1/-1}
+#agentDetailsForm label{font-size:11px;line-height:1.35;gap:3px;color:#5d7186;margin:0 0 5px}
+#agentDetailsForm[data-locked="true"] .profile-read-value{border:0;border-radius:0;background:transparent;padding:0;min-height:0;font-size:13px;font-weight:650;line-height:1.4;color:#18334e}
+#agentDetailsForm[data-locked="true"] .profile-section .hint{display:none}
+#agentDetailsForm[data-locked="true"] .grid{row-gap:7px}
+#agentDetailsForm[data-locked="true"] .profile-section-body{padding-bottom:8px}
+#agentDetailsForm input,#agentDetailsForm textarea{padding:8px;min-height:42px}
+#agentDetailsForm .hint{font-size:12px}
+#agentPasswordPanel{padding:0!important}
+#agentPasswordPanel>summary{padding:12px 14px;min-height:48px}
+#agentPasswordPanel .profile-section-body{padding:0 14px 14px}
+#agentPasswordPanel p{font-size:12px;margin:0 0 10px}
+#agentPasswordPanel label{font-size:12px;margin-bottom:8px}
+#agentPasswordPanel input{padding:8px}
+@media(max-width:350px){#agentDetailsForm:not([data-locked="true"]) .grid{grid-template-columns:1fr}#agentProfileHero strong{font-size:17px}}
 </style>
 </head>
 <body>
@@ -205,21 +254,21 @@ nav#tabs button{flex:0 0 auto!important;scroll-snap-align:start;white-space:nowr
 <button class="secondary">Daftar akaun</button></form><div id="signupDone" class="notice ok" role="status" hidden></div></div>
 </div>
 <div id="signedInAccount" hidden>
-<div class="panel"><h1>Profil Akaun Ejen</h1><p>Maklumat akaun, permohonan, status dan rujukan ejen anda.</p><div id="agentProfileSummary" class="items"></div></div>
-<div class="panel"><h2>Butiran Peribadi Ejen</h2><div id="agentProfileLockNote" class="notice" role="status">Memuatkan profil…</div><a id="agentProfileOwnerContact" href="https://wa.me/601156366925?text=Salam%20Owner%20AbeDin%20Auto%2C%20saya%20ingin%20mendapatkan%20bantuan%20untuk%20profil%20ejen%20saya." target="_blank" rel="noopener noreferrer" aria-label="WhatsApp Owner AbeDin Auto 01156366925">WhatsApp Owner <small>011-5636 6925</small></a><form id="agentDetailsForm" hidden><section class="profile-section"><h3>Maklumat peribadi</h3>
+<div class="panel account-summary-panel"><h1>Profil Akaun Ejen</h1><div id="agentProfileHero"></div><div id="agentProfileSummary" class="items"></div></div>
+<div class="panel"><h2>Butiran Peribadi Ejen</h2><div id="agentProfileLockNote" class="notice" role="status">Memuatkan profil…</div><form id="agentDetailsForm" hidden><details class="profile-section" open><summary><span class="profile-icon" aria-hidden="true">♙</span>Maklumat peribadi</summary><div class="profile-section-body">
 <div class="grid"><label>Nama penuh<input name="display_name" maxlength="160" required></label><label>No. telefon / WhatsApp<input name="phone" type="tel" maxlength="24" required></label>
 <label>Negeri<input name="state" maxlength="80"></label><label>Bandar / Daerah<input name="city" maxlength="100"></label></div>
 <label>Alamat surat-menyurat (pilihan)<textarea name="address" maxlength="400" rows="2"></textarea></label>
-</section><section class="profile-section"><h3>Akaun Bank untuk Bayaran Komisen</h3><p class="hint" style="margin:0 0 8px">Komisen akan dipindahkan ke akaun ini. Pastikan nama pemegang akaun sama dengan nama dalam bank.</p>
+</div></details><details class="profile-section" open><summary><span class="profile-icon bank" aria-hidden="true">▤</span>Akaun pembayaran</summary><div class="profile-section-body"><p class="hint" style="margin:0 0 8px">Komisen akan dipindahkan ke akaun ini. Pastikan nama pemegang akaun sama dengan nama dalam bank.</p>
 <div class="grid"><label>Nama bank<input name="bank_name" required maxlength="80" list="bankList" placeholder="cth: Maybank"></label><label>No. akaun bank<input name="bank_account_no" required maxlength="34" inputmode="numeric" pattern="[0-9 \-]*" placeholder="cth: 1234 5678 9012"></label>
-<label>Nama pemegang akaun<input name="bank_account_holder" required maxlength="160" placeholder="Nama seperti dalam akaun bank"></label></div>
+<label class="profile-wide">Nama pemegang akaun<input name="bank_account_holder" required maxlength="160" placeholder="Nama seperti dalam akaun bank"></label></div>
 <datalist id="bankList"><option>Maybank</option><option>CIMB Bank</option><option>Bank Islam</option><option>Bank Rakyat</option><option>RHB Bank</option><option>Public Bank</option><option>Hong Leong Bank</option><option>AmBank</option><option>Bank Muamalat</option><option>BSN</option><option>Affin Bank</option><option>Alliance Bank</option><option>Agrobank</option><option>Al Rajhi Bank</option><option>MBSB Bank</option><option>OCBC Bank</option><option>UOB</option><option>HSBC</option><option>Standard Chartered</option><option>GXBank</option><option>AEON Bank</option><option>Boost Bank</option></datalist>
-</section><button class="primary" type="submit" hidden>Simpan &amp; Kunci Profil</button></form></div>
-<div class="panel"><h2>Tukar Kata Laluan</h2><p>Untuk keselamatan, masukkan kata laluan semasa sebelum menetapkan yang baharu.</p>
+</div></details><button class="primary" type="submit" hidden>Simpan &amp; Kunci Profil</button></form><a id="agentProfileOwnerContact" href="https://wa.me/601156366925?text=Salam%20Owner%20AbeDin%20Auto%2C%20saya%20ingin%20mendapatkan%20bantuan%20untuk%20profil%20ejen%20saya." target="_blank" rel="noopener noreferrer" aria-label="WhatsApp Owner AbeDin Auto 01156366925">WhatsApp Owner <small>011-5636 6925</small></a></div>
+<details class="panel" id="agentPasswordPanel"><summary><span class="profile-icon password" aria-hidden="true">◇</span>Tukar kata laluan</summary><div class="profile-section-body"><p>Untuk keselamatan, masukkan kata laluan semasa sebelum menetapkan yang baharu.</p>
 <form id="agentPasswordForm"><label>Kata laluan semasa<input name="current_password" type="password" autocomplete="current-password" required></label>
 <label>Kata laluan baharu<input name="new_password" type="password" autocomplete="new-password" required></label>
 <label>Sahkan kata laluan baharu<input name="confirm_password" type="password" autocomplete="new-password" required></label>
-<button class="primary" type="submit">Tukar Kata Laluan</button></form></div>
+<button class="primary" type="submit">Tukar Kata Laluan</button></form></div></details>
 <div class="panel" id="applicationInAccount"><h2>Permohonan Ejen</h2><p id="applicationStatus">Semak status permohonan anda.</p>
 <form id="applyForm" hidden><div class="grid"><label>Nama penuh<input name="full_name" autocomplete="name" maxlength="160" required></label>
 <label>Telefon<input name="phone" type="tel" maxlength="24" required></label>
@@ -508,7 +557,8 @@ function setAgentProfileLocked(locked){
  }
  form.querySelector('button[type="submit"]').hidden=locked;
  note.className=locked?'notice ok':'notice warn';
- note.textContent=locked?'Profil telah dikunci. Semua butiran masih boleh dilihat tetapi tidak boleh diedit. Tekan WhatsApp Owner untuk pembetulan.':'Semak semua butiran. Selepas simpan, profil hanya boleh dibuka semula oleh Owner.';
+ note.textContent=locked?'Profil dikunci · Baca sahaja. Hubungi Owner untuk pembetulan.':'Semak maklumat sebelum simpan. Profil akan dikunci selepas disimpan.';
+ for(const section of form.querySelectorAll('details.profile-section'))section.open=true;
 
  form.hidden=false;
 }
@@ -526,12 +576,24 @@ async function loadAgentAccount(app,profile){
  for(const name of ['display_name','phone','state','city','address'])form.elements[name].value=details?.profile_locked===true?(details[name]||''):(details?.[name]||app?.[name==='display_name'?'full_name':name]||(name==='display_name'?staffPrefill?.full_name:name==='phone'?staffPrefill?.phone:'')||'');
  for(const name of ['bank_name','bank_account_no','bank_account_holder'])form.elements[name].value=details?.[name]||'';
  setAgentProfileLocked(details?.profile_locked===true);
- const summary=$('agentProfileSummary');summary.replaceChildren();
- for(const [label,value] of [['E-mel',me.email],['Kod Ejen',profile?.agent_code||'Belum diberikan'],['Status Ejen',profile?.status||'Belum aktif'],['Status Permohonan',app?.status||'Belum memohon'],['Tarikh Permohonan',app?.applied_at?new Date(app.applied_at).toLocaleDateString('ms-MY'):'—'],['Tarikh Aktif',profile?.activated_at?new Date(profile.activated_at).toLocaleDateString('ms-MY'):'—'],['Akaun Bank',details?.bank_account_no?(details.bank_name||'Bank')+' · •••• '+details.bank_account_no.replace(/\D/g,'').slice(-4):'⚠️ Belum diisi — isi di bawah untuk terima komisen']]){
-  item(summary,label,String(value||'—'));
- }
+ const summary=$('agentProfileSummary'),hero=$('agentProfileHero');summary.replaceChildren();hero.replaceChildren();
+ const node=(tag,cls,value)=>{const el=document.createElement(tag);if(cls)el.className=cls;if(value!==undefined)el.textContent=String(value);return el;};
+ const name=form.elements.display_name.value.trim()||app?.full_name||'Akaun Ejen';
+ const initials=name.split(/\s+/).filter(Boolean).slice(0,2).map(n=>n[0]).join('').toUpperCase();
+ const identity=node('div','profile-hero-text');identity.append(node('strong','',name),node('small','',profile?.agent_code||'Kod belum diberikan'));
+ const statusLabel=({active:'Aktif',suspended:'Digantung',inactive:'Tidak aktif',pending:'Menunggu'})[profile?.status]||profile?.status||'Belum aktif';
+ hero.append(node('div','profile-avatar',initials),identity,node('span','profile-status '+(profile?.status==='active'?'active':['inactive','suspended'].includes(profile?.status)?'inactive':''),statusLabel));
+ const mini=(label,value,wide=false,status='')=>{const el=node('div','profile-mini'+(wide?' wide':''));el.append(node('small','',label),node(status?'span':'b',status?'profile-status '+status:'',value||'—'));summary.append(el);};
+ const appStatus=({approved:'Diluluskan',pending:'Menunggu',rejected:'Ditolak'})[app?.status]||app?.status||'Belum memohon';
+ const date=v=>v?new Date(v).toLocaleDateString('ms-MY',{timeZone:'Asia/Kuala_Lumpur'}):'—';
+ mini('Status permohonan',appStatus,false,app?.status==='approved'?'approved':app?.status==='rejected'?'inactive':'pending');
+ mini('Tarikh aktif',date(profile?.activated_at));
+ mini('Tarikh permohonan',date(app?.applied_at));
+ mini('Akaun bank',details?.bank_account_no?(details.bank_name||'Bank')+' · •••• '+details.bank_account_no.replace(/\D/g,'').slice(-4):'Belum diisi');
+ mini('E-mel',me.email,true);
  $('applicationInAccount').hidden=profile?.status==='active';
 }
+$('agentDetailsForm').addEventListener('invalid',e=>{const section=e.target.closest('details.profile-section');if(section)section.open=true;},true);
 $('agentDetailsForm').onsubmit=async e=>{
  e.preventDefault();if(!me||e.target.hidden||e.target.dataset.locked==='true')return;
  const b=e.submitter||e.target.querySelector('button[type="submit"]');if(b.disabled)return;
