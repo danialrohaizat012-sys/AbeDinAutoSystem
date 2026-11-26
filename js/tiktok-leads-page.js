@@ -266,8 +266,12 @@ async function start() {
   try {
     const { data: auth, error: ae } = await client.auth.getUser();
     if (ae || !auth?.user) throw Error('Sila log masuk melalui dashboard.');
-    const { data: prof, error: pe } = await client.from('profiles').select('id,full_name,role,enabled').eq('id', auth.user.id).single();
-    if (pe || !prof?.enabled || !['owner', 'sales_advisor'].includes(prof.role)) throw Error('Akses tidak dibenarkan');
+    const { data: prof, error: pe } = await client.from('profiles').select('id,full_name,role,enabled,permissions').eq('id', auth.user.id).single();
+    const tk = prof?.permissions && typeof prof.permissions === 'object' ? prof.permissions.tiktok : undefined;
+    const okTk = prof?.role === 'owner' || (typeof tk === 'boolean' ? tk : prof?.role === 'sales_advisor');
+    if (pe || !prof?.enabled || !okTk) throw Error('Akses tidak dibenarkan');
+    // V129: staff lain yang diberi akses TikTok Lead berfungsi sama seperti Sales Advisor dalam halaman ini.
+    if (prof.role !== 'owner') prof.role = 'sales_advisor';
     me = prof; staff = [me];
     const { data: team } = await client.rpc('tiktok_staff_names');
     if (Array.isArray(team) && team.length) staff = team;

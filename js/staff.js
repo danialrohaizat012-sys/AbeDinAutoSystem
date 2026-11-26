@@ -66,11 +66,11 @@ const rmx = n => "RM" + Number(n || 0).toLocaleString("en-MY", { minimumFraction
 const dmyx = s => { if (!s) return "-"; const [y, m, d] = String(s).slice(0, 10).split("-"); return `${d}/${m}/${y}`; };
 const KLx = 8 * 3600000, ymx = () => new Date(Date.now() + KLx).toISOString().slice(0, 7);
 const ROLES = { operations: "Operations (staff)", sales_advisor: "Sales Advisor", owner: "Owner" };
-const ROLE_HINT = { operations: "Lalai: semua menu kecuali Jualan, Pelanggan dan Laporan. Boleh ubah di bawah.", sales_advisor: "Lalai: semua menu kecuali Runner. Boleh ubah di bawah.", owner: "Akses penuh termasuk sahkan pemeriksaan, modal dan urus staff." };
+const ROLE_HINT = { operations: "Lalai: semua menu kecuali Jualan, Pelanggan, Laporan dan TikTok Lead. Boleh ubah di bawah.", sales_advisor: "Lalai: semua menu termasuk Runner & TikTok Lead. Boleh ubah di bawah.", owner: "Akses penuh termasuk sahkan pemeriksaan, modal dan urus staff." };
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const fmt = s => { if (!s) return "belum pernah"; const d = new Date(s); return isNaN(d) ? "-" : d.toLocaleString("ms-MY", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }); };
-const MENUS = [["inventory","Inventori"],["suppliers","Pembekal"],["pemeriksaan","Pemeriksaan"],["kehadiran","Kehadiran"],["puspakom","Puspakom"],["runner","Runner"],["belanja","Perbelanjaan"],["sales","Jualan"],["customers","Pelanggan"],["applications","Permohonan"],["sewa","Sewa"],["reports","Laporan"]];
-function defPerm(role, page) { if (role === "owner") return true; if (role === "operations" && ["sales", "customers", "reports"].includes(page)) return false; if (page === "runner" && role !== "operations") return false; return true; }
+const MENUS = [["inventory","Inventori"],["suppliers","Pembekal"],["pemeriksaan","Pemeriksaan"],["kehadiran","Kehadiran"],["puspakom","Puspakom"],["runner","Runner"],["belanja","Perbelanjaan"],["sales","Jualan"],["customers","Pelanggan"],["applications","Permohonan"],["sewa","Sewa"],["reports","Laporan"],["tiktok","TikTok Lead"]];
+function defPerm(role, page) { if (role === "owner") return true; if (role === "operations" && ["sales", "customers", "reports"].includes(page)) return false; if (page === "runner" && !["operations", "sales_advisor"].includes(role)) return false; if (page === "tiktok" && role !== "sales_advisor") return false; return true; }
 function canPage(u, page) { if (u.role === "owner") return true; const v = u.permissions && typeof u.permissions === "object" ? u.permissions[page] : undefined; return typeof v === "boolean" ? v : defPerm(u.role, page); }
 const SUPA_ESM = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
