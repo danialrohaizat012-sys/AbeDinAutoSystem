@@ -121,6 +121,30 @@ nav#tabs button{flex:0 0 auto!important;scroll-snap-align:start;white-space:nowr
 #agentProfileOwnerContact small{font-size:12px;color:inherit;font-weight:500}
 #agentProfileOwnerContact:focus-visible{outline:3px solid #174f83;outline-offset:3px}
 @media(max-width:520px){#signedInAccount .panel{padding:14px;margin-bottom:12px}#agentDetailsForm .grid,#agentProfileSummary{grid-template-columns:1fr}#agentDetailsForm .profile-section{padding:11px}#agentDetailsForm input,#agentDetailsForm textarea{font-size:16px}}
+/* Agent finance: compact responsive records with independent transaction details. */
+.agent-finance-summary .stat{min-width:0;flex:1 1 40%;padding:12px}
+.agent-finance-summary .stat span{font-size:12px;line-height:1.4;display:block}
+.agent-finance-summary .stat b{font-size:clamp(17px,4.8vw,23px);overflow-wrap:anywhere;margin:5px 0 0}
+.finance-record{border:1px solid #dce5ef;border-radius:13px;background:#fff;overflow:hidden}
+.finance-record summary{cursor:pointer;list-style:none;padding:12px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.finance-record summary::-webkit-details-marker{display:none}
+.finance-record summary::after{content:'+';font-size:19px;color:#526984;font-weight:600;align-self:center}
+.finance-record[open] summary::after{content:'−'}
+.finance-head{min-width:0;flex:1;display:grid;gap:4px}
+.finance-head strong{font-size:15px;overflow-wrap:anywhere}
+.finance-head small,.finance-meta{font-size:12px;color:#596e85;overflow-wrap:anywhere}
+.finance-money{display:grid;gap:5px;justify-items:end;flex-shrink:0}
+.finance-money strong{font-size:17px;color:#174f83}
+.finance-status{border-radius:6px;background:#eef3f8;padding:3px 6px;font-size:11px;font-weight:700;color:#526984}
+.finance-status.paid{background:#e3f4e9;color:#17663a}
+.finance-status.pending{background:#fff3df;color:#81560c}
+.finance-body{padding:12px;border-top:1px solid #e1e8f0;background:#f8fafd}
+.finance-line{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:5px 0}
+.finance-line span{color:#526984}.finance-line b{text-align:right;overflow-wrap:anywhere;min-width:0}
+.finance-vehicle{padding:10px 0;border-top:1px solid #dce5ef}
+.finance-vehicle:first-child{border-top:0;padding-top:0}
+.finance-caption{font-size:12px;color:#596e85;margin:6px 0 10px}
+#commissionStatus{padding:10px}
 </style>
 </head>
 <body>
@@ -199,8 +223,8 @@ nav#tabs button{flex:0 0 auto!important;scroll-snap-align:start;white-space:nowr
 </div><label class="check"><input name="consent" type="checkbox" required> Pelanggan telah memberikan kebenaran untuk dihubungi mengenai kereta.</label>
 <button class="primary">Daftar lead</button></form></div>
 
-<div class="agent-quicklinks"><a href="#commissionItems">Komisen Saya</a><a href="#payoutItems">Sejarah Bayaran</a><a href="#agentPromo">Katalog Promosi</a></div><h2 style="margin-top:22px">Komisen Saya</h2><div class="agent-finance-summary" id="commissionSummary" aria-live="polite"></div><div class="lead-tools"><label for="commissionStatus">Tapis status komisen<select id="commissionStatus"><option value="all">Semua status</option><option value="approved">Diluluskan</option><option value="pending">Menunggu kelulusan</option><option value="paid">Dibayar</option></select></label></div><div id="commissionItems" class="items"></div>
-<h2 style="margin-top:22px">Pembayaran Saya</h2><div class="agent-finance-summary" id="payoutSummary" aria-live="polite"></div><div id="payoutItems" class="items"></div></div></section>
+<div class="agent-quicklinks"><a href="#commissionItems">Komisen Saya</a><a href="#payoutItems">Sejarah Bayaran</a><a href="#agentPromo">Katalog Promosi</a></div><h2 style="margin-top:22px">Komisen Saya</h2><p class="finance-caption">Ringkasan keseluruhan · tekan rekod untuk butiran kereta dan komisen.</p><div class="agent-finance-summary" id="commissionSummary" aria-live="polite"></div><div class="lead-tools"><label for="commissionStatus">Tapis status komisen<select id="commissionStatus"><option value="all">Semua status</option><option value="approved">Diluluskan</option><option value="pending">Menunggu kelulusan</option><option value="paid">Dibayar</option><option value="rejected">Ditolak</option><option value="cancelled">Dibatalkan</option></select></label></div><p id="commissionHistoryNote" class="finance-caption" hidden></p><div id="commissionItems" class="items"></div>
+<h2 style="margin-top:22px">Sejarah Pembayaran</h2><p class="finance-caption">Semak kereta yang terlibat, tarikh bayaran dan rujukan transaksi.</p><div class="agent-finance-summary" id="payoutSummary" aria-live="polite"></div><p id="payoutHistoryNote" class="finance-caption" hidden></p><div id="payoutItems" class="items"></div></div></section>
 
 <section id="promosi" hidden><div class="panel"><h1>Katalog Kereta Ejen</h1><p>Pilih kereta dan kongsi link bersama kod rujukan anda.</p><div id="promosiMount"></div></div></section>
 <section id="owner" hidden><div class="panel"><h2>Ayat Promosi Ejen (5 Pilihan)</h2><p>Owner sediakan dan terbitkan ayat. Gunakan {model}, {tahun}, {harga} untuk maklumat automatik. AI belum disambungkan ke backend; butang sediakan prompt untuk AI.</p><button type="button" class="secondary" id="copyPromoAiPrompt">Salin Prompt AI (5 Ayat)</button><div id="ownerPromoSlots" class="items"></div></div><div class="panel"><h1>Kelulusan Owner</h1>
@@ -684,22 +708,48 @@ function renderAgentLeads(){
 }
 $('leadSearch').addEventListener('input',renderAgentLeads);
 $('leadReadFilter').addEventListener('change',renderAgentLeads);
-let agentCommissionRecords=[],agentPayoutRecords=[];
+let agentCommissionRecords=[],agentPayoutRecords=[],agentFinanceSummary={};
+const financeRM=v=>new Intl.NumberFormat('ms-MY',{style:'currency',currency:'MYR'}).format(Number(v||0));
+const financeDate=v=>v?new Date(v).toLocaleDateString('ms-MY',{timeZone:'Asia/Kuala_Lumpur'}):'—';
+const financeStatus=v=>({paid:'Dibayar',approved:'Diluluskan',pending:'Menunggu kelulusan',rejected:'Ditolak',cancelled:'Dibatalkan',prepared:'Disediakan',draft:'Draf',failed:'Gagal',void:'Dibatalkan'})[v]||v||'Tiada status';
+function financeCar(x){return [x.make,x.model,x.model_year].filter(Boolean).join(' ')||x.stock_code||'Kereta belum dipautkan';}
+function financePlate(x){return [x.plate?'No. plat: '+x.plate:'',x.stock_code?'Stok: '+x.stock_code:''].filter(Boolean).join(' · ');}
+function financeNode(tag,cls,value){const el=document.createElement(tag);if(cls)el.className=cls;if(value!==undefined)el.textContent=value;return el;}
+function financeLine(parent,label,value){const row=financeNode('div','finance-line');row.append(financeNode('span','',label),financeNode('b','',String(value??'—')));parent.append(row);}
+function financeCard(title,subtitle,amount,status){
+ const d=financeNode('details','finance-record'),sm=financeNode('summary'),head=financeNode('div','finance-head'),money=financeNode('div','finance-money'),body=financeNode('div','finance-body');
+ head.append(financeNode('strong','',title),financeNode('small','',subtitle||'Tekan untuk butiran'));
+ money.append(financeNode('strong','',financeRM(amount)),financeNode('span','finance-status '+(status==='paid'?'paid':['pending','prepared'].includes(status)?'pending':''),financeStatus(status)));
+ sm.append(head,money);d.append(sm,body);return {d,body};
+}
 function renderAgentFinance(){
- const rm=v=>new Intl.NumberFormat('ms-MY',{style:'currency',currency:'MYR'}).format(Number(v||0));
- const total=agentCommissionRecords.reduce((sum,x)=>sum+Number(x.agreed_amount||0),0);
- const paid=agentPayoutRecords.filter(x=>String(x.status||'').toLowerCase()==='paid'||Boolean(x.paid_at)).reduce((sum,x)=>sum+Number(x.amount||0),0);
- const box=$('commissionSummary');box.replaceChildren();
- const makeStat=(parent,label,value)=>{const el=document.createElement('div');el.className='stat';const title=document.createElement('span');title.textContent=label;const number=document.createElement('b');number.textContent=value;el.append(title,number);parent.append(el);};
- makeStat(box,'Jumlah rekod komisen',String(agentCommissionRecords.length));
- makeStat(box,'Jumlah komisen direkod',rm(total));
- const payoutBox=$('payoutSummary');payoutBox.replaceChildren();
- makeStat(payoutBox,'Jumlah payout direkod',String(agentPayoutRecords.length));
- makeStat(payoutBox,'Jumlah payout dibayar',rm(paid));
- const filter=$('commissionStatus').value;
- const selected=agentCommissionRecords.filter(x=>filter==='all'||String(x.status||'').toLowerCase()===filter);
- showRows('commissionItems',selected,(el,x)=>item(el,rm(x.agreed_amount),x.status));
- showRows('payoutItems',agentPayoutRecords,(el,x)=>item(el,rm(x.amount),x.status+(x.paid_at?' · '+new Date(x.paid_at).toLocaleDateString('ms-MY'):'')));
+ const box=$('commissionSummary'),payoutBox=$('payoutSummary');box.replaceChildren();payoutBox.replaceChildren();
+ const makeStat=(parent,label,value)=>{const el=financeNode('div','stat');el.append(financeNode('span','',label),financeNode('b','',value));parent.append(el);};
+ makeStat(box,'Jumlah rekod komisen',String(agentFinanceSummary.commission_count??agentCommissionRecords.length));
+ makeStat(box,'Jumlah komisen direkod',financeRM(agentFinanceSummary.commission_total));
+ makeStat(payoutBox,'Jumlah rekod bayaran',String(agentFinanceSummary.payout_count??agentPayoutRecords.length));
+ makeStat(payoutBox,'Jumlah sudah dibayar',financeRM(agentFinanceSummary.paid_total));
+ const filter=$('commissionStatus').value,selected=agentCommissionRecords.filter(x=>filter==='all'||x.status===filter);
+ for(const [id,count,rows] of [['commissionHistoryNote',agentFinanceSummary.commission_count,agentCommissionRecords],['payoutHistoryNote',agentFinanceSummary.payout_count,agentPayoutRecords]]){
+  const n=$(id);n.hidden=Number(count||0)<=rows.length;n.textContent='Memaparkan '+rows.length+' rekod terkini daripada '+count+' rekod.';
+ }
+ showRows('commissionItems',selected,(el,x)=>{
+  const {d,body}=financeCard(financeCar(x),financePlate(x)||'Direkod: '+financeDate(x.created_at),x.agreed_amount,x.status);
+  financeLine(body,'No. plat',x.plate||'Belum direkod');financeLine(body,'Kod stok',x.stock_code||'—');financeLine(body,'Tarikh jualan',financeDate(x.sold_at));financeLine(body,'Tarikh komisen',financeDate(x.created_at));financeLine(body,'Tarikh diluluskan',financeDate(x.approved_at));
+  if(x.lead_source)financeLine(body,'Sumber',x.lead_source==='agent_manual'?'Jualan manual':x.lead_source==='agent_link'?'Rujukan ejen':x.lead_source);
+  for(const p of x.payments||[]){const part=financeNode('div','finance-vehicle');financeLine(part,'Amaun pembayaran',financeRM(p.amount));financeLine(part,'Status bayaran',financeStatus(p.status));financeLine(part,'Tarikh dibayar',financeDate(p.paid_at));financeLine(part,'Rujukan transaksi',p.transfer_reference||'—');body.append(part);}
+  if(!(x.payments||[]).length)body.append(financeNode('p','finance-caption','Belum ada rekod pembayaran dipautkan.'));
+  el.append(d);
+ });
+ showRows('payoutItems',agentPayoutRecords,(el,x)=>{
+  const items=x.items||[],title=items.length===1?financeCar(items[0]):items.length>1?items.length+' komisen dalam bayaran':'Bayaran komisen';
+  const sub=[items.length===1?financePlate(items[0]):'',x.paid_at?'Dibayar: '+financeDate(x.paid_at):'Direkod: '+financeDate(x.created_at)].filter(Boolean).join(' · ');
+  const {d,body}=financeCard(title,sub,x.amount,x.status);
+  financeLine(body,'Tarikh dibayar',financeDate(x.paid_at));financeLine(body,'Rujukan transaksi',x.transfer_reference||'—');
+  if(!items.length)body.append(financeNode('p','finance-caption','Butiran kereta belum dipautkan kepada bayaran ini. Hubungi Owner untuk semakan.'));
+  for(const i of items){const part=financeNode('div','finance-vehicle');part.append(financeNode('strong','',financeCar(i)),financeNode('div','finance-meta',financePlate(i)||'No. plat belum direkod'));financeLine(part,'Tarikh jualan',financeDate(i.sold_at));financeLine(part,'Komisen dibayar',financeRM(i.amount));body.append(part);}
+  el.append(d);
+ });
 }
 $('commissionStatus').addEventListener('change',renderAgentFinance);
 async function loadAgentClickStats(){
@@ -744,17 +794,17 @@ function renderClickCharts(){
 }
 async function loadDashboard(){
  if(!me?.email_confirmed_at||agent?.status!=='active')return;
- const [l,c,p,publicCars]=await Promise.all([
+ const [l,f,publicCars]=await Promise.all([
  supabase.from('agent_leads').select('id,vehicle_id,customer_name,customer_phone,status,lead_source,agent_read_at,owner_read_at,created_at').eq('agent_id',agent.id).order('created_at',{ascending:false}).limit(50),
- supabase.from('agent_commissions').select('id,agreed_amount,status,created_at').eq('agent_id',agent.id).order('created_at',{ascending:false}).limit(50),
- supabase.from('agent_payouts').select('id,amount,status,paid_at').eq('agent_id',agent.id).order('created_at',{ascending:false}).limit(50),
+ supabase.rpc('agent_my_finance_details_v1'),
  supabase.rpc('get_public_catalogue',{p_vehicle_id:null})]);
- for(const x of [l,c,p])if(x.error)throw x.error;
+ for(const x of [l,f])if(x.error)throw x.error;
+ const finances=f.data||{};agentFinanceSummary=finances.summary||{};
  const carMap=new Map((!publicCars.error&&Array.isArray(publicCars.data)?publicCars.data:[]).map(v=>[v.id,v]));
- text($('countLeads'),l.data.length);text($('countCommission'),c.data.length);text($('countPayout'),p.data.length);
+ text($('countLeads'),l.data.length);text($('countCommission'),agentFinanceSummary.commission_count||0);text($('countPayout'),agentFinanceSummary.payout_count||0);
  agentLeadRecords=l.data;agentLeadCars=carMap;renderAgentLeads();
  const rm=v=>new Intl.NumberFormat('ms-MY',{style:'currency',currency:'MYR'}).format(Number(v||0));
- agentCommissionRecords=c.data;agentPayoutRecords=p.data;renderAgentFinance();
+ agentCommissionRecords=finances.commissions||[];agentPayoutRecords=finances.payouts||[];renderAgentFinance();
  await loadAgentClickStats();
 }
 async function adminRequest(data){
