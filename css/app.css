@@ -2520,7 +2520,7 @@ html.ada-light .ada-cs-row{border-color:#0000000f}
 #ada-cloud-gate main:has(.ivx) .cloud-hero{display:none!important}
 #ada-cloud-gate .ivx{--bg1:#151a1b;--bg2:#1d2324;--ln:#ffffff14;--tx:#f4f1ea;--mut:#8e979a;margin:10px 0 16px;display:flex;flex-direction:column;gap:10px}
 html.ada-light #ada-cloud-gate .ivx{--bg1:#fff;--bg2:#f4f4f6;--ln:#00000012;--tx:#15171a;--mut:#6b7176}
-#ada-cloud-gate .ivx-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px}
+#ada-cloud-gate .ivx-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
 #ada-cloud-gate .ivx .ivx-tile{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;gap:5px;padding:12px 13px;border-radius:16px;background:linear-gradient(160deg,color-mix(in srgb,var(--c) 14%,transparent),transparent 65%),var(--bg1);border:1px solid color-mix(in srgb,var(--c) 26%,var(--ln));color:var(--tx);min-width:0;transition:transform .15s,border-color .15s}
 #ada-cloud-gate .ivx .ivx-tile:hover{transform:translateY(-1px)}
 #ada-cloud-gate .ivx .ivx-tile.on{border-color:var(--c);box-shadow:0 0 0 2px color-mix(in srgb,var(--c) 45%,transparent)}
@@ -2546,7 +2546,7 @@ html.ada-light #ada-cloud-gate .ivx-money b.pos{color:#16a34a}
 #ada-cloud-gate .ivx-fact{font-size:11.5px;color:var(--mut);padding:5px 10px;border-radius:99px;background:var(--bg2)}
 #ada-cloud-gate .ivx-fact b{color:var(--tx);font-weight:800}
 #ada-cloud-gate .ivx-fact.warn b{color:#fb7185}
-@media(max-width:1250px){#ada-cloud-gate .ivx-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:1250px){#ada-cloud-gate .ivx-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:700px){#ada-cloud-gate .ivx-grid{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding-bottom:4px;gap:8px}#ada-cloud-gate .ivx .ivx-tile{flex:0 0 46%;scroll-snap-align:start;padding:11px 12px}#ada-cloud-gate .ivx-n{font-size:23px}#ada-cloud-gate .ivx-sep{display:none}#ada-cloud-gate .ivx-meta{gap:6px}}
 #ada-cloud-gate .ivx-money{flex-direction:column;gap:1px}
 #ada-cloud-gate .ivx-money b{font-size:12.5px}

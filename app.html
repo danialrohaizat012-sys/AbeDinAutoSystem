@@ -87,7 +87,7 @@
 <link rel="preconnect" href="https://buzpdyvvoiqgbeventwm.supabase.co" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm" crossorigin>
-<link rel="stylesheet" href="css/app.css?v=54.0">
+<link rel="stylesheet" href="css/app.css?v=54.1">
 <link rel="stylesheet" href="css/vehicle360.css?v=83.0">
 <link rel="stylesheet" href="css/admin-menu.css?v=83.6">
 <link rel="stylesheet" href="css/staff-dashboard.css?v=83.2">
@@ -692,7 +692,7 @@ function invAnalytics(){const own=profile?.role==='owner',st=v=>effStatus(v);
   const mny=v=>{v=Number(v||0);const a=Math.abs(v);return (v<0?'−':'')+(a>=1e6?`RM ${(a/1e6).toFixed(2)}j`:a>=1e4?`RM ${Math.round(a/1e3)}k`:'RM '+Math.round(a).toLocaleString('en-MY'))};
   const tile=g=>`<button type="button" class="ivx-tile${curKey===g.key?' on':''}" style="--c:${g.col}" data-ivx-st="${g.set.st}" data-ivx-wd="${g.set.wd}" title="Tapis: ${g.label}"><span class="ivx-tl"><i>${g.ic}</i>${g.label}</span><b class="ivx-n">${g.n}</b>${g.key==='active'||g.key==='sold'||g.key==='wd'?'':`<span class="ivx-bar"><em style="width:${Math.round(g.n/tot*100)}%"></em></span><small class="ivx-pct">${Math.round(g.n/tot*100)}% stok aktif</small>`}${g.key==='sold'?`<small class="ivx-pct">${own?'Jualan '+mny(g.ask):'Telah dijual'}</small>`:''}${g.key==='wd'?'<small class="ivx-pct">Bukan jualan anda</small>':''}${g.key==='active'?`<small class="ivx-pct">${pub} live · ${activeStock.length-pub} internal</small>`:''}${own&&g.key!=='wd'?`<span class="ivx-money"><span>${g.key==='sold'?'Untung':'Modal'}</span><b class="${g.key==='sold'&&g.pr<0?'neg':''}">${g.key==='sold'?mny(g.pr):mny(g.cap)}</b></span>${g.key!=='sold'?`<span class="ivx-money"><span>Potensi untung</span><b class="${g.pr<0?'neg':'pos'}">${mny(g.pr)}</b></span>`:''}`:''}</button>`;
   const pkc=(k,l,c)=>`<button type="button" class="ivx-chip${invPk===k?' on':''}" style="--c:${c}" data-ivx-pk="${invPk===k?'':k}">${l}<b>${pkN(k)}</b></button>`;
-  return `<section class="ivx"><div class="ivx-grid">${G.map(tile).join('')}</div>
+  return `<section class="ivx"><div class="ivx-grid">${G.filter(g=>g.key!=='preparation').map(tile).join('')}</div>
   <div class="ivx-strip"><div class="ivx-seg" title="Komposisi stok aktif">${segs.map(g=>g.n?`<i style="flex:${g.n};background:${g.col}" title="${g.label}: ${g.n}"></i>`:'').join('')}</div>
   <div class="ivx-meta"><span class="ivx-lbl">Puspakom</span>${pkc('belum','Belum tempah','#94a3b8')}${pkc('tempah','Booking','#5aa9ff')}${pkc('lulus','Lulus','#3ecf8e')}${pkc('gagal','Gagal','#fb7185')}<span class="ivx-sep"></span><span class="ivx-fact">Purata umur stok <b>${avgAge} hari</b></span><span class="ivx-fact ${old90?'warn':''}">Lebih 90 hari <b>${old90}</b></span>${own?`<span class="ivx-fact">Potensi jual <b>${mny(activeStock.reduce((a,v)=>a+Number(v.asking_price||0),0))}</b></span>`:''}</div></div></section>`}
 if(!window.__ivxClick){window.__ivxClick=1;document.addEventListener('click',e=>{const t=e.target.closest?.('[data-ivx-st],[data-ivx-pk]');if(!t||current!=='inventory')return;e.preventDefault();if(t.hasAttribute('data-ivx-pk')){invPk=t.dataset.ivxPk}else{invSt=t.dataset.ivxSt;invWd=t.dataset.ivxWd}renderCloud()},true)}

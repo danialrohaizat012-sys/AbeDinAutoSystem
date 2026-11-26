@@ -1,0 +1,8 @@
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const read=p=>fs.readFileSync(path.resolve(__dirname,'..',p),'utf8');
+const app=read('app.html'),css=read('css/app.css');
+const src=app.slice(app.indexOf('function invAnalytics(){'),app.indexOf('if(!window.__ivxClick)'));
+function render(vehicles){return new Function('profile','effStatus','sales','extraCosts','inspCosts','vehicles','saleAmt','invWd','invSt','invPk','pkOf',src+';return invAnalytics()')({role:'owner'},v=>v.status,[],()=>({total:0}),{},vehicles,()=>0,'','','',()=>null)}
+test('inventory summary hides only Preparation and retains other six actions',()=>{const html=render([]),grid=html.split('<div class="ivx-strip">')[0];assert.equal((grid.match(/class="ivx-tile/g)||[]).length,6);assert.doesNotMatch(grid,/Preparation|data-ivx-st="preparation"/);for(const label of ['Stok aktif','Available','Reserved','Sold','Consignment','Ditarik tuan'])assert.ok(grid.includes(label));});
+test('hidden status still contributes to active inventory and capital',()=>{const html=render([{id:'p',status:'preparation',purchase_cost:1000,asking_price:1500},{id:'a',status:'available',purchase_cost:2000,asking_price:3000}]);assert.match(html,/Stok aktif<\/span><b class="ivx-n">2<\/b>/);assert.match(html,/RM 3,000/);assert.match(html,/50% stok aktif/);});
+test('responsive layout fits six tiles and retains mobile scrolling',()=>{assert.match(css,/\.ivx-grid\{display:grid;grid-template-columns:repeat\(6,/);assert.match(css,/1250px\)\{#ada-cloud-gate \.ivx-grid\{grid-template-columns:repeat\(3,/);assert.match(css,/700px\)\{#ada-cloud-gate \.ivx-grid\{display:flex;overflow-x:auto/);assert.match(app,/css\/app\.css\?v=54\.1/);});
