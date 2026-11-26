@@ -391,6 +391,14 @@ export function mountAgentAdmin(host,{client,profile}={}){
      ed.onclick=()=>{form.hidden=!form.hidden};cn.onclick=()=>{form.hidden=true};
      form.onsubmit=async e=>{e.preventDefault();sv.disabled=true;try{const {error}=await client.rpc('owner_agent_update_v1',{p_user_id:g.user_id,p_name:fN.value,p_phone:fP.value,p_state:fS.value,p_city:fC.value});if(error)throw error;status('Butiran ejen dikemas kini.');await load()}catch(err){status(err.message.includes('phone_check')?'Nombor telefon tidak sah (9–24 aksara).':err.message,true)}finally{sv.disabled=false}};
      ctl.append(ed);
+     const unlock=node('button','ag-c-orange','Buka Kunci Profil');unlock.type='button';
+     unlock.onclick=async()=>{
+      if(!confirm('Benarkan '+(g.name||'ejen')+' mengisi semula profil sekali lagi? Profil akan dikunci selepas simpan.'))return;
+      unlock.disabled=true;
+      try{const {data,error}=await client.rpc('owner_unlock_agent_account_v1',{p_user_id:g.user_id});if(error)throw error;if(!data)throw Error('Ejen belum menyimpan profil.');status('Profil dibuka semula. Minta ejen muat semula Portal Ejen.');}
+      catch(err){status(err.message,true)}finally{unlock.disabled=false}
+     };
+     ctl.append(unlock);
      if(g.agent_status==='active'){const href=congratsLink(g.name,g.phone,g.agent_code);if(href){const tw=node('a','ag-link ag-c-green','🎉 WhatsApp Tahniah');tw.href=href;tw.target='_blank';tw.rel='noopener noreferrer';ctl.append(tw);}}
      if(g.agent_profile_id){
       const isAct=g.agent_status==='active';
