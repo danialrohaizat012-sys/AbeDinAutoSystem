@@ -4,7 +4,7 @@
   // Show once per catalogue page load, not once per browser tab lifetime.
   // Safari may restore sessionStorage across browser visits, hiding the promotion indefinitely.
   const DEFAULT = {
-    enabled:true,badge:'PROMOSI HUJUNG TAHUN • 2026',headline:'JIMAT',highlight:'RM300–RM500!',
+    enabled:true,popup_delay_seconds:10,badge:'PROMOSI HUJUNG TAHUN • 2026',headline:'JIMAT',highlight:'RM300–RM500!',
     subtitle:'Penghantaran Percuma Seluruh Malaysia',
     description:'Jimat anggaran RM300 hingga RM500 kos penghantaran sempena promosi hujung tahun! Daftar minat hari ini untuk memulakan permohonan kereta pilihan anda.',
     button_text:'SAYA NAK GRAB',whatsapp_text:'Saya nak grab promosi',whatsapp_number:'601156366925',
@@ -15,7 +15,7 @@
   window.adaSetYearEndPromoConfig = data => {
     if (data && typeof data === 'object') promotion = {...DEFAULT,...data};
     if (!promotion.enabled) {
-      if (pending) clearTimeout(pending);
+      if (pending !== null) clearTimeout(pending);
       pending = null;
       close();
     }
@@ -78,13 +78,19 @@
     if (!preview) remember();
     root.querySelector('.ada-promo-close')?.focus();
   }
-  window.adaScheduleYearEndPromo = function (carId) {
-    if (pending) clearTimeout(pending);
+  window.adaCancelYearEndPromo = function () {
+    if (pending !== null) clearTimeout(pending);
+    pending = null;
     close();
-    if (!promotion.enabled || !document.getElementById('ada-public-catalogue') || (!preview && seen())) return;
-    pending = setTimeout(() => { pending = null; show(carId ? String(carId) : null); }, 10000);
   };
-  window.addEventListener('popstate', () => { if (pending) clearTimeout(pending); pending = null; close(); });
+  window.adaScheduleYearEndPromo = function (carId) {
+    window.adaCancelYearEndPromo();
+    if (!promotion.enabled || !document.getElementById('ada-public-catalogue') || (!preview && seen())) return;
+    const raw = promotion.popup_delay_seconds;
+    const seconds = raw !== null && raw !== '' && Number.isInteger(Number(raw)) && Number(raw)>=0 && Number(raw)<=300 ? Number(raw) : DEFAULT.popup_delay_seconds;
+    pending = setTimeout(() => { pending = null; show(carId ? String(carId) : null); }, seconds * 1000);
+  };
+  window.addEventListener('popstate', window.adaCancelYearEndPromo);
   const style = document.createElement('style');
   style.textContent = `
     .ada-promo-open{overflow:hidden!important}

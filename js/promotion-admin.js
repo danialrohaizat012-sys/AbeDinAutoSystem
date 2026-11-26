@@ -57,14 +57,16 @@ export async function mountPromotionEditor(host,{client,profile}={}){
  const root=host.shadowRoot||host.attachShadow({mode:'open'});
  const field=([key,label,max,kind])=>`<label class="f ${kind==='area'?'wide':''}">${esc(label)}${kind==='area'?`<textarea name="${key}" maxlength="${max}" required></textarea>`:`<input name="${key}" maxlength="${max}" ${key==='whatsapp_number'?'inputmode="numeric" placeholder="601156366925"':''} required>`}</label>`;
  root.innerHTML=`<style>${CSS}</style><section class="shell">
- <div><div class="kick">KATALOG AWAM</div><h2>Promosi Katalog</h2><p class="mute">ON/OFF popup dan ubah teks promosi. Perubahan dipaparkan kepada pelawat baharu tanpa perlu ubah kod.</p></div>
+ <div><div class="kick">KATALOG AWAM</div><h2>Promosi Katalog</h2><p class="mute">ON/OFF popup, ubah masa kemunculan dan teks promosi. Perubahan dipaparkan kepada pelawat baharu tanpa perlu ubah kod.</p></div>
  <div class="layout"><form id="f" class="card" novalidate>
   <label class="toggle card" style="margin-bottom:14px;background:var(--soft)"><span><strong>Aktifkan popup promosi</strong><span class="mute">OFF untuk sembunyikan promosi pada katalog awam</span></span><span class="sw"><input name="enabled" type="checkbox" aria-label="Aktifkan popup promosi"><i></i></span></label>
-  <div class="grid">${FIELDS.map(field).join('')}</div>
+  <div class="grid">
+   <label class="f wide">Masa popup muncul (saat)<input name="popup_delay_seconds" type="number" inputmode="numeric" min="0" max="300" step="1" required value="10"><span class="mute">0 = terus muncul. 10 = selepas 10 saat. Maksimum 300 saat (5 minit).</span></label>
+   ${FIELDS.map(field).join('')}</div>
   <div class="actions"><button class="btn" type="submit">Simpan Promosi</button><span id="chip"></span></div>
   <div id="msg" class="msg" role="status" style="margin-top:8px">Memuatkan tetapan...</div>
  </form>
- <div class="pv-wrap"><div class="kick">PRATONTON POPUP</div><div id="pv" class="pv"></div><p class="mute" style="font-size:12px">Anggaran rupa popup pada katalog.</p></div></div>
+ <div class="pv-wrap"><div class="kick">PRATONTON POPUP</div><div id="pv" class="pv"></div><p class="mute" style="font-size:12px">Anggaran rupa popup pada katalog. <span id="delay-preview"></span></p></div></div>
  </section>`;
  const form=root.getElementById('f'),msg=root.getElementById('msg'),chip=root.getElementById('chip'),pv=root.getElementById('pv'),save=form.querySelector('[type=submit]');
  const say=(t,c='')=>{msg.textContent=t;msg.className='msg '+c};
@@ -72,6 +74,8 @@ export async function mountPromotionEditor(host,{client,profile}={}){
  const preview=()=>{
   const on=form.elements.enabled.checked;
   pv.classList.toggle('off',!on);
+  const raw=val('popup_delay_seconds'),n=Number(raw);
+  root.getElementById('delay-preview').textContent=!on?'Popup dimatikan.':raw!==''&&Number.isInteger(n)&&n>=0&&n<=300?(n===0?'Muncul terus selepas katalog dimuatkan.':'Muncul selepas '+n+' saat.'):'Masukkan 0 hingga 300 saat.';
   pv.innerHTML=`${val('badge')?`<span class="pv-badge">${esc(val('badge'))}</span>`:''}<div class="pv-h">${esc(val('headline'))}</div><div class="pv-big">${esc(val('highlight'))}</div><div class="pv-sub">${esc(val('subtitle'))}</div><div class="pv-desc">${esc(val('description'))}</div><div class="pv-btn">${esc(val('button_text')||'Butang')}</div><div class="pv-terms">${esc(val('disclaimer'))}</div>`;
   chip.innerHTML=on?'<span class="chip c-on">● Popup ON</span>':'<span class="chip c-off">○ Popup OFF</span>';
  };
@@ -81,18 +85,22 @@ export async function mountPromotionEditor(host,{client,profile}={}){
  if(error||!data){say('Tidak dapat muat tetapan: '+(error?.message||'Rekod tiada'),'bad');save.disabled=true;return}
  for(const [key] of FIELDS){form.elements[key].value=data[key]??'';form.elements[key].defaultValue=data[key]??''}
  form.elements.enabled.checked=form.elements.enabled.defaultChecked=!!data.enabled;
+ form.elements.popup_delay_seconds.value=form.elements.popup_delay_seconds.defaultValue=String(data.popup_delay_seconds??10);
  preview();say(data.enabled?'Status: promosi aktif':'Status: promosi dimatikan');
  form.addEventListener('submit',async e=>{
   e.preventDefault();
-  const vals={enabled:form.elements.enabled.checked};
+  const rawDelay=val('popup_delay_seconds'),delay=Number(rawDelay);
+  if(rawDelay===''||!Number.isInteger(delay)||delay<0||delay>300){say('Masa popup mesti nombor bulat antara 0 hingga 300 saat.','bad');form.elements.popup_delay_seconds.focus();return}
+  const vals={enabled:form.elements.enabled.checked,popup_delay_seconds:delay};
   for(const [key,label] of FIELDS){vals[key]=val(key);if(!vals[key]){say(label+' wajib diisi.','bad');form.elements[key].focus();return}}
   if(!/^60[0-9]{8,11}$/.test(vals.whatsapp_number)){say('Nombor WhatsApp mesti bermula 60, contoh 601156366925.','bad');form.elements.whatsapp_number.focus();return}
   save.disabled=true;say('Menyimpan promosi...');
   try{
-   const {data:updated,error}=await client.from('catalogue_promotion_settings').update({...vals,updated_at:new Date().toISOString()}).eq('id',true).select('id,enabled').single();
+   const {data:updated,error}=await client.from('catalogue_promotion_settings').update({...vals,updated_at:new Date().toISOString()}).eq('id',true).select('id,enabled,popup_delay_seconds').single();
    if(error)throw error;if(!updated)throw Error('Perubahan tidak disimpan.');
    for(const [key] of FIELDS)form.elements[key].defaultValue=vals[key];
    form.elements.enabled.defaultChecked=vals.enabled;
+   form.elements.popup_delay_seconds.defaultValue=String(updated.popup_delay_seconds);
    say('Berjaya disimpan. Popup '+(updated.enabled?'ON':'OFF')+'. Pelawat baharu akan melihat tetapan terbaru.','ok');
   }catch(err){say('Gagal simpan: '+(err.message||err),'bad')}
   finally{save.disabled=false}
