@@ -171,6 +171,46 @@ Deno.serve(async(req)=>{
    const {data,error}=await admin.rpc(rpc,args);
    return error?res(error.code==="23505"?409:400,{error:"Payout action rejected: check commission and approval status"}):res(200,{result:data});
  }
+ // V125: komisen manual — ejen jual tanpa link
+ if(payload.action==="manual_commission_options"){
+   const [ag,sl,cm]=await Promise.all([
+     admin.from("agent_profiles").select("id,agent_code,application_id,user_id").eq("status","active").limit(500),
+     admin.from("sales").select("id,vehicle_id,customer_id,agreed_price,sold_at").eq("status","sold").order("sold_at",{ascending:false}).limit(300),
+     admin.from("agent_commissions").select("sale_id").limit(2000)
+   ]);
+   if(ag.error||sl.error||cm.error)return res(500,{error:"Unable to load manual commission options"});
+   const used=new Set((cm.data||[]).map(x=>x.sale_id));
+   const sales=(sl.data||[]).filter(x=>!used.has(x.id));
+   const appIds=[...new Set((ag.data||[]).map(x=>x.application_id).filter(Boolean))];
+   const vIds=[...new Set(sales.map(x=>x.vehicle_id))],cIds=[...new Set(sales.map(x=>x.customer_id).filter(Boolean))],sIds=sales.map(x=>x.id);
+   const [apps,cars,custs,pays,offers]=await Promise.all([
+     appIds.length?admin.from("agent_applications").select("id,full_name,phone").in("id",appIds):Promise.resolve({data:[],error:null}),
+     vIds.length?admin.from("vehicles").select("id,vehicle_id,plate,make,model,model_year").in("id",vIds):Promise.resolve({data:[],error:null}),
+     cIds.length?admin.from("customers").select("id,full_name").in("id",cIds):Promise.resolve({data:[],error:null}),
+     sIds.length?admin.from("payments").select("sale_id,amount").in("sale_id",sIds):Promise.resolve({data:[],error:null}),
+     vIds.length?admin.from("agent_vehicle_commission_offers").select("vehicle_id,indicative_amount").in("vehicle_id",vIds):Promise.resolve({data:[],error:null})
+   ]);
+   if(apps.error||cars.error||custs.error||pays.error||offers.error)return res(500,{error:"Unable to load manual commission details"});
+   const A=new Map((apps.data||[]).map(x=>[x.id,x])),V=new Map((cars.data||[]).map(x=>[x.id,x])),C=new Map((custs.data||[]).map(x=>[x.id,x.full_name])),O=new Map((offers.data||[]).map(x=>[x.vehicle_id,Number(x.indicative_amount||0)]));
+   const paid=new Map();for(const p of pays.data||[])paid.set(p.sale_id,(paid.get(p.sale_id)||0)+Number(p.amount||0));
+   return res(200,{
+     agents:(ag.data||[]).map(x=>({id:x.id,code:x.agent_code,name:A.get(x.application_id)?.full_name||null,phone:A.get(x.application_id)?.phone||null})).sort((a,b)=>String(a.name||"").localeCompare(String(b.name||""))),
+     sales:sales.map(x=>({id:x.id,vehicle_id:x.vehicle_id,car:V.get(x.vehicle_id)||null,customer:C.get(x.customer_id)||null,sold_at:x.sold_at,paid:paid.get(x.id)||0,offer:O.get(x.vehicle_id)||0}))
+   });
+ }
+ if(payload.action==="manual_commission"){
+   const amount=payload.amount;
+   if(typeof payload.agent_id!=="string"||!uuid.test(payload.agent_id)||typeof payload.sale_id!=="string"||!uuid.test(payload.sale_id)||
+      typeof amount!=="string"||!/^(?:[1-9]\d{0,5})(?:\.\d{1,2})?$/.test(amount)||Number(amount)>100000||
+      typeof payload.reason!=="string"||payload.reason.trim().length<20)
+      return res(400,{error:"Pilih ejen, jualan, amaun komisen dan tulis sebab (sekurang-kurangnya 20 aksara)."});
+   const {data,error}=await admin.rpc("agent_manual_commission_gateway_v1",{
+     p_actor:identity.user.id,p_agent:payload.agent_id,p_sale:payload.sale_id,p_amount:amount,
+     p_reason:payload.reason.trim().slice(0,1500),p_prepare:payload.prepare!==false
+   });
+   if(error)return res(error.code==="23505"?409:400,{error:["22023","23514","23505","42501"].includes(String(error.code))?String(error.message):"Komisen manual ditolak. Semak jualan & ejen."});
+   return res(200,{result:data});
+ }
  if(payload.action==="review"){
    const application=payload.application_id,decision=payload.decision;
    const reason=typeof payload.reason==="string"?payload.reason.trim().slice(0,2000):null;
