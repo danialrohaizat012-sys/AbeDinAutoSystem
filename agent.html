@@ -103,6 +103,18 @@ nav#tabs button{flex:0 0 auto!important;scroll-snap-align:start;white-space:nowr
 .ch-col small{font-size:10px;color:#8a9bb0}
 .ch-row{margin:10px 0}.ch-lab{display:flex;justify-content:space-between;gap:8px;font-size:13px;margin-bottom:5px}.ch-lab span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#23384f}.ch-lab b{white-space:nowrap;color:#16335b}
 .ch-track{height:12px;border-radius:999px;background:#eef3f9;overflow:hidden}.ch-track i{display:block;height:100%;border-radius:999px;transition:width .6s ease}
+#signedInAccount{max-width:820px;margin-inline:auto}
+#agentProfileSummary{grid-template-columns:repeat(2,minmax(0,1fr))}
+#agentProfileSummary .item{padding:10px 12px;overflow-wrap:anywhere}
+#agentDetailsForm .profile-section{border:1px solid #dce5ef;border-radius:13px;padding:14px;margin:0 0 12px;background:#fbfdff}
+#agentDetailsForm .profile-section h3{margin:0 0 12px;color:#174f83}
+#agentDetailsForm .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px}
+#agentDetailsForm label{margin-bottom:8px;min-width:0}
+#agentDetailsForm input,#agentDetailsForm textarea{padding:10px;min-width:0}
+#agentDetailsForm[data-locked="true"] input,#agentDetailsForm[data-locked="true"] textarea{background:#f0f4f8;border-color:#e0e7ef;color:#263b51}
+#agentDetailsForm button[type="submit"]{width:100%}
+#agentProfileLockNote{margin:0 0 12px}
+@media(max-width:520px){#signedInAccount .panel{padding:14px;margin-bottom:12px}#agentDetailsForm .grid,#agentProfileSummary{grid-template-columns:1fr}#agentDetailsForm .profile-section{padding:11px}#agentDetailsForm input,#agentDetailsForm textarea{font-size:16px}}
 </style>
 </head>
 <body>
@@ -130,15 +142,15 @@ nav#tabs button{flex:0 0 auto!important;scroll-snap-align:start;white-space:nowr
 </div>
 <div id="signedInAccount" hidden>
 <div class="panel"><h1>Profil Akaun Ejen</h1><p>Maklumat akaun, permohonan, status dan rujukan ejen anda.</p><div id="agentProfileSummary" class="items"></div></div>
-<div class="panel"><h2>Butiran Peribadi Ejen</h2><form id="agentDetailsForm">
+<div class="panel"><h2>Butiran Peribadi Ejen</h2><div id="agentProfileLockNote" class="notice" role="status">Memuatkan profil…</div><form id="agentDetailsForm" hidden><section class="profile-section"><h3>Maklumat peribadi</h3>
 <div class="grid"><label>Nama penuh<input name="display_name" maxlength="160" required></label><label>No. telefon / WhatsApp<input name="phone" type="tel" maxlength="24" required></label>
 <label>Negeri<input name="state" maxlength="80"></label><label>Bandar / Daerah<input name="city" maxlength="100"></label></div>
 <label>Alamat surat-menyurat (pilihan)<textarea name="address" maxlength="400" rows="2"></textarea></label>
-<h3 style="margin:18px 0 4px">🏦 Akaun Bank untuk Bayaran Komisen</h3><p class="hint" style="margin:0 0 8px">Komisen akan dipindahkan ke akaun ini. Pastikan nama pemegang akaun sama dengan nama dalam bank.</p>
-<div class="grid"><label>Nama bank<input name="bank_name" maxlength="80" list="bankList" placeholder="cth: Maybank"></label><label>No. akaun bank<input name="bank_account_no" maxlength="34" inputmode="numeric" pattern="[0-9 \-]*" placeholder="cth: 1234 5678 9012"></label>
-<label>Nama pemegang akaun<input name="bank_account_holder" maxlength="160" placeholder="Nama seperti dalam akaun bank"></label></div>
+</section><section class="profile-section"><h3>Akaun Bank untuk Bayaran Komisen</h3><p class="hint" style="margin:0 0 8px">Komisen akan dipindahkan ke akaun ini. Pastikan nama pemegang akaun sama dengan nama dalam bank.</p>
+<div class="grid"><label>Nama bank<input name="bank_name" required maxlength="80" list="bankList" placeholder="cth: Maybank"></label><label>No. akaun bank<input name="bank_account_no" required maxlength="34" inputmode="numeric" pattern="[0-9 \-]*" placeholder="cth: 1234 5678 9012"></label>
+<label>Nama pemegang akaun<input name="bank_account_holder" required maxlength="160" placeholder="Nama seperti dalam akaun bank"></label></div>
 <datalist id="bankList"><option>Maybank</option><option>CIMB Bank</option><option>Bank Islam</option><option>Bank Rakyat</option><option>RHB Bank</option><option>Public Bank</option><option>Hong Leong Bank</option><option>AmBank</option><option>Bank Muamalat</option><option>BSN</option><option>Affin Bank</option><option>Alliance Bank</option><option>Agrobank</option><option>Al Rajhi Bank</option><option>MBSB Bank</option><option>OCBC Bank</option><option>UOB</option><option>HSBC</option><option>Standard Chartered</option><option>GXBank</option><option>AEON Bank</option><option>Boost Bank</option></datalist>
-<button class="primary" type="submit">Simpan Profil</button></form></div>
+</section><button class="primary" type="submit" hidden>Simpan &amp; Kunci Profil</button></form></div>
 <div class="panel"><h2>Tukar Kata Laluan</h2><p>Untuk keselamatan, masukkan kata laluan semasa sebelum menetapkan yang baharu.</p>
 <form id="agentPasswordForm"><label>Kata laluan semasa<input name="current_password" type="password" autocomplete="current-password" required></label>
 <label>Kata laluan baharu<input name="new_password" type="password" autocomplete="new-password" required></label>
@@ -418,25 +430,48 @@ async function sync(){
   view(profile?.status==='active'?'dashboard':owner?'owner':'account');
  }catch(e){fail(e);}
 }
+let agentAccountContext=null;
+function setAgentProfileLocked(locked){
+ const form=$('agentDetailsForm'),note=$('agentProfileLockNote');
+ form.dataset.locked=String(locked);
+ for(const field of form.querySelectorAll('input,textarea'))field.readOnly=locked;
+ form.querySelector('button[type="submit"]').hidden=locked;
+ note.className=locked?'notice ok':'notice warn';
+ note.textContent=locked?'Profil telah dikunci. Hubungi Owner jika maklumat perlu dibetulkan.':'Semak semua butiran. Selepas simpan, profil hanya boleh dibuka semula oleh Owner.';
+ if(locked){const n=form.elements.bank_account_no;n.value=n.value?'•••• '+n.value.replace(/\D/g,'').slice(-4):'';}
+ form.hidden=false;
+}
 async function loadAgentAccount(app,profile){
  if(!me)return;
- const {data:details,error}=await supabase.from('agent_account_details').select('display_name,phone,state,city,address,bank_name,bank_account_no,bank_account_holder').eq('user_id',me.id).maybeSingle();
- if(error)throw error;
+ const accountId=me.id;
  const form=$('agentDetailsForm');
+ form.hidden=true;form.dataset.locked='true';
+ $('agentProfileLockNote').textContent='Memuatkan profil…';
+ agentAccountContext=null;
+ const {data:details,error}=await supabase.from('agent_account_details').select('display_name,phone,state,city,address,bank_name,bank_account_no,bank_account_holder,profile_locked').eq('user_id',me.id).maybeSingle();
+ if(error){$('agentProfileLockNote').textContent='Profil gagal dimuatkan. Muat semula halaman.';throw error;}
+ if(me?.id!==accountId)return;
+ agentAccountContext={app,profile};
  for(const name of ['display_name','phone','state','city','address'])form.elements[name].value=details?.[name]||app?.[name==='display_name'?'full_name':name]||(name==='display_name'?staffPrefill?.full_name:name==='phone'?staffPrefill?.phone:'')||'';
  for(const name of ['bank_name','bank_account_no','bank_account_holder'])form.elements[name].value=details?.[name]||'';
+ setAgentProfileLocked(details?.profile_locked===true);
  const summary=$('agentProfileSummary');summary.replaceChildren();
- for(const [label,value] of [['E-mel',me.email],['Kod Ejen',profile?.agent_code||'Belum diberikan'],['Status Ejen',profile?.status||'Belum aktif'],['Status Permohonan',app?.status||'Belum memohon'],['Tarikh Permohonan',app?.applied_at?new Date(app.applied_at).toLocaleDateString('ms-MY'):'—'],['Tarikh Aktif',profile?.activated_at?new Date(profile.activated_at).toLocaleDateString('ms-MY'):'—'],['Akaun Bank',details?.bank_account_no?(details.bank_name||'Bank')+' · '+details.bank_account_no:'⚠️ Belum diisi — isi di bawah untuk terima komisen']]){
+ for(const [label,value] of [['E-mel',me.email],['Kod Ejen',profile?.agent_code||'Belum diberikan'],['Status Ejen',profile?.status||'Belum aktif'],['Status Permohonan',app?.status||'Belum memohon'],['Tarikh Permohonan',app?.applied_at?new Date(app.applied_at).toLocaleDateString('ms-MY'):'—'],['Tarikh Aktif',profile?.activated_at?new Date(profile.activated_at).toLocaleDateString('ms-MY'):'—'],['Akaun Bank',details?.bank_account_no?(details.bank_name||'Bank')+' · •••• '+details.bank_account_no.replace(/\D/g,'').slice(-4):'⚠️ Belum diisi — isi di bawah untuk terima komisen']]){
   item(summary,label,String(value||'—'));
  }
  $('applicationInAccount').hidden=profile?.status==='active';
 }
 $('agentDetailsForm').onsubmit=async e=>{
- e.preventDefault();if(!me)return;const b=e.submitter;b.disabled=true;
+ e.preventDefault();if(!me||e.target.hidden||e.target.dataset.locked==='true')return;
+ const b=e.submitter||e.target.querySelector('button[type="submit"]');if(b.disabled)return;
+ if(!window.confirm('Simpan dan kunci profil? Maklumat hanya boleh dibetulkan oleh Owner selepas ini.'))return;
+ b.disabled=true;
  try{const d=Object.fromEntries(new FormData(e.target));
-  for(const k of ['display_name','phone'])if(!String(d[k]||'').trim())throw new Error('Nama dan telefon diperlukan');
+  for(const k of ['display_name','phone','bank_name','bank_account_no','bank_account_holder'])if(!String(d[k]||'').trim())throw new Error('Lengkapkan nama, telefon dan butiran bank.');
+  if(!/\d/.test(d.bank_account_no))throw new Error('Nombor akaun bank tidak sah.');
   const {error}=await supabase.from('agent_account_details').upsert({user_id:me.id,display_name:d.display_name.trim(),phone:d.phone.trim(),state:d.state.trim(),city:d.city.trim(),address:d.address.trim(),bank_name:String(d.bank_name||'').trim()||null,bank_account_no:String(d.bank_account_no||'').replace(/[^0-9 -]/g,'').trim()||null,bank_account_holder:String(d.bank_account_holder||'').trim()||null,updated_at:new Date().toISOString()},{onConflict:'user_id'});
-  if(error)throw error;message('Profil ejen berjaya disimpan.');
+  if(error)throw error;setAgentProfileLocked(true);message('Profil ejen berjaya disimpan dan dikunci.');
+  if(agentAccountContext)await loadAgentAccount(agentAccountContext.app,agentAccountContext.profile);
  }catch(err){fail(err)}finally{b.disabled=false}
 };
 $('agentPasswordForm').onsubmit=async e=>{
