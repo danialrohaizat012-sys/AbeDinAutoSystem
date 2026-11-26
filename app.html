@@ -912,7 +912,7 @@ function salesPageHtml(){
   return `<h2>Jualan & Pembayaran Cloud</h2><div class="cloud-toolbar ada-sales-toolbar"><div class="ada-inv-search"><input id="ada-sales-search" type="search" enterkeyhint="search" placeholder="Cari plat, model, pelanggan atau no. rujukan..." aria-label="Cari jualan" autocomplete="off" spellcheck="false" value="${safe(salesQuery)}"></div><button id="ada-new-sale">+ Jual Kereta</button></div>
   <div class="ada-sales-filters"><label><span>Bulan</span><select id="ada-sales-month">${o('','Semua bulan',salesMonth)}${months.map(m=>o(m,monthLabel(m),salesMonth)).join('')}</select></label><label><span>Bayaran</span><select id="ada-sales-pay">${o('','Semua',salesPay)}${o('full','✓ Bayar penuh',salesPay)}${o('deposit','● Deposit sahaja',salesPay)}${o('none','○ Belum bayar',salesPay)}</select></label><label><span>Susun</span><select id="ada-sales-sort">${o('new','Terbaru',salesSort)}${o('old','Paling lama',salesSort)}${o('price_high','Harga tertinggi',salesSort)}${o('price_low','Harga terendah',salesSort)}${o('bal_high','Baki tertinggi',salesSort)}</select></label>${filtered?'<button type="button" class="secondary" id="ada-sales-reset">↻ Reset</button>':''}</div>
   <div class="ada-sales-summary" aria-live="polite" aria-atomic="true"><div><span>${salesMonth?monthLabel(salesMonth):'Semua'} · ${rows.length} transaksi</span><strong>${money(tot)}</strong></div><div><span>Diterima</span><strong>${money(got)}</strong></div><div><span>Baki belum dibayar</span><strong>${money(bal)}</strong></div><div class="ada-sales-states"><span class="ada-paybadge is-full">✓ ${nFull} bayar penuh</span><span class="ada-paybadge is-dep">● ${nDep} deposit</span><span class="ada-paybadge is-none">○ ${nNone} belum bayar</span></div></div>
-  <div class="panel cloud-table-wrap" data-pg-anchor="sales"><table class="cloud-table ada-sales-table"><tr><th>Kenderaan</th><th>Pelanggan</th><th>Harga</th><th>Dibayar</th><th>Baki</th><th>Bayaran</th><th>Tindakan</th></tr>${pgRows('sales',rows).map(r=>`<tr class="ada-sale-${r.state}"><td data-label="Kenderaan"><strong>${safe(r.v.plate||r.x.vehicle_id)}</strong><small>${safe([r.v.model_year,r.v.make,r.v.model].filter(Boolean).join(' '))}</small><small>${dmy(r.x.created_at)} · ${safe(saleStatusLabel(r.x.status))}</small></td><td data-label="Pelanggan">${safe(r.c.full_name||'-')}${r.c.phone?`<small>${safe(r.c.phone)}</small>`:''}</td><td data-label="Harga">${money(r.x.agreed_price)}${String(r.x.status||'').toLowerCase()==='sold'&&Math.abs(r.paid-Number(r.x.agreed_price||0))>0.5?`<small class="ada-real-price">Sebenar ${money(r.paid)}</small>`:''}</td><td data-label="Dibayar">${money(r.paid)}</td><td data-label="Baki">${money(r.bal)}</td><td data-label="Bayaran">${badge(r)}</td><td data-label="Tindakan"><div class="ada-sale-actions">${r.x.status==='reserved'?`<button data-pay="${r.x.id}">+ Payment</button>`:''}${profile?.role==='owner'?`<button class="secondary" data-edit-sale="${r.x.id}">✎ Edit</button>`:''}<button class="secondary" data-receipt="${r.x.id}">⬇ Resit PDF</button><button class="secondary ada-wa-mini" data-receipt-wa="${r.x.id}" title="Hantar resit ke WhatsApp pelanggan">WhatsApp</button>${profile?.role==='owner'?`<button class="ada-danger-mini" data-delete-sale="${r.x.id}" title="Padam jualan">🗑 Padam</button>`:''}</div></td></tr>`).join('')||`<tr><td colspan="7">${filtered?'Tiada jualan sepadan. Cuba kata kunci lain atau tekan Reset untuk lihat semua rekod.':'Belum ada transaksi.'}</td></tr>`}</table></div>${pgNav('sales',rows.length)}`;
+  <div class="panel cloud-table-wrap" data-pg-anchor="sales"><table class="cloud-table ada-sales-table"><tr><th>Kenderaan</th><th>Pelanggan</th><th>Harga</th><th>Dibayar</th><th>Baki</th><th>Bayaran</th><th>Tindakan</th></tr>${pgRows('sales',rows).map(r=>`<tr class="ada-sale-${r.state}"><td data-label="Kenderaan"><strong>${safe(r.v.plate||r.x.vehicle_id)}</strong><small>${safe([r.v.model_year,r.v.make,r.v.model].filter(Boolean).join(' '))}</small><small>${dmy(r.x.created_at)} · ${safe(saleStatusLabel(r.x.status))}</small></td><td data-label="Pelanggan">${safe(r.c.full_name||'-')}${r.c.phone?`<small>${safe(r.c.phone)}</small>`:''}</td><td data-label="Harga">${money(r.x.agreed_price)}${String(r.x.status||'').toLowerCase()==='sold'&&Math.abs(r.paid-Number(r.x.agreed_price||0))>0.5?`<small class="ada-real-price">Sebenar ${money(r.paid)}</small>`:''}</td><td data-label="Dibayar">${money(r.paid)}</td><td data-label="Baki">${money(r.bal)}</td><td data-label="Bayaran">${badge(r)}</td><td data-label="Tindakan"><div class="ada-sale-actions">${r.x.status==='reserved'?`<button data-pay="${r.x.id}">+ Payment</button>`:''}${profile?.role==='owner'?`<button class="secondary" data-edit-sale="${r.x.id}">✎ Edit</button>`:''}<button class="secondary" data-receipt="${r.x.id}">⬇ Resit PDF</button>${/^(cancelled|canceled)$/i.test(r.x.status||'')?'':`<button class="secondary" data-do-pdf="${r.x.id}" title="Borang Serahan Kenderaan">⬇ DO PDF</button>`}<button class="secondary ada-wa-mini" data-receipt-wa="${r.x.id}" title="Hantar resit ke WhatsApp pelanggan">WhatsApp</button>${profile?.role==='owner'?`<button class="ada-danger-mini" data-delete-sale="${r.x.id}" title="Padam jualan">🗑 Padam</button>`:''}</div></td></tr>`).join('')||`<tr><td colspan="7">${filtered?'Tiada jualan sepadan. Cuba kata kunci lain atau tekan Reset untuk lihat semua rekod.':'Belum ada transaksi.'}</td></tr>`}</table></div>${pgNav('sales',rows.length)}`;
 }
 async function deleteCustomer(id,btn){
   if(profile?.role!=='owner'){alert('Hanya Owner boleh padam pelanggan.');return}
@@ -945,6 +945,7 @@ function bindSalesPage(){
   el('ada-sales-sort')?.addEventListener('change',e=>{salesSort=e.target.value;renderCloud()});
   el('ada-sales-reset')?.addEventListener('click',()=>{salesQuery='';salesMonth='';salesPay='';salesSort='new';renderCloud()});
   el('ada-cloud-view').querySelectorAll('[data-receipt]').forEach(b=>b.addEventListener('click',()=>downloadSaleReceipt(b.dataset.receipt,b)));el('ada-cloud-view').querySelectorAll('[data-receipt-wa]').forEach(b=>b.addEventListener('click',()=>downloadSaleReceipt(b.dataset.receiptWa,b,'wa')));el('ada-cloud-view').querySelectorAll('[data-edit-sale]').forEach(b=>b.addEventListener('click',()=>showEditSaleForm(b.dataset.editSale)));
+  el('ada-cloud-view').querySelectorAll('[data-do-pdf]').forEach(b=>b.addEventListener('click',()=>openDeliveryOrder(b.dataset.doPdf)));
   el('ada-cloud-view').querySelectorAll('[data-delete-sale]').forEach(b=>b.addEventListener('click',()=>deleteSale(b.dataset.deleteSale,b)));
 }
 function attachPickerSearch(form,name,placeholder,textOf){
@@ -973,6 +974,34 @@ async function downloadSaleReceipt(saleId,btn,mode){
     msg('Resit PDF dimuat turun: '+fname);
   }catch(e){msg('Gagal jana resit: '+(e.message||e));alert('Gagal jana resit: '+(e.message||e))}
   finally{if(btn){btn.disabled=false;btn.textContent=old}}
+}
+async function openDeliveryOrder(saleId){
+  const x=sales.find(s=>String(s.id)===String(saleId));
+  if(!x||/^(cancelled|canceled)$/i.test(x.status||''))return;
+  const v=vehicles.find(y=>y.id===x.vehicle_id)||{},c=customers.find(y=>y.id===x.customer_id)||{};
+  if(!v.id||!c.id){alert('Maklumat pelanggan atau profil kenderaan tidak ditemui. Sila semak rekod jualan.');return}
+  try{
+    const {deliveryFields,buildDeliveryOrderPdf}=await import('./js/do-pdf.mjs?v=1');
+    const a=deliveryFields({x,v,c});
+    const o=cloudModal('DO PDF - Borang Serahan', '<p class="muted">Semak maklumat sebelum cetak. Tarikh dan masa mesti mengikut serahan sebenar; boleh dibiarkan kosong untuk diisi dengan tangan.</p>'+
+      '<div class="cloud-notice">'+safe(a.plate)+' · '+safe(a.model)+' · '+safe(a.name)+'</div>'+
+      '<div class="ada-edit-grid"><label>Tarikh serahan<input type="date" name="date"></label><label>Masa serahan<input type="time" name="time"></label>'+
+      '<label>No. kad pengenalan<input name="ic" value="'+safe(a.ic)+'" maxlength="40"></label><label>Mileage (km)<input type="number" min="0" step="1" name="mileage" value="'+safe(a.mileage)+'"></label></div>'+
+      '<label>Alamat pelanggan<textarea name="address" rows="2" maxlength="180">'+safe(a.address)+'</textarea></label>'+
+      '<label>Varian / spesifikasi<input name="variant" value="'+safe(a.variant)+'" maxlength="100"></label>'+
+      '<p class="muted">Data tambahan ini hanya digunakan dalam PDF, tidak mengubah rekod asal. Status serahan, dokumen dan tandatangan diisi semasa serahan.</p><button type="submit">Muat turun DO PDF</button>');
+    o.querySelector('form').onsubmit=async e=>{
+      e.preventDefault();const form=e.currentTarget,btn=form.querySelector('[type=submit]'),err=o.querySelector('.ada-form-error');
+      btn.disabled=true;err.textContent='Menjana PDF...';
+      try{
+        const handover=Object.fromEntries(new FormData(form).entries());
+        const PDFLib=await loadPdfLib();
+        const {bytes,fname}=await buildDeliveryOrderPdf(PDFLib,{x,v,c,handover});
+        const url=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'}));const link=document.createElement('a');link.href=url;link.download=fname;document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
+        o.remove();msg('DO PDF dimuat turun: '+fname);
+      }catch(e){err.textContent='Gagal jana DO PDF: '+(e.message||e);btn.disabled=false}
+    };
+  }catch(e){alert('Gagal membuka DO PDF: '+(e.message||e))}
 }
 function waPhone(p){let d=String(p||'').replace(/\D/g,'');if(!d)return '';if(d.startsWith('0'))d='6'+d;else if(d.startsWith('1'))d='60'+d;return d}
 async function receiptWhatsApp({blob,fname,no,x,v,c,paid,bal}){
