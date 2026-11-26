@@ -982,7 +982,7 @@ async function openDeliveryESign(saleId,btn){
   if(!v.id||!c.id){alert('Maklumat pelanggan atau kenderaan tidak lengkap.');return}
   const old=btn.textContent;btn.disabled=true;btn.textContent='Memuatkan...';
   try{
-    const [{mountStaffESign},{deliveryFields}]=await Promise.all([import('./js/do-esign.mjs?v=1'),import('./js/do-pdf.mjs?v=2')]);
+    const [{mountStaffESign},{deliveryFields}]=await Promise.all([import('./js/do-esign.mjs?v=2'),import('./js/do-pdf.mjs?v=3')]);
     await mountStaffESign({client,cloudModal,saleId:x.id,fields:deliveryFields({x,v,c}),phone:waPhone(c.phone)});
   }catch(e){alert('Gagal membuka E-Sign: '+(e.message||e))}
   finally{btn.disabled=false;btn.textContent=old}
@@ -993,14 +993,13 @@ async function openDeliveryOrder(saleId){
   const v=vehicles.find(y=>y.id===x.vehicle_id)||{},c=customers.find(y=>y.id===x.customer_id)||{};
   if(!v.id||!c.id){alert('Maklumat pelanggan atau profil kenderaan tidak ditemui. Sila semak rekod jualan.');return}
   try{
-    const {deliveryFields,buildDeliveryOrderPdf}=await import('./js/do-pdf.mjs?v=2');
+    const {deliveryFields,buildDeliveryOrderPdf}=await import('./js/do-pdf.mjs?v=3');
     const a=deliveryFields({x,v,c});
     const o=cloudModal('DO PDF - Borang Serahan', '<p class="muted">Semak maklumat sebelum cetak. Tarikh dan masa mesti mengikut serahan sebenar; boleh dibiarkan kosong untuk diisi dengan tangan.</p>'+
       '<div class="cloud-notice">'+safe(a.plate)+' · '+safe(a.model)+' · '+safe(a.name)+'</div>'+
       '<div class="ada-edit-grid"><label>Tarikh serahan<input type="date" name="date"></label><label>Masa serahan<input type="time" name="time"></label>'+
       '<label>No. kad pengenalan<input name="ic" value="'+safe(a.ic)+'" maxlength="40"></label><label>Mileage (km)<input type="number" min="0" step="1" name="mileage" value="'+safe(a.mileage)+'"></label></div>'+
       '<label>Alamat pelanggan<textarea name="address" rows="2" maxlength="180">'+safe(a.address)+'</textarea></label>'+
-      '<label>Varian / spesifikasi<input name="variant" value="'+safe(a.variant)+'" maxlength="100"></label>'+
       '<p class="muted">Data tambahan ini hanya digunakan dalam PDF, tidak mengubah rekod asal. Status serahan, dokumen dan tandatangan pelanggan diisi semasa serahan. Pihak Abe Din Auto tidak perlu tandatangan.</p><button type="submit">Muat turun DO PDF</button>');
     o.querySelector('form').onsubmit=async e=>{
       e.preventDefault();const form=e.currentTarget,btn=form.querySelector('[type=submit]'),err=o.querySelector('.ada-form-error');
