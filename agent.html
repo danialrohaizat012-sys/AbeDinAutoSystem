@@ -145,6 +145,40 @@ nav#tabs button{flex:0 0 auto!important;scroll-snap-align:start;white-space:nowr
 .finance-vehicle:first-child{border-top:0;padding-top:0}
 .finance-caption{font-size:12px;color:#596e85;margin:6px 0 10px}
 #commissionStatus{padding:10px}
+/* My Leads: scoped, mobile-first hierarchy and readable status colours. */
+#myLeadSection{margin-top:18px}
+#myLeadSection .my-lead-titlebar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+#myLeadSection .my-lead-titlebar h2{font-size:clamp(19px,5vw,24px);line-height:1.25;color:#142d57;margin:0;letter-spacing:-.025em}
+#myLeadSection .my-lead-titlebar button{font-size:12px;padding:9px 11px;white-space:nowrap;background:#e5efff;color:#164eaa;border-radius:10px}
+#myLeadSection .my-lead-intro{border-radius:12px;background:#eef5ff;border:1px solid #d6e5fb;color:#355779;font-size:12px;line-height:1.5;padding:10px 12px;margin:0 0 12px}
+#myLeadSection .my-lead-intro strong{display:block;color:#154d9a;font-size:13px;margin-bottom:3px}
+#myLeadSection .lead-tools{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:8px;margin:10px 0}
+#myLeadSection .lead-tools label{font-size:12px;color:#344d67;min-width:0}
+#myLeadSection .lead-tools input,#myLeadSection .lead-tools select{font-size:14px;padding:10px 8px;min-width:0;min-height:42px}
+#myLeadSection .lead-tools input::placeholder{font-weight:400}
+#myLeadSection #leadFilterCount{font-size:12px;color:#4c6684;margin:10px 0}
+#myLeadSection #leadItems{gap:8px}
+#myLeadSection .lead-collapse{margin:0;border-left:4px solid #e6a23c;border-radius:11px;box-shadow:0 2px 8px #19365608}
+#myLeadSection .lead-collapse.is-read{border-left-color:#239565}
+#myLeadSection .lead-collapse summary{padding:11px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:start}
+#myLeadSection .lead-collapse summary::after{content:'›';font-size:22px;line-height:1;color:#55728e;grid-column:2;grid-row:1;align-self:center}
+#myLeadSection .lead-collapse[open] summary::after{content:'⌄'}
+#myLeadSection .lead-head{grid-column:1;min-width:0;gap:5px}
+#myLeadSection .lead-head strong{font-size:16px;font-weight:800;line-height:1.3;color:#12263d;overflow-wrap:anywhere}
+#myLeadSection .lead-head .lead-car-name{color:#1756a0;font-size:13px;line-height:1.35;font-weight:650;overflow-wrap:anywhere}
+#myLeadSection .lead-head .lead-agent-identity{color:#63778a;font-size:11px;line-height:1.4;font-weight:500!important;overflow-wrap:anywhere}
+#myLeadSection .lead-badges{grid-column:1/-1;gap:5px}
+#myLeadSection .lead-badge{font-size:11px;line-height:1.4;padding:4px 8px;border-radius:7px;background:#fff2dc;color:#854d0e}
+#myLeadSection .lead-badge.read{background:#e2f4e9;color:#16633e}
+#myLeadSection .lead-badge.owner-read.read{background:#dcf5f3;color:#0d6667}
+#myLeadSection .lead-collapsed-content{background:#f8fafc;padding:11px}
+#myLeadSection .lead-detail{font-size:12px;line-height:1.55;gap:5px;margin-top:0}
+#myLeadSection .lead-contact-actions a{font-size:12px;padding:10px 12px}
+#myLeadSection .lead-collapsed-content button{font-size:12px;margin-top:9px}
+#leadPanel{border-top:1px solid #dce5ef;padding-top:15px;margin-top:18px}
+#leadPanel>h2{font-size:19px;color:#142d57;letter-spacing:-.02em}
+#leadPanel>.notice{font-size:12px;padding:10px 12px}
+@media(max-width:360px){#myLeadSection .lead-tools{grid-template-columns:1fr}#myLeadSection .lead-head strong{font-size:15px}}
 </style>
 </head>
 <body>
@@ -200,9 +234,9 @@ nav#tabs button{flex:0 0 auto!important;scroll-snap-align:start;white-space:nowr
 <p id="agentStatus" class="agent-chip">Maklumat ejen akan dipaparkan selepas permohonan diluluskan.</p>
 <div id="myRankCard" class="rank-card" hidden></div><a href="#agentPromo" id="goAgentPromos" class="cta-card"><span class="cta-ico">🚗</span><span class="cta-txt"><b>Katalog Kereta</b><small>Pilih kereta &amp; kongsi link rujukan anda</small></span><span class="cta-go">›</span></a>
 <div class="stats slide"><div class="stat"><span>👆 Klik hari ini</span><b id="countClicksToday">0</b></div><div class="stat"><span>📈 Klik 30 hari</span><b id="countClicksMonth">0</b></div><div class="stat"><span>🔥 Lead saya</span><b id="countLeads">0</b></div><div class="stat"><span>💰 Komisen</span><b id="countCommission">0</b></div><div class="stat"><span>🧾 Pembayaran</span><b id="countPayout">0</b></div></div>
-<div class="panel" id="agentClickPanel"><h2>Analitik Klik Promosi</h2><p class="agent-v20-note">Klik unik pada link anda. Klik tidak bermaksud lead atau jualan.</p><div id="clickCarStats" class="items"></div></div><div class="row" style="margin:12px 0;justify-content:space-between"><h2 style="margin:0">Lead Saya</h2><button class="secondary" type="button" id="refreshMyLeads">Muat Semula Data</button></div>
-<div class="notice" style="margin:14px 0"><strong>Lead Saya</strong><p style="margin:5px 0 0">Nama, telefon, kereta diminati dan butang WhatsApp pelanggan dipaparkan di sini.</p></div>
-<div class="lead-tools"><label for="leadSearch">Cari lead<input id="leadSearch" type="search" placeholder="Nama pelanggan atau kereta" autocomplete="off"></label><label for="leadReadFilter">Status bacaan<select id="leadReadFilter"><option value="all">Semua lead</option><option value="unread">Belum baca</option><option value="read">Sudah baca</option></select></label></div><p id="leadFilterCount" class="agent-v20-note" aria-live="polite"></p><div id="leadItems" class="items"></div>
+<div class="panel" id="agentClickPanel"><h2>Analitik Klik Promosi</h2><p class="agent-v20-note">Klik unik pada link anda. Klik tidak bermaksud lead atau jualan.</p><div id="clickCarStats" class="items"></div></div><div id="myLeadSection"><div class="my-lead-titlebar"><h2>Lead Saya</h2><button class="secondary" type="button" id="refreshMyLeads">↻ Muat Semula</button></div>
+<div class="my-lead-intro"><strong>Urus pelanggan anda</strong>Tekan mana-mana rekod untuk melihat butiran dan menghubungi pelanggan.</div>
+<div class="lead-tools"><label for="leadSearch">Cari lead<input id="leadSearch" type="search" placeholder="Nama pelanggan atau kereta" autocomplete="off"></label><label for="leadReadFilter">Status bacaan<select id="leadReadFilter"><option value="all">Semua lead</option><option value="unread">Belum baca</option><option value="read">Sudah baca</option></select></label></div><p id="leadFilterCount" class="agent-v20-note" aria-live="polite"></p><div id="leadItems" class="items"></div></div>
 <div id="agentPromo" hidden>
 <div class="promo-toolbar"><div><h2 style="margin:0">Stok Katalog Awam untuk Promosi</h2><p style="margin:5px 0">Pilih kereta Available, kemudian kongsi pautan khas ejen terus ke profil kereta.</p></div>
 <div class="row"><a class="secondary" href="/" target="_blank" rel="noopener" style="padding:12px;text-decoration:none;border-radius:10px;background:#e6eef7;color:#17477d;font-weight:700">Buka Katalog Awam</a><button type="button" class="secondary" id="refreshPromo">Segarkan Stok</button></div></div>
@@ -358,11 +392,11 @@ function leadContact(parent,lead,car){
  const ownerRead=lead.owner_read_at?'Dibaca owner':'Belum baca owner';
  const heading=document.createElement('div');heading.className='lead-head';
  const name=document.createElement('strong');text(name,lead.customer_name||'Pelanggan');
- const model=document.createElement('small');text(model,carTitle);
+ const model=document.createElement('small');model.className='lead-car-name';text(model,carTitle);
  heading.append(name,model);
  if(!directLead){
   const identity=document.createElement('small');
-  identity.style.fontWeight='700';
+  identity.className='lead-agent-identity';identity.style.fontWeight='700';
   const code=lead.agent_code||lead.referral_code_snapshot||'';
   const agentName=lead.agent_name||'';
   identity.textContent='Ejen: '+(agentName||'Nama belum tersedia')+(code?' · ID '+code:' · Kod belum tersedia');
@@ -370,7 +404,7 @@ function leadContact(parent,lead,car){
  }
  const badges=document.createElement('div');badges.className='lead-badges';
  for(const [label,isRead] of (directLead?[[ownerRead,Boolean(lead.owner_read_at)]]:[[agentRead,Boolean(lead.agent_read_at)],[ownerRead,Boolean(lead.owner_read_at)]])){
-   const badge=document.createElement('span');badge.className='lead-badge'+(isRead?' read':'');text(badge,label);badges.append(badge);
+   const badge=document.createElement('span');badge.className='lead-badge'+(isRead?' read':'')+(label===ownerRead?' owner-read':'');text(badge,label);badges.append(badge);
  }
  head.append(heading,badges);summary.append(head);
  const body=document.createElement('div');body.className='lead-collapsed-content';
@@ -686,7 +720,7 @@ function applyPromoFilter(){
 $('promoSearch').addEventListener('input',()=>{promoVisibleLimit=12;applyPromoFilter()});
 $('promoMore').addEventListener('click',()=>{promoVisibleLimit+=12;applyPromoFilter()});
 $('refreshPromo').onclick=()=>loadAgentCatalogue().catch(fail);
-$('refreshMyLeads').onclick=()=>loadDashboard().catch(fail);
+$('refreshMyLeads').onclick=async()=>{const b=$('refreshMyLeads');b.disabled=true;try{await loadDashboard()}catch(e){fail(e)}finally{b.disabled=false}};
 let agentLeadRecords=[],agentLeadCars=new Map();
 function renderAgentLeads(){
  const query=($('leadSearch')?.value||'').trim().toLocaleLowerCase('ms-MY');
@@ -696,10 +730,12 @@ function renderAgentLeads(){
   const matches=String(x.customer_name||'').toLocaleLowerCase('ms-MY').includes(query)||String(car).toLocaleLowerCase('ms-MY').includes(query);
   return matches&&(status==='all'||(status==='read'?Boolean(x.agent_read_at):!x.agent_read_at));
  });
- $('leadFilterCount').textContent=filtered.length+' daripada '+agentLeadRecords.length+' lead dipaparkan';
+ $('leadFilterCount').textContent=filtered.length+' daripada '+agentLeadRecords.length+' lead · '+agentLeadRecords.filter(x=>!x.agent_read_at).length+' belum dibaca';
  showRows('leadItems',filtered,(el,x)=>{
   const card=document.createElement('div');
+  x={...x,agent_id:agent?.id||x.agent_id,agent_name:($('agentDetailsForm').elements.display_name.value||agentAccountContext?.app?.full_name||'').trim()||'Akaun anda',agent_code:agent?.agent_code||x.agent_code};
   leadContact(card,x,agentLeadCars.get(x.vehicle_id));
+  card.querySelector('.lead-collapse').classList.toggle('is-read',Boolean(x.agent_read_at));
   const panel=card.querySelector('.lead-collapsed-content');
   leadCarLink(panel,agentLeadCars.get(x.vehicle_id),x.vehicle_id);
   leadReadButton(panel,x,'agent',loadDashboard);
