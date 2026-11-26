@@ -1,3 +1,5 @@
+export const DO_TERMS_VERSION=3;
+export const DO_TERMS=Object.freeze({intro:"Dengan menandatangani borang ini, saya selaku pembeli mengakui bahawa:",clauses:Object.freeze(["Saya telah diberi peluang munasabah untuk memeriksa kenderaan dan bertanya tentang keadaannya sebelum menerima serahan.","Saya memahami kenderaan ini terpakai. Usia, perbatuan, harga dan keadaan sebenar diambil kira tanpa menjejaskan gerenti atau keperluan keselamatan di sisi undang-undang.","Kecacatan khusus yang dimaklumkan sebelum persetujuan pembelian direkodkan dalam catatan atau dokumen rujukan, jika ada. Ini bukan pengesahan bahawa tiada kecacatan tersembunyi.","Jaminan tambahan, jika ada, mengikut terma yang dipersetujui. Borang ini tidak membatalkan janji, representasi atau tanggungjawab Abe Din Auto di sisi undang-undang.","Selepas serahan, saya bertanggungjawab atas penyelenggaraan biasa dan kerosakan yang terbukti berpunca daripada salah penggunaan, kecuaian, kemalangan atau pengubahsuaian oleh saya, bukan liabiliti penjual.","Saya mengesahkan penerimaan kenderaan, kunci, dokumen dan aksesori setakat rekod yang tepat. Saya akan memaklumkan masalah dalam masa munasabah dan memberi peluang pemeriksaan jika sesuai, tanpa mengehadkan remedi saya.","Saya telah membaca, memahami dan berpeluang meminta penjelasan serta membetulkan rekod. Saya menandatangani secara sukarela, sama ada secara fizikal atau elektronik."]),rights:"Borang ini ialah bukti serahan, bukan pelepasan liabiliti menyeluruh. Hak pengguna, termasuk gerenti dan remedi di bawah Akta Perlindungan Pengguna 1999 (Akta 599), kekal terpelihara."});
 // Internal delivery order: read-only, generated in the signed-in browser.
 export function deliveryFields({x={},v={},c={}}={}){
   const note=String(c.notes||'');
@@ -22,32 +24,42 @@ export async function buildDeliveryOrderPdf(PDFLib,{x,v,c,handover={}}){
   const left=M+9,right=mid,endL=mid-22,endR=R-9;
   const pair=(l,lv,r,rv,y)=>{field(l,lv,left,y,endL);field(r,rv,right,y,endR)};
   const check=(label,x,y)=>{page.drawRectangle({x,y:H-y,width:7,height:7,borderColor:ink,borderWidth:.6});text(label,x+10,y-.5,8.4);};
-  rect(M,30,R-M,65,ink);text('ABE DIN AUTO',M+13,50,20,b,white);text('JUAL  -  BELI  -  TUKAR BELI',M+13,65,9,b,white);
-  text('926-D, Kg Kenali, Kubang Kerian, 16150 Kota Bharu, Kelantan',M+13,81,8,f,white);
-  text('TEL: 011-56366925',R-12,56,8,f,white,'right');text('SSM: 003842956-V',R-12,72,8,f,white,'right');
-  text('BORANG SERAHAN KENDERAAN / DELIVERY ORDER',W/2,116,14,b,ink,'center');
+  rect(M,22,R-M,58,ink);text('ABE DIN AUTO',M+13,42,20,b,white);text('JUAL  -  BELI  -  TUKAR BELI',M+13,55,9,b,white);
+  text('926-D, Kg Kenali, Kubang Kerian, 16150 Kota Bharu, Kelantan',M+13,69,8,f,white);
+  text('TEL: 011-56366925',R-12,46,8,f,white,'right');text('SSM: 003842956-V',R-12,60,8,f,white,'right');
+  text('BORANG SERAHAN KENDERAAN / DELIVERY ORDER',W/2,98,14,b,ink,'center');
   let date='',day='';if(/^\d{4}-\d{2}-\d{2}$/.test(a.date||'')){const dt=new Date(a.date+'T12:00:00+08:00');if(!isNaN(dt)){date=a.date.split('-').reverse().join('/');day=new Intl.DateTimeFormat('ms-MY',{weekday:'long',timeZone:'Asia/Kuala_Lumpur'}).format(dt)}}
-  bar('A. MAKLUMAT SERAHAN',143);pair('Tarikh',date,'Hari',day,176);pair('Masa Serahan',a.time||'','No. DO',a.no,209);
-  bar('B. MAKLUMAT PELANGGAN',237);pair('Nama Pelanggan',a.name,'No. Kad Pengenalan',a.ic,270);pair('No. Telefon',a.phone,'Alamat',a.address,303);
-  bar('C. MAKLUMAT KENDERAAN',330);pair('No. Pendaftaran',a.plate,'Jenama / Model',a.model,363);
+  bar('A. MAKLUMAT SERAHAN',111);pair('Tarikh',date,'Hari',day,136);pair('Masa Serahan',a.time||'','No. DO',a.no,164);
+  bar('B. MAKLUMAT PELANGGAN',191);pair('Nama Pelanggan',a.name,'No. Kad Pengenalan',a.ic,216);pair('No. Telefon',a.phone,'Alamat',a.address,244);
+  bar('C. MAKLUMAT KENDERAAN',271);pair('No. Pendaftaran',a.plate,'Jenama / Model',a.model,296);
   const km=a.mileage!==''&&a.mileage!=null&&Number.isFinite(Number(a.mileage))?Number(a.mileage).toLocaleString('en-MY')+' km':'';
-  pair('Tahun',a.year,'Mileage (KM)',km,396);
-  bar('D. STATUS SERAHAN & DOKUMEN',423);
-  text('Keadaan:',left,457,8.4);check('Baik',left+48,457);check('Perlu Pemeriksaan',left+88,457);
-  text('Bilangan Kunci:',right,457,8.4);check('1',right+78,457);check('2',right+105,457);
-  text('Dokumen:',left,480,8.4);check('Geran/e-Geran',left+48,480);check('Insurans',left+131,480);check('Lain-lain',left+189,480);
-  text('Barang / Aksesori:',right,480,8.4);rule(right+91,482,endR);
-  bar('E. PENGAKUAN PELANGGAN',496);
-  const statement='Saya mengesahkan bahawa kenderaan di atas telah diserahkan kepada saya dalam keadaan seperti yang dinyatakan dan saya telah menerima kenderaan serta dokumen/barang yang berkaitan. Sebarang perkara tambahan dinyatakan di bahagian catatan.';
-  wrap(statement,endR-left,9,f).forEach((s,i)=>text(s,left,529+i*12,9));
-  bar('F. PENGESAHAN SERAHAN',566);
-  text('PIHAK ABE DIN AUTO',(left+endL)/2,601,10,b,ink,'center');text('PELANGGAN',(right+endR)/2,601,10,b,ink,'center');
+  pair('Tahun',a.year,'Mileage (KM)',km,324);
+  bar('D. STATUS SERAHAN & DOKUMEN',351);
+  text('Keadaan:',left,380,8.4);check('Baik',left+48,380);check('Perlu Pemeriksaan',left+88,380);
+  text('Bilangan Kunci:',right,380,8.4);check('1',right+78,380);check('2',right+105,380);
+  text('Dokumen:',left,399,8.4);check('Geran/e-Geran',left+48,399);check('Insurans',left+131,399);check('Lain-lain',left+189,399);
+  text('Barang / Aksesori:',right,399,8.4);rule(right+91,401,endR);
+  bar('E. PENGAKUAN, PERSETUJUAN DAN PENERIMAAN KENDERAAN',413);
+  let y=444;
+  const size=9.2,leading=11;
+  text(DO_TERMS.intro,left,y,size,b);y+=13;
+  DO_TERMS.clauses.forEach((clause,i)=>{
+    const lines=wrap(clause,endR-left-14,size,f);
+    text(String(i+1)+'.',left,y,size,f);
+    lines.forEach((s,j)=>text(s,left+14,y+j*leading,size,f));
+    y+=lines.length*leading+2;
+  });
+  wrap(DO_TERMS.rights,endR-left,size,b).forEach(s=>{text(s,left,y,size,b);y+=leading});
+  const fy=y+7,gy=fy+91;
+  if(gy+54>H-20)throw Error('Terma DO melebihi ruang A4.');
+  bar('F. PENGESAHAN SERAHAN',fy);
+  text('PIHAK ABE DIN AUTO',(left+endL)/2,fy+30,10,b,ink,'center');text('PELANGGAN',(right+endR)/2,fy+30,10,b,ink,'center');
   const companyCenter=(left+endL)/2;
-  text('CETAKAN BERKOMPUTER',companyCenter,624,10,b,ink,'center');
-  wrap('Dokumen ini dijana oleh sistem dan tidak memerlukan tandatangan pihak Abe Din Auto.',endL-left-16,9,f).forEach((s,i)=>text(s,companyCenter,639+i*11,9,f,mut,'center'));
-  rule(right+10,653,endR-5);
-  text('Nama / Tandatangan:',right+10,666,8.5);
-  bar('G. CATATAN',681);rule(left,720,endR);rule(left,742,endR);rule(left,764,endR);rule(left,786,endR);rule(left,808,endR);
+  text('CETAKAN BERKOMPUTER',companyCenter,fy+44,10,b,ink,'center');
+  wrap('Dokumen ini dijana oleh sistem dan tidak memerlukan tandatangan pihak Abe Din Auto.',endL-left-16,9,f).forEach((s,i)=>text(s,companyCenter,fy+56+i*10,9,f,mut,'center'));
+  rule(right+10,fy+66,endR-5);text('Nama / Tandatangan:',right+10,fy+78,8.5);
+  bar('G. CATATAN / RUJUKAN KECACATAN DIMAKLUMKAN SEBELUM PEMBELIAN',gy);
+  rule(left,gy+36,endR);rule(left,gy+54,endR);
   doc.setTitle('Borang Serahan Kenderaan '+a.no);doc.setAuthor('Abe Din Auto');
   const bytes=await doc.save();return {bytes,fname:'DO-'+clean(a.plate||'jualan').replace(/[^a-z0-9_-]/gi,'')+'-'+a.no.replace(/^DO-/,'')+'.pdf'};
 }

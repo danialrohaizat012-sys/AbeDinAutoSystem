@@ -1,6 +1,6 @@
 import {createClient} from 'npm:@supabase/supabase-js@2.49.4';
 import * as PDFLib from 'npm:pdf-lib@1.17.1';
-import {deliveryFields,buildDeliveryOrderPdf} from './do-pdf.mjs';
+import {deliveryFields,buildDeliveryOrderPdf,DO_TERMS,DO_TERMS_VERSION} from './do-pdf.mjs';
 const db=createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,{auth:{persistSession:false,autoRefreshToken:false}});
 const table='delivery_order_esign';
 const allowed=new Set(['https://abedinauto.my','https://www.abedinauto.my']);
@@ -21,9 +21,9 @@ async function snapshot(s:any,h:any){
  if(!['baik','perlu'].includes(h.condition)||!['1','2'].includes(h.keys))throw new Error('Pilih keadaan kenderaan dan bilangan kunci.');
  const mileage=str(h.mileage,10);if(mileage!==''&&!/^\d{1,9}$/.test(mileage))throw new Error('Mileage tidak sah.');
  const docs=Array.isArray(h.docs)?[...new Set(h.docs)].filter(d=>['geran','insurans','lain'].includes(d)):[];
- return {version:2,vehicle_id:s.vehicle_id,customer_id:s.customer_id,fields:{...a,date,time,ic:str(h.ic,40),address:str(h.address,180),mileage,condition:h.condition,keys:h.keys,docs,accessories:str(h.accessories,35),notes:str(h.notes,150)}};
+ return {version:DO_TERMS_VERSION,vehicle_id:s.vehicle_id,customer_id:s.customer_id,fields:{...a,date,time,ic:str(h.ic,40),address:str(h.address,180),mileage,condition:h.condition,keys:h.keys,docs,accessories:str(h.accessories,35),notes:str(h.notes,150)}};
 }
-async function render(snap:any,signature?:number[][][],signedAt?:string){if(snap.version!==2)throw new Error('Versi dokumen tidak disokong.');const result=await buildDeliveryOrderPdf(PDFLib,{x:{},v:{},c:{},handover:{...snap.fields,signature,signedAt}});return {pdf:b64(result.bytes),filename:result.fname}}
+async function render(snap:any,signature?:number[][][],signedAt?:string){if(snap.version!==DO_TERMS_VERSION)throw new Error('Versi dokumen tidak disokong.');const result=await buildDeliveryOrderPdf(PDFLib,{x:{},v:{},c:{},handover:{...snap.fields,signature,signedAt}});return {pdf:b64(result.bytes),filename:result.fname}}
 function signatureOf(v:any){if(!Array.isArray(v)||!v.length||v.length>80)throw new Error('Sila tandatangan.');let n=0,travel=0;for(const stroke of v){if(!Array.isArray(stroke)||stroke.length<2)throw new Error('Tandatangan tidak sah.');let prev:number[]|null=null;for(const pt of stroke){if(!Array.isArray(pt)||pt.length!==2||pt.some(x=>typeof x!=='number'||!Number.isFinite(x)||x<0||x>1)||++n>2000)throw new Error('Tandatangan terlalu kompleks atau tidak sah.');if(prev)travel+=Math.hypot(pt[0]-prev[0],pt[1]-prev[1]);prev=pt}}if(travel<.025)throw new Error('Sila lukis tandatangan penuh.');return v}
 Deno.serve(async req=>{
  const origin=req.headers.get('origin')||'';
@@ -40,7 +40,7 @@ Deno.serve(async req=>{
    if(!validId(b.sale_id))return reply({error:'ID jualan tidak sah.'},400);
    const s=await sale(b.sale_id);if(!saleOk(s))return reply({error:'E-Sign hanya untuk jualan selesai.'},409);
    const {data:old,error}=await db.from(table).select('sale_id,snapshot,signed_at,signed_pdf,expires_at,token_hash').eq('sale_id',s.id).maybeSingle();if(error)throw error;
-   if(b.action==='staff_get'){if(!old)return reply({status:'none'});return reply({status:old.signed_at?'signed':old.snapshot.version!==2?'expired':new Date(old.expires_at).getTime()>Date.now()?'pending':'expired',signed_at:old.signed_at,expires_at:old.expires_at,...(old.signed_at?{pdf:old.signed_pdf,fields:old.snapshot.fields}:{})})}
+   if(b.action==='staff_get'){if(!old)return reply({status:'none'});return reply({status:old.signed_at?'signed':old.snapshot.version!==DO_TERMS_VERSION?'expired':new Date(old.expires_at).getTime()>Date.now()?'pending':'expired',signed_at:old.signed_at,expires_at:old.expires_at,...(old.signed_at?{pdf:old.signed_pdf,fields:old.snapshot.fields}:{})})}
    if(old?.signed_at)return reply({error:'DO telah ditandatangani dan dikunci.'},409);
    const snap=await snapshot(s,b.handover||{});await render(snap);
    const t=token(),digest=await hash(t),expires_at=new Date(Date.now()+48*3600000).toISOString();
@@ -53,13 +53,14 @@ Deno.serve(async req=>{
   const digest=await hash(b.token);
   const {data:row,error}=await db.from(table).select('sale_id,snapshot,expires_at,signed_at,signed_pdf').eq('token_hash',digest).gt('expires_at',new Date().toISOString()).maybeSingle();
   if(error)throw error;if(!row)return reply({error:'Pautan tidak sah atau tamat tempoh.'},404);
-  if(!row.signed_at&&row.snapshot.version!==2)return reply({error:'Format DO telah dikemas kini. Sila minta Abe Din Auto jana pautan baharu sebelum tandatangan.'},409);
+  if(!row.signed_at&&row.snapshot.version!==DO_TERMS_VERSION)return reply({error:'Format DO telah dikemas kini. Sila minta Abe Din Auto jana pautan baharu sebelum tandatangan.'},409);
   if(b.action==='buyer_get'){
    if(row.signed_at)return reply({status:'signed',fields:row.snapshot.fields,pdf:row.signed_pdf,signed_at:row.signed_at});
    const s=await sale(row.sale_id);if(!saleOk(s)||s.vehicle_id!==row.snapshot.vehicle_id||s.customer_id!==row.snapshot.customer_id)return reply({error:'Rekod jualan telah berubah. Hubungi Abe Din Auto.'},409);
-   return reply({status:'pending',fields:row.snapshot.fields,...await render(row.snapshot)});
+   return reply({status:'pending',fields:row.snapshot.fields,terms:DO_TERMS,terms_version:DO_TERMS_VERSION,...await render(row.snapshot)});
   }
   if(row.signed_at)return reply({error:'DO telah ditandatangani. Muat semula untuk mendapatkan PDF.'},409);
+  if(b.terms_version!==DO_TERMS_VERSION)return reply({error:'Sila muat semula borang untuk membaca terma terkini.'},409);
   if(b.accept!==true)return reply({error:'Sila sahkan pengakuan pelanggan.'},400);
   const signature=signatureOf(b.signature);
   const s=await sale(row.sale_id);if(!saleOk(s)||s.vehicle_id!==row.snapshot.vehicle_id||s.customer_id!==row.snapshot.customer_id)return reply({error:'Rekod jualan telah berubah. Hubungi Abe Din Auto.'},409);
