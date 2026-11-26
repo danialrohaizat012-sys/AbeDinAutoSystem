@@ -69,7 +69,7 @@ export function mountAdminMenu(){
   }
   for(const section of staticSections)section.hidden=![...section.querySelectorAll('button[data-cloud-page]')].some(b=>!b.hidden);
   const candidate=isStaff
-   ?['kehadiran','inventory','belanja','pemeriksaan','puspakom','sales','applications','sewa','reports','profil','dashboard']
+   ?['kehadiran','dashboard','inventory','belanja','pemeriksaan','puspakom','sales','applications','sewa','reports','profil']
    :['dashboard','inventory','sales','reports'];
   const allowed=candidate.filter(page=>byPage.get(page)&&!byPage.get(page).hidden).slice(0,4);
   if(bottom){
@@ -79,7 +79,8 @@ export function mountAdminMenu(){
     const button=document.createElement('button');button.type='button';button.dataset.cloudPage=page;
     const icon=document.createElement('span');icon.setAttribute('aria-hidden','true');icon.textContent=ICONS[page]||'•';
     const label=document.createElement('small');
-    label.textContent=page==='dashboard'&&isStaff?'Katalog Umum':(LABELS[page]||page).replace(' Kenderaan','').replace(' Kereta','').replace(' Jualan','');
+    label.textContent=page==='kehadiran'&&isStaff?'Utama':page==='dashboard'&&isStaff?'Katalog Umum':(LABELS[page]||page).replace(' Kenderaan','').replace(' Kereta','').replace(' Jualan','');
+    button.setAttribute('aria-label',page==='kehadiran'&&isStaff?'Utama - Kehadiran dan To-Do List':label.textContent);
     button.append(icon,label);
     button.classList.toggle('active',byPage.get(page).classList.contains('active'));
     button.addEventListener('click',()=>{if(navigate(page))close()});
