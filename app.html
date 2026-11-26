@@ -981,7 +981,7 @@ async function openDeliveryOrder(saleId){
   const v=vehicles.find(y=>y.id===x.vehicle_id)||{},c=customers.find(y=>y.id===x.customer_id)||{};
   if(!v.id||!c.id){alert('Maklumat pelanggan atau profil kenderaan tidak ditemui. Sila semak rekod jualan.');return}
   try{
-    const {deliveryFields,buildDeliveryOrderPdf}=await import('./js/do-pdf.mjs?v=1');
+    const {deliveryFields,buildDeliveryOrderPdf}=await import('./js/do-pdf.mjs?v=2');
     const a=deliveryFields({x,v,c});
     const o=cloudModal('DO PDF - Borang Serahan', '<p class="muted">Semak maklumat sebelum cetak. Tarikh dan masa mesti mengikut serahan sebenar; boleh dibiarkan kosong untuk diisi dengan tangan.</p>'+
       '<div class="cloud-notice">'+safe(a.plate)+' · '+safe(a.model)+' · '+safe(a.name)+'</div>'+
@@ -989,7 +989,7 @@ async function openDeliveryOrder(saleId){
       '<label>No. kad pengenalan<input name="ic" value="'+safe(a.ic)+'" maxlength="40"></label><label>Mileage (km)<input type="number" min="0" step="1" name="mileage" value="'+safe(a.mileage)+'"></label></div>'+
       '<label>Alamat pelanggan<textarea name="address" rows="2" maxlength="180">'+safe(a.address)+'</textarea></label>'+
       '<label>Varian / spesifikasi<input name="variant" value="'+safe(a.variant)+'" maxlength="100"></label>'+
-      '<p class="muted">Data tambahan ini hanya digunakan dalam PDF, tidak mengubah rekod asal. Status serahan, dokumen dan tandatangan diisi semasa serahan.</p><button type="submit">Muat turun DO PDF</button>');
+      '<p class="muted">Data tambahan ini hanya digunakan dalam PDF, tidak mengubah rekod asal. Status serahan, dokumen dan tandatangan pelanggan diisi semasa serahan. Pihak Abe Din Auto tidak perlu tandatangan.</p><button type="submit">Muat turun DO PDF</button>');
     o.querySelector('form').onsubmit=async e=>{
       e.preventDefault();const form=e.currentTarget,btn=form.querySelector('[type=submit]'),err=o.querySelector('.ada-form-error');
       btn.disabled=true;err.textContent='Menjana PDF...';

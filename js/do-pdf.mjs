@@ -43,8 +43,11 @@ export async function buildDeliveryOrderPdf(PDFLib,{x,v,c,handover={}}){
   wrap(statement,endR-left,9,f).forEach((s,i)=>text(s,left,595+i*12,9));
   bar('F. PENGESAHAN SERAHAN',632);
   text('PIHAK ABE DIN AUTO',(left+endL)/2,667,10,b,ink,'center');text('PELANGGAN',(right+endR)/2,667,10,b,ink,'center');
-  rule(left+10,719,endL-5);rule(right+10,719,endR-5);
-  text('Nama / Tandatangan:',left+10,732,8.5);text('Nama / Tandatangan:',right+10,732,8.5);
+  const companyCenter=(left+endL)/2;
+  text('CETAKAN BERKOMPUTER',companyCenter,690,10,b,ink,'center');
+  wrap('Dokumen ini dijana oleh sistem dan tidak memerlukan tandatangan pihak Abe Din Auto.',endL-left-16,9,f).forEach((s,i)=>text(s,companyCenter,705+i*11,9,f,mut,'center'));
+  rule(right+10,719,endR-5);
+  text('Nama / Tandatangan:',right+10,732,8.5);
   bar('G. CATATAN',747);rule(left,786,endR);rule(left,808,endR);
   doc.setTitle('Borang Serahan Kenderaan '+a.no);doc.setAuthor('Abe Din Auto');
   const bytes=await doc.save();return {bytes,fname:'DO-'+clean(a.plate||'jualan').replace(/[^a-z0-9_-]/gi,'')+'-'+a.no.replace(/^DO-/,'')+'.pdf'};
