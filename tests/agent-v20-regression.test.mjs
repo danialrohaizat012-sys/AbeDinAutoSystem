@@ -26,9 +26,9 @@ test('agent portal does not write to database',()=>{
  const src=readFileSync(new URL('js/agent-v20-data.mjs',root),'utf8');
  assert.doesNotMatch(src,/\.(insert|update|upsert|delete|rpc)\s*\(/);
 });
-test('main application only adds isolated agent link and check',()=>{
- assert.match(app,/id="ada-agent-v20-link"[^>]*hidden/);
- assert.match(app,/\.eq\('status','active'\)\.maybeSingle\(\)/);
+test('staff dashboard has no obsolete V20 shortcut; standalone portal remains intact',()=>{
+ assert.doesNotMatch(app,/id="ada-agent-v20-link"/);
+ assert.doesNotMatch(app,/const agentV20Link=/);
  assert.match(portal,/createV20AgentData/);
  assert.match(portal,/signInWithPassword/);
 });
