@@ -912,7 +912,7 @@ return function mountRunner(host,ctx){
   var role=ctx&&ctx.profile&&ctx.profile.role;
   S.myId=ctx.profile&&ctx.profile.id||null;
   S.client=ctx.client;ctx.client.rpc('runner_staff_choices').then(function(res){if(!res.error){S.staff=res.data||[];sched()}});
-  S.owner=role==='owner';S.admin=role==='owner';S.canEditTrip=role==='owner'||role==='operations';
+  S.owner=role==='owner';S.admin=role==='owner';S.canEditTrip=role==='owner'||role==='operations'||role==='sales_advisor';
   var root=host.shadowRoot||host.attachShadow({mode:'open'});
   root.innerHTML='<style>'+CSS+'</style><div class="shell'+(S.admin?' runner-admin':'')+'"><div class="wrap" id="app"></div></div>';
   app=root.getElementById('app');
