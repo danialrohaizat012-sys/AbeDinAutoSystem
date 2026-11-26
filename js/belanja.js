@@ -44,6 +44,7 @@ const EXTRA_CSS = `.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px}
 .rc{display:flex;gap:10px;align-items:flex-start}.rc img,.rc .ph{width:64px;height:84px;object-fit:cover;border-radius:8px;background:var(--soft);flex:0 0 64px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:22px}
 .rc .grow{min-width:0}.rc b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rc small{color:var(--mute);font-size:12.5px;display:block}
+.bankbox{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:10px 12px;border-radius:12px;background:rgba(63,174,107,.12);border:1px solid rgba(63,174,107,.4)}.bankbox .accno{font-size:18px;font-weight:800;letter-spacing:.04em}.bankbox small{flex-basis:100%;color:var(--mute)}
 .amt{font-weight:800;font-size:16px;white-space:nowrap}.warn{background:#3a1513;color:#ffaaa4;border-radius:10px;padding:8px 10px;font-size:13px}
 .info{background:#12263a;color:#8cc4ff;border-radius:10px;padding:8px 10px;font-size:13px}
 .edit{display:grid;grid-template-columns:1fr 1fr;gap:10px}.edit .full{grid-column:1/-1}@media(max-width:560px){.edit{grid-template-columns:1fr}}
@@ -74,7 +75,7 @@ export function mountBelanja(host, ctx) {
   const root = host.shadowRoot || host.attachShadow({ mode: "open" });
   root.innerHTML = `<style>${CSS}${EXTRA_CSS}</style><section class="shell" id="app"></section>`;
   const app = root.getElementById("app");
-  const TABS = owner ? [["snap", "📷 Snap Resit"], ["list", "Senarai"], ["ana", "📊 Analisa"], ["report", "Laporan"], ["export", "Eksport"], ["ai", "Tetapan AI"]] : [["snap", "📷 Snap Resit"], ["list", "Resit Saya"]];
+  let TABS = owner ? [["snap", "📷 Snap Resit"], ["list", "Senarai"], ["ana", "📊 Analisa"], ["report", "Laporan"], ["export", "Eksport"], ["ai", "Tetapan AI"]] : [["snap", "📷 Snap Resit"], ["list", "Resit Saya"]];
   const S = { dups: {}, tab: "snap", rows: [], names: {}, urls: {}, err: "", msg: "", cls: "", queue: [], editId: null, ai: null,
     f: { month: "recent", rmonth: ymNow(), cat: "", status: "", q: "", unit: "", jenis: "" }, prev: [], payMonth: ymNow(), busy: false, insp: {} };
 
@@ -199,7 +200,7 @@ export function mountBelanja(host, ctx) {
       ${S.err ? `<div class="warn">${esc(S.err)}</div>` : ""}
       <div id="bmsg" class="msg ${S.cls}">${esc(S.msg)}</div>
       ${S.editId ? editor(S.rows.find(x => x.id === S.editId)) : ""}
-      ${S.tab === "snap" ? snapView() : S.tab === "list" ? listView() : S.tab === "ana" ? anaView() : S.tab === "report" ? reportView() : S.tab === "export" ? exportView() : aiView()}`;
+      ${S.tab === "snap" ? snapView() : S.tab === "list" ? listView() : S.tab === "ejen" ? ejenView() : S.tab === "ana" ? anaView() : S.tab === "report" ? reportView() : S.tab === "export" ? exportView() : aiView()}`;
   }
 
   function snapView() {
@@ -536,7 +537,7 @@ export function mountBelanja(host, ctx) {
       return;
     }
     if (b.dataset.fj !== undefined) { S.f.jenis = b.dataset.fj; S.f.cat = ""; render(); return; }
-    if (b.dataset.tab) { S.tab = b.dataset.tab; S.editId = null; say(""); render(); if (S.tab === "ana") loadAna(); return; }
+    if (b.dataset.tab) { S.tab = b.dataset.tab; S.editId = null; say(""); render(); if (S.tab === "ana") loadAna(); if (S.tab === "ejen") loadEjen(); return; }
     if (b.dataset.amode) { A.mode = b.dataset.amode; loadAna(); return; }
     if (b.dataset.ajenis !== undefined) { A.jenis = b.dataset.ajenis; render(); return; }
     if (b.dataset.acat) { S.tab = "list"; S.f.month = "all"; S.f.jenis = ""; S.f.cat = b.dataset.acat; S.f.status = ""; load(); return; }
@@ -574,6 +575,48 @@ export function mountBelanja(host, ctx) {
     if (b.hasAttribute("data-csv")) { exportCsv(L); return; }
     if (b.hasAttribute("data-zip")) { b.disabled = true; try { await exportZip(L); } catch (er) { say("Gagal ZIP: " + (er?.message || er), "err"); } b.disabled = false; return; }
   });
+
+  // V127: Bayaran komisen ejen — pengesah HR sahkan pindahan bank
+  const E = { ok: false, verifier: false, me: null, rows: [], loading: false };
+  async function loadEjen(quiet) {
+    E.loading = true; if (!quiet && S.tab === "ejen") render();
+    const r = await client.rpc("agent_hr_payouts_v1");
+    E.loading = false;
+    if (r.error) { E.ok = false; return; }
+    E.ok = true; E.verifier = !!r.data?.verifier; E.me = r.data?.me; E.rows = r.data?.payouts || [];
+    if (!TABS.some(t => t[0] === "ejen")) { TABS = TABS.concat([["ejen", "💸 Bayaran Ejen"]]); }
+    render();
+  }
+  function ejenView() {
+    if (E.loading && !E.rows.length) return `<p class="mute">Memuatkan…</p>`;
+    const wait = E.rows.filter(x => x.status === "approved"), paid = E.rows.filter(x => x.status === "paid");
+    const card = (x, done) => {
+      const bank = x.bank_account_no ? `<div class="bankbox"><b>🏦 ${esc(x.bank_name || "Bank")}</b><span class="accno">${esc(x.bank_account_no)}</span><small>${esc(x.bank_account_holder || x.agent_name || "")}</small><button type="button" class="btn sm" data-copy="${esc(String(x.bank_account_no).replace(/\s|-/g, ""))}">📋 Salin no. akaun</button></div>` : `<div class="warn">⚠️ Ejen belum isi akaun bank di Portal Ejen → Profil. Hubungi ejen di ${esc(x.agent_phone || "-")}.</div>`;
+      const items = (x.items || []).map(i => `${esc(i.plate || "-")} · ${esc(i.car || "")}${i.customer ? " · " + esc(i.customer) : ""}`).join("<br>");
+      const self = x.approved_by && x.approved_by === E.me;
+      return `<div class="card" style="display:flex;flex-direction:column;gap:8px;${done ? "opacity:.8" : "border-color:#5a4a14"}">
+        <div class="row"><div class="grow"><b>${esc(x.agent_name || "Ejen")}</b> <span class="chip">${esc(x.agent_code || "")}</span><br><small class="mute">${esc(x.agent_phone || "")}${x.approved_by_name ? " · Diluluskan oleh " + esc(x.approved_by_name) : ""} · ${dtm(x.created_at)}</small></div><div class="amt">${rm(x.amount)}</div></div>
+        ${items ? `<small class="mute">🚗 ${items}</small>` : ""}
+        ${done ? `<div class="info">✅ Dibayar ${dtm(x.paid_at)} · Rujukan: <b>${esc(x.transfer_reference || "")}</b></div>` : bank + (E.verifier && !self ? `<form class="edit" data-payconf="${esc(x.id)}"><div><label>No. rujukan pindahan bank</label><input class="field" name="ref" maxlength="120" required placeholder="cth: MBB 123456789"></div><div><label>Tarikh & masa dibayar</label><input class="field" type="datetime-local" name="at" required value="${new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)}"></div><div class="full"><button class="btn pri" type="submit">✅ Sahkan sudah dibayar ${rm(x.amount)}</button></div></form>` : `<small class="mute">${self ? "Anda meluluskan payout ini — pengesahan mesti oleh pengesah HR yang lain." : "Menunggu pengesah HR sahkan bayaran bank."}</small>`)}
+      </div>`;
+    };
+    return `<div class="card" style="display:flex;flex-direction:column;gap:6px"><b>💸 Bayaran Komisen Ejen</b><small class="mute">Pindahkan komisen ke akaun bank ejen, kemudian masukkan no. rujukan pindahan untuk tanda sebagai dibayar. Ejen akan nampak status "dibayar".</small></div>
+      <h4 style="margin:14px 0 6px">Menunggu bayaran (${wait.length})</h4>${wait.length ? `<div class="list">${wait.map(x => card(x, false)).join("")}</div>` : `<p class="mute">Tiada payout menunggu.</p>`}
+      ${paid.length ? `<h4 style="margin:16px 0 6px">Sudah dibayar (60 hari)</h4><div class="list">${paid.map(x => card(x, true)).join("")}</div>` : ""}`;
+  }
+  app.addEventListener("submit", async e => {
+    const f = e.target; if (!f.dataset?.payconf) return; e.preventDefault();
+    const ref = f.elements.ref.value.trim(), at = f.elements.at.value;
+    if (!ref || !at) return say("Isi rujukan & tarikh bayar.", "err");
+    const x = E.rows.find(r => r.id === f.dataset.payconf);
+    if (!confirm(`Sahkan ${rm(x?.amount || 0)} sudah dipindahkan ke akaun ${x?.bank_name || ""} ${x?.bank_account_no || ""} (${x?.agent_name || "ejen"})?\nRujukan: ${ref}`)) return;
+    const btn = f.querySelector("button"); btn.disabled = true;
+    const r = await client.rpc("agent_hr_confirm_payout_v1", { p_payout: f.dataset.payconf, p_transfer_reference: ref, p_paid_at: new Date(at).toISOString() });
+    if (r.error) { btn.disabled = false; return say("Gagal: " + r.error.message, "err"); }
+    say("Bayaran komisen disahkan. Status ejen dikemas kini kepada DIBAYAR.", "ok"); await loadEjen(true);
+  });
+  app.addEventListener("click", async e => { const b = e.target.closest?.("[data-copy]"); if (!b) return; try { await navigator.clipboard.writeText(b.dataset.copy); say("No. akaun disalin.", "ok"); } catch (_) { say(b.dataset.copy); } });
+  loadEjen(true);
 
   // Dibuka dari notifikasi resit -> terus buka resit berkenaan
   const want = window.__adaOpenResit; window.__adaOpenResit = null;
