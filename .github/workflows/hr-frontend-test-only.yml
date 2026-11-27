@@ -4,6 +4,7 @@ on:
     branches: [hr-sql-test-only]
     paths:
       - 'js/hr-*.mjs'
+      - 'js/payroll-*.mjs'
       - 'js/staff*.js'
       - 'hr-sql-ci/tests/*.cjs'
       - '.github/workflows/hr-frontend-test-only.yml'
@@ -32,6 +33,7 @@ jobs:
           node --check js/hr-esign.mjs
           node --check js/hr-discipline.mjs
           node --check js/hr-assets.mjs
+          for f in js/payroll-*.mjs; do node --check "$f"; done
           test "$(git hash-object js/hr-discipline.mjs)" = aaccbc2f8acf943d89d3a7ea43aae55e1c36a230
           test "$(git hash-object js/hr-assets.mjs)" = 632d8326e937ca291a15bcab4342d65b2f0dccf1
           test "$(git hash-object js/hr-letters.mjs)" = bf8afa0590b85e1fe53488365362877b75d71754
@@ -46,7 +48,7 @@ jobs:
           npm install --no-save playwright@1.56.1
           npx playwright install --with-deps chromium
       - name: Test real staff module with isolated mock database
-        run: node --test hr-sql-ci/tests/hr-owner-frontend.test.cjs
+        run: node --test hr-sql-ci/tests/hr-owner-frontend.test.cjs hr-sql-ci/tests/hr-payroll-frontend.test.cjs
       - name: Run existing application regression suite
         if: always()
         run: node --test tests/*.test.cjs tests/*.test.mjs
