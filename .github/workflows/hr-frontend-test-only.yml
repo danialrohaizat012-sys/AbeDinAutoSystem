@@ -29,6 +29,7 @@ jobs:
         run: |
           node --check --input-type=module < js/staff.js
           node --check --input-type=module < js/staff-me.js
+          node --check js/hr-delegate.mjs
           node --check js/hr-kpi.mjs
           node --check --input-type=module < js/staff-profile.js
           node --check js/hr-letters.mjs
@@ -50,7 +51,7 @@ jobs:
           npm install --no-save playwright@1.56.1
           npx playwright install --with-deps chromium
       - name: Test real staff module with isolated mock database
-        run: node --test hr-sql-ci/tests/hr-owner-frontend.test.cjs hr-sql-ci/tests/hr-payroll-frontend.test.cjs
+        run: node --test hr-sql-ci/tests/hr-owner-frontend.test.cjs hr-sql-ci/tests/hr-payroll-frontend.test.cjs hr-sql-ci/tests/hr-delegate-frontend.test.cjs
       - name: Run existing application regression suite
         if: always()
         run: node --test tests/*.test.cjs tests/*.test.mjs
