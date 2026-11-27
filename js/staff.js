@@ -1,8 +1,9 @@
+import { mountPayrollQueue } from "./payroll-handoff.mjs?v=1";
 // Abe Din Auto – Urus Staff (menu Staff). Hanya Owner.
 // Cipta akaun log masuk baharu melalui Supabase Auth (klien sementara, sesi Owner tidak terjejas),
 // kemudian aktifkan profil melalui RPC staff_save. Senarai melalui RPC staff_list (lihat V66_STAFF_MIGRATION.sql).
 // UI dalam Shadow DOM supaya tidak bercampur dengan CSS sistem sedia ada.
-import { mountProfile, PROFILE_CSS, CATEGORY, EMP_TYPE, CONTRACT, completeness, LEAVE, CLAIM } from "./staff-profile.js?v=10";
+import { mountProfile, PROFILE_CSS, CATEGORY, EMP_TYPE, CONTRACT, completeness, LEAVE, CLAIM } from "./staff-profile.js?v=11";
 export const CSS = `
 :host{display:block;--card:#151412;--fg:#f4efe2;--mute:#a69f8c;--line:#2e2a20;--soft:#1e1c17;--pri:#e8b10b;--pri-fg:#141000;
   --ok:#3fae6b;--bad:#e0473f;--f:Inter,-apple-system,"Segoe UI",system-ui,sans-serif;color-scheme:dark}
@@ -74,6 +75,13 @@ function defPerm(role, page) { if (role === "owner") return true; if (role === "
 function canPage(u, page) { if (u.role === "owner") return true; const v = u.permissions && typeof u.permissions === "object" ? u.permissions[page] : undefined; return typeof v === "boolean" ? v : defPerm(u.role, page); }
 const SUPA_ESM = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
+import { mountHRDashboard } from "./hr-dashboard.mjs?v=hr6-staging";
+import { mountHRAssistant } from "./hr-assistant.mjs?v=hr6-staging";
+
+import { mountKpi } from "./hr-kpi.mjs?v=1";
+
+import { mountAssets } from "./hr-assets.mjs?v=1";
+
 export function mountStaff(host, ctx) {
   const client = ctx.client, me = ctx.profile || {};
   const root = host.shadowRoot || host.attachShadow({ mode: "open" });
@@ -120,10 +128,19 @@ export function mountStaff(host, ctx) {
       ${S.mode ? formView() : ""}
       ${S.share ? `<div class="share" id="share">${esc(S.share)}</div><div class="row"><button class="btn sm" data-a="copy">Salin untuk WhatsApp</button><button class="btn sm" data-a="hide">Tutup</button></div>` : ""}
       <p class="msg ${S.msgCls}" id="msg">${esc(S.msg)}</p>
+      ${!S.mode && me.role === "owner" && all && !S.err ? `<div id="hr-dashboard"></div><details class="sec" id="hr-assistant-wrap"><summary>HR Assistant</summary><div id="hr-assistant"></div></details>` : ""}
+      ${!S.mode && me.role === "owner" && all && !S.err ? `<details class="sec" id="hr-kpi-wrap"><summary>Sasaran &amp; Penilaian KPI</summary><div id="hr-kpi"></div></details>` : ""}
+      ${!S.mode && me.role === "owner" && all && !S.err ? `<details class="sec" id="hr-assets-wrap"><summary>Pengurusan aset syarikat</summary><div id="hr-assets"></div></details>` : ""}
+      ${!S.mode && me.role === "owner" && all && !S.err ? `<details class="sec" id="payroll-queue-wrap"><summary>Kelulusan Payroll</summary><div id="payroll-queue"></div></details>` : ""}
       ${S.mode ? "" : inboxView()}
       ${S.mode ? "" : `<div class="row" style="margin-top:4px"><div class="grow"><div class="kick">PASUKAN</div><h3>Senarai staff</h3></div><button class="btn pri" data-a="new">+ Tambah staff</button></div>${catBar}`}
       <div class="grid">${rows === null ? `<div class="empty">Memuatkan…</div>` : (globalThis.adaPg?globalThis.adaPg.rows("st-acc",rows,render):rows).map(item).join("") || `<div class="empty">Tiada staff ditemui.</div>`}</div>${rows?(globalThis.adaPg?globalThis.adaPg.nav("st-acc",rows.length):""):""}
       ${S.mode ? "" : `<p class="mute">Setiap staff log masuk dengan emel dan kata laluan sendiri di <b>abedinauto.my/admin</b>.</p>`}`;
+    const hrDash = app.querySelector("#hr-dashboard"); if (hrDash) mountHRDashboard(hrDash, ctx, all);
+    const ha = app.querySelector("#hr-assistant-wrap"); if (ha) ha.ontoggle = () => { if (ha.open && !ha.dataset.loaded) { ha.dataset.loaded = "1"; mountHRAssistant(ha.querySelector("#hr-assistant"), ctx, all); } };
+    const kpi = app.querySelector("#hr-kpi-wrap"); if (kpi) kpi.ontoggle = () => { if (kpi.open && !kpi.dataset.loaded) { kpi.dataset.loaded = "1"; mountKpi(kpi.querySelector("#hr-kpi"), ctx, all); } };
+    const assets = app.querySelector("#hr-assets-wrap"); if (assets) assets.ontoggle = () => { if (assets.open && !assets.dataset.loaded) { assets.dataset.loaded = "1"; mountAssets(assets.querySelector("#hr-assets"), ctx); } };
+    const pq=app.querySelector("#payroll-queue-wrap"); if(pq) pq.ontoggle=()=>{if(pq.open && !pq.dataset.loaded){pq.dataset.loaded="1";mountPayrollQueue(pq.querySelector("#payroll-queue"),ctx,all);}};
     bind();
   }
 

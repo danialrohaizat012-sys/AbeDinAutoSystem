@@ -1,8 +1,10 @@
+import { loadPayrollSlip, recordHtml, printRecordedPayroll, reviewFormHtml, bindReviewForm } from "./payroll-slip.mjs?v=2";
+import { mountPayrollQueue } from "./payroll-handoff.mjs?v=1";
 // Abe Din Auto – "Profil Saya": layan diri untuk setiap staff yang log masuk.
 // Ringkasan, mohon cuti, slip gaji, tuntutan (claim) dengan resit, mohon advance, kemas kini maklumat sendiri.
 // Data & kebenaran: V73_STAFF_HR.sql + V74_STAFF_SELF_SERVICE.sql. Slip gaji dikira oleh computeSlip() (kehadiran.js).
-import { CSS } from "./staff.js?v=14";
-import { PROFILE_CSS, CATEGORY, EMP_TYPE, LEAVE, CLAIM, leaveEntitle } from "./staff-profile.js?v=9";
+import { CSS } from "./staff.js?v=23";
+import { PROFILE_CSS, CATEGORY, EMP_TYPE, LEAVE, CLAIM, leaveEntitle } from "./staff-profile.js?v=11";
 import { slipHtml, printSlip, rm, monthName } from "./slip.js?v=2";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -16,7 +18,7 @@ const addM = (m, n) => { const [y, mo] = m.split("-").map(Number), t = y * 12 + 
 const mIdx = (a, b) => { const [y1, m1] = a.split("-").map(Number), [y2, m2] = b.split("-").map(Number); return (y2 - y1) * 12 + (m2 - m1); };
 const ST = { pending: ["Menunggu", "c-role"], approved: ["Lulus", "c-on"], rejected: ["Ditolak", "c-warn"], paid: ["Dibayar", "c-blue"], requested: ["Menunggu", "c-role"], active: ["Aktif", "c-blue"], done: ["Selesai", "c-on"], cancelled: ["Batal", "c-off"] };
 const chip = s => `<span class="chip ${(ST[s] || ["", "c-off"])[1]}">${(ST[s] || [s])[0]}</span>`;
-const TABS = [["home", "Ringkasan"], ["cuti", "Cuti"], ["gaji", "Slip Gaji"], ["claim", "Tuntutan"], ["advance", "Advance"], ["info", "Maklumat Saya"]];
+const TABS = [["home", "Ringkasan"], ["cuti", "Cuti"], ["gaji", "Slip Gaji"], ["claim", "Tuntutan"], ["advance", "Advance"], ["info", "Maklumat Saya"], ["kpi", "KPI"], ["letters", "Surat HR"], ["discipline", "Kes HR"], ["assets", "Aset Saya"], ["payroll-review", "Semakan payroll"]];
 const ME_CSS = `.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}.tabs button{white-space:nowrap;border:1px solid var(--line);background:var(--soft);border-radius:999px;padding:8px 14px;font-weight:700;font-size:14px;cursor:pointer;color:var(--fg)}
 .tabs button.on{background:var(--pri);color:var(--pri-fg);border-color:var(--pri)}.badge{background:#e0473f;color:#fff;border-radius:99px;font-size:11px;padding:1px 6px;margin-left:4px}
 .field{font-size:16px}textarea.field{resize:vertical}.list2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
@@ -31,6 +33,13 @@ async function shrink(file) {
   c.width = Math.round(img.width * k); c.height = Math.round(img.height * k); c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
   return await new Promise(r => c.toBlob(b => r(b ? new File([b], "img.jpg", { type: "image/jpeg" }) : file), "image/jpeg", .85));
 }
+
+import { mountKpi } from "./hr-kpi.mjs?v=1";
+
+import { mountLetters } from "./hr-letters.mjs?v=1";
+
+import { mountDiscipline } from "./hr-discipline.mjs?v=1";
+import { mountAssets } from "./hr-assets.mjs?v=1";
 
 export function mountStaffMe(host, ctx) {
   const client = ctx.client, me = ctx.profile || {}, uid = me.id;
@@ -54,12 +63,18 @@ export function mountStaffMe(host, ctx) {
     const paths = [S.hr.photo_path, ...S.claims.map(c => c.receipt_path), ...S.leaves.map(l => l.attachment_path)].filter(p => p && !S.urls[p]);
     if (paths.length) { const { data } = await client.storage.from("staff-docs").createSignedUrls(paths, 3600); (data || []).forEach(d => { if (d.signedUrl) S.urls[d.path] = d.signedUrl; }); }
     render();
-    if (S.tab === "gaji" && !S.slip) loadSlip();
+    if (S.tab === "gaji" && !S.slipBusy) loadSlip();
   }
   async function loadSlip() {
-    S.slipBusy = true; S.slipErr = ""; render();
-    try { const m = await import("./kehadiran.js?v=9"); S.slip = await m.computeSlip(client, me, uid, S.month); }
-    catch (e) { S.slipErr = e?.message || String(e); S.slip = null; }
+    const token = (S.slipToken || 0) + 1; S.slipToken = token;
+    const month = S.month;
+    S.slipBusy = true; S.slipErr = ""; S.slip = null; S.payroll = null; render();
+    try {
+      const m = await import("./kehadiran.js?v=9");
+      const result = await loadPayrollSlip({client,profile:me,staffId:uid,month,computeSlip:m.computeSlip});
+      if (S.slipToken !== token) return;
+      S.payroll = result; S.slip = result.kind === "estimate" ? result.slip : null;
+    } catch(e) { if (S.slipToken !== token) return; S.slipErr = e?.message || String(e); }
     S.slipBusy = false; render();
   }
   async function upload(file, name) {
@@ -126,11 +141,11 @@ export function mountStaffMe(host, ctx) {
 
   function vGaji() {
     const opts = []; for (let i = 0; i < 12; i++) opts.push(addM(ymNow(), -i));
+    const rec = S.payroll?.kind === "recorded" ? S.payroll.record : null;
     return `<div class="sec"><div class="row"><h4 class="grow">Slip gaji</h4><select class="field" id="month" style="max-width:200px">${opts.map(m => `<option value="${m}" ${m === S.month ? "selected" : ""}>${esc(monthName(m))}</option>`).join("")}</select>
-      ${S.slip ? `<button class="btn sm pri" data-act="print">⎙ PDF</button>` : ""}</div>
-      <div style="margin-top:10px">${S.slipBusy ? `<p class="note">Mengira…</p>` : S.slipErr ? `<p class="msg err">${esc(S.slipErr)}</p>` : S.slip ? slipHtml(S.slip) : `<button class="btn" data-act="slip">Kira slip</button>`}</div></div>`;
+      ${rec && !S.slipBusy ? `<button class="btn sm pri" data-act="recordprint">PDF rekod</button>` : S.slip && !S.slipBusy ? `<button class="btn sm" data-act="print">PDF anggaran</button>` : ""}</div>
+      <div style="margin-top:10px">${S.slipBusy ? `<p class="note">Memuatkan…</p>` : S.slipErr ? `<p class="msg err">${esc(S.slipErr)}</p>` : rec ? recordHtml(rec) : S.slip ? `<p class="warn">ANGGARAN · BELUM DISAHKAN</p>${slipHtml(S.slip)}` : `<p class="note">Tekan Muat semula untuk semak slip.</p>`}</div><button class="btn sm" data-act="slip" ${S.slipBusy ? "disabled" : ""}>Muat semula</button></div>`;
   }
-
   function vClaim() {
     const sum = s => S.claims.filter(c => c.status === s).reduce((t, c) => t + +c.amount, 0);
     return `<div class="tiles"><div class="tile t-y"><small>Menunggu</small><b>${rm(sum("pending"))}</b></div><div class="tile t-g"><small>Diluluskan (belum dibayar)</small><b>${rm(sum("approved"))}</b></div><div class="tile t-b"><small>Sudah dibayar</small><b>${rm(sum("paid"))}</b></div></div>
@@ -180,17 +195,23 @@ export function mountStaffMe(host, ctx) {
 
   function render() {
     if (!S.hr) { app.innerHTML = `<div class="empty">Memuatkan…</div>`; return; }
-    const v = { home: vHome, cuti: vCuti, gaji: vGaji, claim: vClaim, advance: vAdv, info: vInfo }[S.tab]();
+    const v = { home: vHome, cuti: vCuti, gaji: vGaji, claim: vClaim, advance: vAdv, info: vInfo, kpi: () => `<div id="my-kpi"></div>`, letters: () => `<div id="my-letters"></div>`, discipline: () => `<div id="my-discipline"></div>`, assets: () => `<div id="my-assets"></div>`, "payroll-review": () => `<div id="my-payroll-queue"></div>` }[S.tab]();
     app.innerHTML = `<div class="pf">${header()}${tabs()}${S.err ? `<p class="msg err">${esc(S.err)}</p>` : ""}<p class="msg ${S.cls}" id="mmsg">${esc(S.msg)}</p>${v}</div>`;
+    const kpi = app.querySelector("#my-kpi"); if (kpi) mountKpi(kpi, ctx, [], true);
+    const letters = app.querySelector("#my-letters"); if (letters) mountLetters(letters, ctx, me, true);
+    const discipline = app.querySelector("#my-discipline"); if (discipline) mountDiscipline(discipline, ctx, me, true);
+    const assets = app.querySelector("#my-assets"); if (assets) mountAssets(assets, ctx, {self:true});
+    const pq=app.querySelector("#my-payroll-queue"); if(pq) mountPayrollQueue(pq,ctx);
     bind();
   }
   const run = async (btn, fn, ok) => { if (btn) btn.disabled = true; try { say("Sila tunggu…"); await fn(); S.msg = ok; S.cls = "ok"; await load(); } catch (e) { if (btn) btn.disabled = false; say(e?.message || String(e), "err"); } };
 
   function bind() {
-    app.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => { S.tab = b.dataset.tab; S.msg = ""; render(); if (S.tab === "gaji" && !S.slip && !S.slipBusy) loadSlip(); if (b.dataset.new) app.querySelector("form input,form select")?.focus(); });
+    app.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => { S.tab = b.dataset.tab; S.msg = ""; render(); if (S.tab === "gaji" && !S.slipBusy) loadSlip(); if (b.dataset.new) app.querySelector("form input,form select")?.focus(); });
     app.querySelectorAll("[data-act]").forEach(b => b.onclick = () => {
       const a = b.dataset.act;
       if (a === "slip") loadSlip();
+      if (a === "recordprint" && !S.slipBusy && S.payroll?.kind === "recorded" && !printRecordedPayroll(S.payroll.record,{name:me.full_name})) say("Benarkan pop-up untuk cetak.","err");
       if (a === "edinfo") { S.editInfo = true; render(); }
       if (a === "noinfo") { S.editInfo = false; render(); }
       if (a === "print" && S.slip && !printSlip(S.slip, { name: me.full_name, month: S.month, ic: S.hr.ic_no, code: S.hr.staff_code, position: S.hr.position, bank: [S.hr.bank_name, S.hr.bank_account].filter(Boolean).join(" "), epf: S.hr.epf_no, socso: S.hr.socso_no })) say("Benarkan pop-up untuk cetak.", "err");

@@ -8,7 +8,9 @@ const src=fs.readFileSync(path.resolve(__dirname,'../js/staff-profile.js'),'utf8
 const staff=fs.readFileSync(path.resolve(__dirname,'../js/staff.js'),'utf8');
 const html=fs.readFileSync(path.resolve(__dirname,'../app.html'),'utf8');
 test('HR module remains valid JavaScript',()=>{
- assert.doesNotThrow(()=>new Function(src.replace(/^export /gm,'')));
+ const {spawnSync}=require('node:child_process');
+ const result=spawnSync(process.execPath,['--check','--input-type=module'],{input:src,encoding:'utf8'});
+ assert.equal(result.status,0,result.stderr||result.error?.message);
 });
 test('unconfigured annual leave displays as not set, not arbitrary 8 days',()=>{
  assert.match(src,/const annualNotSet = P\.hr\.al_days == null/);
