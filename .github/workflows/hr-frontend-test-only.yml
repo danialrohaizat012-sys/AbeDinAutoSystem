@@ -1,0 +1,40 @@
+name: HR frontend isolated regression
+on:
+  push:
+    branches: [hr-sql-test-only]
+    paths:
+      - 'js/hr-*.mjs'
+      - 'js/staff*.js'
+      - 'hr-sql-ci/tests/*.cjs'
+      - '.github/workflows/hr-frontend-test-only.yml'
+permissions:
+  contents: read
+concurrency:
+  group: hr-frontend-test-only
+  cancel-in-progress: true
+jobs:
+  validate:
+    if: github.ref == 'refs/heads/hr-sql-test-only'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check integrated JavaScript syntax
+        run: |
+          node --check --input-type=module < js/staff.js
+          node --check js/hr-dashboard.mjs
+          node --check js/hr-assistant.mjs
+          test "$(git hash-object js/hr-dashboard.mjs)" = 873e764eda7f5d76f52254521eb8e4b49d07ae15
+          test "$(git hash-object js/hr-assistant.mjs)" = b9e348346d9fc5d9286ecd596bd9aa285f4c4c52
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Test real staff module with isolated mock database
+        run: node --test hr-sql-ci/tests/hr-owner-frontend.test.cjs
+      - name: Run existing application regression suite
+        if: always()
+        run: node --test tests/*.test.cjs tests/*.test.mjs
