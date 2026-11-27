@@ -132,6 +132,8 @@ async function shrink(file) {
 
 import { mountLetters } from "./hr-letters.mjs?v=1";
 
+import { mountDiscipline } from "./hr-discipline.mjs?v=1";
+
 export function mountProfile(app, ctx, staff, onBack) {
   const client = ctx.client, me = ctx.profile || {}, id = staff.id;
   const P = { hr: null, pay: null, hist: [], chrono: [], adv: [], leaves: [], claims: [], slip: null, slipMonth: ym(), slipBusy: false, edit: null, msg: "", cls: "", urls: {}, err: "" };
@@ -310,8 +312,9 @@ export function mountProfile(app, ctx, staff, onBack) {
     const payNote = `<p class="note full" style="margin:0">Jenis gaji, kadar dan elaun dikongsi dengan modul Kehadiran (kiraan gaji).</p>`;
     app.innerHTML = `<div class="pf">${header()}${P.err ? `<p class="msg err">${esc(P.err)}</p>` : ""}<p class="msg ${P.cls}" id="pmsg">${esc(P.msg)}</p>
       ${photoBox()}${section("personal")}${section("job", `<div class="kv"><div><span>Peranan sistem</span><span>${esc({ owner: "Owner", operations: "Operations", sales_advisor: "Sales Advisor" }[staff.role] || staff.role)}</span></div><div><span>Tempoh khidmat</span><span>${esc(serviceText(P.hr.join_date))}</span></div></div>`)}
-      ${section("contract")}${section("payroll", "", payNote)}${slipView()}${claimView()}${advView()}${leaveView()}${histView()}${chronoView()}${section("docs", docsExtra())}<details class="sec" id="hr-letters-wrap"><summary>Surat HR digital</summary><div id="hr-letters"></div></details></div>`;
+      ${section("contract")}${section("payroll", "", payNote)}${slipView()}${claimView()}${advView()}${leaveView()}${histView()}${chronoView()}${section("docs", docsExtra())}<details class="sec" id="hr-letters-wrap"><summary>Surat HR digital</summary><div id="hr-letters"></div></details><details class="sec" id="hr-discipline-wrap"><summary>Disiplin &amp; penambahbaikan</summary><div id="hr-discipline"></div></details></div>`;
     const letters = app.querySelector("#hr-letters-wrap"); if (letters) letters.ontoggle = () => { if (letters.open && !letters.dataset.loaded) { letters.dataset.loaded = "1"; mountLetters(letters.querySelector("#hr-letters"), ctx, staff); } };
+    const discipline = app.querySelector("#hr-discipline-wrap"); if (discipline) discipline.ontoggle = () => { if (discipline.open && !discipline.dataset.loaded) { discipline.dataset.loaded = "1"; mountDiscipline(discipline.querySelector("#hr-discipline"), ctx, staff); } };
     bind();
   }
 
