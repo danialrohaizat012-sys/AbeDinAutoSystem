@@ -1,0 +1,40 @@
+name: HR delegation isolated security
+on:
+  push:
+    branches: [hr-sql-test-only]
+    paths:
+      - 'hr-delegation-ci/**'
+      - '.github/workflows/hr-delegation-test-only.yml'
+permissions:
+  contents: read
+jobs:
+  delegation:
+    if: github.ref == 'refs/heads/hr-sql-test-only'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ci_demo_only
+          POSTGRES_DB: hr_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d hr_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: ci_demo_only
+      PGDATABASE: hr_ci
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: psql -X -v ON_ERROR_STOP=1 -f hr-sql-ci/tests/discipline-assets-db-smoke.sql
+      - run: psql -X -v ON_ERROR_STOP=1 -f hr-delegation-ci/delegation-smoke.sql
