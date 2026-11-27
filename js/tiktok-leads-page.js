@@ -14,10 +14,10 @@ const fmtShort = (d) => new Date(d).toLocaleDateString('ms-MY', { timeZone: 'Asi
 const fmtTime = (d) => new Date(d).toLocaleString('ms-MY', { timeZone: 'Asia/Kuala_Lumpur' });
 
 let me = null, staff = [], page = 0, busy = false, counts = {};
-const staffName = (id) => {
+const staffName = (id, status) => {
   const p = staff.find((x) => x.id === id);
   if (!p) return id ? 'Staff terdahulu' : 'Belum diambil';
-  if (p.role === 'owner' && me.role !== 'owner') return 'Belum diambil';
+  if (p.role === 'owner' && me.role !== 'owner' && status === 'new') return 'Belum diambil';
   return p.id === me.id ? (p.full_name || 'Anda') + ' (anda)' : (p.full_name || 'Staff');
 };
 const unclaimed = (id) => !id || staff.some((p) => p.id === id && p.role === 'owner');
@@ -129,7 +129,7 @@ function leadCard(r) {
   a.append(h, p, s, mk('p', 'meta', 'Masuk ' + fmtDate(r.created_at)));
 
   const ownerLabel = mk('p', 'owner');
-  const paintOwner = () => { ownerLabel.textContent = 'Staff: ' + staffName(r.assigned_to); ownerLabel.classList.toggle('mine', r.assigned_to === me.id); };
+  const paintOwner = (status = r.status) => { ownerLabel.textContent = 'Staff: ' + staffName(r.assigned_to, status); ownerLabel.classList.toggle('mine', r.assigned_to === me.id); };
   paintOwner();
   a.append(ownerLabel);
   let syncAssign = () => {};
@@ -154,7 +154,7 @@ function leadCard(r) {
       if (!result.data) throw Error('Lead telah berubah. Muat semula sebelum mencuba lagi.');
       data = result.data;
     }
-    r.assigned_to = data.assigned_to; paintOwner(); syncAssign();
+    r.assigned_to = data.assigned_to; paintOwner(data.status); syncAssign();
     s.value = data.status; s.dataset.v = data.status;
     if (r.status !== data.status) afterStatus(a, r, data.status);
   }
