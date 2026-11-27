@@ -68,6 +68,6 @@ export async function buildDeliveryOrderPdf(PDFLib,{x,v,c,handover={}}){
   const notes=wrap(a.notes||'',endR-left,9,f);if(notes.length>2)throw Error('Catatan terlalu panjang.');notes.forEach((s,i)=>text(s,left,gy+32+i*18,9));
   rule(left,gy+36,endR);rule(left,gy+54,endR);
   rect(M,H-13,R-M,2,gold);
-  doc.setTitle('Borang Serahan Kenderaan '+a.no);doc.setAuthor('Abe Din Auto');
+  doc.setTitle('Borang Serahan Kenderaan '+a.no);doc.setAuthor('Abe Din Auto');if(typeof doc.setSubject==='function')doc.setSubject('AbeDin DO branded 2026-11');
   const bytes=await doc.save();return {bytes,fname:'DO-'+clean(a.plate||'jualan').replace(/[^a-z0-9_-]/gi,'')+'-'+a.no.replace(/^DO-/,'')+'.pdf'};
 }

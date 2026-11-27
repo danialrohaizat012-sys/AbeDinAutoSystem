@@ -57,8 +57,15 @@ export function mountDeliveryShare(host,{file,fields={},phone='',signed=false,li
  const observer=new MutationObserver(()=>{if(!host.isConnected){URL.revokeObjectURL(url);observer.disconnect()}});
  observer.observe(document.body,{childList:true,subtree:true});window.addEventListener('pagehide',()=>{URL.revokeObjectURL(url);observer.disconnect()},{once:true});
 }
+function appendOriginalArchive(host,data){
+ if(!data.original_pdf)return;
+ const file=pdfFile({...data,pdf:data.original_pdf});const url=URL.createObjectURL(file);
+ const a=document.createElement('a');a.className='es-btn';a.href=url;a.download='ASAL-'+file.name;a.textContent='Muat turun PDF asal bertandatangan';host.append(a);
+ const note=document.createElement('p');note.className='es-muted';note.textContent='Paparan baharu ialah salinan berjenama. PDF asal yang ditandatangani kekal disimpan.';host.append(note);
+ window.addEventListener('pagehide',()=>URL.revokeObjectURL(url),{once:true});
+}
 function pdfActions(host,data,phone='',staff=false,link=''){
- if(staff){mountDeliveryShare(host,{file:pdfFile(data),fields:data.fields,phone,signed:true,link});return;}
+ if(staff){mountDeliveryShare(host,{file:pdfFile(data),fields:data.fields,phone,signed:true,link});appendOriginalArchive(host,data);return;}
  const file=pdfFile(data),url=URL.createObjectURL(file);
  const href=esc(url),name=esc(file.name);
  host.innerHTML='<a class="es-btn" href="'+href+'" target="_blank" rel="noopener noreferrer">Lihat PDF</a><a class="es-btn" href="'+href+'" download="'+name+'">Muat turun PDF</a><button type="button" data-share class="es-green">Kongsi DO PDF ke WhatsApp</button>'+(phone?'<a class="es-btn" href="https://wa.me/'+esc(phone)+'?text='+encodeURIComponent('Salam, DO kenderaan anda telah ditandatangani. Kami akan kongsikan fail PDF.')+'" target="_blank" rel="noopener noreferrer">Buka WhatsApp pelanggan (mesej)</a>':'')+'<p class="es-muted" data-share-status>Untuk lampirkan PDF, pilih WhatsApp dan penerima dalam menu perkongsian.</p>';
@@ -66,6 +73,7 @@ function pdfActions(host,data,phone='',staff=false,link=''){
  const download=()=>{const a=document.createElement('a');a.href=url;a.download=file.name;document.body.appendChild(a);a.click();a.remove()};
  host.querySelector('[data-share]').onclick=async()=>{try{if(navigator.share&&navigator.canShare?.({files:[file]})){await navigator.share({files:[file],title:'DO Abe Din Auto'});status.textContent='Menu perkongsian selesai. Semak penghantaran dalam WhatsApp.'}else{download();status.textContent='PDF dimuat turun. Lampirkan fail secara manual dalam WhatsApp.'}}catch(e){if(e.name!=='AbortError')status.textContent='Perkongsian gagal. Gunakan Muat turun PDF.'}};
  window.addEventListener('pagehide',()=>URL.revokeObjectURL(url),{once:true});
+ appendOriginalArchive(host,data);
 }
 const STYLE='<style>.es-form{display:grid;gap:10px}.es-form label{display:grid;gap:5px}.es-form input,.es-form textarea,.es-form select{width:100%;min-width:0}.es-checks{display:flex;flex-wrap:wrap;gap:10px}.es-checks label{display:flex;align-items:center}.es-checks input{width:auto}.es-actions{display:grid;gap:9px;margin:12px 0}.es-btn,.es-green{box-sizing:border-box;display:block;text-align:center;border:1px solid #80808066;border-radius:10px;padding:12px;text-decoration:none;color:inherit;font:inherit;font-weight:650;cursor:pointer}.es-green{background:#15803d!important;color:#fff!important}.es-muted{font-size:12px;opacity:.85}.es-good{color:#39bc78;font-weight:750}</style>';
 export async function mountStaffESign({client,cloudModal,saleId,fields:a,phone}){

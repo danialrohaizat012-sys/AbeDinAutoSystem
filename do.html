@@ -8,6 +8,7 @@ try{
  const bytes=Uint8Array.from(atob(data.pdf),c=>c.charCodeAt(0)),url=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'}));
  status.textContent=data.signed?'DO telah ditandatangani. Simpan salinan anda.':'DO belum ditandatangani. Untuk semakan.';
  for(const download of [false,true]){const a=document.createElement('a');a.href=url;a.textContent=download?'Muat turun PDF':'Lihat PDF';if(download)a.download=data.filename||'DO.pdf';else{a.target='_blank';a.rel='noopener noreferrer'}actions.append(a)}
+ if(data.original_pdf){const original=Uint8Array.from(atob(data.original_pdf),c=>c.charCodeAt(0)),originalUrl=URL.createObjectURL(new Blob([original],{type:'application/pdf'}));const a=document.createElement('a');a.href=originalUrl;a.download='ASAL-'+(data.filename||'DO.pdf');a.textContent='Muat turun PDF asal';actions.append(a);const p=document.createElement('p');p.textContent='Salinan reka bentuk baharu. Dokumen asal kekal disimpan.';actions.append(p);window.addEventListener('pagehide',()=>URL.revokeObjectURL(originalUrl),{once:true});}
  window.addEventListener('pagehide',()=>URL.revokeObjectURL(url),{once:true});
 }catch(e){status.textContent=e.message||'DO tidak dapat dimuatkan.'}
 </script></body></html>

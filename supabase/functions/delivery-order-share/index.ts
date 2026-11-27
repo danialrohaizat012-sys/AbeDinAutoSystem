@@ -1,5 +1,6 @@
 import {createClient} from 'npm:@supabase/supabase-js@2.49.4';
 import * as PDFLib from 'npm:pdf-lib@1.17.1';
+import {safeBrandedCopy} from './do-brand-archive.mjs';
 import {buildDeliveryOrderPdf} from './do-pdf.mjs';
 const db=createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,{auth:{persistSession:false,autoRefreshToken:false}});
 const allowed=new Set(['https://abedinauto.my','https://www.abedinauto.my']);
@@ -60,6 +61,6 @@ Deno.serve(async req=>{
   const s=await sale(r.sale_id);if(!validSale(s)||s.vehicle_id!==r.vehicle_id||s.customer_id!==r.customer_id)return reply({error:'Rekod jualan telah berubah.'},409);
   const pdf=r.signed?(await signedRecord(s))?.signed_pdf:r.pdf;
   if(!pdf)return reply({error:'Dokumen tidak tersedia.'},404);
-  return reply({pdf,filename:r.filename,signed:r.signed});
+  return reply({...await safeBrandedCopy(PDFLib,pdf),filename:r.filename,signed:r.signed});
  }catch{return reply({error:'DO PDF tidak dapat diproses. Sila hubungi Abe Din Auto.'},500)}
 });

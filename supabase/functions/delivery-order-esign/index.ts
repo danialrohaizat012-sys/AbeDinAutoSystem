@@ -1,5 +1,6 @@
 import {createClient} from 'npm:@supabase/supabase-js@2.49.4';
 import * as PDFLib from 'npm:pdf-lib@1.17.1';
+import {safeBrandedCopy} from './do-brand-archive.mjs';
 import {deliveryFields,buildDeliveryOrderPdf,DO_TERMS,DO_TERMS_VERSION} from './do-pdf.mjs';
 const db=createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,{auth:{persistSession:false,autoRefreshToken:false}});
 const table='delivery_order_esign';
@@ -52,7 +53,7 @@ Deno.serve(async req=>{
    if(!validId(b.sale_id))return reply({error:'ID jualan tidak sah.'},400);
    const s=await sale(b.sale_id);if(!saleOk(s))return reply({error:'E-Sign hanya untuk jualan selesai.'},409);
    const {data:old,error}=await db.from(table).select('sale_id,snapshot,signed_at,signed_pdf,expires_at,token_hash').eq('sale_id',s.id).maybeSingle();if(error)throw error;
-   if(b.action==='staff_get'){if(!old)return reply({status:'none'});return reply({status:old.signed_at?'signed':old.snapshot.version!==DO_TERMS_VERSION?'expired':new Date(old.expires_at).getTime()>Date.now()?'pending':'expired',signed_at:old.signed_at,expires_at:old.expires_at,...(old.signed_at?{pdf:old.signed_pdf,fields:old.snapshot.fields}:{})})}
+   if(b.action==='staff_get'){if(!old)return reply({status:'none'});return reply({status:old.signed_at?'signed':old.snapshot.version!==DO_TERMS_VERSION?'expired':new Date(old.expires_at).getTime()>Date.now()?'pending':'expired',signed_at:old.signed_at,expires_at:old.expires_at,...(old.signed_at?{...await safeBrandedCopy(PDFLib,old.signed_pdf),fields:old.snapshot.fields}:{})})}
    if(old?.signed_at)return reply({error:'DO telah ditandatangani dan dikunci.'},409);
    const snap=await snapshot(s,b.handover||{});await render(snap);
    const t=token(),digest=await hash(t),expires_at=new Date(Date.now()+48*3600000).toISOString();
@@ -67,7 +68,7 @@ Deno.serve(async req=>{
   if(error)throw error;if(!row)return reply({error:'Pautan tidak sah atau tamat tempoh.'},404);
   if(!row.signed_at&&row.snapshot.version!==DO_TERMS_VERSION)return reply({error:'Format DO telah dikemas kini. Sila minta Abe Din Auto jana pautan baharu sebelum tandatangan.'},409);
   if(b.action==='buyer_get'){
-   if(row.signed_at)return reply({status:'signed',fields:row.snapshot.fields,pdf:row.signed_pdf,signed_at:row.signed_at});
+   if(row.signed_at)return reply({status:'signed',fields:row.snapshot.fields,...await safeBrandedCopy(PDFLib,row.signed_pdf),signed_at:row.signed_at});
    const s=await sale(row.sale_id);if(!saleOk(s)||s.vehicle_id!==row.snapshot.vehicle_id||s.customer_id!==row.snapshot.customer_id)return reply({error:'Rekod jualan telah berubah. Hubungi Abe Din Auto.'},409);
    return reply({status:'pending',fields:row.snapshot.fields,terms:DO_TERMS,terms_version:DO_TERMS_VERSION,...await render(row.snapshot)});
   }

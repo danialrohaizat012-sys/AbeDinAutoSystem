@@ -982,7 +982,7 @@ async function openDeliveryESign(saleId,btn){
   if(!v.id||!c.id){alert('Maklumat pelanggan atau kenderaan tidak lengkap.');return}
   const old=btn.textContent;btn.disabled=true;btn.textContent='Memuatkan...';
   try{
-    const [{mountStaffESign},{deliveryFields}]=await Promise.all([import('./js/do-esign.mjs?v=6'),import('./js/do-pdf.mjs?v=5')]);
+    const [{mountStaffESign},{deliveryFields}]=await Promise.all([import('./js/do-esign.mjs?v=7'),import('./js/do-pdf.mjs?v=6')]);
     await mountStaffESign({client,cloudModal,saleId:x.id,fields:deliveryFields({x,v,c}),phone:waPhone(c.phone)});
   }catch(e){alert('Gagal membuka E-Sign: '+(e.message||e))}
   finally{btn.disabled=false;btn.textContent=old}
@@ -993,7 +993,7 @@ async function openDeliveryOrder(saleId){
   const v=vehicles.find(y=>y.id===x.vehicle_id)||{},c=customers.find(y=>y.id===x.customer_id)||{};
   if(!v.id||!c.id){alert('Maklumat pelanggan atau profil kenderaan tidak ditemui. Sila semak rekod jualan.');return}
   try{
-    const {deliveryFields,buildDeliveryOrderPdf}=await import('./js/do-pdf.mjs?v=5');
+    const {deliveryFields,buildDeliveryOrderPdf}=await import('./js/do-pdf.mjs?v=6');
     const a=deliveryFields({x,v,c});
     const o=cloudModal('DO PDF - Borang Serahan', '<p class="muted">Semak maklumat sebelum cetak. Tarikh dan masa mesti mengikut serahan sebenar; boleh dibiarkan kosong untuk diisi dengan tangan.</p>'+
       '<div class="cloud-notice">'+safe(a.plate)+' · '+safe(a.model)+' · '+safe(a.name)+'</div>'+
@@ -1009,7 +1009,7 @@ async function openDeliveryOrder(saleId){
         const PDFLib=await loadPdfLib();
         const {bytes,fname}=await buildDeliveryOrderPdf(PDFLib,{x,v,c,handover});
         if(action==='share'){
-          const {mountDeliveryShare,issueDeliveryLink}=await import('./js/do-esign.mjs?v=6');
+          const {mountDeliveryShare,issueDeliveryLink}=await import('./js/do-esign.mjs?v=7');
           const link=await issueDeliveryLink(client,x.id,false,handover);
           const file=new File([bytes],fname,{type:'application/pdf'});
           const share=cloudModal('Hantar DO PDF ke WhatsApp','<div data-do-share-host class="es-actions" style="display:grid;gap:9px"></div>');
