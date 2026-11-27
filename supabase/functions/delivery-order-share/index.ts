@@ -11,6 +11,18 @@ const id=(v:unknown)=>typeof v==='string'&&/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}
 const validSale=(s:any)=>s&&['sold','completed','reserved'].includes(String(s.status).toLowerCase());
 async function sale(saleId:string){const {data,error}=await db.from('sales').select('id,vehicle_id,customer_id,status').eq('id',saleId).maybeSingle();if(error)throw error;return data}
 async function signedRecord(s:any){const {data,error}=await db.from('delivery_order_esign').select('signed_pdf,signed_at,snapshot').eq('sale_id',s.id).maybeSingle();if(error)throw error;if(!data?.signed_at||!data.signed_pdf||data.snapshot?.vehicle_id!==s.vehicle_id||data.snapshot?.customer_id!==s.customer_id)return null;return data}
+const authClient=(jwt:string)=>createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_ANON_KEY')||'sb_publishable_zuuNipsMpalN_38SJwXpFA_MRzQ6eZ0',{global:{headers:{Authorization:'Bearer '+jwt}},auth:{persistSession:false,autoRefreshToken:false}});
+async function verifySalesStaff(req:Request){
+ const jwt=req.headers.get('authorization')?.match(/^Bearer\s+([^\s]+)$/i)?.[1];
+ if(!jwt)return {error:'Sesi log masuk tiada. Sila log masuk semula.',status:401};
+ const scoped=authClient(jwt);
+ const {data,error}=await scoped.auth.getUser(jwt);
+ if(error||!data.user)return {error:'Sesi log masuk tamat atau tidak sah. Sila log masuk semula.',status:401};
+ const {data:profile,error:pe}=await scoped.from('profiles').select('id,role,enabled').eq('id',data.user.id).maybeSingle();
+ if(pe)return {error:'Pengesahan profil staf gagal. Cuba semula.',status:503};
+ if(!profile||profile.enabled!==true||!['owner','sales_advisor'].includes(profile.role))return {error:'Akses E-Sign hanya untuk Owner dan Sales Advisor yang aktif.',status:403};
+ return {profile,status:200};
+}
 Deno.serve(async req=>{
  const origin=req.headers.get('origin')||'';
  const headers={'Content-Type':'application/json','Cache-Control':'no-store','Vary':'Origin','Access-Control-Allow-Origin':allowed.has(origin)?origin:'https://abedinauto.my','Access-Control-Allow-Headers':'authorization,apikey,content-type,x-client-info','Access-Control-Allow-Methods':'POST,OPTIONS'};
@@ -22,10 +34,7 @@ Deno.serve(async req=>{
   const raw=await req.text();if(raw.length>8000)return reply({error:'Permintaan terlalu besar.'},413);
   const b=JSON.parse(raw);
   if(b?.action==='issue'){
-   const jwt=req.headers.get('authorization')?.match(/^Bearer (.+)$/i)?.[1];if(!jwt)return reply({error:'Sila log masuk.'},401);
-   const {data:u,error:ue}=await db.auth.getUser(jwt);if(ue||!u.user)return reply({error:'Sila log masuk.'},401);
-   const {data:p,error:pe}=await db.from('profiles').select('role,enabled').eq('id',u.user.id).maybeSingle();
-   if(pe||!p?.enabled||!['owner','sales_advisor'].includes(p.role))return reply({error:'Akses tidak dibenarkan.'},403);
+   const checked=await verifySalesStaff(req);if(!checked.profile)return reply({error:checked.error},checked.status);
    if(!id(b.sale_id)||typeof b.signed!=='boolean')return reply({error:'Permintaan tidak sah.'},400);
    const s=await sale(b.sale_id);if(!validSale(s))return reply({error:'Rekod jualan tidak sah.'},409);
    let pdf:string|null=null,filename='DO-'+s.id.replace(/-/g,'')+'.pdf';
@@ -41,7 +50,7 @@ Deno.serve(async req=>{
     pdf=b64(out.bytes);filename=out.fname;
    }
    const t=token(),digest=await hash(t),expires_at=new Date(Date.now()+7*86400000).toISOString();
-   const {error}=await db.from('delivery_order_share').upsert({sale_id:s.id,signed:b.signed,vehicle_id:s.vehicle_id,customer_id:s.customer_id,token_hash:digest,expires_at,pdf,filename,created_by:u.user.id},{onConflict:'sale_id,signed'});
+   const {error}=await db.from('delivery_order_share').upsert({sale_id:s.id,signed:b.signed,vehicle_id:s.vehicle_id,customer_id:s.customer_id,token_hash:digest,expires_at,pdf,filename,created_by:checked.profile.id},{onConflict:'sale_id,signed'});
    if(error)throw error;
    return reply({token:t,expires_at});
   }

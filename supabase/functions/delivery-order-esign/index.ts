@@ -11,7 +11,19 @@ const b64=(bytes:Uint8Array)=>{let s='';for(let i=0;i<bytes.length;i+=8192)s+=St
 const str=(v:unknown,max:number)=>{if(typeof v!=='string')return '';if(v.length>max)throw new Error('Maklumat terlalu panjang.');return v.trim()};
 const saleOk=(s:any)=>s&&['sold','completed'].includes(String(s.status).toLowerCase());
 async function sale(id:string){const {data,error}=await db.from('sales').select('id,vehicle_id,customer_id,status').eq('id',id).maybeSingle();if(error)throw error;return data}
-async function staff(req:Request){const jwt=req.headers.get('authorization')?.match(/^Bearer (.+)$/i)?.[1];if(!jwt)return null;const {data,error}=await db.auth.getUser(jwt);if(error||!data.user)return null;const {data:profile,error:pe}=await db.from('profiles').select('id,role,enabled').eq('id',data.user.id).maybeSingle();if(pe||!profile?.enabled||!['owner','sales_advisor'].includes(profile.role))return null;return profile}
+const authClient=(jwt:string)=>createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_ANON_KEY')||'sb_publishable_zuuNipsMpalN_38SJwXpFA_MRzQ6eZ0',{global:{headers:{Authorization:'Bearer '+jwt}},auth:{persistSession:false,autoRefreshToken:false}});
+async function verifySalesStaff(req:Request){
+ const jwt=req.headers.get('authorization')?.match(/^Bearer\s+([^\s]+)$/i)?.[1];
+ if(!jwt)return {error:'Sesi log masuk tiada. Sila log masuk semula.',status:401};
+ const scoped=authClient(jwt);
+ const {data,error}=await scoped.auth.getUser(jwt);
+ if(error||!data.user)return {error:'Sesi log masuk tamat atau tidak sah. Sila log masuk semula.',status:401};
+ const {data:profile,error:pe}=await scoped.from('profiles').select('id,role,enabled').eq('id',data.user.id).maybeSingle();
+ if(pe)return {error:'Pengesahan profil staf gagal. Cuba semula.',status:503};
+ if(!profile||profile.enabled!==true||!['owner','sales_advisor'].includes(profile.role))return {error:'Akses E-Sign hanya untuk Owner dan Sales Advisor yang aktif.',status:403};
+ return {profile,status:200};
+}
+
 async function snapshot(s:any,h:any){
  const [v,c]=await Promise.all([db.from('vehicles').select('id,plate,make,model,model_year,mileage_km').eq('id',s.vehicle_id).single(),db.from('customers').select('id,full_name,phone,notes').eq('id',s.customer_id).single()]);
  if(v.error||c.error||!v.data||!c.data)throw new Error('Rekod pelanggan atau kenderaan tidak lengkap.');
@@ -36,7 +48,7 @@ Deno.serve(async req=>{
   const raw=await req.text();if(raw.length>140000)return reply({error:'Permintaan terlalu besar.'},413);
   const b=JSON.parse(raw);if(!b||typeof b!=='object')return reply({error:'Permintaan tidak sah.'},400);
   if(['staff_get','staff_issue'].includes(b.action)){
-   const who=await staff(req);if(!who)return reply({error:'Akses tidak dibenarkan.'},403);
+   const checked=await verifySalesStaff(req);if(!checked.profile)return reply({error:checked.error},checked.status);const who=checked.profile;
    if(!validId(b.sale_id))return reply({error:'ID jualan tidak sah.'},400);
    const s=await sale(b.sale_id);if(!saleOk(s))return reply({error:'E-Sign hanya untuk jualan selesai.'},409);
    const {data:old,error}=await db.from(table).select('sale_id,snapshot,signed_at,signed_pdf,expires_at,token_hash').eq('sale_id',s.id).maybeSingle();if(error)throw error;

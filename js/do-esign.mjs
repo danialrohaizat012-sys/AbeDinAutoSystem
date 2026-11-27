@@ -6,7 +6,7 @@ const formatTime=t=>new Intl.DateTimeFormat('ms-MY',{dateStyle:'medium',timeStyl
 export async function esignRequest(action,params={},jwt){
  const res=await fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json',apikey:KEY,...(jwt?{Authorization:'Bearer '+jwt}:{})},body:JSON.stringify({action,...params}),cache:'no-store',referrerPolicy:'no-referrer'});
  let data;try{data=await res.json()}catch(_){throw Error('Perkhidmatan E-Sign tidak dapat dihubungi.')}
- if(!res.ok||data.error)throw Error(data.error||'Permintaan gagal.');return data;
+ if(!res.ok||data.error)throw Object.assign(Error(data.error||'Permintaan gagal.'),{status:res.status});return data;
 }
 function pdfFile(data){const bytes=Uint8Array.from(atob(data.pdf),c=>c.charCodeAt(0));const name='DO-'+String(data.fields?.plate||'jualan').replace(/[^a-z0-9_-]/gi,'')+'-'+String(data.fields?.no||'').replace(/^DO-/,'')+'.pdf';return new File([bytes],name,{type:'application/pdf'})}
 // The share sheet receives the actual PDF and editable text, not a public link.
@@ -16,11 +16,24 @@ export function deliveryShareMessage(fields={},signed=false,link=''){
  return ['Salam'+(name?' '+name:'')+',','','Terima kasih kerana memilih Abe Din Auto.',signed?'Bersama ini dilampirkan Borang Serahan Kenderaan (DO PDF) yang telah ditandatangani untuk simpanan dan rujukan anda.':'Bersama ini dilampirkan Borang Serahan Kenderaan (DO PDF) untuk semakan. Borang ini belum ditandatangani.','',car?'Kenderaan: '+car:'',no?'No. DO: '+no:'','','Terima kasih.','Abe Din Auto'].filter((v,i,a)=>v!==''||i===1||i===4||i===7).join('\n')+(link?'\n\nLihat atau muat turun DO PDF (sah 7 hari):\n'+link:'');
 }
 export function deliverySharePayload(file,text){return {files:[file],title:'DO Abe Din Auto',text:String(text??'')}}
+export async function withSalesSession(client,call){
+ const {data,error}=await client.auth.getSession();
+ let jwt=data?.session?.access_token;
+ if(error||!jwt)throw Error('Sila log masuk semula.');
+ try{return await call(jwt)}catch(e){
+  if(e?.status!==401)return Promise.reject(e);
+  const refreshed=await client.auth.refreshSession();
+  jwt=refreshed.data?.session?.access_token;
+  if(refreshed.error||!jwt)throw Error('Sesi telah tamat. Sila log masuk semula.');
+  return call(jwt);
+ }
+}
 export async function issueDeliveryLink(client,saleId,signed,handover={}){
- const {data}=await client.auth.getSession();const jwt=data.session?.access_token;if(!jwt)throw Error('Sila log masuk semula.');
+ return withSalesSession(client,async jwt=>{
  const res=await fetch(ENDPOINT.replace(/delivery-order-esign$/,'delivery-order-share'),{method:'POST',headers:{'Content-Type':'application/json',apikey:KEY,Authorization:'Bearer '+jwt},body:JSON.stringify({action:'issue',sale_id:saleId,signed,handover}),cache:'no-store',referrerPolicy:'no-referrer'});
- const out=await res.json();if(!res.ok||!/^[a-f0-9]{64}$/.test(out.token||''))throw Error(out.error||'Pautan PDF gagal dijana.');
+ const out=await res.json();if(!res.ok||!/^[a-f0-9]{64}$/.test(out.token||''))throw Object.assign(Error(out.error||'Pautan PDF gagal dijana.'),{status:res.status});
  return 'https://abedinauto.my/do.html#t='+out.token;
+ });
 }
 export function mountDeliveryShare(host,{file,fields={},phone='',signed=false,link=''}){
  const ph=String(phone||'').replace(/\D/g,'');
@@ -56,7 +69,7 @@ function pdfActions(host,data,phone='',staff=false,link=''){
 }
 const STYLE='<style>.es-form{display:grid;gap:10px}.es-form label{display:grid;gap:5px}.es-form input,.es-form textarea,.es-form select{width:100%;min-width:0}.es-checks{display:flex;flex-wrap:wrap;gap:10px}.es-checks label{display:flex;align-items:center}.es-checks input{width:auto}.es-actions{display:grid;gap:9px;margin:12px 0}.es-btn,.es-green{box-sizing:border-box;display:block;text-align:center;border:1px solid #80808066;border-radius:10px;padding:12px;text-decoration:none;color:inherit;font:inherit;font-weight:650;cursor:pointer}.es-green{background:#15803d!important;color:#fff!important}.es-muted{font-size:12px;opacity:.85}.es-good{color:#39bc78;font-weight:750}</style>';
 export async function mountStaffESign({client,cloudModal,saleId,fields:a,phone}){
- const request=async(action,params={})=>{const {data}=await client.auth.getSession();const jwt=data.session?.access_token;if(!jwt)throw Error('Sila log masuk semula.');return esignRequest(action,{sale_id:saleId,...params},jwt)};
+ const request=(action,params={})=>withSalesSession(client,jwt=>esignRequest(action,{sale_id:saleId,...params},jwt));
  const current=await request('staff_get');
  if(current.status==='signed'){
   const o=cloudModal('E-Sign DO - Sudah sign',STYLE+'<p class="es-good">Sudah ditandatangani: '+esc(formatTime(current.signed_at))+' MYT</p><p>PDF dikunci dan disimpan dalam sistem.</p><div class="es-actions" data-pdf></div>');
