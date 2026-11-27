@@ -1,6 +1,6 @@
 // TikTok Lead – halaman utama (V2: susun atur iPad/PC, menu ikut status, susunan)
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import * as WA from './tiktok-wa.js?v=4';
+import * as WA from './tiktok-wa.js?v=5';
 
 const client = createClient('https://buzpdyvvoiqgbeventwm.supabase.co', 'sb_publishable_zuuNipsMpalN_38SJwXpFA_MRzQ6eZ0');
 const $ = (id) => document.getElementById(id);
@@ -20,7 +20,8 @@ const staffName = (id) => {
   if (p.role === 'owner' && me.role !== 'owner') return 'Belum diambil';
   return p.id === me.id ? (p.full_name || 'Anda') + ' (anda)' : (p.full_name || 'Staff');
 };
-const unclaimed = (id) => { if (!id) return true; const p = staff.find((x) => x.id === id); return !p || p.role === 'owner'; };
+const unclaimed = (id) => !id || staff.some((p) => p.id === id && p.role === 'owner');
+const senderName = (id) => id === me.id ? (me.full_name || 'Anda') : (staff.find((p) => p.id === id)?.full_name || (id ? 'Staff terdahulu' : 'Tidak direkodkan'));
 let tab = 'new', queue = '';
 let sort = (() => { try { return localStorage.getItem('tt_sort') || 'new'; } catch (_) { return 'new'; } })();
 $('sort').value = sort;
@@ -120,11 +121,8 @@ function leadCard(r) {
     const prev = r.status;
     s.dataset.v = s.value; s.disabled = true;
     try {
-      const { data, error } = await client.from('tiktok_leads').update({ status: s.value }).eq('id', r.id).select('id,status').single();
-      if (error) throw error;
+      await saveStatus(s.value, false);
       $('status').textContent = 'Status disimpan';
-      claim();
-      afterStatus(a, r, data.status);
     } catch (e) { s.value = prev; s.dataset.v = prev; $('status').textContent = 'Gagal: ' + e.message; }
     finally { s.disabled = false; }
   };
@@ -134,19 +132,39 @@ function leadCard(r) {
   const paintOwner = () => { ownerLabel.textContent = 'Staff: ' + staffName(r.assigned_to); ownerLabel.classList.toggle('mine', r.assigned_to === me.id); };
   paintOwner();
   a.append(ownerLabel);
-  // Sales advisor yang hubungi lead automatik jadi staff lead itu (jika belum diambil)
-  const claim = async () => {
-    if (me.role !== 'sales_advisor' || r.assigned_to === me.id || !unclaimed(r.assigned_to)) return;
-    const { data, error } = await client.from('tiktok_leads').update({ assigned_to: me.id }).eq('id', r.id).select('id,assigned_to').single();
-    if (!error && data) { r.assigned_to = data.assigned_to; paintOwner(); }
-  };
-  a.addEventListener('click', (e) => { if (e.target.closest('.wa')) claim(); });
+  let syncAssign = () => {};
+  // Status dan agihan disimpan bersama, berdasarkan profil akaun yang disahkan.
+  // Agihan kepada staff lain dikekalkan; nama penghantar sebenar dipaparkan pada badge WhatsApp.
+  async function saveStatus(v, fromWhatsApp) {
+    let current = { status: r.status, assigned_to: r.assigned_to };
+    if (fromWhatsApp) {
+      const { data, error } = await client.from('tiktok_leads').select('status,assigned_to').eq('id', r.id).single();
+      if (error) throw error;
+      current = data;
+      v = current.status === 'new' ? 'contacted' : current.status;
+    }
+    const patch = { status: v };
+    if (v === 'contacted' && unclaimed(current.assigned_to) && current.assigned_to !== me.id) patch.assigned_to = me.id;
+    let data = current;
+    if (v !== current.status || 'assigned_to' in patch) {
+      let query = client.from('tiktok_leads').update(patch).eq('id', r.id).eq('status', current.status);
+      if ('assigned_to' in patch) query = current.assigned_to ? query.eq('assigned_to', current.assigned_to) : query.is('assigned_to', null);
+      const result = await query.select('id,status,assigned_to').maybeSingle();
+      if (result.error) throw result.error;
+      if (!result.data) throw Error('Lead telah berubah. Muat semula sebelum mencuba lagi.');
+      data = result.data;
+    }
+    r.assigned_to = data.assigned_to; paintOwner(); syncAssign();
+    s.value = data.status; s.dataset.v = data.status;
+    if (r.status !== data.status) afterStatus(a, r, data.status);
+  }
   if (me.role === 'owner') {
     const ass = mk('select', 'assign');
     ass.setAttribute('aria-label', 'Agih pelanggan kepada staff');
     const ph = mk('option', null, 'Pilih staff'); ph.value = ''; ph.disabled = true; ass.append(ph);
     for (const person of staff) { const o = mk('option', null, person.full_name || 'Staff'); o.value = person.id; ass.append(o); }
     const sync = () => { ass.value = staff.some((x) => x.id === r.assigned_to) ? r.assigned_to : ''; };
+    syncAssign = sync;
     sync();
     ass.onchange = async () => {
       ass.disabled = true;
@@ -162,7 +180,7 @@ function leadCard(r) {
     a.append(ass);
   }
   if (/^\+601\d{8,9}$/.test(r.phone)) {
-    a.append(...WA.buttons(r, (v) => { s.value = v; s.dataset.v = v; afterStatus(a, r, v); }));
+    a.append(...WA.buttons(r, () => saveStatus('contacted', true)));
   }
 
   // Edit maklumat
@@ -278,7 +296,7 @@ async function start() {
     if (me.role === 'owner') {
       for (const id of ['open-wa', 'open-staff', 'm-open-wa', 'm-open-staff', 'm-import', 'side-import', 'tools-wrap']) $(id).hidden = false;
     }
-    await WA.init(client, me, { onSent: loadCounts, onConfig: () => load() });
+    await WA.init(client, me, { onSent: loadCounts, onConfig: () => load(), senderName });
     setTitle(); setOn('tabs', 'data-tab', tab);
     await Promise.all([loadCounts(), load()]);
   } catch (e) { $('status').textContent = e.message; }
