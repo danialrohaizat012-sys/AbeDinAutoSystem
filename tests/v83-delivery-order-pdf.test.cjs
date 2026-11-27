@@ -8,3 +8,16 @@ test('actual A4 single-page PDF with complete and sparse historical records',asy
 test('button adjacent to receipt and click handler wired; no write to database',()=>{assert.match(app,/Resit PDF<\/button>\$\{[^}]*data-do-pdf=/);assert.match(app,/openDeliveryOrder\(b\.dataset\.doPdf\)/);const src=app.slice(app.indexOf('async function openDeliveryOrder('),app.indexOf('function waPhone('));assert.doesNotThrow(()=>new Function(src));assert.doesNotMatch(src,/client\.(from|rpc)/);assert.match(src,/type="date" name="date"/);});
 
 test('computer-generated company confirmation retains customer signature only',async()=>{const {buildDeliveryOrderPdf}=await get();const drawn=[],rules=[];const font={widthOfTextAtSize:(s,size)=>s.length*size*.43};const page={drawText:(s,opts)=>drawn.push({s,...opts}),drawLine:opts=>rules.push(opts),drawRectangle(){}};const fake={...lib,PDFDocument:{create:async()=>({addPage:()=>page,embedFont:async()=>font,setTitle(){},setAuthor(){},save:async()=>new Uint8Array()})}};await buildDeliveryOrderPdf(fake,fixture);assert.ok(drawn.some(t=>t.s==='CETAKAN BERKOMPUTER'));for(const label of ['Varian / Spesifikasi','Warna','No. Chassis / VIN','No. Enjin'])assert.ok(!drawn.some(t=>t.s===label));for(const label of ['No. Pendaftaran','Jenama / Model','Tahun','Mileage (KM)'])assert.ok(drawn.some(t=>t.s===label));assert.match(drawn.map(t=>t.s).join(' '),/tidak memerlukan tandatangan pihak Abe Din Auto\./);const sig=drawn.filter(t=>t.s==='Nama / Tandatangan:');assert.equal(sig.length,1);assert.ok(sig[0].x>297);const signatureRules=rules.filter(t=>Math.abs(t.start.y-(sig[0].y+12))<.01);assert.equal(signatureRules.length,1);assert.ok(signatureRules[0].start.x>297);assert.match(app,/do-pdf\.mjs\?v=6/)});
+
+test('manual and e-sign DO collect identical handover fields and share all selected documents',()=>{
+ const read=p=>fs.readFileSync(path.join(__dirname,'..',p),'utf8');
+ const manual=app.slice(app.indexOf('async function openDeliveryOrder('),app.indexOf('function waPhone('));
+ const es=read('js/do-esign.mjs'),digital=es.slice(es.indexOf('export async function mountStaffESign'),es.indexOf('export function mountSignaturePad'));
+ const fields=s=>[...new Set([...s.matchAll(/name="(date|time|ic|address|mileage|condition|keys|docs|accessories|notes)"/g)].map(m=>m[1]))].sort();
+ assert.deepEqual(fields(manual),fields(digital));assert.equal(fields(manual).length,10);
+ assert.ok(manual.includes("fd.getAll('docs')"));
+ assert.ok(manual.includes('issueDeliveryLink(client,x.id,false,handover)'));
+ const share=read('supabase/functions/delivery-order-share/index.ts');
+ assert.ok(share.includes('condition,keys,docs,accessories:text(h.accessories,35),notes:text(h.notes,150)'));
+ assert.ok(share.includes("if(b.signed){if(!await signedRecord(s))"));
+});
