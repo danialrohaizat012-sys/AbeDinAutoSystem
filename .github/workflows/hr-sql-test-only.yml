@@ -38,3 +38,29 @@ jobs:
         run: |
           psql -X -v ON_ERROR_STOP=1 -f hr-sql-ci/tests/discipline-assets-db-smoke.sql
           echo 'HR cumulative SQL smoke passed'
+      - name: Build and validate atomic HR release migration
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: '5432'
+          PGUSER: postgres
+          PGPASSWORD: ci_demo_only
+          PGDATABASE: hr_release_ci
+        run: |
+          python3 hr-sql-ci/build-release-sql.py /tmp/HR_RELEASE_CANDIDATE.sql
+          createdb hr_release_ci
+          sed '/^create role /d; /\\ir /,$d' hr-sql-ci/tests/payroll-db-smoke.sql > /tmp/hr-bootstrap.sql
+          psql -X -v ON_ERROR_STOP=1 -f /tmp/hr-bootstrap.sql
+          psql -X -v ON_ERROR_STOP=1 -c 'alter table public.profiles add column full_name text;'
+          psql -X -v ON_ERROR_STOP=1 -f /tmp/HR_RELEASE_CANDIDATE.sql
+          psql -X -v ON_ERROR_STOP=1 -f hr-sql-ci/tests/release-schema-check.sql
+          if psql -X -v ON_ERROR_STOP=1 -f /tmp/HR_RELEASE_CANDIDATE.sql; then
+            echo 'ERROR: collision preflight did not stop the second migration'
+            exit 1
+          fi
+          psql -X -v ON_ERROR_STOP=1 -f hr-sql-ci/tests/release-schema-check.sql
+      - name: Retain tested release candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: HR-release-candidate-review-only
+          path: /tmp/HR_RELEASE_CANDIDATE.sql
+          retention-days: 7
