@@ -399,6 +399,23 @@ export function mountAgentAdmin(host,{client,profile}={}){
       catch(err){status(err.message,true)}finally{unlock.disabled=false}
      };
      ctl.append(unlock);
+     // Recovery uses the existing Supabase email flow; never expose or set another user's password.
+     if(g.agent_status==='active'&&g.email){
+      const recovery=node('button','ag-c-purple','Reset Password Ejen');recovery.type='button';
+      recovery.title='Hantar pautan reset kata laluan ke e-mel ejen';
+      recovery.onclick=async()=>{
+       const email=String(g.email).trim();
+       if(!email||!confirm('Hantar pautan reset kata laluan kepada '+(g.name||'ejen')+' melalui '+email+'? Ejen akan menetapkan kata laluan sendiri.'))return;
+       recovery.disabled=true;
+       try{
+        const {error}=await client.auth.resetPasswordForEmail(email,{redirectTo:'https://abedinauto.my/agent.html'});
+        if(error)throw error;
+        status('Permintaan reset dihantar. Minta ejen semak e-mel dan folder Spam.');
+       }catch(err){status(err?.message||'Gagal meminta reset kata laluan.',true)}
+       finally{recovery.disabled=false}
+      };
+      ctl.append(recovery);
+     }
      if(g.agent_status==='active'){const href=congratsLink(g.name,g.phone,g.agent_code);if(href){const tw=node('a','ag-link ag-c-green','🎉 WhatsApp Tahniah');tw.href=href;tw.target='_blank';tw.rel='noopener noreferrer';ctl.append(tw);}}
      if(g.agent_profile_id){
       const isAct=g.agent_status==='active';
