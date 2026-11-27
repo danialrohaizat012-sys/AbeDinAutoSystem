@@ -1,3 +1,4 @@
+import { mountPayrollQueue } from "./payroll-handoff.mjs?v=1";
 // Abe Din Auto – Urus Staff (menu Staff). Hanya Owner.
 // Cipta akaun log masuk baharu melalui Supabase Auth (klien sementara, sesi Owner tidak terjejas),
 // kemudian aktifkan profil melalui RPC staff_save. Senarai melalui RPC staff_list (lihat V66_STAFF_MIGRATION.sql).
@@ -130,6 +131,7 @@ export function mountStaff(host, ctx) {
       ${!S.mode && me.role === "owner" && all && !S.err ? `<div id="hr-dashboard"></div><details class="sec" id="hr-assistant-wrap"><summary>HR Assistant</summary><div id="hr-assistant"></div></details>` : ""}
       ${!S.mode && me.role === "owner" && all && !S.err ? `<details class="sec" id="hr-kpi-wrap"><summary>Sasaran &amp; Penilaian KPI</summary><div id="hr-kpi"></div></details>` : ""}
       ${!S.mode && me.role === "owner" && all && !S.err ? `<details class="sec" id="hr-assets-wrap"><summary>Pengurusan aset syarikat</summary><div id="hr-assets"></div></details>` : ""}
+      ${!S.mode && me.role === "owner" && all && !S.err ? `<details class="sec" id="payroll-queue-wrap"><summary>Kelulusan Payroll</summary><div id="payroll-queue"></div></details>` : ""}
       ${S.mode ? "" : inboxView()}
       ${S.mode ? "" : `<div class="row" style="margin-top:4px"><div class="grow"><div class="kick">PASUKAN</div><h3>Senarai staff</h3></div><button class="btn pri" data-a="new">+ Tambah staff</button></div>${catBar}`}
       <div class="grid">${rows === null ? `<div class="empty">Memuatkan…</div>` : (globalThis.adaPg?globalThis.adaPg.rows("st-acc",rows,render):rows).map(item).join("") || `<div class="empty">Tiada staff ditemui.</div>`}</div>${rows?(globalThis.adaPg?globalThis.adaPg.nav("st-acc",rows.length):""):""}
@@ -138,6 +140,7 @@ export function mountStaff(host, ctx) {
     const ha = app.querySelector("#hr-assistant-wrap"); if (ha) ha.ontoggle = () => { if (ha.open && !ha.dataset.loaded) { ha.dataset.loaded = "1"; mountHRAssistant(ha.querySelector("#hr-assistant"), ctx, all); } };
     const kpi = app.querySelector("#hr-kpi-wrap"); if (kpi) kpi.ontoggle = () => { if (kpi.open && !kpi.dataset.loaded) { kpi.dataset.loaded = "1"; mountKpi(kpi.querySelector("#hr-kpi"), ctx, all); } };
     const assets = app.querySelector("#hr-assets-wrap"); if (assets) assets.ontoggle = () => { if (assets.open && !assets.dataset.loaded) { assets.dataset.loaded = "1"; mountAssets(assets.querySelector("#hr-assets"), ctx); } };
+    const pq=app.querySelector("#payroll-queue-wrap"); if(pq) pq.ontoggle=()=>{if(pq.open && !pq.dataset.loaded){pq.dataset.loaded="1";mountPayrollQueue(pq.querySelector("#payroll-queue"),ctx,all);}};
     bind();
   }
 
