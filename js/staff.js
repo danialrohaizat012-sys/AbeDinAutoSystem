@@ -74,6 +74,9 @@ function defPerm(role, page) { if (role === "owner") return true; if (role === "
 function canPage(u, page) { if (u.role === "owner") return true; const v = u.permissions && typeof u.permissions === "object" ? u.permissions[page] : undefined; return typeof v === "boolean" ? v : defPerm(u.role, page); }
 const SUPA_ESM = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
+import { mountHRDashboard } from "./hr-dashboard.mjs?v=hr6-staging";
+import { mountHRAssistant } from "./hr-assistant.mjs?v=hr6-staging";
+
 export function mountStaff(host, ctx) {
   const client = ctx.client, me = ctx.profile || {};
   const root = host.shadowRoot || host.attachShadow({ mode: "open" });
@@ -120,10 +123,13 @@ export function mountStaff(host, ctx) {
       ${S.mode ? formView() : ""}
       ${S.share ? `<div class="share" id="share">${esc(S.share)}</div><div class="row"><button class="btn sm" data-a="copy">Salin untuk WhatsApp</button><button class="btn sm" data-a="hide">Tutup</button></div>` : ""}
       <p class="msg ${S.msgCls}" id="msg">${esc(S.msg)}</p>
+      ${!S.mode && me.role === "owner" && all && !S.err ? `<div id="hr-dashboard"></div><details class="sec" id="hr-assistant-wrap"><summary>HR Assistant</summary><div id="hr-assistant"></div></details>` : ""}
       ${S.mode ? "" : inboxView()}
       ${S.mode ? "" : `<div class="row" style="margin-top:4px"><div class="grow"><div class="kick">PASUKAN</div><h3>Senarai staff</h3></div><button class="btn pri" data-a="new">+ Tambah staff</button></div>${catBar}`}
       <div class="grid">${rows === null ? `<div class="empty">Memuatkan…</div>` : (globalThis.adaPg?globalThis.adaPg.rows("st-acc",rows,render):rows).map(item).join("") || `<div class="empty">Tiada staff ditemui.</div>`}</div>${rows?(globalThis.adaPg?globalThis.adaPg.nav("st-acc",rows.length):""):""}
       ${S.mode ? "" : `<p class="mute">Setiap staff log masuk dengan emel dan kata laluan sendiri di <b>abedinauto.my/admin</b>.</p>`}`;
+    const hrDash = app.querySelector("#hr-dashboard"); if (hrDash) mountHRDashboard(hrDash, ctx, all);
+    const ha = app.querySelector("#hr-assistant-wrap"); if (ha) ha.ontoggle = () => { if (ha.open && !ha.dataset.loaded) { ha.dataset.loaded = "1"; mountHRAssistant(ha.querySelector("#hr-assistant"), ctx, all); } };
     bind();
   }
 
