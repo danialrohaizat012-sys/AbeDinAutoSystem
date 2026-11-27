@@ -1,7 +1,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const {chromium}=require('playwright');
 const root=path.resolve(__dirname,'../..');
-const modules=new Set(['staff.js','staff-profile.js','hr-dashboard.mjs','hr-assistant.mjs','hr-kpi.mjs','staff-me.js','slip.js','hr-letters.mjs','hr-esign.mjs']);
+const modules=new Set(['staff.js','staff-profile.js','hr-dashboard.mjs','hr-assistant.mjs','hr-kpi.mjs','staff-me.js','slip.js','hr-letters.mjs','hr-esign.mjs','hr-discipline.mjs','hr-assets.mjs']);
 for(const width of [390,1280])test('Real owner staff module HR workflow '+width+'px',async()=>{
  const browser=await chromium.launch({headless:true});
  try{
@@ -18,8 +18,8 @@ for(const width of [390,1280])test('Real owner staff module HR workflow '+width+
   const {mountStaff}=await import('/js/staff.js');
   const me={id:'00000000-0000-0000-0000-000000000001',role:'owner',enabled:true,full_name:'Demo Owner',email:'demo@example.invalid'};
   const worker={...me,id:'00000000-0000-0000-0000-000000000002',role:'operations',full_name:'Demo Staff'};
-  window.calls=[]; window.kpiRows=[]; window.letterRows=[]; window.signatureRows=[];
-  function mock(actor=me){return {rpc:async name=>({data:name==='staff_list'?[me,worker]:[],error:null}),from(table){window.calls.push(table);const filters={}; const q={select(){return q},eq(k,v){filters[k]=v;return q},in(k,v){filters[k]=v;return q},gte(){return q},lt(){return q},lte(){return q},order(){return q},range:async()=>({data:table==='hr_kpi_targets'?window.kpiRows.filter(r=>Object.entries(filters).every(([k,v])=>r[k]===v)):[],error:null}),limit:async()=>({data:table==='hr_letters'?window.letterRows.filter(r=>r.staff_id===filters.staff_id&&(actor.role==='owner'||r.state==='issued')).slice().reverse():[],error:null}),insert:async row=>{if(table==='hr_kpi_targets')window.kpiRows.push({...row,id:'00000000-0000-0000-0000-000000000010'});else if(table==='hr_letters'&&actor.role==='owner')window.letterRows.push({...row,id:crypto.randomUUID(),created_at:new Date().toISOString()});else if(table==='hr_letter_signatures'&&actor.id===worker.id)window.signatureRows.push({...row,consent_version:'hr-esign-v1',signed_at:new Date().toISOString(),document_sha256:'a'.repeat(64)});else throw Error('Unexpected write');return {error:null}},maybeSingle:async()=>({data:table==='profiles'?me:null,error:null}),then(resolve){return Promise.resolve({data:table==='hr_letter_signatures'?window.signatureRows.filter(r=>filters.letter_id?.includes(r.letter_id)):[],error:null}).then(resolve)}};return q;}}}
+  window.calls=[]; window.kpiRows=[]; window.letterRows=[]; window.signatureRows=[]; window.disciplineRows=[]; window.assetRows=[]; window.assetEvents=[];
+  function mock(actor=me){return {rpc:async name=>({data:name==='staff_list'?[me,worker]:[],error:null}),from(table){window.calls.push(table);const filters={}; const rows=()=>{if(table==='hr_letters')return window.letterRows.filter(r=>r.staff_id===filters.staff_id&&(actor.role==='owner'||r.state==='issued')).slice().reverse();if(table==='hr_discipline_events')return window.disciplineRows.filter(r=>r.staff_id===filters.staff_id&&(actor.role==='owner'||r.staff_id===actor.id));if(table==='hr_asset_events')return window.assetEvents.filter(r=>actor.role==='owner'||r.staff_id===actor.id);if(table==='hr_assets')return window.assetRows.filter(r=>actor.role==='owner'||window.assetEvents.some(e=>e.asset_id===r.id&&e.staff_id===actor.id));return []}; const q={select(){return q},eq(k,v){filters[k]=v;return q},in(k,v){filters[k]=v;return q},gte(){return q},lt(){return q},lte(){return q},order(){return q},range:async()=>({data:table==='hr_kpi_targets'?window.kpiRows.filter(r=>Object.entries(filters).every(([k,v])=>r[k]===v)):[],error:null}),limit:async()=>({data:rows(),count:rows().length,error:null}),insert:async row=>{if(table==='hr_kpi_targets')window.kpiRows.push({...row,id:'00000000-0000-0000-0000-000000000010'});else if(table==='hr_letters'&&actor.role==='owner')window.letterRows.push({...row,id:crypto.randomUUID(),created_at:new Date().toISOString()});else if(table==='hr_letter_signatures'&&actor.id===worker.id)window.signatureRows.push({...row,consent_version:'hr-esign-v1',signed_at:new Date().toISOString(),document_sha256:'a'.repeat(64)});else if(table==='hr_discipline_events'&&(actor.role==='owner'||row.staff_id===actor.id&&row.kind==='response'))window.disciplineRows.push({...row,created_at:new Date().toISOString()});else if(table==='hr_assets'&&actor.role==='owner')window.assetRows.push({...row,id:crypto.randomUUID()});else if(table==='hr_asset_events'&&actor.role==='owner')window.assetEvents.push({...row,created_at:new Date().toISOString()});else throw Error('Unexpected write');return {error:null}},maybeSingle:async()=>({data:table==='profiles'?me:null,error:null}),then(resolve){return Promise.resolve({data:table==='hr_letter_signatures'?window.signatureRows.filter(r=>filters.letter_id?.includes(r.letter_id)):[],error:null}).then(resolve)}};return q;}}}
   mountStaff(document.querySelector('#owner'),{client:mock(),profile:me});
   mountStaff(document.querySelector('#staff'),{client:mock(),profile:{id:'00000000-0000-0000-0000-000000000002',role:'operations',enabled:true}});
   const {mountStaffMe}=await import('/js/staff-me.js');
@@ -78,6 +78,42 @@ for(const width of [390,1280])test('Real owner staff module HR workflow '+width+
  await personal.getByText('Terma diterima · Demo Staff',{exact:false}).waitFor();
  assert.equal(await page.evaluate(()=>window.signatureRows.length),1);
  assert.equal(await personal.locator('[data-form]').count(),0);
+ await profile.locator('#hr-discipline-wrap summary').click();
+ const disc=profile.locator('#hr-discipline');
+ const due=await page.evaluate(()=>new Date(Date.now()+3*86400000).toISOString().slice(0,10));
+ await disc.locator('input[name=due]').fill(due);
+ await disc.locator('textarea[name=body]').fill('Demo notice for employee response');
+ await disc.getByRole('button',{name:'Terbitkan catatan'}).click();
+ await disc.locator('details summary').waitFor();
+ await personal.getByRole('button',{name:'Kes HR',exact:true}).click();
+ const pd=personal.locator('#my-discipline');
+ await pd.locator('details summary').click();
+ await pd.locator('textarea[name=body]').fill('Demo response by the employee');
+ await pd.getByRole('button',{name:'Terbitkan catatan'}).click();
+ await pd.getByText('Jawapan pekerja',{exact:false}).first().waitFor();
+ assert.equal(await page.evaluate(()=>window.disciplineRows.length),2);
+ await owner.locator('#hr-assets-wrap summary').click();
+ const assets=owner.locator('#hr-assets');
+ await assets.locator('input[name=code]').fill('KEY-001');
+ await assets.locator('input[name=name]').fill('Kunci demo');
+ await assets.getByRole('button',{name:'Daftar aset'}).click();
+ await assets.locator('details summary').click();
+ await assets.locator('select[name=staff]').selectOption('00000000-0000-0000-0000-000000000002');
+ await assets.locator('textarea[name=note]').fill('Keadaan baik');
+ await assets.locator('[data-asset]').getByRole('button',{name:'Simpan',exact:true}).click();
+ await assets.getByText('KEY-001 · Kunci demo · Diserahkan',{exact:true}).waitFor();
+ await personal.getByRole('button',{name:'Aset Saya',exact:true}).click();
+ const pa=personal.locator('#my-assets');
+ await pa.getByText('KEY-001 · Kunci demo · Dalam jagaan anda',{exact:true}).waitFor();
+ assert.equal(await pa.locator('form').count(),0);
+ await assets.locator('details summary').click();
+ await assets.locator('textarea[name=note]').fill('Dipulangkan baik');
+ await assets.locator('[data-asset]').getByRole('button',{name:'Simpan',exact:true}).click();
+ await assets.getByText('KEY-001 · Kunci demo · Tersedia',{exact:true}).waitFor();
+ await pa.getByRole('button',{name:'Muat semula'}).click();
+ await pa.getByText('KEY-001 · Kunci demo · Telah dipulangkan',{exact:true}).waitFor();
+ assert.equal(await page.evaluate(()=>window.assetEvents.length),2);
+ assert.equal(await staff.locator('#hr-assets-wrap').count(),0);
  assert.equal(failures.length,0,failures.join('; '));
  }finally{await browser.close()}
 });
