@@ -16,7 +16,7 @@ const addM = (m, n) => { const [y, mo] = m.split("-").map(Number), t = y * 12 + 
 const mIdx = (a, b) => { const [y1, m1] = a.split("-").map(Number), [y2, m2] = b.split("-").map(Number); return (y2 - y1) * 12 + (m2 - m1); };
 const ST = { pending: ["Menunggu", "c-role"], approved: ["Lulus", "c-on"], rejected: ["Ditolak", "c-warn"], paid: ["Dibayar", "c-blue"], requested: ["Menunggu", "c-role"], active: ["Aktif", "c-blue"], done: ["Selesai", "c-on"], cancelled: ["Batal", "c-off"] };
 const chip = s => `<span class="chip ${(ST[s] || ["", "c-off"])[1]}">${(ST[s] || [s])[0]}</span>`;
-const TABS = [["home", "Ringkasan"], ["cuti", "Cuti"], ["gaji", "Slip Gaji"], ["claim", "Tuntutan"], ["advance", "Advance"], ["info", "Maklumat Saya"], ["kpi", "KPI"], ["letters", "Surat HR"]];
+const TABS = [["home", "Ringkasan"], ["cuti", "Cuti"], ["gaji", "Slip Gaji"], ["claim", "Tuntutan"], ["advance", "Advance"], ["info", "Maklumat Saya"], ["kpi", "KPI"], ["letters", "Surat HR"], ["discipline", "Kes HR"], ["assets", "Aset Saya"]];
 const ME_CSS = `.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}.tabs button{white-space:nowrap;border:1px solid var(--line);background:var(--soft);border-radius:999px;padding:8px 14px;font-weight:700;font-size:14px;cursor:pointer;color:var(--fg)}
 .tabs button.on{background:var(--pri);color:var(--pri-fg);border-color:var(--pri)}.badge{background:#e0473f;color:#fff;border-radius:99px;font-size:11px;padding:1px 6px;margin-left:4px}
 .field{font-size:16px}textarea.field{resize:vertical}.list2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
@@ -35,6 +35,9 @@ async function shrink(file) {
 import { mountKpi } from "./hr-kpi.mjs?v=1";
 
 import { mountLetters } from "./hr-letters.mjs?v=1";
+
+import { mountDiscipline } from "./hr-discipline.mjs?v=1";
+import { mountAssets } from "./hr-assets.mjs?v=1";
 
 export function mountStaffMe(host, ctx) {
   const client = ctx.client, me = ctx.profile || {}, uid = me.id;
@@ -184,10 +187,12 @@ export function mountStaffMe(host, ctx) {
 
   function render() {
     if (!S.hr) { app.innerHTML = `<div class="empty">Memuatkan…</div>`; return; }
-    const v = { home: vHome, cuti: vCuti, gaji: vGaji, claim: vClaim, advance: vAdv, info: vInfo, kpi: () => `<div id="my-kpi"></div>`, letters: () => `<div id="my-letters"></div>` }[S.tab]();
+    const v = { home: vHome, cuti: vCuti, gaji: vGaji, claim: vClaim, advance: vAdv, info: vInfo, kpi: () => `<div id="my-kpi"></div>`, letters: () => `<div id="my-letters"></div>`, discipline: () => `<div id="my-discipline"></div>`, assets: () => `<div id="my-assets"></div>` }[S.tab]();
     app.innerHTML = `<div class="pf">${header()}${tabs()}${S.err ? `<p class="msg err">${esc(S.err)}</p>` : ""}<p class="msg ${S.cls}" id="mmsg">${esc(S.msg)}</p>${v}</div>`;
     const kpi = app.querySelector("#my-kpi"); if (kpi) mountKpi(kpi, ctx, [], true);
     const letters = app.querySelector("#my-letters"); if (letters) mountLetters(letters, ctx, me, true);
+    const discipline = app.querySelector("#my-discipline"); if (discipline) mountDiscipline(discipline, ctx, me, true);
+    const assets = app.querySelector("#my-assets"); if (assets) mountAssets(assets, ctx, {self:true});
     bind();
   }
   const run = async (btn, fn, ok) => { if (btn) btn.disabled = true; try { say("Sila tunggu…"); await fn(); S.msg = ok; S.cls = "ok"; await load(); } catch (e) { if (btn) btn.disabled = false; say(e?.message || String(e), "err"); } };
