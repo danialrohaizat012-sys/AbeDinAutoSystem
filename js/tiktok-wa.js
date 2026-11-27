@@ -192,7 +192,53 @@ function renderPanel() {
       if (error) { del.disabled = false; gst.textContent = 'Gagal buang: ' + error.message; return; }
       tpls = tpls.filter((x) => x.id !== t.id); row.remove(); info.textContent = `${tpls.length} ayat aktif.`;
     };
-    row.append(p, del); list.append(row);
+    const actions = mk('div', 'wa-tpl-actions'), edit = mk('button', 'btn ghost', 'Edit');
+    edit.type = del.type = 'button';
+    const content = mk('div', 'wa-tpl-content');
+    const editor = mk('div', 'wa-tpl-editor');
+    editor.hidden = true;
+    const field = mk('textarea');
+    field.rows = 5; field.maxLength = 1400;
+    field.setAttribute('aria-label', 'Edit ayat WhatsApp ' + (i + 1));
+    const hint = mk('small', 'wa-note', 'Kekalkan {nama} untuk nama pelanggan. 10–700 aksara.');
+    const feedback = mk('p', 'wa-note'); feedback.setAttribute('role', 'status');
+    const editActions = mk('div', 'wa-tpl-actions');
+    const save = mk('button', 'btn primary', 'Simpan'), cancel = mk('button', 'btn ghost', 'Batal');
+    save.type = cancel.type = 'button';
+    editActions.append(save, cancel);
+    editor.append(field, hint, feedback, editActions);
+    function closeEditor() {
+      editor.hidden = true; p.hidden = false; actions.hidden = false;
+      feedback.textContent = '';
+    }
+    edit.onclick = () => {
+      field.value = t.body; feedback.textContent = '';
+      actions.hidden = true; p.hidden = true; editor.hidden = false; field.focus();
+    };
+    cancel.onclick = closeEditor;
+    save.onclick = async () => {
+      const next = field.value.trim(), size = Array.from(next).length;
+      if (size < 10 || size > 700 || !next.includes('{nama}')) {
+        feedback.textContent = 'Ayat mesti 10–700 aksara dan mengandungi {nama}.';
+        return;
+      }
+      if (next === t.body) { closeEditor(); return; }
+      save.disabled = cancel.disabled = field.disabled = true;
+      feedback.textContent = 'Menyimpan...';
+      try {
+        const { data, error } = await client.from('tiktok_wa_templates')
+          .update({ body: next }).eq('id', t.id).eq('active', true).eq('body', t.body)
+          .select('id,body').single();
+        if (error) throw error;
+        if (!data || data.id !== t.id) throw Error('Ayat tidak dijumpai. Muat semula halaman.');
+        t.body = data.body;
+        p.textContent = (i + 1) + '. ' + t.body;
+        closeEditor(); gst.textContent = 'Ayat ' + (i + 1) + ' berjaya dikemas kini.';
+      } catch (e) { feedback.textContent = 'Gagal simpan: ' + e.message; }
+      finally { save.disabled = cancel.disabled = field.disabled = false; }
+    };
+    actions.append(edit, del); content.append(p, editor);
+    row.append(content, actions); list.append(row);
   });
   tplCard.append(h, info, gen, gst);
   if (tpls.length) tplCard.append(list);
