@@ -116,7 +116,7 @@ $('login').addEventListener('submit', async e => {
   if (error) { say('Login gagal: ' + (/invalid/i.test(error.message) ? 'email atau kata laluan salah.' : /confirm/i.test(error.message) ? 'sahkan email anda dahulu (semak inbox).' : error.message)); return; }
   start();
 });
-$('logout').addEventListener('click', async () => { await client.auth.signOut(); location.reload(); });
+$('logout').addEventListener('click', async () => { await client.auth.signOut({ scope: 'local' }); location.reload(); });
 start();
 </script>
 </body>

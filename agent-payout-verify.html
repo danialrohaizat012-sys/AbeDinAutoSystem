@@ -102,7 +102,7 @@ $('login').onsubmit=async e=>{
  }catch(err){showStatus(err.message,true);}finally{button.disabled=false;}
 };
 $('refresh').onclick=load;
-$('logout').onclick=async()=>{await client.auth.signOut();setVisible(false);showStatus('Sesi tamat. Sila log masuk.');};
+$('logout').onclick=async()=>{await client.auth.signOut({scope:'local'});setVisible(false);showStatus('Sesi tamat. Sila log masuk.');};
 const {data}=await client.auth.getSession();
 if(data.session)await load();else{setVisible(false);showStatus('Sila log masuk dengan akaun HR yang diberi kuasa.');}
 </script></body></html>
