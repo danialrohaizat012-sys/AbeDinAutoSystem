@@ -6,6 +6,8 @@ on:
       - 'js/hr-*.mjs'
       - 'js/payroll-*.mjs'
       - 'js/staff*.js'
+      - 'app.html'
+      - 'tests/v83-staff-annual-leave-initial.test.cjs'
       - 'hr-sql-ci/tests/*.cjs'
       - '.github/workflows/hr-frontend-test-only.yml'
 permissions:
