@@ -47,16 +47,31 @@ jobs:
           PGDATABASE: hr_release_ci
         run: |
           python3 hr-sql-ci/build-release-sql.py /tmp/HR_RELEASE_CANDIDATE.sql
+          psql -X -v ON_ERROR_STOP=1 -d hr_ci -c 'create role service_role nologin bypassrls;'
           createdb hr_release_ci
+          createdb hr_rollback_ci
           sed '/^create role /d; /\\ir /,$d' hr-sql-ci/tests/payroll-db-smoke.sql > /tmp/hr-bootstrap.sql
-          psql -X -v ON_ERROR_STOP=1 -f /tmp/hr-bootstrap.sql
-          psql -X -v ON_ERROR_STOP=1 -c 'alter table public.profiles add column full_name text;'
+          for db in hr_release_ci hr_rollback_ci; do
+            psql -X -v ON_ERROR_STOP=1 -d "$db" -f /tmp/hr-bootstrap.sql
+            psql -X -v ON_ERROR_STOP=1 -d "$db" -c 'alter table public.profiles add column full_name text;'
+            psql -X -v ON_ERROR_STOP=1 -d "$db" -c 'alter default privileges for role postgres in schema public grant all on tables to anon, authenticated, service_role; alter default privileges for role postgres in schema public grant execute on functions to anon, authenticated, service_role; alter default privileges for role postgres in schema public grant all on sequences to anon, authenticated, service_role;'
+          done
+          python3 -c "from pathlib import Path; s=Path('/tmp/HR_RELEASE_CANDIDATE.sql').read_text(); a,b=s.rsplit('COMMIT;',1); assert not b.strip(); Path('/tmp/HR_FAIL.sql').write_text(a+'SELECT 1/0;\\nCOMMIT;'+b)"
+          if psql -X -v ON_ERROR_STOP=1 -d hr_rollback_ci -f /tmp/HR_FAIL.sql > /tmp/hr-failure.log 2>&1; then
+            echo 'Unexpected success of injected failure'; exit 1
+          fi
+          grep -F 'division by zero' /tmp/hr-failure.log
+          test "$(psql -X -At -d hr_rollback_ci -c "select count(*) from pg_tables where schemaname='public' and (tablename like 'hr\\_%' or tablename='staff_payroll_records')")" = 0
+          test "$(psql -X -At -d hr_rollback_ci -c "select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname like 'hr\\_%'")" = 0
+          test "$(psql -X -At -d hr_rollback_ci -c 'select count(*) from public.profiles')" = 4
+          echo 'Atomic rollback and existing fixture preservation passed'
           psql -X -v ON_ERROR_STOP=1 -f /tmp/HR_RELEASE_CANDIDATE.sql
           psql -X -v ON_ERROR_STOP=1 -f hr-sql-ci/tests/release-schema-check.sql
-          if psql -X -v ON_ERROR_STOP=1 -f /tmp/HR_RELEASE_CANDIDATE.sql; then
+          if psql -X -v ON_ERROR_STOP=1 -f /tmp/HR_RELEASE_CANDIDATE.sql > /tmp/hr-collision.log 2>&1; then
             echo 'ERROR: collision preflight did not stop the second migration'
             exit 1
           fi
+          grep -F 'HR objects already exist' /tmp/hr-collision.log
           psql -X -v ON_ERROR_STOP=1 -f hr-sql-ci/tests/release-schema-check.sql
       - name: Retain tested release candidate
         uses: actions/upload-artifact@v4
