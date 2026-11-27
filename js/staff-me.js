@@ -1,10 +1,10 @@
-import { loadPayrollSlip, recordHtml, printRecordedPayroll, reviewFormHtml, bindReviewForm } from "./payroll-slip.mjs?v=2";
+import { loadPayrollSlip, recordHtml, printRecordedPayroll, reviewFormHtml, bindReviewForm } from "./payroll-slip.mjs?v=3";
 import { mountPayrollQueue } from "./payroll-handoff.mjs?v=1";
 // Abe Din Auto – "Profil Saya": layan diri untuk setiap staff yang log masuk.
 // Ringkasan, mohon cuti, slip gaji, tuntutan (claim) dengan resit, mohon advance, kemas kini maklumat sendiri.
 // Data & kebenaran: V73_STAFF_HR.sql + V74_STAFF_SELF_SERVICE.sql. Slip gaji dikira oleh computeSlip() (kehadiran.js).
-import { CSS } from "./staff.js?v=23";
-import { PROFILE_CSS, CATEGORY, EMP_TYPE, LEAVE, CLAIM, leaveEntitle } from "./staff-profile.js?v=11";
+import { CSS } from "./staff.js?v=24";
+import { PROFILE_CSS, CATEGORY, EMP_TYPE, LEAVE, CLAIM, leaveEntitle } from "./staff-profile.js?v=12";
 import { slipHtml, printSlip, rm, monthName } from "./slip.js?v=2";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -70,7 +70,7 @@ export function mountStaffMe(host, ctx) {
     const month = S.month;
     S.slipBusy = true; S.slipErr = ""; S.slip = null; S.payroll = null; render();
     try {
-      const m = await import("./kehadiran.js?v=9");
+      const m = await import("./kehadiran.js?v=28");
       const result = await loadPayrollSlip({client,profile:me,staffId:uid,month,computeSlip:m.computeSlip});
       if (S.slipToken !== token) return;
       S.payroll = result; S.slip = result.kind === "estimate" ? result.slip : null;

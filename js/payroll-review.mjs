@@ -5,10 +5,19 @@ function sen(value, name) {
   if (typeof value !== 'number' || !Number.isFinite(value) || Math.abs(value) > 1e8 || Math.abs(value * 100 - Math.round(value * 100)) > 1e-6) throw new Error(`Amaun tidak sah: ${name}`);
   return Math.round(value * 100);
 }
+// Hari tanpa punch balik dikira penuh oleh computeSlip(), jadi draf ditahan sehingga rekod dibetulkan.
+export function openDayWarning(slip) {
+  const count = slip?.c?.openCount || 0;
+  if (!count) return '';
+  const dates = (slip.c.openDays || []).map(k => k.split('-').reverse().join('/')).join(', ');
+  return `Draf gaji ditahan: ${count} hari tiada punch balik${dates ? ` (${dates})` : ''}. Betulkan rekod di Kehadiran, kemudian muat semula slip.`;
+}
 export function preparePayroll({ staffId, month, slip, statutory, review }) {
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(staffId || '')) throw new Error('ID staf tidak sah');
   if (!/^20\d\d-(0[1-9]|1[0-2])$/.test(month || '')) throw new Error('Bulan tidak sah');
   if (!slip?.c?.hasPay || !Array.isArray(slip.lines) || !slip.lines.length) throw new Error('Gaji belum ditetapkan atau pengiraan belum tersedia');
+  const blocked = openDayWarning(slip);
+  if (blocked) throw new Error(blocked);
   if (review?.attendance !== true || review?.deductions !== true || review?.statutory !== true || typeof review.reference !== 'string' || !review.reference.trim()) throw new Error('Semakan HR dan rujukan diperlukan');
   const lines = slip.lines.map((l) => {
     if (!Array.isArray(l) || typeof l[0] !== 'string' || !l[0].trim()) throw new Error('Baris gaji tidak sah');

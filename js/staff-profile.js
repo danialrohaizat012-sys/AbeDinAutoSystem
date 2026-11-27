@@ -1,4 +1,4 @@
-import { loadPayrollSlip, recordHtml, printRecordedPayroll, reviewFormHtml, bindReviewForm } from "./payroll-slip.mjs?v=2";
+import { loadPayrollSlip, recordHtml, printRecordedPayroll, reviewFormHtml, bindReviewForm } from "./payroll-slip.mjs?v=3";
 import { mountHandoffPreview } from "./payroll-handoff.mjs?v=1";
 // Abe Din Auto – Profil HR staff penuh (dibuka dari menu Staff → Profil). Hanya Owner.
 // Data: staff_hr, staff_pay, staff_work_history, staff_chronology, staff_advances, staff_leaves,
@@ -279,14 +279,14 @@ export function mountProfile(app, ctx, staff, onBack) {
     const rec = P.payroll?.kind === "recorded" ? P.payroll.record : null;
     return `<div class="sec"><div class="row"><h4 class="grow">Slip Gaji</h4><select class="field" id="slipm" style="width:auto">${opts.map(m => `<option value="${m}" ${m === P.slipMonth ? "selected" : ""}>${esc(monthName(m))}</option>`).join("")}</select>
       <button class="btn sm" data-a="slip" ${P.slipBusy ? "disabled" : ""}>Semak slip</button>${rec && !P.slipBusy ? `<button class="btn sm pri" data-a="recordprint">PDF rekod</button><button class="btn sm" data-a="payroll-correction">Sediakan pembetulan</button>` : P.slip && !P.slipBusy ? `<button class="btn sm" data-a="slipprint">PDF anggaran</button>` : ""}</div>
-      <div style="margin-top:8px">${P.slipBusy ? `<p class="note">Memuatkan…</p>` : P.slipErr ? `<p class="msg err">${esc(P.slipErr)}</p>` : rec ? recordHtml(rec) : P.slip ? `<p class="warn">ANGGARAN · BELUM DISAHKAN</p>${P.slipHtml(P.slip)}${P.previousPayroll ? `<p class="warn">Pembetulan versi ${esc(P.previousPayroll.revision)}</p>` : ""}${P.slip.c.hasPay && me.role === "owner" ? reviewFormHtml() : ""}` : `<p class="note">Tekan Semak slip.</p>`}</div></div>`;
+      <div style="margin-top:8px">${P.slipBusy ? `<p class="note">Memuatkan…</p>` : P.slipErr ? `<p class="msg err">${esc(P.slipErr)}</p>` : rec ? recordHtml(rec) : P.slip ? `<p class="warn">ANGGARAN · BELUM DISAHKAN</p>${P.slipHtml(P.slip)}${P.previousPayroll ? `<p class="warn">Pembetulan versi ${esc(P.previousPayroll.revision)}</p>` : ""}${P.slip.c.hasPay && me.role === "owner" ? reviewFormHtml(P.slip) : ""}` : `<p class="note">Tekan Semak slip.</p>`}</div></div>`;
   }
   async function loadSlip() {
     const token = (P.slipToken || 0) + 1; P.slipToken = token;
     const month = P.slipMonth;
     P.slipBusy = true; P.slipErr = ""; P.slip = null; P.payroll = null; P.previousPayroll = null; render();
     try {
-      const [k, sl] = await Promise.all([import("./kehadiran.js?v=9"), import("./slip.js?v=2")]);
+      const [k, sl] = await Promise.all([import("./kehadiran.js?v=28"), import("./slip.js?v=2")]);
       const result = await loadPayrollSlip({client,profile:me,staffId:id,month,computeSlip:k.computeSlip});
       if (P.slipToken !== token) return;
       P.slipHtml = sl.slipHtml; P.printSlip = sl.printSlip; P.payroll = result; P.slip = result.kind === "estimate" ? result.slip : null;
@@ -297,7 +297,7 @@ export function mountProfile(app, ctx, staff, onBack) {
     if (P.slipBusy || me.role !== "owner" || P.payroll?.kind !== "recorded") return;
     const prev=P.payroll.record, month=P.slipMonth, token=(P.slipToken||0)+1; P.slipToken=token;
     P.slipBusy=true; P.slipErr=""; render();
-    try { const k=await import("./kehadiran.js?v=9"); const estimate=await k.computeSlip(client,me,id,month); if(P.slipToken!==token)return; P.previousPayroll=prev; P.payroll=null; P.slip=estimate; }
+    try { const k=await import("./kehadiran.js?v=28"); const estimate=await k.computeSlip(client,me,id,month); if(P.slipToken!==token)return; P.previousPayroll=prev; P.payroll=null; P.slip=estimate; }
     catch(e){if(P.slipToken!==token)return;P.slipErr=e?.message||String(e);}
     P.slipBusy=false;render();
   }

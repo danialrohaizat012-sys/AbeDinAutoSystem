@@ -385,7 +385,7 @@ function computePay(days, pay, sid) {
   const otBy = { normal:0, rest:0, ph:0 }; days.forEach(d => { otBy[d.otKind] = (otBy[d.otKind] || 0) + d.otPaid; });
   const otPendingMin = days.filter(d => d.otStatus === "pending").reduce((a, d) => a + d.ot, 0);
   const lateMin = days.reduce((a, d) => a + d.late, 0), lateCount = days.filter(d => d.late > 0).length, lateExcusedCount = days.filter(d => d.lateExcused).length;
-  const openCount = days.filter(d => d.open && d.key < nowKey()).length, restOverCount = days.filter(d => d.restOver > 0).length;
+  const openDays = days.filter(d => d.open && d.key < nowKey()).map(d => d.key), openCount = openDays.length, restOverCount = days.filter(d => d.restOver > 0).length;
   const rate = +p.rate || 0; let base = 0, baseNote = "", absentDeduct = 0, unpaidDeduct = 0, leavePay = 0, holidayPay = 0;
   if (p.pay_type === "daily") {
     const n = days.filter(d => d.present && (d.type === "work" || (d.type === "rest" && !st.ot_offday_all))).length;
@@ -420,7 +420,7 @@ function computePay(days, pay, sid) {
   const claims = sid ? (S.claims || []).filter(x => x.staff_id === sid && x.pay_month === S.month) : [], claimPay = claims.reduce((t, x) => t + +x.amount, 0);
   const net = claimPay + base + leavePay + holidayPay + otPay + allowance - lateDeduct - absentDeduct - unpaidDeduct - advDeduct;
   return { claims, claimPay, adv, advDeduct, paidLeave, unpaidLeave, leavePay, unpaidDeduct, holidayPay, phDays:phDays.length, presentDays, absent, workedMin, regMin,
-    otMin, otRaw, otBy, otPayBy, otPendingMin, lateMin, latePerMin, shortMin, shortDays, lateCount, lateExcusedCount, openCount, restOverCount, base, baseNote, otPay, lateDeduct, absentDeduct, allowance, net, pay:p, hasPay:!!pay };
+    otMin, otRaw, otBy, otPayBy, otPendingMin, lateMin, latePerMin, shortMin, shortDays, lateCount, lateExcusedCount, openCount, openDays, restOverCount, base, baseNote, otPay, lateDeduct, absentDeduct, allowance, net, pay:p, hasPay:!!pay };
 }
 // V123: gaji sebenar satu hari (asas + OT − potongan lewat/kurang jam), selari dengan computePay.
 function dayPay(d, sid) {
