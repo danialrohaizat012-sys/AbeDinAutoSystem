@@ -25,6 +25,9 @@ jobs:
       - name: Check integrated JavaScript syntax
         run: |
           node --check --input-type=module < js/staff.js
+          node --check --input-type=module < js/staff-me.js
+          node --check js/hr-kpi.mjs
+          test "$(git hash-object js/hr-kpi.mjs)" = f485d106a6259f56a8b94d714202ac49ee69ba3f
           node --check js/hr-dashboard.mjs
           node --check js/hr-assistant.mjs
           test "$(git hash-object js/hr-dashboard.mjs)" = 873e764eda7f5d76f52254521eb8e4b49d07ae15
