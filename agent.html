@@ -242,6 +242,20 @@ nav#tabs button{flex:0 0 auto!important;scroll-snap-align:start;white-space:nowr
 <button data-view="owner" id="ownerTab" hidden>Kelulusan Owner</button>
 </nav>
 
+<section id="agentRecovery" hidden>
+<div class="panel"><h1>Tetapkan Kata Laluan Baharu</h1>
+<p id="recoveryInfo" role="status" aria-live="polite">Mengesahkan pautan reset...</p>
+<form id="recoveryForm" hidden>
+<label>Kata laluan baharu<input name="password" type="password" autocomplete="new-password" minlength="8" required></label>
+<label>Sahkan kata laluan baharu<input name="confirmation" type="password" autocomplete="new-password" minlength="8" required></label>
+<button class="primary" type="submit">Simpan Kata Laluan Baharu</button>
+</form>
+<form id="recoveryResend" hidden>
+<label>E-mel akaun ejen<input name="email" type="email" autocomplete="email" required></label>
+<button class="primary" type="submit">Minta Pautan Reset Baharu</button>
+</form>
+<p><a href="/agent.html" id="recoveryBack">Kembali ke log masuk</a></p>
+</div></section>
 <section id="account">
 <div class="grid" id="authPanels" hidden>
 <div class="panel"><h1>Masuk Portal Ejen</h1><p>Gunakan akaun e-mel yang telah disahkan. Akaun ejen tidak diberikan akses kepada modul staff AbeDin Auto.</p>
@@ -402,12 +416,22 @@ nav#tabs button{flex:0 0 auto!important;scroll-snap-align:start;white-space:nowr
 <script type="module">
 import {createClient} from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 const project='https://buzpdyvvoiqgbeventwm.supabase.co';
+// Capture the recovery callback before the SDK consumes the URL fragment.
+const recoveryHash=new URLSearchParams(location.hash.slice(1));
+const recoveryQuery=new URLSearchParams(location.search);
+const recoveryIntent=recoveryHash.get('type')==='recovery'||recoveryQuery.get('type')==='recovery'||recoveryHash.has('error')||recoveryHash.has('error_code')||recoveryQuery.has('error')||recoveryQuery.has('error_code')||recoveryQuery.has('code');
+let recoveryAccess=recoveryHash.get('type')==='recovery'?recoveryHash.get('access_token'):null;
+let recoveryUserId=null,recoveryMode=false;
 const supabase=createClient(project,'sb_publishable_zuuNipsMpalN_38SJwXpFA_MRzQ6eZ0',{
- auth:{storageKey:'abe-agent-network-session',autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}});
+ auth:{storageKey:'abe-agent-network-session',autoRefreshToken:true,persistSession:true,detectSessionInUrl:true,flowType:'implicit'}});
+supabase.auth.onAuthStateChange((event,session)=>{
+ if(event==='PASSWORD_RECOVERY'&&session?.user?.id)recoveryUserId=session.user.id;
+});
 const $=id=>document.getElementById(id);
 let me=null,agent=null,owner=false,shareToken='',staffPrefill=null;
 function message(msg,bad=false){$('alert').textContent=msg;$('alert').className='notice '+(bad?'warn error':'');}
 function view(id){
+ if(recoveryMode)id='agentRecovery';
  if(id==='dashboard'&&!(me?.email_confirmed_at&&agent?.status==='active'))id='account';
  if(id==='application')id='account';
  if(id==='owner'&&!owner)id='account';
@@ -1046,12 +1070,49 @@ $('forgotPw').onclick=async e=>{e.preventDefault();
  let email=$('signinForm').elements.email.value.trim()||prompt('Masukkan e-mel akaun anda:')||'';email=email.trim();if(!email)return;
  try{const {error}=await supabase.auth.resetPasswordForEmail(email,{redirectTo:location.origin+'/agent.html'});if(error)throw error;
   message('Pautan tukar kata laluan dihantar ke '+email+'. Semak inbox atau folder Spam.');}catch(err){fail(err);}};
-supabase.auth.onAuthStateChange((event)=>{if(event!=='PASSWORD_RECOVERY')return;setTimeout(async()=>{
- const pw=prompt('Masukkan kata laluan baharu:');if(!pw)return;
- 
- const {error}=await supabase.auth.updateUser({password:pw});if(error)return fail(error);
- message('Kata laluan berjaya ditukar.');await sync();},0);});
-await sync();
+function recoveryScreen(info,ready=false){
+ recoveryMode=true;$('tabs').hidden=true;$('logout').hidden=true;$('alert').hidden=true;
+ view('agentRecovery');$('recoveryInfo').textContent=info;
+ $('recoveryForm').hidden=!ready;$('recoveryResend').hidden=ready;
+}
+function cleanRecoveryUrl(){history.replaceState(null,'',location.pathname);}
+async function startRecovery(){
+ recoveryScreen('Mengesahkan pautan reset...');
+ $('recoveryResend').hidden=true;
+ const invalid=recoveryHash.has('error')||recoveryHash.has('error_code')||recoveryQuery.has('error')||recoveryQuery.has('error_code');
+ try{
+  const {data,error}=await supabase.auth.getSession();
+  const session=data?.session;
+  const callbackMatches=Boolean(recoveryAccess&&session?.access_token===recoveryAccess);
+  if(invalid||error||!session?.user?.id||(!callbackMatches&&recoveryUserId!==session.user.id))throw Error('invalid recovery');
+  const checked=await supabase.auth.getUser();
+  if(checked.error||checked.data?.user?.id!==session.user.id)throw Error('invalid recovery session');
+  recoveryUserId=session.user.id;
+  recoveryScreen('Pautan disahkan. Tetapkan kata laluan baharu sekurang-kurangnya 8 aksara.',true);
+ }catch{recoveryUserId=null;recoveryScreen('Pautan reset tidak sah, sudah digunakan atau tamat tempoh. Minta pautan baharu dan buka terus melalui e-mel terkini.');}
+ finally{recoveryAccess=null;recoveryHash.delete('access_token');recoveryHash.delete('refresh_token');cleanRecoveryUrl();}
+}
+$('recoveryForm').onsubmit=async e=>{
+ e.preventDefault();const b=e.submitter;const d=Object.fromEntries(new FormData(e.target));
+ if(!recoveryUserId||!recoveryMode)return;
+ if(d.password.length<8||d.password!==d.confirmation){$('recoveryInfo').textContent='Pastikan kedua-dua kata laluan sama dan sekurang-kurangnya 8 aksara.';return;}
+ b.disabled=true;
+ try{
+  const checked=await supabase.auth.getUser();
+  if(checked.error||checked.data?.user?.id!==recoveryUserId){recoveryUserId=null;recoveryScreen('Sesi reset tamat. Minta pautan baharu.');return;}
+  const {error}=await supabase.auth.updateUser({password:d.password});if(error)throw error;
+  recoveryUserId=null;e.target.reset();$('recoveryForm').hidden=true;
+  const result=await supabase.auth.signOut({scope:'local'});
+  $('recoveryInfo').textContent=result.error?'Kata laluan berjaya ditukar. Tutup halaman ini dan log masuk semula.':'Kata laluan berjaya ditukar. Tekan Kembali ke log masuk.';
+ }catch(err){$('recoveryInfo').textContent=err?.message||'Gagal menyimpan kata laluan. Cuba semula.';}
+ finally{b.disabled=false;}
+};
+$('recoveryResend').onsubmit=async e=>{
+ e.preventDefault();const b=e.submitter;const email=e.target.elements.email.value.trim();if(!email)return;b.disabled=true;
+ try{const {error}=await supabase.auth.resetPasswordForEmail(email,{redirectTo:location.origin+'/agent.html'});if(error)throw error;$('recoveryInfo').textContent='Jika akaun berdaftar, pautan baharu akan dihantar. Semak e-mel dan Spam.';}
+ catch(err){$('recoveryInfo').textContent=err?.message||'Gagal meminta pautan. Cuba semula.';}finally{b.disabled=false;}
+};
+if(recoveryIntent||recoveryUserId)await startRecovery();else await sync();
 </script>
 </body>
 </html>
