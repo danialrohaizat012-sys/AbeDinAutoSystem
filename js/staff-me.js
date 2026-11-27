@@ -1,9 +1,10 @@
+import { hrAccess, mountHRDelegate } from "./hr-delegate.mjs?v=1";
 import { loadPayrollSlip, recordHtml, printRecordedPayroll, reviewFormHtml, bindReviewForm } from "./payroll-slip.mjs?v=2";
 import { mountPayrollQueue } from "./payroll-handoff.mjs?v=1";
 // Abe Din Auto – "Profil Saya": layan diri untuk setiap staff yang log masuk.
 // Ringkasan, mohon cuti, slip gaji, tuntutan (claim) dengan resit, mohon advance, kemas kini maklumat sendiri.
 // Data & kebenaran: V73_STAFF_HR.sql + V74_STAFF_SELF_SERVICE.sql. Slip gaji dikira oleh computeSlip() (kehadiran.js).
-import { CSS } from "./staff.js?v=23";
+import { CSS } from "./staff.js?v=24";
 import { PROFILE_CSS, CATEGORY, EMP_TYPE, LEAVE, CLAIM, leaveEntitle } from "./staff-profile.js?v=11";
 import { slipHtml, printSlip, rm, monthName } from "./slip.js?v=2";
 
@@ -18,7 +19,7 @@ const addM = (m, n) => { const [y, mo] = m.split("-").map(Number), t = y * 12 + 
 const mIdx = (a, b) => { const [y1, m1] = a.split("-").map(Number), [y2, m2] = b.split("-").map(Number); return (y2 - y1) * 12 + (m2 - m1); };
 const ST = { pending: ["Menunggu", "c-role"], approved: ["Lulus", "c-on"], rejected: ["Ditolak", "c-warn"], paid: ["Dibayar", "c-blue"], requested: ["Menunggu", "c-role"], active: ["Aktif", "c-blue"], done: ["Selesai", "c-on"], cancelled: ["Batal", "c-off"] };
 const chip = s => `<span class="chip ${(ST[s] || ["", "c-off"])[1]}">${(ST[s] || [s])[0]}</span>`;
-const TABS = [["home", "Ringkasan"], ["cuti", "Cuti"], ["gaji", "Slip Gaji"], ["claim", "Tuntutan"], ["advance", "Advance"], ["info", "Maklumat Saya"], ["kpi", "KPI"], ["letters", "Surat HR"], ["discipline", "Kes HR"], ["assets", "Aset Saya"], ["payroll-review", "Semakan payroll"]];
+const TABS = [["home", "Ringkasan"], ["cuti", "Cuti"], ["gaji", "Slip Gaji"], ["claim", "Tuntutan"], ["advance", "Advance"], ["info", "Maklumat Saya"], ["kpi", "KPI"], ["letters", "Surat HR"], ["discipline", "Kes HR"], ["assets", "Aset Saya"], ["payroll-review", "Semakan payroll"], ["hr-delegate", "Pengurusan HR"]];
 const ME_CSS = `.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}.tabs button{white-space:nowrap;border:1px solid var(--line);background:var(--soft);border-radius:999px;padding:8px 14px;font-weight:700;font-size:14px;cursor:pointer;color:var(--fg)}
 .tabs button.on{background:var(--pri);color:var(--pri-fg);border-color:var(--pri)}.badge{background:#e0473f;color:#fff;border-radius:99px;font-size:11px;padding:1px 6px;margin-left:4px}
 .field{font-size:16px}textarea.field{resize:vertical}.list2{display:flex;flex-direction:column;gap:8px;margin-top:10px}
@@ -46,7 +47,7 @@ export function mountStaffMe(host, ctx) {
   const root = host.shadowRoot || host.attachShadow({ mode: "open" });
   root.innerHTML = `<style>${CSS}${PROFILE_CSS}${ME_CSS}</style><section class="shell" id="app"></section>`;
   const app = root.getElementById("app");
-  const S = { tab: new URLSearchParams(location.search).get("tab") || "home", hr: null, pay: null, settings: null, leaves: [], claims: [], adv: [], urls: {}, msg: "", cls: "", err: "", month: ymNow(), slip: null, slipErr: "", slipBusy: false, editInfo: false };
+  const S = { tab: new URLSearchParams(location.search).get("tab") || "home", hr: null, pay: null, settings: null, leaves: [], claims: [], adv: [], urls: {}, msg: "", cls: "", err: "", month: ymNow(), slip: null, slipErr: "", slipBusy: false, editInfo: false, hrDelegate: false };
   if (!TABS.some(t => t[0] === S.tab)) S.tab = "home";
   const say = (t, c) => { S.msg = t; S.cls = c || ""; const m = app.querySelector("#mmsg"); if (m) { m.textContent = t; m.className = "msg " + (c || ""); } };
 
@@ -62,6 +63,8 @@ export function mountStaffMe(host, ctx) {
     S.leaves = r[3].data || []; S.claims = r[4].data || []; S.adv = r[5].data || [];
     const paths = [S.hr.photo_path, ...S.claims.map(c => c.receipt_path), ...S.leaves.map(l => l.attachment_path)].filter(p => p && !S.urls[p]);
     if (paths.length) { const { data } = await client.storage.from("staff-docs").createSignedUrls(paths, 3600); (data || []).forEach(d => { if (d.signedUrl) S.urls[d.path] = d.signedUrl; }); }
+    S.hrDelegate = me.role !== "owner" && await hrAccess(client,uid).catch(()=>false);
+    if(S.tab==="hr-delegate"&&!S.hrDelegate) S.tab="home";
     render();
     if (S.tab === "gaji" && !S.slipBusy) loadSlip();
   }
@@ -104,7 +107,7 @@ export function mountStaffMe(host, ctx) {
   }
   function tabs() {
     const pend = { cuti: S.leaves.filter(l => l.status === "pending").length, claim: S.claims.filter(c => c.status === "pending").length, advance: S.adv.filter(a => a.status === "requested").length };
-    return `<div class="tabs">${TABS.map(([k, t]) => `<button class="${S.tab === k ? "on" : ""}" data-tab="${k}">${t}${pend[k] ? `<span class="badge">${pend[k]}</span>` : ""}</button>`).join("")}</div>`;
+    return `<div class="tabs">${TABS.filter(([k])=>k!=="hr-delegate"||S.hrDelegate).map(([k, t]) => `<button class="${S.tab === k ? "on" : ""}" data-tab="${k}">${t}${pend[k] ? `<span class="badge">${pend[k]}</span>` : ""}</button>`).join("")}</div>`;
   }
 
   function vHome() {
@@ -195,13 +198,14 @@ export function mountStaffMe(host, ctx) {
 
   function render() {
     if (!S.hr) { app.innerHTML = `<div class="empty">Memuatkan…</div>`; return; }
-    const v = { home: vHome, cuti: vCuti, gaji: vGaji, claim: vClaim, advance: vAdv, info: vInfo, kpi: () => `<div id="my-kpi"></div>`, letters: () => `<div id="my-letters"></div>`, discipline: () => `<div id="my-discipline"></div>`, assets: () => `<div id="my-assets"></div>`, "payroll-review": () => `<div id="my-payroll-queue"></div>` }[S.tab]();
+    const v = { home: vHome, cuti: vCuti, gaji: vGaji, claim: vClaim, advance: vAdv, info: vInfo, kpi: () => `<div id="my-kpi"></div>`, letters: () => `<div id="my-letters"></div>`, discipline: () => `<div id="my-discipline"></div>`, assets: () => `<div id="my-assets"></div>`, "payroll-review": () => `<div id="my-payroll-queue"></div>`, "hr-delegate": () => `<div id="my-hr-delegate"></div>` }[S.tab]();
     app.innerHTML = `<div class="pf">${header()}${tabs()}${S.err ? `<p class="msg err">${esc(S.err)}</p>` : ""}<p class="msg ${S.cls}" id="mmsg">${esc(S.msg)}</p>${v}</div>`;
     const kpi = app.querySelector("#my-kpi"); if (kpi) mountKpi(kpi, ctx, [], true);
     const letters = app.querySelector("#my-letters"); if (letters) mountLetters(letters, ctx, me, true);
     const discipline = app.querySelector("#my-discipline"); if (discipline) mountDiscipline(discipline, ctx, me, true);
     const assets = app.querySelector("#my-assets"); if (assets) mountAssets(assets, ctx, {self:true});
     const pq=app.querySelector("#my-payroll-queue"); if(pq) mountPayrollQueue(pq,ctx);
+    const hd=app.querySelector("#my-hr-delegate"); if(hd) mountHRDelegate(hd,ctx);
     bind();
   }
   const run = async (btn, fn, ok) => { if (btn) btn.disabled = true; try { say("Sila tunggu…"); await fn(); S.msg = ok; S.cls = "ok"; await load(); } catch (e) { if (btn) btn.disabled = false; say(e?.message || String(e), "err"); } };
