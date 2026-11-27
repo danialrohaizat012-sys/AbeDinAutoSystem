@@ -12,7 +12,7 @@ test('both staff signed and unsigned share actual PDF; archived document is not 
  const app=read('app.html'),ui=read('js/do-esign.mjs');
  assert.match(app,/mountDeliveryShare\(share\.querySelector/);
  assert.match(ui,/mountDeliveryShare\(host,\{file:pdfFile\(data\)/);
- assert.match(ui,/pdfActions\(o\.querySelector\('\[data-pdf\]'\),current,phone,true\)/);
+ assert.match(ui,/pdfActions\(o\.querySelector\('\[data-pdf\]'\),current,phone,true,link\)/);
  assert.match(ui,/navigator\.share\(payload\)/);
  assert.match(ui,/navigator\.canShare\?\.\(payload\)/);
  assert.match(ui,/PDF dimuat turun/);

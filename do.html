@@ -1,0 +1,13 @@
+<!doctype html><html lang="ms"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow,noarchive"><meta name="referrer" content="no-referrer"><title>DO PDF | Abe Din Auto</title><style>body{font:16px system-ui;background:#101419;color:#f4f1e8;padding:24px;margin:0}main{max-width:500px;margin:auto;background:#1c2321;border-radius:16px;padding:22px;text-align:center}a{display:block;padding:14px;margin:12px 0;border-radius:10px;background:#16803d;color:white;text-decoration:none;font-weight:bold}p{line-height:1.5}</style></head><body><main><h1>ABE DIN AUTO</h1><h2>Borang Serahan Kenderaan</h2><p id="status">Memuatkan DO PDF…</p><div id="actions"></div></main><script type="module">
+const status=document.getElementById('status'),actions=document.getElementById('actions');
+const token=new URLSearchParams(location.hash.slice(1)).get('t')||'';
+try{
+ if(!/^[a-f0-9]{64}$/.test(token))throw Error('Pautan tidak sah.');
+ const r=await fetch('https://buzpdyvvoiqgbeventwm.supabase.co/functions/v1/delivery-order-share',{method:'POST',headers:{'Content-Type':'application/json',apikey:'sb_publishable_zuuNipsMpalN_38SJwXpFA_MRzQ6eZ0'},body:JSON.stringify({action:'get',token}),cache:'no-store',referrerPolicy:'no-referrer'});
+ const data=await r.json();if(!r.ok||!data.pdf)throw Error(data.error||'Dokumen tidak tersedia.');
+ const bytes=Uint8Array.from(atob(data.pdf),c=>c.charCodeAt(0)),url=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'}));
+ status.textContent=data.signed?'DO telah ditandatangani. Simpan salinan anda.':'DO belum ditandatangani. Untuk semakan.';
+ for(const download of [false,true]){const a=document.createElement('a');a.href=url;a.textContent=download?'Muat turun PDF':'Lihat PDF';if(download)a.download=data.filename||'DO.pdf';else{a.target='_blank';a.rel='noopener noreferrer'}actions.append(a)}
+ window.addEventListener('pagehide',()=>URL.revokeObjectURL(url),{once:true});
+}catch(e){status.textContent=e.message||'DO tidak dapat dimuatkan.'}
+</script></body></html>

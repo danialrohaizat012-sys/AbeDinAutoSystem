@@ -11,21 +11,27 @@ export async function esignRequest(action,params={},jwt){
 function pdfFile(data){const bytes=Uint8Array.from(atob(data.pdf),c=>c.charCodeAt(0));const name='DO-'+String(data.fields?.plate||'jualan').replace(/[^a-z0-9_-]/gi,'')+'-'+String(data.fields?.no||'').replace(/^DO-/,'')+'.pdf';return new File([bytes],name,{type:'application/pdf'})}
 // The share sheet receives the actual PDF and editable text, not a public link.
 // WhatsApp/OS decides whether it accepts the caption and which contact receives it.
-export function deliveryShareMessage(fields={},signed=false){
+export function deliveryShareMessage(fields={},signed=false,link=''){
  const name=String(fields.name||'').trim(),car=[fields.model,fields.plate&&'('+fields.plate+')'].filter(Boolean).join(' '),no=String(fields.no||'').trim();
- return ['Salam'+(name?' '+name:'')+',','','Terima kasih kerana memilih Abe Din Auto.',signed?'Bersama ini dilampirkan Borang Serahan Kenderaan (DO PDF) yang telah ditandatangani untuk simpanan dan rujukan anda.':'Bersama ini dilampirkan Borang Serahan Kenderaan (DO PDF) untuk semakan. Borang ini belum ditandatangani.','',car?'Kenderaan: '+car:'',no?'No. DO: '+no:'','','Terima kasih.','Abe Din Auto'].filter((v,i,a)=>v!==''||i===1||i===4||i===7).join('\n');
+ return ['Salam'+(name?' '+name:'')+',','','Terima kasih kerana memilih Abe Din Auto.',signed?'Bersama ini dilampirkan Borang Serahan Kenderaan (DO PDF) yang telah ditandatangani untuk simpanan dan rujukan anda.':'Bersama ini dilampirkan Borang Serahan Kenderaan (DO PDF) untuk semakan. Borang ini belum ditandatangani.','',car?'Kenderaan: '+car:'',no?'No. DO: '+no:'','','Terima kasih.','Abe Din Auto'].filter((v,i,a)=>v!==''||i===1||i===4||i===7).join('\n')+(link?'\n\nLihat atau muat turun DO PDF (sah 7 hari):\n'+link:'');
 }
 export function deliverySharePayload(file,text){return {files:[file],title:'DO Abe Din Auto',text:String(text??'')}}
-export function mountDeliveryShare(host,{file,fields={},phone='',signed=false}){
+export async function issueDeliveryLink(client,saleId,signed,handover={}){
+ const {data}=await client.auth.getSession();const jwt=data.session?.access_token;if(!jwt)throw Error('Sila log masuk semula.');
+ const res=await fetch(ENDPOINT.replace(/delivery-order-esign$/,'delivery-order-share'),{method:'POST',headers:{'Content-Type':'application/json',apikey:KEY,Authorization:'Bearer '+jwt},body:JSON.stringify({action:'issue',sale_id:saleId,signed,handover}),cache:'no-store',referrerPolicy:'no-referrer'});
+ const out=await res.json();if(!res.ok||!/^[a-f0-9]{64}$/.test(out.token||''))throw Error(out.error||'Pautan PDF gagal dijana.');
+ return 'https://abedinauto.my/do.html#t='+out.token;
+}
+export function mountDeliveryShare(host,{file,fields={},phone='',signed=false,link=''}){
  const ph=String(phone||'').replace(/\D/g,'');
  const number=/^[1-9]\d{7,14}$/.test(ph)?ph:'';
  const url=URL.createObjectURL(file);
- host.innerHTML='<div class="cloud-notice">'+esc(fields.name||'Pelanggan')+(number?' · +'+esc(number):'')+' · '+(signed?'PDF sudah ditandatangani':'PDF belum ditandatangani')+'</div><label class="es-form">Mesej WhatsApp<textarea rows="8" data-do-message></textarea></label><button type="button" class="es-green ada-wa-btn" data-do-share>Hantar mesej + DO PDF</button><button type="button" class="es-btn secondary" data-do-copy>Salin mesej</button><button type="button" class="es-btn secondary" data-do-chat '+(number?'':'disabled')+'>Buka WhatsApp pelanggan</button><a class="es-btn" href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">Lihat PDF</a><a class="es-btn" href="'+esc(url)+'" download="'+esc(file.name)+'">Muat turun PDF</a><p class="es-muted" role="status" data-do-status>Pilih WhatsApp dan nombor pelanggan dalam menu perkongsian. Semak mesej sebelum hantar.</p>';
+ host.innerHTML='<div class="cloud-notice">'+esc(fields.name||'Pelanggan')+(number?' · +'+esc(number):'')+' · '+(signed?'PDF sudah ditandatangani':'PDF belum ditandatangani')+'</div><label class="es-form">Mesej WhatsApp<textarea rows="8" data-do-message></textarea></label><button type="button" class="es-green ada-wa-btn" data-do-share>Hantar mesej + DO PDF</button><button type="button" class="es-btn secondary" data-do-copy>Salin mesej</button><button type="button" class="es-btn secondary" data-do-chat '+(number?'':'disabled')+'>Hantar WhatsApp (mesej + link PDF)</button><a class="es-btn" href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">Lihat PDF</a><a class="es-btn" href="'+esc(url)+'" download="'+esc(file.name)+'">Muat turun PDF</a><p class="es-muted" role="status" data-do-status>Pilih WhatsApp dan nombor pelanggan dalam menu perkongsian. Semak mesej sebelum hantar.</p>';
  const q=s=>host.querySelector(s),message=q('[data-do-message]'),status=q('[data-do-status]'),share=q('[data-do-share]');
- message.value=deliveryShareMessage(fields,signed);
+ message.value=deliveryShareMessage(fields,signed,link);
  const download=()=>{const a=document.createElement('a');a.href=url;a.download=file.name;document.body.appendChild(a);a.click();a.remove()};
  q('[data-do-copy]').onclick=async()=>{try{await navigator.clipboard.writeText(message.value);status.textContent='Mesej disalin. Tampal pada kapsyen PDF jika diperlukan.'}catch(_){message.focus();message.select();status.textContent='Salin mesej yang dipilih secara manual.'}};
- q('[data-do-chat]').onclick=()=>{if(number)window.location.assign('https://wa.me/'+number+'?text='+encodeURIComponent(message.value))};
+ q('[data-do-chat]').onclick=()=>{if(number){const body=link&&!message.value.includes(link)?message.value+'\n\n'+link:message.value;window.location.assign('https://wa.me/'+number+'?text='+encodeURIComponent(body))}};
  share.onclick=async()=>{
   const payload=deliverySharePayload(file,message.value);
   try{
@@ -38,8 +44,8 @@ export function mountDeliveryShare(host,{file,fields={},phone='',signed=false}){
  const observer=new MutationObserver(()=>{if(!host.isConnected){URL.revokeObjectURL(url);observer.disconnect()}});
  observer.observe(document.body,{childList:true,subtree:true});window.addEventListener('pagehide',()=>{URL.revokeObjectURL(url);observer.disconnect()},{once:true});
 }
-function pdfActions(host,data,phone='',staff=false){
- if(staff){mountDeliveryShare(host,{file:pdfFile(data),fields:data.fields,phone,signed:true});return;}
+function pdfActions(host,data,phone='',staff=false,link=''){
+ if(staff){mountDeliveryShare(host,{file:pdfFile(data),fields:data.fields,phone,signed:true,link});return;}
  const file=pdfFile(data),url=URL.createObjectURL(file);
  const href=esc(url),name=esc(file.name);
  host.innerHTML='<a class="es-btn" href="'+href+'" target="_blank" rel="noopener noreferrer">Lihat PDF</a><a class="es-btn" href="'+href+'" download="'+name+'">Muat turun PDF</a><button type="button" data-share class="es-green">Kongsi DO PDF ke WhatsApp</button>'+(phone?'<a class="es-btn" href="https://wa.me/'+esc(phone)+'?text='+encodeURIComponent('Salam, DO kenderaan anda telah ditandatangani. Kami akan kongsikan fail PDF.')+'" target="_blank" rel="noopener noreferrer">Buka WhatsApp pelanggan (mesej)</a>':'')+'<p class="es-muted" data-share-status>Untuk lampirkan PDF, pilih WhatsApp dan penerima dalam menu perkongsian.</p>';
@@ -54,7 +60,7 @@ export async function mountStaffESign({client,cloudModal,saleId,fields:a,phone})
  const current=await request('staff_get');
  if(current.status==='signed'){
   const o=cloudModal('E-Sign DO - Sudah sign',STYLE+'<p class="es-good">Sudah ditandatangani: '+esc(formatTime(current.signed_at))+' MYT</p><p>PDF dikunci dan disimpan dalam sistem.</p><div class="es-actions" data-pdf></div>');
-  o.querySelector('form').onsubmit=e=>e.preventDefault();pdfActions(o.querySelector('[data-pdf]'),current,phone,true);return;
+  o.querySelector('form').onsubmit=e=>e.preventDefault();const host=o.querySelector('[data-pdf]');host.textContent='Menjana pautan PDF…';try{const link=await issueDeliveryLink(client,saleId,true);pdfActions(host,current,phone,true,link)}catch(e){pdfActions(host,current,phone,true);o.querySelector('.ada-form-error').textContent=e.message} return;
  }
  const notice=current.status==='pending'?'Pautan aktif sehingga '+formatTime(current.expires_at)+'. Menjana pautan baharu membatalkan pautan lama.':current.status==='expired'?'Pautan lama telah tamat tempoh.':'Belum ditandatangani.';
  const o=cloudModal('E-Sign DO - '+a.plate,STYLE+'<p>'+esc(notice)+'</p><p class="es-muted">Pastikan butiran sebenar serahan tepat. Pelanggan akan melihat PDF ini sebelum tandatangan.</p><div class="cloud-notice">'+esc(a.name)+' · '+esc(a.model)+' · '+esc(a.plate)+'</div><div class="es-form">'+
@@ -70,7 +76,7 @@ export async function mountStaffESign({client,cloudModal,saleId,fields:a,phone})
  btn.disabled=true;err.textContent='Menjana...';try{const fd=new FormData(form),handover={...Object.fromEntries(fd),docs:fd.getAll('docs')};const result=await request('staff_issue',{handover});const link=location.origin+'/do-sign.html#t='+result.token;const text='Salam, sila semak borang serahan kenderaan Abe Din Auto dan tandatangan melalui pautan sulit ini: '+link+' (sah 48 jam).';
  const box=form.querySelector('[data-result]');box.innerHTML='<p class="es-good">Pautan berjaya dijana. Tamat: '+esc(formatTime(result.expires_at))+'</p><a class="es-green" href="'+esc(link)+'" target="_blank" rel="noopener noreferrer">Sign pada telefon ini</a>'+(phone?'<a class="es-green" href="https://wa.me/'+esc(phone)+'?text='+encodeURIComponent(text)+'" target="_blank" rel="noopener noreferrer">Hantar pautan ke WhatsApp pelanggan</a>':'')+'<button type="button" data-copy>Salin pautan sulit</button><button type="button" data-refresh>Semak status tandatangan</button><p class="es-muted">Jangan kongsi pautan dengan pihak lain.</p>';
  box.querySelector('[data-copy]').onclick=async()=>{try{await navigator.clipboard.writeText(link);err.textContent='Pautan disalin.'}catch(_){window.prompt('Salin pautan sulit ini:',link)}};
- box.querySelector('[data-refresh]').onclick=async()=>{try{const data=await request('staff_get');if(data.status==='signed'){box.innerHTML='<p class="es-good">Sudah ditandatangani: '+esc(formatTime(data.signed_at))+' MYT</p><div data-pdf class="es-actions"></div>';pdfActions(box.querySelector('[data-pdf]'),data,phone,true)}else err.textContent='Status: '+(data.status==='pending'?'Belum ditandatangani':'Pautan tamat tempoh.')}catch(e){err.textContent=e.message}};
+ box.querySelector('[data-refresh]').onclick=async()=>{try{const data=await request('staff_get');if(data.status==='signed'){box.innerHTML='<p class="es-good">Sudah ditandatangani: '+esc(formatTime(data.signed_at))+' MYT</p><div data-pdf class="es-actions"></div>';const host=box.querySelector('[data-pdf]');host.textContent='Menjana pautan PDF…';try{const link=await issueDeliveryLink(client,saleId,true);pdfActions(host,data,phone,true,link)}catch(e){pdfActions(host,data,phone,true);err.textContent=e.message}}else err.textContent='Status: '+(data.status==='pending'?'Belum ditandatangani':'Pautan tamat tempoh.')}catch(e){err.textContent=e.message}};
  err.textContent='';}catch(e){err.textContent=e.message;btn.disabled=false}};
 }
 export function mountSignaturePad(canvas,onChange){
