@@ -1,0 +1,46 @@
+name: HR production published asset check
+on:
+  push:
+    branches: [hr-sql-test-only]
+    paths:
+      - '.github/workflows/hr-live-readonly-check.yml'
+permissions:
+  contents: read
+jobs:
+  live-static:
+    if: github.ref == 'refs/heads/hr-sql-test-only'
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 465bcf545724be62a361acf510ca309055c01279
+          persist-credentials: false
+      - name: Verify public HR release assets against production commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          commit=465bcf545724be62a361acf510ca309055c01279
+          tmp=$(mktemp -d)
+          for path in app.html js/staff.js js/staff-profile.js js/staff-me.js js/hr-{dashboard,assistant,kpi,letters,esign,discipline,assets}.mjs js/payroll-{review,approval,slip,handoff}.mjs; do
+            echo "Checking published $path"
+            curl --fail --silent --show-error --location --max-time 20 --retry 1 -H 'Cache-Control: no-cache' -o "$tmp/asset" "https://abedinauto.my/$path?release=$commit"
+            if ! cmp -s "$path" "$tmp/asset"; then
+              echo "FAIL: $path differs from the release commit"
+              sha256sum "$path" "$tmp/asset"
+              exit 1
+            fi
+            echo "PASS: $path matches production commit"
+          done
+      - name: Inspect unchanged agent enquiry page without submitting any lead
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --max-time 20 -H 'Cache-Control: no-cache' -o /tmp/agent-inquiry.html 'https://abedinauto.my/agent-inquiry.html?release=465bcf545724be62a361acf510ca309055c01279'
+          cmp agent-inquiry.html /tmp/agent-inquiry.html
+          grep -Fq 'id="agentCode" name="ref" type="hidden"' /tmp/agent-inquiry.html
+          grep -Fq 'name="consent"' /tmp/agent-inquiry.html
+          grep -Fq 'body:JSON.stringify({ref:r,car,customer_name:' /tmp/agent-inquiry.html
+          grep -Fq 'let {res,data}=await send(refCode);' /tmp/agent-inquiry.html
+          echo 'PASS: unchanged agent enquiry HTML served; new send helper retains ref parameter.'
+          echo 'Static content checks only; no authenticated user sessions or real lead submissions were performed.'
