@@ -998,14 +998,21 @@ async function openDeliveryOrder(saleId){
     const o=cloudModal('DO PDF - Borang Serahan', '<p class="muted">Semak maklumat sebelum cetak. Tarikh dan masa mesti mengikut serahan sebenar; boleh dibiarkan kosong untuk diisi dengan tangan.</p>'+
       '<div class="cloud-notice">'+safe(a.plate)+' · '+safe(a.model)+' · '+safe(a.name)+'</div>'+
       '<div class="ada-edit-grid"><label>Tarikh serahan<input type="date" name="date"></label><label>Masa serahan<input type="time" name="time"></label>'+
-      '<label>No. kad pengenalan<input name="ic" value="'+safe(a.ic)+'" maxlength="40"></label><label>Mileage (km)<input type="number" min="0" step="1" name="mileage" value="'+safe(a.mileage)+'"></label></div>'+
+      '<label>No. kad pengenalan<input name="ic" value="'+safe(a.ic)+'" maxlength="40"></label><label>Mileage (km)<input type="number" min="0" max="999999999" step="1" name="mileage" value="'+safe(a.mileage)+'"></label></div>'+
       '<label>Alamat pelanggan<textarea name="address" rows="2" maxlength="180">'+safe(a.address)+'</textarea></label>'+
-      '<p class="muted">Data tambahan ini hanya digunakan dalam PDF, tidak mengubah rekod asal. Status serahan, dokumen dan tandatangan pelanggan diisi semasa serahan. Pihak Abe Din Auto tidak perlu tandatangan.</p><button type="submit" name="do_action" value="share" class="ada-wa-btn">Hantar DO PDF</button><button type="submit" name="do_action" value="download" class="secondary">Muat turun DO PDF</button>');
+      '<div class="ada-edit-grid"><label>Keadaan kenderaan<select name="condition"><option value="">Pilih</option><option value="baik">Baik</option><option value="perlu">Perlu Pemeriksaan</option></select></label>'+
+      '<label>Bilangan kunci<select name="keys"><option value="">Pilih</option><option>1</option><option>2</option></select></label></div>'+
+      '<fieldset style="border:1px solid #80808066;border-radius:10px;padding:10px"><legend>Dokumen diserahkan</legend><div style="display:flex;flex-wrap:wrap;gap:10px">'+
+      '<label style="display:flex;align-items:center;gap:5px"><input style="width:auto" type="checkbox" name="docs" value="geran">Geran/e-Geran</label>'+
+      '<label style="display:flex;align-items:center;gap:5px"><input style="width:auto" type="checkbox" name="docs" value="insurans">Insurans</label>'+
+      '<label style="display:flex;align-items:center;gap:5px"><input style="width:auto" type="checkbox" name="docs" value="lain">Lain-lain</label></div></fieldset>'+
+      '<label>Aksesori<input name="accessories" maxlength="35"></label><label>Catatan / rujukan kecacatan dimaklumkan sebelum pembelian<textarea name="notes" maxlength="150" rows="2"></textarea></label>'+
+      '<p class="muted">Butiran serahan ini digunakan dalam DO PDF biasa dan pautan WhatsApp. Medan boleh dikosongkan untuk diisi secara manual semasa serahan. Pihak Abe Din Auto tidak perlu tandatangan; pelanggan menandatangani salinan cetak.</p><button type="submit" name="do_action" value="share" class="ada-wa-btn">Hantar DO PDF</button><button type="submit" name="do_action" value="download" class="secondary">Muat turun DO PDF</button>');
     o.querySelector('form').onsubmit=async e=>{
       e.preventDefault();const form=e.currentTarget,btns=[...form.querySelectorAll('[type=submit]')],err=o.querySelector('.ada-form-error');
       const action=e.submitter?.value||'download';btns.forEach(b=>b.disabled=true);err.textContent='Menjana PDF...';
       try{
-        const handover=Object.fromEntries(new FormData(form).entries());
+        const fd=new FormData(form),handover={...Object.fromEntries(fd),docs:fd.getAll('docs')};delete handover.do_action;
         const PDFLib=await loadPdfLib();
         const {bytes,fname}=await buildDeliveryOrderPdf(PDFLib,{x,v,c,handover});
         if(action==='share'){
