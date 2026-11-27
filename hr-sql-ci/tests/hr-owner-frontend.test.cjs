@@ -1,7 +1,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const {chromium}=require('playwright');
 const root=path.resolve(__dirname,'../..');
-const modules=new Set(['staff.js','staff-profile.js','hr-dashboard.mjs','hr-assistant.mjs','hr-kpi.mjs','staff-me.js']);
+const modules=new Set(['staff.js','staff-profile.js','hr-dashboard.mjs','hr-assistant.mjs','hr-kpi.mjs','staff-me.js','slip.js','hr-letters.mjs','hr-esign.mjs']);
 for(const width of [390,1280])test('Real owner staff module HR workflow '+width+'px',async()=>{
  const browser=await chromium.launch({headless:true});
  try{
@@ -9,7 +9,7 @@ for(const width of [390,1280])test('Real owner staff module HR workflow '+width+
  await page.route('**/*',async route=>{
   const u=new URL(route.request().url());
   if(u.hostname!=='hr-demo.invalid')return route.abort();
-  if(u.pathname==='/')return route.fulfill({contentType:'text/html',body:'<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><div id="owner"></div><div id="staff"></div><div id="personal"></div>'});
+  if(u.pathname==='/')return route.fulfill({contentType:'text/html',body:'<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><div id="owner"></div><div id="staff"></div><div id="personal"></div><div id="profile"></div>'});
   const name=u.pathname.slice(4);if(!u.pathname.startsWith('/js/')||!modules.has(name))return route.abort();
   return route.fulfill({contentType:'text/javascript',body:fs.readFileSync(path.join(root,'js',name),'utf8')});
  });
@@ -17,12 +17,15 @@ for(const width of [390,1280])test('Real owner staff module HR workflow '+width+
  await page.evaluate(async()=>{
   const {mountStaff}=await import('/js/staff.js');
   const me={id:'00000000-0000-0000-0000-000000000001',role:'owner',enabled:true,full_name:'Demo Owner',email:'demo@example.invalid'};
-  window.calls=[]; window.kpiRows=[];
-  function mock(){return {rpc:async name=>({data:name==='staff_list'?[me]:[],error:null}),from(table){window.calls.push(table);const filters={}; const q={select(){return q},eq(k,v){filters[k]=v;return q},in(){return q},gte(){return q},lt(){return q},lte(){return q},order(){return q},range:async()=>({data:table==='hr_kpi_targets'?window.kpiRows.filter(r=>Object.entries(filters).every(([k,v])=>r[k]===v)):[],error:null}),insert:async row=>{if(table!=='hr_kpi_targets')throw Error('Unexpected write');window.kpiRows.push({...row,id:'00000000-0000-0000-0000-000000000010'});return {error:null}},maybeSingle:async()=>({data:table==='profiles'?me:null,error:null}),then(resolve){return Promise.resolve({data:[],error:null}).then(resolve)}};return q;}}}
+  const worker={...me,id:'00000000-0000-0000-0000-000000000002',role:'operations',full_name:'Demo Staff'};
+  window.calls=[]; window.kpiRows=[]; window.letterRows=[]; window.signatureRows=[];
+  function mock(actor=me){return {rpc:async name=>({data:name==='staff_list'?[me,worker]:[],error:null}),from(table){window.calls.push(table);const filters={}; const q={select(){return q},eq(k,v){filters[k]=v;return q},in(k,v){filters[k]=v;return q},gte(){return q},lt(){return q},lte(){return q},order(){return q},range:async()=>({data:table==='hr_kpi_targets'?window.kpiRows.filter(r=>Object.entries(filters).every(([k,v])=>r[k]===v)):[],error:null}),limit:async()=>({data:table==='hr_letters'?window.letterRows.filter(r=>r.staff_id===filters.staff_id&&(actor.role==='owner'||r.state==='issued')).slice().reverse():[],error:null}),insert:async row=>{if(table==='hr_kpi_targets')window.kpiRows.push({...row,id:'00000000-0000-0000-0000-000000000010'});else if(table==='hr_letters'&&actor.role==='owner')window.letterRows.push({...row,id:crypto.randomUUID(),created_at:new Date().toISOString()});else if(table==='hr_letter_signatures'&&actor.id===worker.id)window.signatureRows.push({...row,consent_version:'hr-esign-v1',signed_at:new Date().toISOString(),document_sha256:'a'.repeat(64)});else throw Error('Unexpected write');return {error:null}},maybeSingle:async()=>({data:table==='profiles'?me:null,error:null}),then(resolve){return Promise.resolve({data:table==='hr_letter_signatures'?window.signatureRows.filter(r=>filters.letter_id?.includes(r.letter_id)):[],error:null}).then(resolve)}};return q;}}}
   mountStaff(document.querySelector('#owner'),{client:mock(),profile:me});
   mountStaff(document.querySelector('#staff'),{client:mock(),profile:{id:'00000000-0000-0000-0000-000000000002',role:'operations',enabled:true}});
   const {mountStaffMe}=await import('/js/staff-me.js');
-  mountStaffMe(document.querySelector('#personal'),{client:mock(),profile:{...me,role:'operations'}});
+  mountStaffMe(document.querySelector('#personal'),{client:mock(worker),profile:worker});
+  const {mountProfile}=await import('/js/staff-profile.js');
+  mountProfile(document.querySelector('#profile'),{client:mock(),profile:me},worker,()=>{});
  });
  const owner=page.locator('#owner'),staff=page.locator('#staff');
  await owner.getByRole('button',{name:'Muat KPI'}).waitFor();
@@ -37,6 +40,7 @@ for(const width of [390,1280])test('Real owner staff module HR workflow '+width+
  assert.match(await owner.locator('textarea[readonly]').inputValue(),/Ringkasan HR AbeDin Auto/);
  await owner.locator('#hr-kpi-wrap summary').click();
  const kpi=owner.locator('#hr-kpi');
+ await kpi.locator('[data-person]').selectOption('00000000-0000-0000-0000-000000000002');
  await kpi.getByRole('button',{name:'Muat',exact:true}).click();
  await kpi.locator('input[name=target]').fill('5');
  await kpi.locator('textarea[name=reason]').fill('Demo target');
@@ -50,6 +54,30 @@ for(const width of [390,1280])test('Real owner staff module HR workflow '+width+
  assert.equal(await personal.locator('[data-target]').count(),0);
  assert.equal(await personal.locator('[data-person]').count(),0);
  assert.equal(await staff.locator('#hr-kpi-wrap').count(),0);
+ const profile=page.locator('#profile');
+ await profile.locator('#hr-letters-wrap summary').click();
+ const letters=profile.locator('#hr-letters');
+ await letters.locator('select[name=kind]').selectOption('contract');
+ await letters.locator('textarea[name=body]').fill('Demo contract reviewed by HR');
+ await letters.locator('input[name=reason]').fill('Draft demo');
+ await letters.getByRole('button',{name:'Simpan draf'}).click();
+ await letters.getByText('V1 · Draf',{exact:false}).waitFor();
+ await personal.getByRole('button',{name:'Surat HR',exact:true}).click();
+ await personal.getByText('Tiada surat dalam rekod.').waitFor();
+ await letters.locator('input[name=reason]').fill('Approved demo');
+ page.on('dialog',d=>d.accept());
+ await letters.getByRole('button',{name:'Terbitkan draf tersimpan'}).click();
+ await letters.getByText('V2 · Diterbitkan',{exact:false}).waitFor();
+ await personal.getByRole('button',{name:'Semak rekod'}).click();
+ await personal.getByText('Semak dan sahkan',{exact:true}).click();
+ const sign=personal.locator('[data-sign-form]');
+ await sign.locator('input[name=typedName]').fill('Demo Staff');
+ await sign.locator('select[name=intent]').selectOption('acceptance');
+ await sign.locator('input[name=consent]').check();
+ await sign.getByRole('button',{name:'Sahkan secara elektronik'}).click();
+ await personal.getByText('Terma diterima · Demo Staff',{exact:false}).waitFor();
+ assert.equal(await page.evaluate(()=>window.signatureRows.length),1);
+ assert.equal(await personal.locator('[data-form]').count(),0);
  assert.equal(failures.length,0,failures.join('; '));
  }finally{await browser.close()}
 });
