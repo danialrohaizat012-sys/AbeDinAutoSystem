@@ -61,12 +61,12 @@ jobs:
           grep -Fq 'id="agentCode" name="ref" type="hidden"' /tmp/agent-enquiry.html
           grep -q 'a-f0-9' /tmp/agent-enquiry.html
           grep -Fq '[hidden]{display:none!important}' /tmp/agent-enquiry.html
-          grep -Fq 'refCode,car,customer_name:' /tmp/agent-enquiry.html
+          grep -Fq 'ref:r,car,customer_name:' /tmp/agent-enquiry.html
           grep -q 'whatsappAfter' /tmp/agent-enquiry.html
           grep -q 'wa.me/601156366925' /tmp/agent-enquiry.html
           grep -q 'id="agentCode" name="ref"' /tmp/agent-enquiry.html
-          grep -Fq "ref:refCode,car,customer_name:" /tmp/agent-enquiry.html
-          grep -Fq "const refCode=\$('agentCode').value.trim();" /tmp/agent-enquiry.html
+          grep -Fq "await send(refCode)" /tmp/agent-enquiry.html
+          grep -Fq "let refCode=\$('agentCode').value.trim();" /tmp/agent-enquiry.html
           echo "PASS: customer enquiry form served by production"
           echo "Checking public catalogue referral integration"
           curl --fail --location --silent --show-error --max-time 20 \
