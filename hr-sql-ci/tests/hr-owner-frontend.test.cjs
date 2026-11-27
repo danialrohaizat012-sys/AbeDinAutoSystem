@@ -1,7 +1,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const {chromium}=require('playwright');
 const root=path.resolve(__dirname,'../..');
-const modules=new Set(['staff.js','staff-profile.js','hr-dashboard.mjs','hr-assistant.mjs','hr-kpi.mjs','staff-me.js','slip.js','hr-letters.mjs','hr-esign.mjs','hr-discipline.mjs','hr-assets.mjs','payroll-review.mjs','payroll-slip.mjs','payroll-approval.mjs','payroll-handoff.mjs']);
+const modules=new Set(['staff.js','staff-profile.js','hr-dashboard.mjs','hr-assistant.mjs','hr-kpi.mjs','staff-me.js','slip.js','hr-letters.mjs','hr-delegate.mjs','hr-esign.mjs','hr-discipline.mjs','hr-assets.mjs','payroll-review.mjs','payroll-slip.mjs','payroll-approval.mjs','payroll-handoff.mjs']);
 for(const width of [390,1280])test('Real owner staff module HR workflow '+width+'px',async()=>{
  const browser=await chromium.launch({headless:true});
  try{
