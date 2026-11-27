@@ -77,6 +77,8 @@ const SUPA_ESM = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 import { mountHRDashboard } from "./hr-dashboard.mjs?v=hr6-staging";
 import { mountHRAssistant } from "./hr-assistant.mjs?v=hr6-staging";
 
+import { mountKpi } from "./hr-kpi.mjs?v=1";
+
 export function mountStaff(host, ctx) {
   const client = ctx.client, me = ctx.profile || {};
   const root = host.shadowRoot || host.attachShadow({ mode: "open" });
@@ -124,12 +126,14 @@ export function mountStaff(host, ctx) {
       ${S.share ? `<div class="share" id="share">${esc(S.share)}</div><div class="row"><button class="btn sm" data-a="copy">Salin untuk WhatsApp</button><button class="btn sm" data-a="hide">Tutup</button></div>` : ""}
       <p class="msg ${S.msgCls}" id="msg">${esc(S.msg)}</p>
       ${!S.mode && me.role === "owner" && all && !S.err ? `<div id="hr-dashboard"></div><details class="sec" id="hr-assistant-wrap"><summary>HR Assistant</summary><div id="hr-assistant"></div></details>` : ""}
+      ${!S.mode && me.role === "owner" && all && !S.err ? `<details class="sec" id="hr-kpi-wrap"><summary>Sasaran &amp; Penilaian KPI</summary><div id="hr-kpi"></div></details>` : ""}
       ${S.mode ? "" : inboxView()}
       ${S.mode ? "" : `<div class="row" style="margin-top:4px"><div class="grow"><div class="kick">PASUKAN</div><h3>Senarai staff</h3></div><button class="btn pri" data-a="new">+ Tambah staff</button></div>${catBar}`}
       <div class="grid">${rows === null ? `<div class="empty">Memuatkan…</div>` : (globalThis.adaPg?globalThis.adaPg.rows("st-acc",rows,render):rows).map(item).join("") || `<div class="empty">Tiada staff ditemui.</div>`}</div>${rows?(globalThis.adaPg?globalThis.adaPg.nav("st-acc",rows.length):""):""}
       ${S.mode ? "" : `<p class="mute">Setiap staff log masuk dengan emel dan kata laluan sendiri di <b>abedinauto.my/admin</b>.</p>`}`;
     const hrDash = app.querySelector("#hr-dashboard"); if (hrDash) mountHRDashboard(hrDash, ctx, all);
     const ha = app.querySelector("#hr-assistant-wrap"); if (ha) ha.ontoggle = () => { if (ha.open && !ha.dataset.loaded) { ha.dataset.loaded = "1"; mountHRAssistant(ha.querySelector("#hr-assistant"), ctx, all); } };
+    const kpi = app.querySelector("#hr-kpi-wrap"); if (kpi) kpi.ontoggle = () => { if (kpi.open && !kpi.dataset.loaded) { kpi.dataset.loaded = "1"; mountKpi(kpi.querySelector("#hr-kpi"), ctx, all); } };
     bind();
   }
 
