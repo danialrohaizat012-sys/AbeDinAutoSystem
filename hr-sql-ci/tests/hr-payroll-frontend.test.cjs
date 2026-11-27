@@ -1,7 +1,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const {chromium}=require('playwright');
 const root=path.resolve(__dirname,'../..');
-const modules=new Set(['staff.js','staff-profile.js','staff-me.js','slip.js','hr-dashboard.mjs','hr-assistant.mjs','hr-kpi.mjs','hr-letters.mjs','hr-esign.mjs','hr-discipline.mjs','hr-assets.mjs','payroll-review.mjs','payroll-slip.mjs','payroll-handoff.mjs','payroll-approval.mjs']);
+const modules=new Set(['staff.js','staff-profile.js','staff-me.js','slip.js','hr-dashboard.mjs','hr-assistant.mjs','hr-kpi.mjs','hr-letters.mjs','hr-delegate.mjs','hr-esign.mjs','hr-discipline.mjs','hr-assets.mjs','payroll-review.mjs','payroll-slip.mjs','payroll-handoff.mjs','payroll-approval.mjs']);
 const demoSlip={c:{hasPay:true,net:2000},lines:[['Gaji asas','Demo',2000]],rows:[],stats:{present:22,absent:0,late:0,lateMin:'0',worked:'176j',ot:'0',paidLeave:0,unpaidLeave:0}};
 for(const width of [390,1280])test('Payroll profile, independent reviewer and approved slip '+width+'px',async()=>{
  const browser=await chromium.launch({headless:true});
