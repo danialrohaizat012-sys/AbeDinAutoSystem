@@ -36,5 +36,5 @@ jobs:
           PGPASSWORD: ci_demo_only
           PGDATABASE: hr_ci
         run: |
-          psql -X -v ON_ERROR_STOP=1 -f hr-sql-ci/tests/payroll-handoff-db-smoke.sql
-          echo 'Payroll records, approval and handoff SQL smoke passed'
+          psql -X -v ON_ERROR_STOP=1 -f hr-sql-ci/tests/kpi-db-smoke.sql
+          echo 'Payroll and KPI SQL smoke passed'
