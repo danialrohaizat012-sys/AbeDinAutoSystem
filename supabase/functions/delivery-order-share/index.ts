@@ -47,7 +47,12 @@ Deno.serve(async req=>{
     if(date&&(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!Number.isFinite(Date.parse(date+'T12:00:00Z'))||new Date(date+'T12:00:00Z').toISOString().slice(0,10)!==date))return reply({error:'Tarikh tidak sah.'},400);
     if(time&&!/^([01]\d|2[0-3]):[0-5]\d$/.test(time))return reply({error:'Masa tidak sah.'},400);
     if(mileage&&!/^\d{1,9}$/.test(mileage))return reply({error:'Mileage tidak sah.'},400);
-    const out=await buildDeliveryOrderPdf(PDFLib,{x:s,v:v.data,c:c.data,handover:{date,time,mileage,ic:text(h.ic,40),address:text(h.address,180)}});
+    const condition=text(h.condition,12),keys=text(h.keys,2);
+    if(condition&&!['baik','perlu'].includes(condition))return reply({error:'Keadaan kenderaan tidak sah.'},400);
+    if(keys&&!['1','2'].includes(keys))return reply({error:'Bilangan kunci tidak sah.'},400);
+    if(h.docs!=null&&(!Array.isArray(h.docs)||h.docs.some((d:unknown)=>!['geran','insurans','lain'].includes(String(d)))))return reply({error:'Dokumen serahan tidak sah.'},400);
+    const docs=Array.isArray(h.docs)?[...new Set(h.docs)]:[];
+    const out=await buildDeliveryOrderPdf(PDFLib,{x:s,v:v.data,c:c.data,handover:{date,time,mileage,ic:text(h.ic,40),address:text(h.address,180),condition,keys,docs,accessories:text(h.accessories,35),notes:text(h.notes,150)}});
     pdf=b64(out.bytes);filename=out.fname;
    }
    const t=token(),digest=await hash(t),expires_at=new Date(Date.now()+7*86400000).toISOString();
