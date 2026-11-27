@@ -106,7 +106,7 @@ async function sendOne(x, tplId) {
   const res = await invoke({ action: 'send', lead_id: x.r.id, template_id: tplId || undefined });
   waha.sent_today = res.sent_today;
   addSend(x, 'waha', 'sent');
-  if (x.r.status === 'new') x.setStatus('contacted');
+  try { await x.setStatus(); } catch (e) { const st = $('status'); if (st) st.textContent = 'WAHA dihantar, tetapi tagging gagal: ' + e.message; }
   x.box.replaceChildren(mk('p', 'wa-sent', 'Dihantar melalui WAHA: ' + res.text));
   x.box.hidden = false;
   return res;
@@ -125,17 +125,15 @@ export function buttons(r, setStatus) {
     const t = randomTpl();
     // tiada ayat: buka chat kosong
     w.href = 'https://wa.me/' + r.phone.slice(1) + (t ? '?text=' + encodeURIComponent(fill(t.body, r.name)) : '');
-    client.from('tiktok_wa_sends').insert({ lead_id: r.id, template_id: t?.id || null, channel: 'manual', status: 'opened' }).then(() => {}, () => {});
-    addSend(x, 'manual', 'opened');
-    // Lead Baharu automatik jadi Dihubungi bila WhatsApp dibuka
-    if (r.status === 'new') {
-      client.from('tiktok_leads').update({ status: 'contacted' }).eq('id', r.id).eq('status', 'new').select('id,status').maybeSingle()
-        .then(({ data, error }) => {
-          const st = $('status');
-          if (error) { if (st) st.textContent = 'Gagal tukar status: ' + error.message; return; }
-          if (data) { setStatus(data.status); if (st) st.textContent = 'Status ditukar ke Dihubungi'; hooks.onSent?.(); }
-        }, () => {});
-    }
+    // Rekod penghantar ditentukan oleh auth.uid() dan polisi RLS sedia ada.
+    client.from('tiktok_wa_sends').insert({ lead_id: r.id, template_id: t?.id || null, channel: 'manual', status: 'opened' })
+      .then(async ({ error }) => {
+        const st = $('status');
+        if (error) { if (st) st.textContent = 'WhatsApp dibuka, rekod gagal: ' + error.message; return; }
+        addSend(x, 'manual', 'opened');
+        try { await setStatus(); hooks.onSent?.(); }
+        catch (e) { if (st) st.textContent = 'WhatsApp dibuka, tagging gagal: ' + e.message; }
+      }, (e) => { const st = $('status'); if (st) st.textContent = 'Rekod WhatsApp gagal: ' + e.message; });
   });
   const out = [w, badge];
   if (wahaReady()) {
@@ -233,7 +231,7 @@ function renderPanel() {
 // ---------- Status WhatsApp: bezakan Manual dan WAHA ----------
 const fmt = (d) => new Date(d).toLocaleString('ms-MY', { timeZone: 'Asia/Kuala_Lumpur', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false });
 function addSend(x, channel, status) {
-  x.sends = [{ channel, status, created_at: new Date().toISOString() }, ...(x.sends || [])];
+  x.sends = [{ channel, status, sent_by: me.id, created_at: new Date().toISOString() }, ...(x.sends || [])];
   paintBadge(x);
 }
 function chip(cls, label, sub) {
@@ -248,15 +246,15 @@ function paintBadge(x) {
   const manual = list.filter((s) => s.channel === 'manual');
   const sent = list.filter((s) => s.channel === 'waha' && s.status === 'sent');
   const failed = list.filter((s) => s.channel === 'waha' && s.status === 'failed');
-  if (manual.length) x.badge.append(chip('manual', 'Manual' + (manual.length > 1 ? ' ×' + manual.length : ''), fmt(manual[0].created_at)));
-  if (sent.length) x.badge.append(chip('waha', 'WAHA dihantar' + (sent.length > 1 ? ' ×' + sent.length : ''), fmt(sent[0].created_at)));
+  if (manual.length) x.badge.append(chip('manual', 'Manual' + (manual.length > 1 ? ' ×' + manual.length : ''), fmt(manual[0].created_at) + ' · ' + (hooks.senderName?.(manual[0].sent_by) || 'Tidak direkodkan')));
+  if (sent.length) x.badge.append(chip('waha', 'WAHA dihantar' + (sent.length > 1 ? ' ×' + sent.length : ''), fmt(sent[0].created_at) + ' · ' + (hooks.senderName?.(sent[0].sent_by) || 'Tidak direkodkan')));
   // Tunjuk gagal hanya jika ia cubaan WAHA terkini (selepas hantaran berjaya terakhir)
   if (failed.length && (!sent.length || new Date(failed[0].created_at) > new Date(sent[0].created_at))) x.badge.append(chip('fail', 'WAHA gagal', fmt(failed[0].created_at)));
 }
 export async function loadBadges() {
   const items = leads.slice();
   if (!items.length) return;
-  const { data, error } = await client.from('tiktok_wa_sends').select('lead_id,channel,status,created_at')
+  const { data, error } = await client.from('tiktok_wa_sends').select('lead_id,channel,status,created_at,sent_by')
     .in('lead_id', items.map((x) => x.r.id)).order('created_at', { ascending: false }).limit(1000);
   if (error) return; // jadual belum tersedia: biar kosong
   const by = new Map();
