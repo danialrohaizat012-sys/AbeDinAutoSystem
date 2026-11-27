@@ -30,6 +30,10 @@ jobs:
           node --check --input-type=module < js/staff-profile.js
           node --check js/hr-letters.mjs
           node --check js/hr-esign.mjs
+          node --check js/hr-discipline.mjs
+          node --check js/hr-assets.mjs
+          test "$(git hash-object js/hr-discipline.mjs)" = aaccbc2f8acf943d89d3a7ea43aae55e1c36a230
+          test "$(git hash-object js/hr-assets.mjs)" = 632d8326e937ca291a15bcab4342d65b2f0dccf1
           test "$(git hash-object js/hr-letters.mjs)" = bf8afa0590b85e1fe53488365362877b75d71754
           test "$(git hash-object js/hr-esign.mjs)" = b244e745ebfb084427e5223a1508929ff60db2e9
           test "$(git hash-object js/hr-kpi.mjs)" = f485d106a6259f56a8b94d714202ac49ee69ba3f
