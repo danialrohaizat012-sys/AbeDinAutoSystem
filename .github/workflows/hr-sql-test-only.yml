@@ -28,6 +28,9 @@ jobs:
           --health-retries 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
       - name: Run SQL and role checks against disposable database
         env:
           PGHOST: 127.0.0.1
@@ -73,6 +76,16 @@ jobs:
           fi
           grep -F 'HR objects already exist' /tmp/hr-collision.log
           psql -X -v ON_ERROR_STOP=1 -f hr-sql-ci/tests/release-schema-check.sql
+      - name: Verify exact promotion files and reversible frontend patch
+        run: |
+          python3 hr-sql-ci/build-release-bundle.py /tmp/hr-release-bundle
+          cmp /tmp/HR_RELEASE_CANDIDATE.sql /tmp/hr-release-bundle/HR_RELEASE_CANDIDATE.sql
+      - name: Retain review-only release bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: HR-release-bundle-review-only
+          path: /tmp/hr-release-bundle/
+          retention-days: 7
       - name: Retain tested release candidate
         uses: actions/upload-artifact@v4
         with:
