@@ -1,3 +1,5 @@
+import { loadPayrollSlip, recordHtml, printRecordedPayroll, reviewFormHtml, bindReviewForm } from "./payroll-slip.mjs?v=2";
+import { mountHandoffPreview } from "./payroll-handoff.mjs?v=1";
 // Abe Din Auto – Profil HR staff penuh (dibuka dari menu Staff → Profil). Hanya Owner.
 // Data: staff_hr, staff_pay, staff_work_history, staff_chronology, staff_advances, staff_leaves,
 // dokumen dalam bucket peribadi "staff-docs" (lihat V73_STAFF_HR.sql).
@@ -274,15 +276,30 @@ export function mountProfile(app, ctx, staff, onBack) {
   }
   function slipView() {
     const opts = []; for (let i = 0; i < 12; i++) opts.push(addMonths(ym(), -i));
+    const rec = P.payroll?.kind === "recorded" ? P.payroll.record : null;
     return `<div class="sec"><div class="row"><h4 class="grow">Slip Gaji</h4><select class="field" id="slipm" style="width:auto">${opts.map(m => `<option value="${m}" ${m === P.slipMonth ? "selected" : ""}>${esc(monthName(m))}</option>`).join("")}</select>
-      <button class="btn sm" data-a="slip">${P.slip ? "Kira semula" : "Kira slip"}</button>${P.slip ? `<button class="btn sm pri" data-a="slipprint">⎙ PDF</button>` : ""}</div>
-      <div style="margin-top:8px">${P.slipBusy ? `<p class="note">Mengira…</p>` : P.slip ? P.slipHtml(P.slip) : `<p class="note">Tekan "Kira slip" untuk lihat gaji bulan ini (dari rekod kehadiran, cuti, tuntutan dan advance).</p>`}</div></div>`;
+      <button class="btn sm" data-a="slip" ${P.slipBusy ? "disabled" : ""}>Semak slip</button>${rec && !P.slipBusy ? `<button class="btn sm pri" data-a="recordprint">PDF rekod</button><button class="btn sm" data-a="payroll-correction">Sediakan pembetulan</button>` : P.slip && !P.slipBusy ? `<button class="btn sm" data-a="slipprint">PDF anggaran</button>` : ""}</div>
+      <div style="margin-top:8px">${P.slipBusy ? `<p class="note">Memuatkan…</p>` : P.slipErr ? `<p class="msg err">${esc(P.slipErr)}</p>` : rec ? recordHtml(rec) : P.slip ? `<p class="warn">ANGGARAN · BELUM DISAHKAN</p>${P.slipHtml(P.slip)}${P.previousPayroll ? `<p class="warn">Pembetulan versi ${esc(P.previousPayroll.revision)}</p>` : ""}${P.slip.c.hasPay && me.role === "owner" ? reviewFormHtml() : ""}` : `<p class="note">Tekan Semak slip.</p>`}</div></div>`;
   }
   async function loadSlip() {
-    P.slipBusy = true; render();
-    try { const [k, sl] = await Promise.all([import("./kehadiran.js?v=9"), import("./slip.js?v=2")]); P.slipHtml = sl.slipHtml; P.printSlip = sl.printSlip; P.slip = await k.computeSlip(client, me, id, P.slipMonth); }
-    catch (e) { P.slip = null; say(e?.message || String(e), "err"); }
+    const token = (P.slipToken || 0) + 1; P.slipToken = token;
+    const month = P.slipMonth;
+    P.slipBusy = true; P.slipErr = ""; P.slip = null; P.payroll = null; P.previousPayroll = null; render();
+    try {
+      const [k, sl] = await Promise.all([import("./kehadiran.js?v=9"), import("./slip.js?v=2")]);
+      const result = await loadPayrollSlip({client,profile:me,staffId:id,month,computeSlip:k.computeSlip});
+      if (P.slipToken !== token) return;
+      P.slipHtml = sl.slipHtml; P.printSlip = sl.printSlip; P.payroll = result; P.slip = result.kind === "estimate" ? result.slip : null;
+    } catch(e) { if (P.slipToken !== token) return; P.slipErr = e?.message || String(e); }
     P.slipBusy = false; render();
+  }
+  async function prepareCorrection() {
+    if (P.slipBusy || me.role !== "owner" || P.payroll?.kind !== "recorded") return;
+    const prev=P.payroll.record, month=P.slipMonth, token=(P.slipToken||0)+1; P.slipToken=token;
+    P.slipBusy=true; P.slipErr=""; render();
+    try { const k=await import("./kehadiran.js?v=9"); const estimate=await k.computeSlip(client,me,id,month); if(P.slipToken!==token)return; P.previousPayroll=prev; P.payroll=null; P.slip=estimate; }
+    catch(e){if(P.slipToken!==token)return;P.slipErr=e?.message||String(e);}
+    P.slipBusy=false;render();
   }
   function histView() {
     return `<div class="sec"><div class="row"><h4 class="grow">Pengalaman Kerja</h4><button class="btn sm" data-tg="hist">+ Tambah</button></div>
@@ -333,12 +350,15 @@ export function mountProfile(app, ctx, staff, onBack) {
   const run = async (fn, okMsg) => { try { say("Sila tunggu…"); await fn(); P.msg = okMsg; P.cls = "ok"; await signUrls(); render(); } catch (e) { say(e?.message || String(e), "err"); } };
 
   function bind() {
+    if (P.slip && !P.slipBusy && me.role === "owner") bindReviewForm(app,{staffId:id,month:P.slipMonth,slip:P.slip,onPreview:(out,payload)=>mountHandoffPreview(out,{client,me,staffId:id,payload,previousId:P.previousPayroll?.id||null})});
     app.querySelectorAll("[data-a]").forEach(b => b.onclick = () => {
       const a = b.dataset.a;
       if (a === "back") return onBack();
       if (a === "cancel") { P.edit = null; render(); }
       if (a === "pdf") printPdf();
       if (a === "slip") loadSlip();
+      if (a === "payroll-correction") prepareCorrection();
+      if (a === "recordprint" && !P.slipBusy && P.payroll?.kind === "recorded" && !printRecordedPayroll(P.payroll.record,{name:staff.full_name})) say("Benarkan pop-up untuk cetak.","err");
       if (a === "slipprint" && P.slip && !P.printSlip(P.slip, { name: staff.full_name, month: P.slipMonth, ic: P.hr.ic_no, code: P.hr.staff_code, position: P.hr.position, bank: [P.hr.bank_name, P.hr.bank_account].filter(Boolean).join(" "), epf: P.hr.epf_no, socso: P.hr.socso_no })) say("Benarkan pop-up untuk cetak.", "err");
       if (a === "pledge") run(() => saveHr({ pledge_signed_at: new Date().toISOString(), pledge_signer: P.hr.pledge_signer || staff.full_name, pledge_signer_ic: P.hr.pledge_signer_ic || P.hr.ic_no }), "Ikrar direkodkan.");
     });
