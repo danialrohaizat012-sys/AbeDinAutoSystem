@@ -54,6 +54,33 @@ function compactLead(parent,a,car,onRead,agentLead){
  details.append(summary,body);parent.append(details);
 }
 function section(parent,title,desc,tab){const a=node('section','ag-card');if(tab)a.dataset.tab=tab;a.append(node('h3','',title),node('p','ag-desc',desc));parent.append(a);return a}
+// Dipaparkan sekali sahaja; diletakkan pada body supaya tidak hilang apabila senarai dimuat semula.
+function showTempPassword(g,r){
+ document.getElementById('ada-temp-password')?.remove();
+ const wrap=node('div');wrap.id='ada-temp-password';wrap.setAttribute('role','dialog');wrap.setAttribute('aria-modal','true');
+ wrap.style.cssText='position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.65)';
+ const box=node('div');box.style.cssText='width:100%;max-width:420px;max-height:90vh;overflow:auto;background:#fff;color:#16242e;border-radius:16px;padding:20px;font-size:14px;line-height:1.5';
+ const title=node('h3','','Kata laluan sementara');title.style.cssText='margin:0 0 8px;color:#16242e';
+ const info=node('p','',(g.name||'Ejen')+' · '+r.email);info.style.cssText='margin:0 0 12px;color:#465a69;overflow-wrap:anywhere';
+ const code=node('div','',r.temporary_password);code.style.cssText='font:700 22px/1.4 ui-monospace,Menlo,monospace;text-align:center;padding:14px;border:1px dashed #8aa0b0;border-radius:10px;background:#f4f7f9;color:#16242e;user-select:all;overflow-wrap:anywhere';
+ const note=node('p','','Salin atau hantar sekarang — ia tidak boleh dilihat semula selepas ditutup. Minta ejen terus tukar kata laluan dalam Portal Ejen.');note.style.cssText='margin:12px 0;color:#7a4b12';
+ const row=node('div');row.style.cssText='display:flex;flex-wrap:wrap;gap:8px';
+ const css='flex:1 1 110px;padding:12px;border:0;border-radius:10px;font:700 14px inherit;font-family:inherit;text-align:center;text-decoration:none;cursor:pointer;';
+ const copy=node('button','','Salin');copy.type='button';copy.style.cssText=css+'background:#1762a8;color:#fff';
+ copy.onclick=async()=>{try{await navigator.clipboard.writeText(r.temporary_password);copy.textContent='Disalin ✓'}catch{copy.textContent='Tekan lama untuk salin'}};
+ row.append(copy);
+ const phone=phoneLink(g.phone);
+ if(phone){
+  const wa=node('a','','WhatsApp Ejen');wa.target='_blank';wa.rel='noopener noreferrer';wa.style.cssText=css+'background:#146848;color:#fff';
+  wa.href='https://wa.me/'+phone+'?text='+encodeURIComponent(['Salam '+String(g.name||'')+', ini maklumat log masuk Portal Ejen AbeDin Auto anda.',
+   'E-mel: '+r.email,'Kata laluan sementara: '+r.temporary_password,'',
+   'Log masuk di https://abedinauto.my/agent.html dan terus tukar kata laluan (Tukar kata laluan). Jangan kongsi dengan sesiapa.'].join('\n'));
+  row.append(wa);
+ }
+ const close=node('button','','Tutup');close.type='button';close.style.cssText=css+'background:#e8eef3;color:#23445b';close.onclick=()=>wrap.remove();
+ row.append(close);
+ box.append(title,info,code,note,row);wrap.append(box);document.body.append(wrap);
+}
 export function mountAgentAdmin(host,{client,profile}={}){
  host.replaceChildren();
  if(profile?.role!=='owner'||profile?.enabled!==true){host.append(node('p','muted','Hanya owner aktif boleh mengurus ejen.'));return}
@@ -399,7 +426,18 @@ export function mountAgentAdmin(host,{client,profile}={}){
       catch(err){status(err.message,true)}finally{unlock.disabled=false}
      };
      ctl.append(unlock);
-     // Recovery uses the existing Supabase email flow; never expose or set another user's password.
+     if(g.agent_status==='active'){
+      const temp=node('button','ag-c-teal','🔑 Set Kata Laluan Sementara');temp.type='button';
+      temp.onclick=async()=>{
+       if(!confirm('Tetapkan kata laluan sementara untuk '+(g.name||'ejen')+(g.email?' ('+g.email+')':'')+'?\n\nPastikan yang meminta memang ejen ini (hubungi nombor berdaftar). Kata laluan lama akan terus terbatal.'))return;
+       temp.disabled=true;
+       try{const r=await request('set_temp_password',{agent_user_id:g.user_id});showTempPassword(g,r);status('Kata laluan sementara ditetapkan.')}
+       catch(err){status(err.message||'Gagal menetapkan kata laluan sementara.',true);alert(err.message||'Gagal menetapkan kata laluan sementara.')}
+       finally{temp.disabled=false}
+      };
+      ctl.append(temp);
+     }
+     // E-mel: ejen tetapkan sendiri kata laluan melalui pautan pemulihan Supabase.
      if(g.agent_status==='active'&&g.email){
       const recovery=node('button','ag-c-purple','Reset Password Ejen');recovery.type='button';
       recovery.title='Hantar pautan reset kata laluan ke e-mel ejen';

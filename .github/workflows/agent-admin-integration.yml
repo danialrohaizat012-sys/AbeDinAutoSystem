@@ -10,6 +10,7 @@ on:
       - tests/agent-lead-contact.test.mjs
       - tests/agent-read-commission.test.mjs
       - tests/agent-admin-theme.test.mjs
+      - tests/agent-temp-password.test.mjs
       - tests/catalogue-interest-toggle.test.mjs
       - supabase/catalogue_interest_button_visibility_v1.sql
       - agent.html
@@ -31,7 +32,7 @@ jobs:
         with:
           node-version: '22'
       - name: Check Agent Network owner access and menu integration
-        run: node --test tests/agent-admin-integration.test.mjs tests/agent-lead-contact.test.mjs tests/agent-read-commission.test.mjs tests/agent-admin-theme.test.mjs tests/catalogue-interest-toggle.test.mjs
+        run: node --experimental-strip-types --test tests/agent-admin-integration.test.mjs tests/agent-lead-contact.test.mjs tests/agent-read-commission.test.mjs tests/agent-admin-theme.test.mjs tests/agent-temp-password.test.mjs tests/catalogue-interest-toggle.test.mjs
       - name: Check live admin bundle after deployment
         shell: bash
         run: |

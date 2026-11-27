@@ -4,6 +4,16 @@ const headers={ "content-type":"application/json; charset=utf-8", "cache-control
 "access-control-allow-methods":"POST, OPTIONS" };
 const res=(status:number,payload:unknown)=>new Response(JSON.stringify(payload),{status,headers});
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+// Kata laluan sementara: rawak kriptografi, tanpa aksara yang mengelirukan (0/O, 1/l/I).
+function tempPassword():string{
+ const sets=["ABCDEFGHJKLMNPQRSTUVWXYZ","abcdefghijkmnpqrstuvwxyz","23456789"],all=sets.join("");
+ const pick=(chars:string)=>{const limit=256-(256%chars.length),b=new Uint8Array(1);
+   do{crypto.getRandomValues(b)}while(b[0]>=limit);return chars[b[0]%chars.length]};
+ for(;;){
+   const v=Array.from({length:12},()=>pick(all)).join("");
+   if(sets.every(s=>[...v].some(c=>s.includes(c)))) return v.match(/.{4}/g)!.join("-");
+ }
+}
 Deno.serve(async(req)=>{
  if(req.method==="OPTIONS") return new Response(null,{status:204,headers});
  if(req.method!=="POST") return res(405,{error:"Method not allowed"});
@@ -222,6 +232,34 @@ Deno.serve(async(req)=>{
    });
    if(error) return res(error.code==="23505"?409:400,{error:"Review could not be completed"});
    return res(200,{result:data});
+ }
+ // Owner set kata laluan sementara untuk akaun EJEN sahaja. Kata laluan tidak disimpan atau dilog.
+ if(payload.action==="set_temp_password"){
+   const target=payload.agent_user_id;
+   if(typeof target!=="string"||!uuid.test(target))return res(400,{error:"Ejen tidak sah."});
+   const {data:agent,error:agentErr}=await admin.from("agent_profiles")
+     .select("id,status").eq("user_id",target).maybeSingle();
+   if(agentErr)return res(500,{error:"Tidak dapat menyemak akaun ejen."});
+   if(!agent||agent.status!=="active")return res(400,{error:"Hanya ejen aktif boleh diberi kata laluan sementara."});
+   const {data:staff,error:staffErr}=await admin.from("profiles").select("id").eq("id",target).maybeSingle();
+   if(staffErr)return res(500,{error:"Tidak dapat menyemak akaun ejen."});
+   if(staff||target===identity.user.id)
+     return res(400,{error:"Akaun ini juga akaun staff/owner. Guna butang Reset Password Ejen (pautan e-mel)."});
+   const {data:account,error:accountErr}=await admin.auth.admin.getUserById(target);
+   if(accountErr||!account.user?.email)return res(404,{error:"Akaun log masuk ejen tidak ditemui."});
+   const log=(action:string,reason:string)=>admin.from("agent_audit_events").insert({
+     actor_user_id:identity.user.id,entity_type:"agent_profile",entity_id:agent.id,action,reason});
+   // Rekod dahulu: kalau rekod gagal, kata laluan tidak ditukar.
+   const {error:auditErr}=await log("agent_temp_password_requested","Owner requested a temporary password for this agent");
+   if(auditErr)return res(500,{error:"Rekod audit gagal. Kata laluan tidak ditukar."});
+   const password=tempPassword();
+   const {error:updateErr}=await admin.auth.admin.updateUserById(target,{password});
+   if(updateErr){
+     await log("agent_temp_password_failed","Temporary password was not applied");
+     return res(500,{error:"Gagal menetapkan kata laluan sementara. Cuba lagi."});
+   }
+   await log("agent_temp_password_set","Owner set a temporary password for this agent");
+   return res(200,{email:account.user.email,temporary_password:password});
  }
  return res(400,{error:"Unknown action"});
  }
