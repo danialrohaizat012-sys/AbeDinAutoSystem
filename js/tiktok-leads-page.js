@@ -1,6 +1,6 @@
 // TikTok Lead – halaman utama (V2: susun atur iPad/PC, menu ikut status, susunan)
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import * as WA from './tiktok-wa.js?v=5';
+import * as WA from './tiktok-wa.js?v=6';
 
 const client = createClient('https://buzpdyvvoiqgbeventwm.supabase.co', 'sb_publishable_zuuNipsMpalN_38SJwXpFA_MRzQ6eZ0');
 const $ = (id) => document.getElementById(id);
