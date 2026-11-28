@@ -1039,18 +1039,22 @@ function bindThumbs(box,key){
     markDirty(); renderItemPhotos(box.closest(".it"),key);
     S.client.storage.from(BUCKET).remove([path]).catch(()=>{}); });
 }
-function blankForm(){ return {id:null,vehicle_id:null,jenis:"",tahun:"",plat:"",mileage:"",tarikh:today(),pemeriksa:S.profile?.full_name||lsGet("abedin_nama")||"",items:{},akhir:{},grade:"",catatan:"",status:"draf",parts:[]}; }
+// Pemeriksa ditag automatik mengikut akaun staff yang login (tiada isian manual).
+function myName(){ return String(S.profile?.full_name||S.profile?.email||"").trim(); }
+function blankForm(){ return {id:null,vehicle_id:null,jenis:"",tahun:"",plat:"",mileage:"",tarikh:today(),pemeriksa:myName(),items:{},akhir:{},grade:"",catatan:"",status:"draf",parts:[]}; }
 function openForCar(vid){
   const v=vehById(vid); if(!v) return toast("Kenderaan tidak dijumpai");
   const open=inspFor(v).find(r=>r.status==="draf"||r.status==="ulang"); if(open) return openForm(open.id);
   const d=lsGet("abedin_ck_draft_"+v.id);
   S.form = d && !d.id ? d : Object.assign(blankForm(),{vehicle_id:v.id,jenis:carName(v),tahun:String(v.model_year||""),plat:v.plate||"",mileage:v.mileage_km?String(v.mileage_km):""});
+  if(S.form===d) S.form.pemeriksa=myName();
   S.form.parts=S.form.parts||[]; S.dirty=false; S.view="form"; render();
 }
 function openForm(id){
   const r=S.rows.find(x=>x.id===id); if(!r) return toast("Rekod tidak dijumpai");
   S.form=JSON.parse(JSON.stringify(r)); S.form.items=S.form.items||{}; S.form.akhir=S.form.akhir||{}; S.form.parts=S.form.parts||[];
   { const v=S.form.vehicle_id&&vehById(S.form.vehicle_id); if(v){ if(!String(S.form.tahun||"").trim()&&v.model_year)S.form.tahun=String(v.model_year); if(!String(S.form.mileage||"").trim()&&v.mileage_km)S.form.mileage=String(v.mileage_km); if(!String(S.form.jenis||"").trim())S.form.jenis=carName(v); if(!String(S.form.plat||"").trim())S.form.plat=v.plate||""; } }
+  if(!String(S.form.pemeriksa||"").trim()) S.form.pemeriksa=S.names[r.createdBy]||myName(); // rekod sedia ada kekal atas nama pemeriksa asal
   S.dirty=false; S.view="form"; render();
 }
 function renderForm(){
@@ -1064,7 +1068,7 @@ function renderForm(){
     <div class="fld"><label>Tahun</label><input class="field" data-f="tahun" inputmode="numeric" value="${esc(f.tahun)}"></div>
     <div class="fld"><label>Mileage (km)</label><input class="field" data-f="mileage" inputmode="numeric" value="${esc(f.mileage)}"></div>
     <div class="fld"><label>Tarikh</label><input class="field" type="date" data-f="tarikh" value="${esc(f.tarikh)}"></div>
-    <div class="fld full"><label>Pemeriksa</label><input class="field" data-f="pemeriksa" value="${esc(f.pemeriksa)}" placeholder="Nama staff"></div>
+    <div class="fld full"><label>Pemeriksa <small>🔒 auto ikut akaun login</small></label><input class="field" value="${esc(f.pemeriksa)}" aria-label="Pemeriksa" readonly></div>
   </div></div>
   <div class="jump">${SECTIONS.map((s,si)=>`<button data-j="${s.k}"><i style="background:${SECHEX[s.k]}">${si+1}</i>${["Enjin","Gearbox","Brek","Suspension","Tayar","Body","Elektrik","Interior"][si]} <small data-jc="${s.k}"></small></button>`).join("")}<button data-j="secK"><i style="background:#555">9</i>Kos <small id="jk"></small></button><button data-j="sec9"><i style="background:${"#1d55b8"}">10</i>Keputusan</button></div>
   <p class="mute">Tekan <b>OK</b>, <b>NG</b> atau <b>N/A</b> untuk setiap item. Ruang catatan muncul bila pilih NG.</p>
@@ -1169,7 +1173,6 @@ async function doSave(submit){
   S.saving=false;
   if(res.error){ $$(".savebar button").forEach(b=>b.disabled=false); toast("Gagal simpan: "+res.error.message); return; }
   if(!f.id&&f.vehicle_id) lsSet("abedin_ck_draft_"+f.vehicle_id,null);
-  if(body.pemeriksa) lsSet("abedin_nama",body.pemeriksa);
   const rec=fromRow(res.data); S.rows=[rec,...S.rows.filter(x=>x.id!==rec.id)];
   S.dirty=false; toast(submit?"Dihantar untuk semakan ✓":"Draf disimpan ✓"); go("detail",rec.id);
 }
