@@ -88,7 +88,7 @@ table{font-size:12.5px}th,td{padding:6px 5px}
 .hday-m{display:flex;gap:10px;flex-wrap:wrap}.hday-m>div{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:8px 14px;min-width:140px}.hday-m small{display:block;color:var(--mute);font-size:11.5px}.hday-m b{font-size:18px}.hday-m b.neg,.neg{color:#f87171}
 .hday-r{display:flex;align-items:center;gap:6px}.hday-r .field{max-width:170px;margin:0}
 .hcard{gap:12px}.hhead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.hname h3{margin:0 0 2px}.hhead .chip{flex:0 0 auto}
-.hstats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}.hs{background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:6px 3px;text-align:center;min-width:0}.hs small{display:block;font-size:11px;color:var(--mute);white-space:nowrap}.hs b{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}.hs b i{font-style:normal;font-size:10px;margin-left:2px;opacity:.75}.hs.bad{border-color:rgba(248,113,113,.45);background:rgba(248,113,113,.09)}.hs.bad b{color:#f87171}.hs.blue b{color:#60a5fa}
+.hstats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}.hs em{display:block;font-style:normal;font-size:10.5px;color:var(--mute);margin-top:1px}.hs{background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:6px 3px;text-align:center;min-width:0}.hs small{display:block;font-size:11px;color:var(--mute);white-space:nowrap}.hs b{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}.hs b i{font-style:normal;font-size:10px;margin-left:2px;opacity:.75}.hs.bad{border-color:rgba(248,113,113,.45);background:rgba(248,113,113,.09)}.hs.bad b{color:#f87171}.hs.blue b{color:#60a5fa}
 .hpay{border-radius:12px;padding:10px 14px;display:flex;flex-direction:column;gap:2px;border:1px solid var(--line)}.hpay small{font-size:11.5px;color:var(--mute)}.hpay b{font-size:22px;letter-spacing:-.02em}.hpay span{font-size:12.5px}.hpay em{font-style:normal;color:#f87171;font-weight:700}.hpay .hn{color:var(--mute);font-size:11.5px}
 .hpay.none{background:var(--soft)}.hpay.none b{color:var(--mute)}.hpay.ok{background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.35)}.hpay.ok b{color:#4ade80}.hpay.cut{background:rgba(248,113,113,.07);border-color:rgba(248,113,113,.35)}.hpay.cut b{color:#fbbf24}.hpay.wait{background:rgba(96,165,250,.08);border-color:rgba(96,165,250,.35)}.hpay.wait b{color:#93c5fd}
 .hpunch summary{cursor:pointer;font-weight:700;font-size:13px;color:var(--mute);padding:2px 0}.hpunch[open] summary{margin-bottom:8px}
@@ -658,12 +658,26 @@ function viewToday() {
     const d = x.d, dp = dayPay(d, s.id), fi = d.firstIn, lo = d.lastOut;
     const tHm = x => esc(hm(x)).replace(/\s?(AM|PM|PG|PTG|ptg|pg)$/i, '<i>$1</i>');
     const stat = (l, v, c = "") => `<div class="hs ${c}"><small>${l}</small><b>${v}</b></div>`;
+    // Kotak rehat: jumlah minit + waktu setiap rehat; jika tiada punch rehat, tunjuk rehat syif yang ditolak automatik.
+    const spans = []; let rs = null, working = false;
+    for (const q of x.ps) {
+      if (q.kind === "in") working = true;
+      else if (q.kind === "rest_start") { if (working && !rs) rs = q; }
+      else if (rs && (q.kind === "rest_end" || q.kind === "out")) { spans.push([rs, q]); rs = null; }
+      if (q.kind === "out") working = false;
+    }
+    if (rs) spans.push([rs, null]);
+    const live = rs && k === nowKey() ? Math.max(0, (Date.now() - new Date(rs.punched_at)) / 60000) : 0;
+    const restMin = Math.round(d.rest + live);
+    const restVal = spans.length ? (rs && !live ? "Tiada tamat" : fmtMin(restMin)) : d.autoBreak ? fmtMin(d.autoBreak) : "–";
+    const restSub = spans.length ? spans.map(([a, b]) => `${tHm(a.punched_at)}–${b ? tHm(b.punched_at) : k === nowKey() ? "kini" : "?"}`).join("<br>") : d.autoBreak ? "Auto" : "";
+    const restCls = x.sc.brk > 0 && restMin > x.sc.brk + 5 ? "bad" : rs ? "blue" : "";
     const payTile = !dp ? `<div class="hpay none"><small>Gaji hari ini</small><b>–</b><span>Tetapan gaji belum dibuat</span></div>`
       : `<div class="hpay ${dp.absent || (!d.present && !dp.net) ? "none" : dp.pending ? "wait" : dp.ded > 0 ? "cut" : "ok"}"><small>${dp.pending ? "Gaji setakat ini" : "Gaji sebenar hari ini"}</small><b>${rm(dp.net)}</b>
         <span>${dp.base ? `Asas ${rm(dp.base)}` : "Asas RM0.00"}${dp.ot ? ` · OT +${rm(dp.ot)}` : ""}${dp.ded ? ` · <em>Potongan −${rm(dp.ded)}</em>` : ""}</span>
         ${dp.notes.length ? `<span class="hn">${dp.notes.map(esc).join(" · ")}${dp.pending && d.present ? " · dikira muktamad selepas punch balik" : ""}</span>` : ""}</div>`;
     return `<div class="card staff hcard"><div class="hhead"><div class="hname"><h3>${esc(s.full_name || "Staff")}</h3><span class="mute">${esc(schedText(x.sc))}</span></div><span class="chip ${cls}">${lab}</span></div>
-      <div class="hstats">${stat("Masuk", fi ? tHm(fi.punched_at) : "–", d.late ? "bad" : "")}${stat("Balik", lo && !d.open ? tHm(lo.punched_at) : "–")}${stat("Jam kerja", d.worked ? fmtMin(d.worked) : "–")}${stat("Lewat", d.late ? fmtMin(d.late) : d.lateExcused ? "Dimaafkan" : "–", d.late ? "bad" : "")}${stat("OT", d.ot ? fmtMin(d.ot) : "–", d.ot ? "blue" : "")}</div>
+      <div class="hstats">${stat("Masuk", fi ? tHm(fi.punched_at) : "–", d.late ? "bad" : "")}${stat("Rehat", restVal + (restSub ? `<em>${restSub}</em>` : ""), restCls)}${stat("Balik", lo && !d.open ? tHm(lo.punched_at) : "–")}${stat("Jam kerja", d.worked ? fmtMin(d.worked) : "–")}${stat("Lewat", d.late ? fmtMin(d.late) : d.lateExcused ? "Dimaafkan" : "–", d.late ? "bad" : "")}${stat("OT", d.ot ? fmtMin(d.ot) : "–", d.ot ? "blue" : "")}</div>
       ${S.owner ? payTile : ""}
       ${x.ps.length ? `<details class="hpunch"><summary>Rekod punch (${x.ps.length})${d.outside ? ` <span class="chip bad">Ada luar kawasan</span>` : ""}</summary><div class="pl cols2">${x.ps.map(p => punchRow(p, false)).join("")}</div></details>` : ""}
       <div class="hact"><button class="sm go" data-act="day" data-staff="${esc(s.id)}" data-day="${k}">✎ Edit hari</button><button class="sm" data-act="manual" data-staff="${esc(s.id)}">+ Punch manual</button></div></div>`;

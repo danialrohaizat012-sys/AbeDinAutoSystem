@@ -286,7 +286,7 @@ export function mountProfile(app, ctx, staff, onBack) {
     const month = P.slipMonth;
     P.slipBusy = true; P.slipErr = ""; P.slip = null; P.payroll = null; P.previousPayroll = null; render();
     try {
-      const [k, sl] = await Promise.all([import("./kehadiran.js?v=28"), import("./slip.js?v=2")]);
+      const [k, sl] = await Promise.all([import("./kehadiran.js?v=29"), import("./slip.js?v=2")]);
       const result = await loadPayrollSlip({client,profile:me,staffId:id,month,computeSlip:k.computeSlip});
       if (P.slipToken !== token) return;
       P.slipHtml = sl.slipHtml; P.printSlip = sl.printSlip; P.payroll = result; P.slip = result.kind === "estimate" ? result.slip : null;
@@ -297,7 +297,7 @@ export function mountProfile(app, ctx, staff, onBack) {
     if (P.slipBusy || me.role !== "owner" || P.payroll?.kind !== "recorded") return;
     const prev=P.payroll.record, month=P.slipMonth, token=(P.slipToken||0)+1; P.slipToken=token;
     P.slipBusy=true; P.slipErr=""; render();
-    try { const k=await import("./kehadiran.js?v=28"); const estimate=await k.computeSlip(client,me,id,month); if(P.slipToken!==token)return; P.previousPayroll=prev; P.payroll=null; P.slip=estimate; }
+    try { const k=await import("./kehadiran.js?v=29"); const estimate=await k.computeSlip(client,me,id,month); if(P.slipToken!==token)return; P.previousPayroll=prev; P.payroll=null; P.slip=estimate; }
     catch(e){if(P.slipToken!==token)return;P.slipErr=e?.message||String(e);}
     P.slipBusy=false;render();
   }
